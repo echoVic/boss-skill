@@ -101,20 +101,21 @@ tasks.md → [Frontend/Backend Agent] → 代码 + 测试
 将 `boss` 目录复制到你的 AI 编程工具的 Skills/Commands 目录：
 
 ```bash
+# git 下载后 文件夹名字为 boss-skill
 # Trae
-cp -r boss ~/.blade/skills/
+cp -r boss-skill ~/.blade/skills/
 
 # Claude Code
-cp -r boss ~/.claude/commands/
+cp -r boss-skill ~/.claude/commands/
 
 # Cursor
-cp -r boss ~/.cursor/skills/
+cp -r boss-skill ~/.cursor/skills/
 
 # Windsurf
-cp -r boss ~/.windsurf/skills/
+cp -r boss-skill ~/.windsurf/skills/
 
 # Open Code (开源 Claude Code 替代)
-cp -r boss ~/.opencode/commands/
+cp -r boss-skill ~/.opencode/commands/
 
 # Cline / Roo Code
 # 将 SKILL.md 内容添加到 .clinerules 或项目 README
