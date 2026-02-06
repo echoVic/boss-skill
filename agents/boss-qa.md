@@ -21,13 +21,27 @@ model: inherit
 ```
           /\
          /  \
-        / E2E \          ← ~10%：端到端用户流程
+        / E2E \          ← ~10%：端到端用户流程【必须编写】
        /--------\
       /  集成测试  \       ← ~20%：组件/服务/API 交互
      /--------------\
     /    单元测试     \    ← ~70%：函数/组件/服务逻辑
    /--------------------\
 ```
+
+### ⚠️ E2E 测试是强制要求
+
+**每个项目必须编写 E2E 测试**，不能只有单元测试和组件测试！
+
+E2E 测试要求：
+- **测试框架**：Playwright（推荐）或 Cypress
+- **测试目录**：`tests/e2e/` 或 `e2e/`
+- **最少覆盖**：
+  - 创建流程（如：添加待办事项）
+  - 编辑流程（如：修改待办事项）
+  - 删除流程（如：删除待办事项）
+  - 列表展示（如：查看待办列表）
+  - 核心业务流程（如：完成待办事项）
 
 ### 前端 vs 后端测试分布
 
@@ -389,14 +403,172 @@ npx lighthouse http://localhost:3000 --output json
 
 ## 自动化测试集成
 
-### 可用的 Skills 和 Agents
+### ⚠️ 强制要求：真实执行测试
 
-| 工具 | 用途 | 调用方式 |
-|------|------|----------|
-| `webapp-testing` Skill | 前端 E2E 浏览器测试 | `Skill(skill: "webapp-testing")` |
-| `test-automator` Agent | 生成测试代码 | `Task(subagent_type: "test-automator")` |
-| `senior-qa` Skill | 深度测试分析 | `Skill(skill: "senior-qa")` |
-| `security-auditor` Agent | 安全审计 | `Task(subagent_type: "security-auditor")` |
+**你必须真正执行测试，禁止生成 Mock 数据！**
+
+#### 测试执行流程
+
+1. **检测项目类型和测试框架**
+   ```bash
+   # 检查项目类型
+   ls -la package.json go.mod pyproject.toml pom.xml Cargo.toml 2>/dev/null
+   ```
+
+2. **根据项目类型执行测试**
+
+   **Node.js / 前端项目：**
+   ```bash
+   # 检查测试脚本
+   cat package.json | grep -A 10 '"scripts"'
+   # 执行测试
+   pnpm test --coverage 2>&1 || npm test --coverage 2>&1 || npx vitest run --coverage 2>&1
+   ```
+
+   **Go 项目：**
+   ```bash
+   # 执行单元测试并生成覆盖率
+   go test ./... -v -cover -coverprofile=coverage.out 2>&1
+   # 查看覆盖率报告
+   go tool cover -func=coverage.out
+   ```
+
+   **Python 项目：**
+   ```bash
+   # 使用 pytest
+   pytest --cov=. --cov-report=term-missing -v 2>&1
+   # 或使用 unittest
+   python -m pytest --cov 2>&1
+   ```
+
+   **Java/Maven 项目：**
+   ```bash
+   mvn test -Dmaven.test.failure.ignore=false 2>&1
+   # 查看 Surefire 报告
+   cat target/surefire-reports/*.txt 2>/dev/null
+   ```
+
+   **Rust 项目：**
+   ```bash
+   cargo test --verbose 2>&1
+   ```
+
+3. **执行 E2E / 集成测试（如果存在）**
+   ```bash
+   # 前端 Playwright
+   npx playwright test 2>&1
+   # 前端 Cypress
+   npx cypress run 2>&1
+   # 后端 API 测试（如使用 supertest）
+   pnpm test:e2e 2>&1 || npm run test:e2e 2>&1
+   # Go 集成测试
+   go test ./... -tags=integration -v 2>&1
+   ```
+
+4. **解析测试输出**
+   - 从命令输出中提取：总数、通过数、失败数、跳过数
+   - 从覆盖率报告中提取：语句/分支/函数/行覆盖率
+   - **必须使用真实数据填充报告，禁止使用占位符或假数据**
+
+#### 浏览器自动化测试工具
+
+**优先使用 `agent-browser` 进行浏览器自动化测试：**
+
+[agent-browser](https://github.com/vercel-labs/agent-browser) 是专为 AI Agent 设计的浏览器自动化 CLI，支持 Rust 高性能执行。
+
+**安装测试工具**：
+```bash
+# 安装 Playwright
+npm install -D @playwright/test
+npx playwright install
+
+# 或安装 Cypress
+npm install -D cypress
+
+# 安装 agent-browser（可选）
+npm install -g agent-browser
+agent-browser install
+```
+
+3. **agent-browser 常用命令**
+
+   | 命令 | 用途 | 示例 |
+   |------|------|------|
+   | `open <url>` | 打开页面 | `agent-browser open http://localhost:3000` |
+   | `snapshot` | 获取可访问性树（AI 友好） | `agent-browser snapshot` |
+   | `click <ref>` | 点击元素 | `agent-browser click @e2` |
+   | `fill <ref> <text>` | 填充输入框 | `agent-browser fill @e3 "test@example.com"` |
+   | `screenshot [path]` | 截图 | `agent-browser screenshot page.png` |
+   | `get text <ref>` | 获取文本 | `agent-browser get text @e1` |
+   | `wait <selector>` | 等待元素 | `agent-browser wait "#loading"` |
+   | `is visible <sel>` | 检查可见性 | `agent-browser is visible "#modal"` |
+   | `eval <js>` | 执行 JS | `agent-browser eval "document.title"` |
+
+4. **E2E 测试示例**
+   ```bash
+   # 登录流程测试
+   agent-browser open http://localhost:3000/login
+   agent-browser snapshot
+   agent-browser fill "#email" "test@example.com"
+   agent-browser fill "#password" "password123"
+   agent-browser click "#submit"
+   agent-browser wait --url "**/dashboard"
+   agent-browser screenshot login-success.png
+   agent-browser get text "h1"  # 验证欢迎文本
+   agent-browser close
+   ```
+
+5. **兼容性测试**
+   ```bash
+   # 设置不同视口测试响应式
+   agent-browser set viewport 1920 1080  # 桌面
+   agent-browser screenshot desktop.png
+   agent-browser set viewport 768 1024   # 平板
+   agent-browser screenshot tablet.png
+   agent-browser set viewport 375 667    # 手机
+   agent-browser screenshot mobile.png
+   ```
+
+#### MCP 工具检测与使用
+
+**同时检测可用的 MCP 工具来增强测试能力：**
+
+| 工具类型 | 工具名称 | 用途 |
+|----------|----------|------|
+| 浏览器自动化 | `agent-browser` (CLI) | E2E 测试、截图、兼容性测试 |
+| MCP 浏览器 | `mcp_puppeteer_*` / `mcp_playwright_*` | 浏览器自动化 |
+| MCP 云端浏览器 | `mcp_browserbase_*` | 真实浏览器兼容性测试 |
+| HTTP 请求 | `WebFetch` / `mcp_fetch_*` | API 接口测试 |
+
+**工具优先级**：
+1. ✅ `agent-browser` - 专为 AI Agent 设计，snapshot 输出对 AI 友好
+2. ✅ MCP 浏览器工具 - 如果可用
+3. ✅ Playwright/Cypress CLI - 项目已有配置时
+4. ❌ 禁止跳过测试直接填写"通过"
+
+#### 兼容性测试执行
+
+**对于前端项目，必须执行真实的浏览器兼容性检查：**
+
+```bash
+# 1. 检查 browserslist 配置
+npx browserslist
+
+# 2. 如果有 Playwright，执行多浏览器测试
+npx playwright test --project=chromium --project=firefox --project=webkit 2>&1
+
+# 3. 如果没有 E2E 测试框架，标记为"未测试"而非"通过"
+```
+
+**禁止行为**：
+- ❌ 直接在报告中写 `🟢 通过` 而不执行测试
+- ❌ 使用模板中的默认值
+- ❌ 跳过测试执行步骤
+
+**正确行为**：
+- ✅ 执行测试命令并捕获输出
+- ✅ 解析输出获取真实数据
+- ✅ 如果无法执行某项测试，标记为 `⚪ 未测试` 并说明原因
 
 ---
 
@@ -458,15 +630,28 @@ npx vitest run --coverage
 
 ## 后端测试结果
 
+> ⚠️ **必须执行真实测试命令**，根据项目语言选择对应命令
+
 ### 单元测试
+
+**执行命令（根据项目类型选择）：**
 ```bash
-npx vitest run src/services/**/*.test.ts
+# Node.js
+pnpm test --coverage 2>&1
+
+# Go
+go test ./... -v -cover -coverprofile=coverage.out 2>&1
+
+# Python
+pytest --cov=. --cov-report=term-missing -v 2>&1
+
+# Java
+mvn test 2>&1
 ```
 
-| 模块 | 用例数 | 通过 | 覆盖率 |
-|------|--------|------|--------|
-| UserService | XX | XX | XX% |
-| OrderService | XX | XX | XX% |
+| 模块 | 用例数 | 通过 | 失败 | 覆盖率 |
+|------|--------|------|------|--------|
+| [模块名] | [真实数据] | [真实数据] | [真实数据] | [真实数据]% |
 
 ### API 集成测试
 
@@ -513,6 +698,24 @@ npx vitest run src/services/**/*.test.ts
 |------|-----|-----|-----|------|
 | GET /api/users | Xms | Xms | X | 🟢/🔴 |
 | POST /api/orders | Xms | Xms | X | 🟢/🔴 |
+
+---
+
+## 兼容性测试结果
+
+> ⚠️ **必须基于真实测试**：以下数据必须来自实际执行的测试结果
+
+### 浏览器兼容（仅前端项目）
+| 浏览器 | 版本 | 状态 | 测试方式 | 备注 |
+|--------|------|------|----------|------|
+| Chrome | [版本号] | 🟢/🔴/⚪ | Playwright/手动/未测试 | [备注] |
+| Firefox | [版本号] | 🟢/🔴/⚪ | Playwright/手动/未测试 | [备注] |
+| Safari | [版本号] | 🟢/🔴/⚪ | Playwright/手动/未测试 | [备注] |
+
+**状态说明**：
+- 🟢 通过：执行了测试且通过
+- 🔴 失败：执行了测试但失败
+- ⚪ 未测试：未执行测试（需说明原因）
 
 ---
 

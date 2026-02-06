@@ -74,6 +74,28 @@
 |----------|----------|----------|--------|
 | `tests/xxx.test.ts` | [测试名] | [错误信息] | 高/中/低 |
 
+### 3.4 测试工具与方法
+
+<!-- 记录实际使用的测试工具和方法，确保可追溯 -->
+
+| 测试类型 | 使用工具 | 执行命令/方法 | 备注 |
+|----------|----------|---------------|------|
+| 单元测试 | {{UNIT_TOOL}} | {{UNIT_CMD}} | {{UNIT_NOTES}} |
+| 集成测试 | {{INT_TOOL}} | {{INT_CMD}} | {{INT_NOTES}} |
+| E2E 测试 | {{E2E_TOOL}} | {{E2E_CMD}} | {{E2E_NOTES}} |
+| API 测试 | {{API_TOOL}} | {{API_CMD}} | {{API_NOTES}} |
+| 浏览器自动化 | {{BROWSER_TOOL}} | {{BROWSER_CMD}} | {{BROWSER_NOTES}} |
+
+**浏览器自动化工具：**
+- agent-browser 可用：{{AGENT_BROWSER_AVAILABLE}} (是/否)
+- 实际使用工具：{{BROWSER_AUTOMATION_TOOL}}
+- 截图证据：{{SCREENSHOT_PATHS}}
+
+**MCP 工具使用情况：**
+- 可用 MCP 工具：{{AVAILABLE_MCP_TOOLS}}
+- 实际使用的 MCP 工具：{{USED_MCP_TOOLS}}
+- 未使用原因（如有）：{{MCP_SKIP_REASON}}
+
 ---
 
 ## 4. 发现的 Bug
@@ -159,22 +181,38 @@
 
 ## 7. 兼容性测试（如适用）
 
+> ⚠️ **注意**：以下结果必须基于真实测试执行。如未执行测试，状态应标记为 `⚪ 未测试`。
+
 ### 7.1 浏览器兼容
 
-| 浏览器 | 版本 | 状态 | 备注 |
-|--------|------|------|------|
-| Chrome | Latest | 🟢 通过 | |
-| Firefox | Latest | 🟢 通过 | |
-| Safari | Latest | 🟢 通过 | |
-| Edge | Latest | 🟢 通过 | |
+<!-- 
+执行方式：
+1. 使用 Playwright 多浏览器测试：npx playwright test --project=chromium --project=firefox --project=webkit
+2. 或使用 BrowserStack/Sauce Labs 等云测试平台
+3. 如果无法执行，标记为 ⚪ 未测试
+-->
+
+| 浏览器 | 版本 | 状态 | 测试方式 | 备注 |
+|--------|------|------|----------|------|
+| Chrome | {{CHROME_VERSION}} | {{CHROME_STATUS}} | {{CHROME_METHOD}} | {{CHROME_NOTES}} |
+| Firefox | {{FIREFOX_VERSION}} | {{FIREFOX_STATUS}} | {{FIREFOX_METHOD}} | {{FIREFOX_NOTES}} |
+| Safari | {{SAFARI_VERSION}} | {{SAFARI_STATUS}} | {{SAFARI_METHOD}} | {{SAFARI_NOTES}} |
+| Edge | {{EDGE_VERSION}} | {{EDGE_STATUS}} | {{EDGE_METHOD}} | {{EDGE_NOTES}} |
 
 ### 7.2 设备兼容
 
-| 设备类型 | 分辨率 | 状态 | 备注 |
-|----------|--------|------|------|
-| 桌面 | 1920x1080 | 🟢 通过 | |
-| 平板 | 1024x768 | 🟢 通过 | |
-| 手机 | 375x667 | 🟢 通过 | |
+<!-- 
+执行方式：
+1. 使用 Playwright 设备模拟：npx playwright test --project="Mobile Chrome"
+2. 或使用真实设备测试
+3. 如果无法执行，标记为 ⚪ 未测试
+-->
+
+| 设备类型 | 分辨率 | 状态 | 测试方式 | 备注 |
+|----------|--------|------|----------|------|
+| 桌面 | {{DESKTOP_RES}} | {{DESKTOP_STATUS}} | {{DESKTOP_METHOD}} | {{DESKTOP_NOTES}} |
+| 平板 | {{TABLET_RES}} | {{TABLET_STATUS}} | {{TABLET_METHOD}} | {{TABLET_NOTES}} |
+| 手机 | {{MOBILE_RES}} | {{MOBILE_STATUS}} | {{MOBILE_METHOD}} | {{MOBILE_NOTES}} |
 
 ---
 

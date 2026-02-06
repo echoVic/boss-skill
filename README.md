@@ -164,7 +164,7 @@ boss/
 ├── references/                 # 参考资料
 │   └── bmad-methodology.md
 └── scripts/                    # 辅助脚本
-    └── init-project.sh
+    └── init-project.sh         # 项目初始化
 ```
 
 ## 🤖 Agent 职责

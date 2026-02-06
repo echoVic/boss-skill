@@ -320,7 +320,7 @@ skills/boss/
 ├── references/                 # 参考资料
 │   └── bmad-methodology.md
 └── scripts/                    # 辅助脚本
-    └── init-project.sh
+    └── init-project.sh         # 项目初始化
 ```
 
 ### 5.2 产物目录结构
@@ -341,7 +341,7 @@ skills/boss/
 
 ## 6. 技术实现
 
-### 6.1 Agent 调用机制
+### 6.1 Agent 调用方式
 
 使用 Task 工具 + `general_purpose_task` 类型调用 Agent：
 
@@ -366,7 +366,25 @@ Task({
 | 阶段 3 | 并行 + 循环 | Frontend/Backend 并行开发，QA 持续验证 |
 | 阶段 4 | 串行 | QA 完整测试 → 门禁检查 → DevOps 部署 |
 
-### 6.3 兼容性设计
+### 6.3 质量门禁
+
+阶段 3 门禁（必须全部通过才能进入阶段 4）：
+
+| 门禁检查 | 要求 |
+|----------|------|
+| 单元测试 | 必须执行并通过 |
+| 测试覆盖率 | ≥70% |
+| 测试通过率 | 无严重 Bug，无失败测试 |
+| E2E 测试 | **必须编写并执行**（Playwright/Cypress） |
+
+阶段 4 门禁：
+
+| 门禁检查 | 要求 |
+|----------|------|
+| 部署报告 | 必须存在 |
+| 服务可访问 | URL 返回 HTTP 2xx |
+
+### 6.4 兼容性设计
 
 Boss Skill 使用通用的 `general_purpose_task` agent，兼容主流 AI 编程工具：
 

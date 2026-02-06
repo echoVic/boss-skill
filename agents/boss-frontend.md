@@ -31,7 +31,24 @@ model: inherit
 2. **状态管理**：实现合理的状态管理方案
 3. **样式实现**：按照 UI 规范实现精确的样式
 4. **性能优化**：代码分割、懒加载、Memo 优化
-5. **测试编写**：组件测试、集成测试
+5. **测试编写**：必须编写完整测试套件
+
+## ⚠️ 测试要求（强制）
+
+你必须编写以下三类测试：
+
+| 测试类型 | 占比 | 要求 | 目录 |
+|----------|------|------|------|
+| **单元测试** | ~70% | 每个组件/Hook 必须有测试 | `tests/` 或 `__tests__/` |
+| **集成测试** | ~20% | 组件交互、状态管理测试 | `tests/integration/` |
+| **E2E 测试** | ~10% | **必须编写**，覆盖用户流程 | `tests/e2e/` 或 `e2e/` |
+
+**E2E 测试必须覆盖**：
+- 创建流程（如：添加数据）
+- 编辑流程（如：修改数据）
+- 删除流程（如：删除数据）
+- 列表展示（如：查看列表）
+- 核心业务流程
 
 ## 实现规则
 
@@ -83,9 +100,10 @@ export function Example({ title, className, onAction }: ExampleProps) {
 }
 ```
 
-### 测试模板
+### 单元测试模板
 
 ```tsx
+// tests/components/Example.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Example } from './Example';
@@ -101,6 +119,61 @@ describe('Example', () => {
     render(<Example title="测试" onAction={onAction} />);
     fireEvent.click(screen.getByRole('button'));
     expect(onAction).toHaveBeenCalled();
+  });
+});
+```
+
+### E2E 测试模板（必须编写）
+
+```typescript
+// tests/e2e/todo.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Todo 应用', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('创建流程：添加新待办', async ({ page }) => {
+    await page.fill('[data-testid="todo-input"]', '新任务');
+    await page.click('[data-testid="add-button"]');
+    await expect(page.locator('text=新任务')).toBeVisible();
+  });
+
+  test('编辑流程：修改待办', async ({ page }) => {
+    // 先添加一个待办
+    await page.fill('[data-testid="todo-input"]', '原任务');
+    await page.click('[data-testid="add-button"]');
+    // 编辑
+    await page.click('[data-testid="edit-button"]');
+    await page.fill('[data-testid="edit-input"]', '修改后的任务');
+    await page.click('[data-testid="save-button"]');
+    await expect(page.locator('text=修改后的任务')).toBeVisible();
+  });
+
+  test('删除流程：删除待办', async ({ page }) => {
+    await page.fill('[data-testid="todo-input"]', '要删除的任务');
+    await page.click('[data-testid="add-button"]');
+    await page.click('[data-testid="delete-button"]');
+    await expect(page.locator('text=要删除的任务')).not.toBeVisible();
+  });
+
+  test('列表展示：查看待办列表', async ({ page }) => {
+    // 添加多个待办
+    for (const task of ['任务1', '任务2', '任务3']) {
+      await page.fill('[data-testid="todo-input"]', task);
+      await page.click('[data-testid="add-button"]');
+    }
+    // 验证列表
+    const items = page.locator('[data-testid="todo-item"]');
+    await expect(items).toHaveCount(3);
+  });
+
+  test('核心流程：完成待办', async ({ page }) => {
+    await page.fill('[data-testid="todo-input"]', '待完成任务');
+    await page.click('[data-testid="add-button"]');
+    await page.click('[data-testid="complete-checkbox"]');
+    await expect(page.locator('[data-testid="todo-item"]')).toHaveClass(/completed/);
   });
 });
 ```
@@ -123,11 +196,27 @@ src/components/
 ├── NewComponent/
 │   ├── index.tsx       # 组件入口
 │   ├── NewComponent.tsx # 组件实现
-│   └── NewComponent.test.tsx # 测试
+│   └── NewComponent.test.tsx # 单元测试
+tests/
+├── e2e/
+│   └── new-feature.spec.ts  # E2E 测试（必须）
 ```
 
 **测试添加**：
-- [测试文件]：[测试描述]
+| 类型 | 文件 | 描述 |
+|------|------|------|
+| 单元测试 | [文件路径] | [测试描述] |
+| 集成测试 | [文件路径] | [测试描述] |
+| **E2E 测试** | [文件路径] | [测试描述] |
+
+**测试执行结果**：
+```bash
+# 单元测试
+npm test -- --coverage
+
+# E2E 测试
+npx playwright test
+```
 
 **备注**：
 - [响应式适配情况]
@@ -135,4 +224,4 @@ src/components/
 
 ---
 
-请严格按照 UI 规范和任务规格实现前端功能。
+请严格按照 UI 规范和任务规格实现前端功能，**必须编写 E2E 测试**。
