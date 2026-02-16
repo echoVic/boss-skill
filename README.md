@@ -1,159 +1,87 @@
-# Boss Skill - BMAD 全自动研发流水线
+# boss-skill
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-2.0-blue.svg" alt="Version">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/agents-9-orange.svg" alt="Agents">
-</p>
+BMAD 全自动项目编排 Skill，适用于 [OpenClaw](https://github.com/openclaw/openclaw) Agent。
 
-> 🚀 从需求到部署的完整研发流水线，编排多个专业 Agent 自动完成完整研发周期。
+从需求到部署的完整研发流水线，编排 9 个专业 Agent 自动完成完整研发周期。
 
-## ✨ 特性
+## 工作原理
 
-- **🤖 9 个专业 Agent** - PM、架构师、UI 设计师、Tech Lead、Scrum Master、前端、后端、QA、DevOps
-- **🔄 全自动执行** - 无需中间确认，一气呵成从需求到部署
-- **📝 产物驱动** - 每个阶段产出文档，下一阶段基于前一阶段产物
-- **🧪 测试先行** - 遵循测试金字塔原则，确保交付质量
-- **🚦 质量门禁** - 测试不通过不能部署
-- **🎯 需求穿透** - PM Agent 深度挖掘用户真实需求
-
-## 🏗️ 架构
+Boss Agent 不直接写代码，而是编排专业 Agent 按四阶段流水线执行：
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Boss Agent                               │
-│                    （编排层 - 流水线控制）                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │    PM    │  │ Architect│  │UI Designer│  │Tech Lead │        │
-│  │  Agent   │  │  Agent   │  │  Agent   │  │  Agent   │        │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │
-│  │  Scrum   │  │ Frontend │  │ Backend  │                      │
-│  │  Master  │  │  Agent   │  │  Agent   │                      │
-│  └──────────┘  └──────────┘  └──────────┘                      │
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐                                    │
-│  │    QA    │  │  DevOps  │                                    │
-│  │  Agent   │  │  Agent   │                                    │
-│  └──────────┘  └──────────┘                                    │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+需求 → [PM → Architect → UI] → [Tech Lead → Scrum Master] → [Dev → QA] → [DevOps] → 交付
+         阶段 1: 规划              阶段 2: 评审+拆解          阶段 3: 开发    阶段 4: 部署
 ```
 
-## 📋 四阶段工作流
+每个阶段产出文档，下一阶段基于前一阶段产物，测试不通过不能部署。
 
-### 阶段 1：规划（需求穿透 → 设计）
+## 9 个专业 Agent
 
-```
-用户需求 → [PM Agent] → prd.md
-                ↓
-        ┌───────┴───────┐
-        ↓               ↓
-  [Architect]    [UI Designer]
-        ↓               ↓
-  architecture.md   ui-spec.md
-```
+| Agent | 职责 |
+|-------|------|
+| PM | 需求穿透 — 显性、隐性、潜在、惊喜需求 |
+| Architect | 架构设计、技术选型、API 设计 |
+| UI Designer | UI/UX 设计规范 |
+| Tech Lead | 技术评审、风险评估 |
+| Scrum Master | 任务分解、测试用例定义 |
+| Frontend | UI 组件、状态管理、前端测试 |
+| Backend | API、数据库、后端测试 |
+| QA | 测试执行、Bug 报告 |
+| DevOps | 构建部署、健康检查 |
 
-### 阶段 2：评审 + 任务拆解
+## 使用方式
 
-```
-prd.md + architecture.md → [Tech Lead] → tech-review.md
-                                  ↓
-prd.md + tech-review.md → [Scrum Master] → tasks.md
-```
-
-### 阶段 3：开发 + 持续验证
+触发词：`boss mode`、`/boss`、`全自动开发`、`从需求到部署`
 
 ```
-tasks.md → [Frontend/Backend Agent] → 代码 + 测试
-                    ↓
-              [QA Agent] → 持续验证
+/boss 做一个 Todo 应用
+/boss 给现有项目加用户认证 --skip-ui
+/boss 快速搭建 API 服务 --skip-deploy --quick
 ```
 
-### 阶段 4：部署 + 交付
+| 参数 | 说明 |
+|------|------|
+| `--skip-ui` | 跳过 UI 设计（纯 API/CLI） |
+| `--skip-deploy` | 跳过部署阶段 |
+| `--quick` | 跳过确认节点，全自动 |
+
+## 产物
+
+所有产物保存在 `.boss/<feature>/` 目录：
 
 ```
-代码 → [QA Agent] → qa-report.md → 测试门禁
-                                      ↓
-                              [DevOps Agent]
-                                      ↓
-                              deploy-report.md
-                                      ↓
-                               可访问 URL
+.boss/<feature>/
+├── prd.md              # 产品需求文档
+├── architecture.md     # 系统架构
+├── ui-spec.md          # UI 规范（可选）
+├── tech-review.md      # 技术评审
+├── tasks.md            # 开发任务
+├── qa-report.md        # QA 报告
+└── deploy-report.md    # 部署报告
 ```
 
-## 🚀 快速开始
-
-### 触发方式
-
-| 触发词 | 说明 |
-|--------|------|
-| `/boss` | 主要触发词 |
-| `boss mode` | 自然语言触发 |
-| `全自动开发` | 中文触发 |
-| `从需求到部署` | 场景触发 |
-
-### 安装
-
-将 `boss` 目录复制到你的 AI 编程工具的 Skills/Commands 目录：
-
-```bash
-# git 下载后 文件夹名字为 boss-skill
-# Trae
-cp -r boss-skill ~/.blade/skills/
-
-# Claude Code
-cp -r boss-skill ~/.claude/commands/
-
-# Cursor
-cp -r boss-skill ~/.cursor/skills/
-
-# Windsurf
-cp -r boss-skill ~/.windsurf/skills/
-
-# Open Code (开源 Claude Code 替代)
-cp -r boss-skill ~/.opencode/commands/
-
-# Cline / Roo Code
-# 将 SKILL.md 内容添加到 .clinerules 或项目 README
-```
-
-### 使用示例
+## 文件结构
 
 ```
-用户：/boss 我想做一个待办事项应用
-
-Boss：🚀 Boss Mode 已激活！
-
-请描述你想要构建的功能或项目：
-- 这是新项目还是在现有代码库上添加功能？
-- 需要什么类型的界面？（Web/CLI/API/无界面）
-- 有任何技术偏好或约束吗？
-
-我将为你完成从需求到部署的完整流水线！
-```
-
-## 📁 目录结构
-
-```
-boss/
-├── SKILL.md                    # 主编排文件
-├── DESIGN.md                   # 设计文档
-├── README.md                   # 本文件
-├── agents/                     # Agent Prompt 文件
-│   ├── boss-pm.md              # 产品经理
-│   ├── boss-ui-designer.md     # UI/UX 设计师
-│   ├── boss-architect.md       # 系统架构师
-│   ├── boss-tech-lead.md       # 技术负责人
-│   ├── boss-scrum-master.md    # Scrum Master
-│   ├── boss-frontend.md        # 前端开发
-│   ├── boss-backend.md         # 后端开发
-│   ├── boss-qa.md              # QA 工程师
-│   └── boss-devops.md          # DevOps 工程师
-├── templates/                  # 输出模板
+boss-skill/
+├── SKILL.md                          # 工作流 checklist
+├── DESIGN.md                         # 设计文档
+├── agents/                           # 9 个 Agent Prompt（按需加载）
+│   ├── boss-pm.md
+│   ├── boss-architect.md
+│   ├── boss-ui-designer.md
+│   ├── boss-tech-lead.md
+│   ├── boss-scrum-master.md
+│   ├── boss-frontend.md
+│   ├── boss-backend.md
+│   ├── boss-qa.md
+│   └── boss-devops.md
+├── references/                       # 按需加载的规范文档
+│   ├── bmad-methodology.md           # BMAD 方法论
+│   ├── artifact-guide.md             # 产物保存规范
+│   ├── testing-standards.md          # 测试标准
+│   └── quality-gate.md               # 质量门禁
+├── templates/                        # 产物模板
 │   ├── prd.md.template
 │   ├── architecture.md.template
 │   ├── ui-spec.md.template
@@ -161,114 +89,14 @@ boss/
 │   ├── tasks.md.template
 │   ├── qa-report.md.template
 │   └── deploy-report.md.template
-├── references/                 # 参考资料
-│   └── bmad-methodology.md
-└── scripts/                    # 辅助脚本
-    └── init-project.sh         # 项目初始化
+└── scripts/
+    └── init-project.sh               # 项目初始化脚本
 ```
 
-## 🤖 Agent 职责
+## 设计理念
 
-| Agent | 角色 | 职责 |
-|-------|------|------|
-| PM | 产品经理 | 20 年产品经验，需求穿透、4 层需求挖掘 |
-| UI Designer | UI/UX 设计师 | Apple 20 年设计师，像素级设计规范 |
-| Architect | 系统架构师 | 架构设计、技术选型、API 设计 |
-| Tech Lead | 技术负责人 | 技术评审、风险评估、代码规范 |
-| Scrum Master | 敏捷教练 | 任务拆解、工作量估算 |
-| Frontend | 前端专家 | UI 实现、状态管理、性能优化 |
-| Backend | 后端专家 | API 开发、数据库、业务逻辑 |
-| QA | 测试工程师 | 测试执行、质量验证 |
-| DevOps | 运维工程师 | 构建部署、健康检查 |
+基于 BMAD（Breakthrough Method of Agile AI-Driven Development）方法论，详见 `references/bmad-methodology.md` 和 `DESIGN.md`。
 
-## 📊 产物输出
+## License
 
-执行完成后，所有产物保存在 `.boss/<feature>/` 目录：
-
-```
-.boss/
-└── <feature-name>/
-    ├── prd.md              # 产品需求文档（含用户故事）
-    ├── architecture.md     # 系统架构文档
-    ├── ui-spec.md          # UI/UX 规范
-    ├── tech-review.md      # 技术评审报告
-    ├── tasks.md            # 开发任务
-    ├── qa-report.md        # QA 测试报告
-    └── deploy-report.md    # 部署报告
-```
-
-## 🧪 测试门禁
-
-```
-┌─────────────────────────────────────┐
-│  🚦 测试门禁（必须通过才能部署）      │
-├─────────────────────────────────────┤
-│  ✅ 所有单元测试通过                 │
-│  ✅ 测试覆盖率 ≥ 70%                 │
-│  ✅ 无严重 Bug（高优先级）           │
-│  ✅ 关键 E2E 流程通过                │
-└─────────────────────────────────────┘
-```
-
-## 🔧 兼容性
-
-Boss Skill 使用通用的 `general_purpose_task` agent，兼容主流 AI 编程工具：
-
-### 完全兼容 ✅
-
-| 工具 | Skills 目录 | 说明 |
-|------|-------------|------|
-| **Trae** | `~/.blade/skills/` | 字节跳动 AI IDE |
-| **Claude Code** | `~/.claude/commands/` | Anthropic 官方 CLI |
-| **Open Code** | `~/.opencode/commands/` | 开源 Claude Code 替代 |
-| **Cursor** | `~/.cursor/skills/` | AI-first 代码编辑器 |
-| **Windsurf** | `~/.windsurf/skills/` | Codeium AI IDE |
-
-### 部分兼容 ⚠️
-
-| 工具 | 适配方式 | 说明 |
-|------|----------|------|
-| **Cline** | `.clinerules` | 需手动配置 Agent prompts |
-| **Roo Code** | `.roo/rules/` | Cline 分支，配置类似 |
-| **Aider** | `.aider.conf.yml` | 需适配为 Aider 格式 |
-| **Continue** | `.continue/config.json` | 需配置自定义 commands |
-
-### 兼容性原理
-
-Boss Skill 的核心设计确保了广泛兼容性：
-
-1. **纯 Markdown 格式** - 所有 Agent prompts 都是标准 Markdown
-2. **通用 Task 调用** - 使用 `general_purpose_task` 而非特定工具 API
-3. **无外部依赖** - 不依赖特定运行时或框架
-4. **模块化设计** - 可按需选用部分 Agent
-
-## 📖 BMAD 方法论
-
-BMAD（Breakthrough Method of Agile AI-Driven Development）是一种突破性的 AI 驱动敏捷开发方法论，核心原则：
-
-1. **需求穿透** - 深度挖掘用户真实需求
-2. **专业分工** - 多 Agent 协作，各司其职
-3. **产物驱动** - 文档化每个阶段产出
-4. **质量门禁** - 测试先行，确保交付质量
-5. **全自动化** - 最小化人工干预
-
-详见 [references/bmad-methodology.md](references/bmad-methodology.md)
-
-## 📝 版本历史
-
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
-| v2.0 | 2025-01 | PM 需求穿透、Apple 级 UI 设计、Tech Lead 技术评审 |
-| v1.0 | 2024-12 | 初始版本 |
-
-## 📄 License
-
-[MIT License](LICENSE)
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## ⭐ Star History
-
-如果这个项目对你有帮助，请给一个 Star ⭐
+MIT
