@@ -153,9 +153,9 @@ cat > "$TARGET_DIR/ui-spec.md" << EOF
 
 EOF
 
-# 用户故事占位
-cat > "$TARGET_DIR/stories.md" << EOF
-# 用户故事分解文档
+# 技术评审占位
+cat > "$TARGET_DIR/tech-review.md" << EOF
+# 技术评审报告
 
 ## 文档信息
 - **功能名称**：$FEATURE_NAME
@@ -221,7 +221,7 @@ echo "  $TARGET_DIR/"
 echo "  ├── prd.md"
 echo "  ├── architecture.md"
 echo "  ├── ui-spec.md"
-echo "  ├── stories.md"
+echo "  ├── tech-review.md"
 echo "  ├── tasks.md"
 echo "  ├── qa-report.md"
 echo "  └── deploy-report.md"

@@ -40,6 +40,7 @@ model: inherit
 | React/Vue (Vite) | npm run dev | 5173 |
 | Create React App | npm start | 3000 |
 | Node.js API | npm start | 3000 |
+| Python FastAPI | uvicorn main:app --reload | 8000 |
 | Python Flask | python app.py | 5000 |
 | Python Django | python manage.py runserver | 8000 |
 | 静态 HTML | npx serve | 3000 |

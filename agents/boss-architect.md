@@ -73,7 +73,7 @@ model: inherit
 使用 `WebSearch` 和 `WebFetch` 进行调研：
 
 ```
-WebSearch("[技术领域] + best practices + 2024")
+WebSearch("[技术领域] + best practices + [当前年份]")
 WebSearch("[框架名] vs [框架名] comparison")
 WebFetch("[技术文档链接]", "提取核心特性和适用场景")
 ```
