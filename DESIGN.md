@@ -393,8 +393,8 @@ Boss Skill 使用通用的 `general_purpose_task` agent，兼容主流 AI 编程
 | 工具 | Skills 目录 | 说明 |
 |------|-------------|------|
 | **Trae** | `~/.blade/skills/` | 字节跳动 AI IDE |
-| **Claude Code** | `~/.claude/commands/` | Anthropic 官方 CLI |
-| **Open Code** | `~/.opencode/commands/` | 开源 Claude Code 替代 |
+| **Claude Code** | `~/.claude/skills/` | Anthropic 官方 CLI |
+| **Open Code** | `~/.opencode/skills/` | 开源 Claude Code 替代 |
 | **Cursor** | `~/.cursor/skills/` | AI-first 代码编辑器 |
 | **Windsurf** | `~/.windsurf/skills/` | Codeium AI IDE |
 

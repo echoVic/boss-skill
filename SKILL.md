@@ -62,6 +62,7 @@ Copy this checklist and check off items as you complete them:
     - Load `agents/boss-ui-designer.md` → UI Agent（除非 `--skip-ui`）
   - [ ] 1.4 Load `references/artifact-guide.md` 获取产物保存规范
   - [ ] 1.5 💾 保存产物到 `.boss/<feature>/`：`prd.md`, `architecture.md`, `ui-spec.md`
+  - [ ] 1.6 📝 更新 `.boss/<feature>/.meta/execution.json`：阶段 1 状态改为 `completed`
   - [ ] 1.6 确认规划结果 ⚠️ REQUIRED (除非 `--quick`)
 
 - [ ] **阶段 2: 评审 + 任务拆解**
@@ -70,6 +71,7 @@ Copy this checklist and check off items as you complete them:
   - [ ] 2.2 Load `agents/boss-tech-lead.md` → 技术评审
   - [ ] 2.3 Load `agents/boss-scrum-master.md` → 任务拆解 + 测试用例定义
   - [ ] 2.4 💾 保存产物：`tech-review.md`, `tasks.md`
+  - [ ] 2.5 📝 更新 `.meta/execution.json`：阶段 2 状态改为 `completed`
 
 - [ ] **阶段 3: 开发 + 持续验证**
   - [ ] 3.0 ⏩ 检查点：若 `--continue-from 4` 且 `qa-report.md` 已存在且门禁通过，跳过本阶段
@@ -80,11 +82,13 @@ Copy this checklist and check off items as you complete them:
   - [ ] 3.3 Load `agents/boss-qa.md` → 执行全套测试
   - [ ] 3.4 🚦 质量门禁检查 — Load `references/quality-gate.md`
   - [ ] 3.5 💾 保存产物：`qa-report.md`
+  - [ ] 3.6 📝 更新 `.meta/execution.json`：阶段 3 状态、质量门禁结果
 
 - [ ] **阶段 4: 部署 + 交付**（除非 `--skip-deploy`）
   - [ ] 4.1 读取阶段 3 产物
   - [ ] 4.2 Load `agents/boss-devops.md` → 构建部署
   - [ ] 4.3 💾 保存产物：`deploy-report.md`
+  - [ ] 4.4 📝 更新 `.meta/execution.json`：阶段 4 状态、访问 URL
   - [ ] 4.4 输出最终结果（文档位置 + 测试摘要 + 访问 URL）
 
 ---
