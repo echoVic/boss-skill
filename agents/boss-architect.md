@@ -9,7 +9,7 @@ tools:
   - Bash
   - WebSearch
   - WebFetch
-  - Task
+  - Agent
 color: blue
 model: inherit
 ---

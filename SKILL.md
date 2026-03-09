@@ -45,32 +45,33 @@ Copy this checklist and check off items as you complete them:
 
 - [ ] **阶段 1: 规划（需求穿透 → 设计）**
   - [ ] 1.1 Load `agents/boss-pm.md` → 调用 PM Agent 进行需求穿透
-  - [ ] 1.2 Load `agents/boss-architect.md` → 调用 Architect Agent 设计架构
-  - [ ] 1.3 Load `agents/boss-ui-designer.md` → 调用 UI Agent（除非 `--skip-ui`）
+  - [ ] 1.2~1.3 **并行执行**（同时调用以下两个 Agent，无需等待其中一个完成）：
+    - Load `agents/boss-architect.md` → Architect Agent 设计架构
+    - Load `agents/boss-ui-designer.md` → UI Agent（除非 `--skip-ui`）
   - [ ] 1.4 Load `references/artifact-guide.md` 获取产物保存规范
-  - [ ] 1.5 ⛔ 保存产物到 `.boss/<feature>/`：`prd.md`, `architecture.md`, `ui-spec.md`
+  - [ ] 1.5 💾 保存产物到 `.boss/<feature>/`：`prd.md`, `architecture.md`, `ui-spec.md`
   - [ ] 1.6 确认规划结果 ⚠️ REQUIRED (除非 `--quick`)
 
 - [ ] **阶段 2: 评审 + 任务拆解**
   - [ ] 2.1 读取阶段 1 产物
   - [ ] 2.2 Load `agents/boss-tech-lead.md` → 技术评审
   - [ ] 2.3 Load `agents/boss-scrum-master.md` → 任务拆解 + 测试用例定义
-  - [ ] 2.4 ⛔ 保存产物：`tech-review.md`, `tasks.md`
+  - [ ] 2.4 💾 保存产物：`tech-review.md`, `tasks.md`
 
 - [ ] **阶段 3: 开发 + 持续验证**
   - [ ] 3.1 读取阶段 2 产物
-  - [ ] 3.2 根据任务类型调用开发 Agent：
+  - [ ] 3.2 根据任务类型调用开发 Agent（全栈项目前后端**并行执行**）：
     - 前端 → Load `agents/boss-frontend.md`
     - 后端 → Load `agents/boss-backend.md`
   - [ ] 3.3 Load `references/testing-standards.md` → 编写完整测试套件
   - [ ] 3.4 Load `agents/boss-qa.md` → 执行全套测试
-  - [ ] 3.5 ⛔ 质量门禁检查 — Load `references/quality-gate.md`
-  - [ ] 3.6 ⛔ 保存产物：`qa-report.md`
+  - [ ] 3.5 🚦 质量门禁检查 — Load `references/quality-gate.md`
+  - [ ] 3.6 💾 保存产物：`qa-report.md`
 
 - [ ] **阶段 4: 部署 + 交付**（除非 `--skip-deploy`）
   - [ ] 4.1 读取阶段 3 产物
   - [ ] 4.2 Load `agents/boss-devops.md` → 构建部署
-  - [ ] 4.3 ⛔ 保存产物：`deploy-report.md`
+  - [ ] 4.3 💾 保存产物：`deploy-report.md`
   - [ ] 4.4 输出最终结果（文档位置 + 测试摘要 + 访问 URL）
 
 ---
@@ -91,17 +92,21 @@ Copy this checklist and check off items as you complete them:
 
 ## 调用 Agent 的标准格式
 
-```
-# 1. 读取 Agent Prompt
-pm_prompt = Read("agents/boss-pm.md")
+1. 读取对应的 Agent Prompt 文件（如 `agents/boss-pm.md`）
+2. 将文件内容作为 Prompt，追加当前任务说明，调用一个子 Agent 执行
+3. 任务说明追加格式：
 
-# 2. 调用 Task
-Task(
-  subagent_type: "general_purpose_task",
-  description: "PM: 创建 PRD",
-  query: pm_prompt + "\n\n---\n\n## 当前任务\n\n[任务描述]"
-)
 ```
+[Agent Prompt 文件内容]
+
+---
+
+## 当前任务
+
+[具体任务描述，包含所需上下文、输入产物路径、输出产物路径]
+```
+
+**并行调用**：需要同时执行多个 Agent 时（如阶段 1 的 Architect + UI Designer、阶段 3 的 Frontend + Backend），在同一步骤内同时发起多个子 Agent 调用，无需等待其中一个完成再启动另一个。
 
 ## 产物目录结构
 

@@ -6,8 +6,7 @@ tools:
   - Glob
   - Grep
   - Bash
-  - Skill
-  - Task
+  - Agent
 color: green
 model: inherit
 ---
