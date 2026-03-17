@@ -55,6 +55,27 @@ git clone https://github.com/echoVic/boss-skill.git .opencode/skills/boss
 
 将 `SKILL.md` 复制到你的 Coding Agent 支持的 Slash Command 目录，然后根据需要将 `agents/`、`references/`、`templates/`、`scripts/` 目录一起放入同一位置。
 
+**方式六： cc-switch 导入（Beta）**
+
+cc-switch 支持通过 zip 包导入 Skill。导入前请确保压缩包根目录直接包含 `SKILL.md`、`agents/`、`references/`、`templates/`、`scripts/`，不要额外套一层目录。
+
+如果你在本仓库本地打包，可执行：
+
+```bash
+zip -r boss-skill.zip SKILL.md agents references templates scripts README.md LICENSE
+```
+
+导入步骤：
+
+1. 在 cc-switch 中选择导入本地 Skill zip 包
+2. 选择上一步生成的 `boss-skill.zip`
+3. 导入完成后，确认 Skill 已出现在 cc-switch 的技能列表中
+
+注意：
+- 这是兼容性导入方案，仍按 Beta 看待
+- 不建议直接使用 GitHub 自动生成的源码 zip；这类压缩包通常会在最外层多一层目录，可能导致 cc-switch 无法直接识别 `SKILL.md`
+- 如果导入失败，先检查 zip 根目录下是否能直接看到 `SKILL.md`
+
 ---
 
 ## 工作原理
