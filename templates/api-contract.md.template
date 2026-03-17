@@ -1,0 +1,231 @@
+---
+type: api-contract
+outputFor: [frontend, backend, qa]
+dependencies: [architecture]
+---
+
+# API 契约文档
+
+## 文档信息
+- **功能名称**：{{FEATURE_NAME}}
+- **版本**：1.0
+- **创建日期**：{{DATE}}
+- **作者**：Architect Agent
+
+## 摘要
+
+> 下游 Agent 请优先阅读本节，需要细节时再查阅完整文档。
+
+- **契约范围**：[覆盖的业务模块]
+- **端点总数**：[N 个]
+- **认证方式**：[JWT / Session / API Key]
+- **API 风格**：[RESTful / GraphQL]
+- **Base URL**：`/api/v1`
+
+---
+
+## 1. 通用约定
+
+### 1.1 请求规范
+
+| 项目 | 约定 |
+|------|------|
+| Base URL | `/api/v1` |
+| Content-Type | `application/json` |
+| 认证头 | `Authorization: Bearer <token>` |
+| 字符编码 | UTF-8 |
+
+### 1.2 统一响应格式
+
+**成功响应**：
+```json
+{
+  "success": true,
+  "data": { ... },
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "totalPages": 5
+  }
+}
+```
+
+**错误响应**：
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "人类可读的错误描述",
+    "details": [...]
+  }
+}
+```
+
+### 1.3 统一错误码
+
+| 错误码 | HTTP 状态码 | 含义 |
+|--------|------------|------|
+| `VALIDATION_ERROR` | 400 | 请求参数校验失败 |
+| `UNAUTHORIZED` | 401 | 未登录或 Token 过期 |
+| `FORBIDDEN` | 403 | 权限不足 |
+| `NOT_FOUND` | 404 | 资源不存在 |
+| `CONFLICT` | 409 | 资源冲突（如邮箱已存在） |
+| `INTERNAL_ERROR` | 500 | 服务器内部错误 |
+
+### 1.4 分页约定
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `page` | number | 1 | 页码，从 1 开始 |
+| `limit` | number | 20 | 每页条数，最大 100 |
+| `sort` | string | `-createdAt` | 排序字段，`-` 表示降序 |
+
+---
+
+## 2. 数据模型 Schema
+
+> 定义所有 API 涉及的核心数据结构，前后端必须严格遵循。
+
+### 2.1 {{ModelName}}
+
+```typescript
+interface {{ModelName}} {
+  id: string;            // UUID，主键
+  // [字段名]: [类型];   // [说明]
+  createdAt: string;     // ISO 8601 格式
+  updatedAt: string;     // ISO 8601 格式
+}
+```
+
+**字段约束**：
+
+| 字段 | 类型 | 必填 | 校验规则 | 说明 |
+|------|------|------|----------|------|
+| id | string (UUID) | 是 | 自动生成 | 主键 |
+| createdAt | string (ISO 8601) | 是 | 自动生成 | 创建时间 |
+| updatedAt | string (ISO 8601) | 是 | 自动更新 | 更新时间 |
+
+---
+
+## 3. 端点详情
+
+> 每个端点必须包含：请求 Schema、响应 Schema、Mock 数据、错误场景。
+
+### 3.1 模块：{{ModuleName}}
+
+---
+
+#### EP-001: [端点描述]
+
+| 项目 | 值 |
+|------|-----|
+| **方法** | `GET` / `POST` / `PUT` / `DELETE` |
+| **路径** | `/api/v1/{{resource}}` |
+| **认证** | 是 / 否 |
+| **描述** | [端点功能描述] |
+
+**请求参数 / 请求体**：
+
+```typescript
+// Query 参数（GET 请求）
+interface QueryParams {
+  page?: number;         // 页码
+  limit?: number;        // 每页条数
+}
+
+// 请求体（POST/PUT 请求）
+interface CreateRequest {
+  // [字段名]: [类型];   // [说明] [校验规则]
+}
+```
+
+**响应体**：
+
+```typescript
+// 成功响应
+interface SuccessResponse {
+  success: true;
+  data: {{ModelName}} | {{ModelName}}[];
+  meta?: PaginationMeta;
+}
+```
+
+**Mock 数据**：
+
+```json
+// 请求示例
+{
+  // ...
+}
+
+// 响应示例（成功）
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    // ...
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+
+// 响应示例（错误）
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "xxx 不能为空"
+  }
+}
+```
+
+**错误场景**：
+
+| 场景 | HTTP 状态码 | 错误码 | 说明 |
+|------|------------|--------|------|
+| [场景描述] | [状态码] | [错误码] | [说明] |
+
+---
+
+#### EP-002: [端点描述]
+
+[同上格式...]
+
+---
+
+## 4. 前端 Mock 配置指引
+
+> 前端 Agent 可基于以下配置在开发阶段使用 Mock 数据，无需等待后端就绪。
+
+### 4.1 Mock 服务配置（推荐方案）
+
+```typescript
+// src/services/api-client.ts
+// 基于契约中的 Mock 数据，使用 MSW (Mock Service Worker) 或条件判断
+
+const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
+
+export async function fetchResource(id: string) {
+  if (IS_MOCK) {
+    // 返回契约中定义的 Mock 数据
+    return MOCK_DATA.resource;
+  }
+  return fetch(`/api/v1/resource/${id}`).then(r => r.json());
+}
+```
+
+### 4.2 类型声明生成
+
+前端应基于「2. 数据模型 Schema」中的 TypeScript 接口，在 `src/types/api.ts` 中同步定义类型，确保与契约严格一致。
+
+---
+
+## 5. 契约变更记录
+
+| 版本 | 日期 | 变更内容 | 影响范围 |
+|------|------|----------|----------|
+| 1.0 | {{DATE}} | 初始版本 | 全部端点 |
+
+> ⚠️ **契约变更规则**：契约一旦发布，任何变更必须同步通知 Frontend Agent 和 Backend Agent。破坏性变更（字段删除/重命名/类型变更）必须在此表中记录。

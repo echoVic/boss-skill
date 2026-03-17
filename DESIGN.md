@@ -94,9 +94,12 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
                     │
                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 阶段 2：评审 + 任务拆解                                       │
+│ 阶段 2：评审 + 契约 + 任务拆解                                 │
 │                                                              │
 │   prd.md + architecture.md ──→ [Tech Lead] ──→ tech-review.md│
+│                                      │                       │
+│                                      ▼                       │
+│   architecture.md ──→ [Architect] ──→ api-contract.md        │
 │                                      │                       │
 │                                      ▼                       │
 │   prd.md + tech-review.md ──→ [Scrum Master] ──→ tasks.md   │
@@ -153,9 +156,9 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 - PM 必须先执行，进行需求穿透
 - 架构和 UI 设计基于 PRD 并行执行
 
-### 3.2 阶段 2：评审 + 任务拆解
+### 3.2 阶段 2：评审 + 契约 + 任务拆解
 
-**目标**：技术评审 + 将用户故事转化为详细开发任务
+**目标**：技术评审 + API 契约定义 + 将用户故事转化为详细开发任务
 
 **执行顺序**：
 
@@ -164,14 +167,19 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
    └── 技术方案评审
    └── 输出 tech-review.md
 
-2. Scrum Master Agent
-   └── 任务拆解
+2. Architect Agent（全栈项目）
+   └── 基于 architecture.md 生成 API 契约
+   └── 输出 api-contract.md
+
+3. Scrum Master Agent
+   └── 任务拆解（引用 api-contract.md 端点 ID）
    └── 输出 tasks.md
 ```
 
 **关键点**：
 - 如果评审不通过，需要返回阶段 1 修改
 - 用户故事由 PM 在 PRD 中输出，Tech Lead 负责评审
+- API 契约是前后端并行开发的「唯一真相来源」
 
 ### 3.3 阶段 3：开发 + 持续验证
 
@@ -281,6 +289,33 @@ UI Designer Agent 遵循 Apple 设计原则：
 └─────────────────────────────────────┘
 ```
 
+### 4.4 API Contract-First 机制
+
+在阶段 2 中，Architect Agent 基于 `architecture.md` 生成详细的 **`api-contract.md`**，作为前后端之间的唯一真相来源（Single Source of Truth）：
+
+```
+┌─────────────────────────────────────────────┐
+│           api-contract.md                    │
+│  ┌──────────────────────────────────────┐    │
+│  │  TypeScript 接口 + Mock 数据 + 错误码  │    │
+│  └──────────┬───────────────┬───────────┘    │
+│             │               │                │
+│             ▼               ▼                │
+│     Frontend Agent    Backend Agent          │
+│     (基于 Mock 开发)  (严格实现契约)          │
+└─────────────────────────────────────────────┘
+```
+
+| 角色 | 使用方式 |
+|------|----------|
+| Architect | 生成契约（TypeScript Schema + Mock 数据 + 错误码） |
+| Frontend | 基于契约的 Mock 数据开发 API 服务层，不猜测接口格式 |
+| Backend | 严格按契约实现每个端点，不擅自变更字段/类型 |
+| Scrum Master | 任务拆解中引用端点 ID（EP-XXX），确保可追溯 |
+| QA | 基于契约验证接口一致性 |
+
+---
+
 **测试金字塔**：
 
 | 测试类型 | 占比 | 说明 |
@@ -331,6 +366,7 @@ skills/boss/
 │   ├── prd.md              # 产品需求文档（含用户故事）
 │   ├── architecture.md     # 系统架构文档
 │   ├── ui-spec.md          # UI/UX 规范
+│   ├── api-contract.md     # API 契约（全栈项目）
 │   ├── tech-review.md      # 技术评审报告
 │   ├── tasks.md            # 开发任务
 │   ├── qa-report.md        # QA 测试报告
@@ -486,8 +522,23 @@ Boss Skill 的核心设计确保了广泛兼容性：
 
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
+| v2.1 | 2025-03 | API Contract-First 机制，前后端并行开发基于契约文档 |
 | v2.0 | 2025-01 | PM 需求穿透能力、UI Designer Apple 级设计、Tech Lead 技术评审、角色职责优化 |
 | v1.0 | 2024-12 | 初始版本，基础流水线 |
+
+### v2.1 主要变更
+
+1. **API Contract-First 机制**
+   - 新增 `api-contract.md` 产物（阶段 2，全栈项目）
+   - 新增 `templates/api-contract.md.template` 模板
+   - Architect Agent 在阶段 2 生成详细 API 契约（TypeScript Schema + Mock 数据 + 错误码）
+   - Frontend Agent 基于契约 Mock 数据开发，不猜测接口格式
+   - Backend Agent 严格按契约实现接口，不擅自变更
+   - Scrum Master 任务拆解引用端点 ID（EP-XXX），确保可追溯
+
+2. **工作流调整**
+   - 阶段 2 从「评审 + 任务拆解」改为「评审 + 契约 + 任务拆解」
+   - 阶段 2 新增步骤 2.3：Architect 生成 API 契约
 
 ### v2.0 主要变更
 

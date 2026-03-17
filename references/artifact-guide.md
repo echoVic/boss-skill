@@ -13,6 +13,7 @@
 | 阶段 1 | `prd.md` | `templates/prd.md.template` |
 | 阶段 1 | `architecture.md` | `templates/architecture.md.template` |
 | 阶段 1 | `ui-spec.md`（如有界面） | `templates/ui-spec.md.template` |
+| 阶段 2 | `api-contract.md`（全栈项目） | `templates/api-contract.md.template` |
 | 阶段 2 | `tech-review.md` | `templates/tech-review.md.template` |
 | 阶段 2 | `tasks.md` | `templates/tasks.md.template` |
 | 阶段 3 | `qa-report.md` | `templates/qa-report.md.template` |
