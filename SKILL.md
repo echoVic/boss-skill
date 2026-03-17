@@ -65,13 +65,14 @@ Copy this checklist and check off items as you complete them:
   - [ ] 1.6 📝 更新 `.boss/<feature>/.meta/execution.json`：阶段 1 状态改为 `completed`
   - [ ] 1.6 确认规划结果 ⚠️ REQUIRED (除非 `--quick`)
 
-- [ ] **阶段 2: 评审 + 任务拆解**
+- [ ] **阶段 2: 评审 + 契约 + 任务拆解**
   - [ ] 2.0 ⏩ 检查点：若 `--continue-from 3+` 且 `tech-review.md` / `tasks.md` 已存在，跳过本阶段
   - [ ] 2.1 读取阶段 1 产物
   - [ ] 2.2 Load `agents/boss-tech-lead.md` → 技术评审
-  - [ ] 2.3 Load `agents/boss-scrum-master.md` → 任务拆解 + 测试用例定义
-  - [ ] 2.4 💾 保存产物：`tech-review.md`, `tasks.md`
-  - [ ] 2.5 📝 更新 `.meta/execution.json`：阶段 2 状态改为 `completed`
+  - [ ] 2.3 Load `agents/boss-architect.md` → 基于 `architecture.md` 生成 API 契约（全栈项目，非 `--skip-ui` 时）
+  - [ ] 2.4 Load `agents/boss-scrum-master.md` → 任务拆解 + 测试用例定义
+  - [ ] 2.5 💾 保存产物：`tech-review.md`, `api-contract.md`（如有）, `tasks.md`
+  - [ ] 2.6 📝 更新 `.meta/execution.json`：阶段 2 状态改为 `completed`
 
 - [ ] **阶段 3: 开发 + 持续验证**
   - [ ] 3.0 ⏩ 检查点：若 `--continue-from 4` 且 `qa-report.md` 已存在且门禁通过，跳过本阶段
@@ -140,6 +141,7 @@ Copy this checklist and check off items as you complete them:
 ├── prd.md              # 阶段 1
 ├── architecture.md     # 阶段 1
 ├── ui-spec.md          # 阶段 1（可选）
+├── api-contract.md     # 阶段 2（全栈项目）
 ├── tech-review.md      # 阶段 2
 ├── tasks.md            # 阶段 2
 ├── qa-report.md        # 阶段 3
