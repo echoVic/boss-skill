@@ -1,0 +1,62 @@
+language: zh-CN
+
+# CodeRabbit configuration for boss-skill
+# Focus on Shell scripts under scripts/, ignore documentation/templates.
+
+reviews:
+  pull_requests:
+    enabled: true
+    drafts: true
+    base_branches:
+      - main
+
+  # Limit review scope to Shell scripts and ignore docs/templates.
+  path_filters:
+    include:
+      - "scripts/**/*.sh"
+      - "scripts/*.sh"
+    exclude:
+      - "templates/**"
+      - "agents/**"
+      - "references/**"
+      - "**/*.md"
+
+  # High-level instructions to bias the AI review.
+  review_instructions: |
+    请使用简体中文（zh-CN）进行代码审查和评论。
+
+    项目说明：
+    - 本仓库以 Shell 脚本（scripts 目录）为核心，用于自动化适配与项目初始化等流程。
+
+    审查重点（请优先关注以下内容）：
+    1. Shell 脚本逻辑正确性
+       - 命令执行顺序是否合理，是否存在早返回或遗漏分支。
+       - 变量是否正确初始化与引用，是否有未定义变量的使用（特别是 set -u / set -e 场景）。
+       - 条件判断（[ / [[ / test）语法是否正确，字符串与数字比较是否区分清楚。
+
+    2. 边界条件与错误处理
+       - 对关键命令的返回值是否进行了检查（例如：命令失败时是否中止或给出清晰提示）。
+       - 是否处理了空输入、空文件、目录不存在、权限不足等异常情况。
+       - 是否对外部依赖（git、curl、docker 等）的缺失做了友好校验与提示。
+
+    3. 可移植性与健壮性
+       - 是否依赖特定 Shell 特性（bash vs. sh），脚本 shebang 是否与语法一致。
+       - 是否正确使用引号避免单词拆分与通配符误匹配（尤其在包含空格或特殊字符路径时）。
+       - 路径拼接、临时文件处理是否安全，是否会误删或覆盖重要文件。
+
+    4. 安全性
+       - 是否避免使用不安全的 eval 或从不可信输入构造命令。
+       - 是否对可能包含用户输入的变量做了适当转义。
+
+    5. 可读性与可维护性（在不影响以上核心问题的前提下）
+       - 适当的注释是否能帮助理解关键逻辑和约定。
+       - 函数与脚本的职责是否清晰，是否便于后续扩展。
+
+    忽略项（如无明显问题请少做评论）：
+    - Markdown 文档（*.md）、说明类模板（templates/**、agents/**、references/**）中的文字表述与格式。
+    - 与 Shell 逻辑无关的轻微样式或排版问题。
+
+    总体目标：
+    - 帮助作者识别 Shell 脚本中的逻辑缺陷、隐藏的边界条件问题以及潜在的安全风险；
+    - 给出具体、可执行的修改建议，并尽量使用简洁清晰的中文说明原因和改进思路。
+
