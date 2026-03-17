@@ -3,6 +3,28 @@ language: zh-CN
 # CodeRabbit configuration for boss-skill
 # Focus on Shell scripts under scripts/, ignore documentation/templates.
 
+summary:
+  enabled: true
+  instructions: |
+    请使用简体中文为本次 Pull Request 生成总结，严格按照以下结构输出：
+
+    1. 高层概览（Why）
+       - 用 1–2 句话说明本次改动的背景与目的：为什么要做这些改动、希望解决什么问题或带来什么收益。
+
+    2. 具体逻辑变更（What）
+       - 使用无序列表（- 开头）逐条列出主要逻辑调整，每条建议包含：
+         - 受影响的模块或脚本（如具体文件或功能名称）；
+         - 变更类型（新增、重构、修复缺陷、配置调整等）；
+         - 对行为、数据流或接口的关键影响。
+
+    3. 潜在副作用与评审关注点（Risk）
+       - 列出可能的副作用、风险点或需要 reviewer 特别留意的事项，例如：
+         - 向后兼容性风险（是否可能影响现有调用或旧版本行为）；
+         - 性能、资源占用或稳定性方面的变化；
+         - 部署、回滚、运维操作或脚本执行顺序上的特殊注意事项。
+
+    请保持总结简洁清晰，避免逐行复述 diff，更侧重于行为变化、设计意图与风险洞察，以便 reviewer 快速理解本次改动的核心价值与影响范围。
+
 reviews:
   pull_requests:
     enabled: true
@@ -59,4 +81,3 @@ reviews:
     总体目标：
     - 帮助作者识别 Shell 脚本中的逻辑缺陷、隐藏的边界条件问题以及潜在的安全风险；
     - 给出具体、可执行的修改建议，并尽量使用简洁清晰的中文说明原因和改进思路。
-
