@@ -1,0 +1,25 @@
+{
+  "name": "api-only",
+  "version": "1.0.0",
+  "type": "pipeline-pack",
+  "description": "纯 API 服务 Pipeline：无 UI、无前端，专注后端 API 开发",
+  "author": "Boss Harness Team",
+  "license": "MIT",
+  "config": {
+    "stages": [1, 2, 3, 4],
+    "roles": "custom",
+    "agents": [
+      "boss-pm",
+      "boss-architect",
+      "boss-tech-lead",
+      "boss-scrum-master",
+      "boss-backend",
+      "boss-qa",
+      "boss-devops"
+    ],
+    "gates": ["gate0", "gate1", "gate2"],
+    "skipUI": true,
+    "skipFrontend": true
+  },
+  "enabled": true
+}

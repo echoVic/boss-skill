@@ -289,27 +289,79 @@ cat > "$TARGET_DIR/deploy-report.md" << EOF
 
 EOF
 
-# 执行追踪元数据
+# 执行追踪元数据（Harness Engineer v0.1+ schema）
 cat > "$TARGET_DIR/.meta/execution.json" << EOF
 {
+  "schemaVersion": "0.1.0",
   "feature": "$FEATURE_NAME",
   "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "updatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "initialized",
   "parameters": {
     "skipUI": false,
     "skipDeploy": false,
-    "quick": false
+    "quick": false,
+    "hitlLevel": "auto",
+    "roles": "full"
   },
   "stages": {
-    "1": { "status": "pending", "startTime": null, "endTime": null },
-    "2": { "status": "pending", "startTime": null, "endTime": null },
-    "3": { "status": "pending", "startTime": null, "endTime": null },
-    "4": { "status": "pending", "startTime": null, "endTime": null }
+    "1": {
+      "name": "planning",
+      "status": "pending",
+      "startTime": null,
+      "endTime": null,
+      "retryCount": 0,
+      "maxRetries": 2,
+      "failureReason": null,
+      "artifacts": [],
+      "gateResults": {}
+    },
+    "2": {
+      "name": "review",
+      "status": "pending",
+      "startTime": null,
+      "endTime": null,
+      "retryCount": 0,
+      "maxRetries": 2,
+      "failureReason": null,
+      "artifacts": [],
+      "gateResults": {}
+    },
+    "3": {
+      "name": "development",
+      "status": "pending",
+      "startTime": null,
+      "endTime": null,
+      "retryCount": 0,
+      "maxRetries": 2,
+      "failureReason": null,
+      "artifacts": [],
+      "gateResults": {}
+    },
+    "4": {
+      "name": "deployment",
+      "status": "pending",
+      "startTime": null,
+      "endTime": null,
+      "retryCount": 0,
+      "maxRetries": 2,
+      "failureReason": null,
+      "artifacts": [],
+      "gateResults": {}
+    }
   },
   "qualityGates": {
-    "gate0": null,
-    "gate1": null,
-    "gate2": null
+    "gate0": { "status": "pending", "passed": null, "checks": [], "executedAt": null },
+    "gate1": { "status": "pending", "passed": null, "checks": [], "executedAt": null },
+    "gate2": { "status": "pending", "passed": null, "checks": [], "executedAt": null }
   },
+  "metrics": {
+    "totalDuration": null,
+    "stageTimings": {},
+    "gatePassRate": null,
+    "retryTotal": 0
+  },
+  "plugins": [],
   "humanInterventions": []
 }
 EOF

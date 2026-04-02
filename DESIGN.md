@@ -542,3 +542,337 @@ Boss Skill 支持项目级模板覆盖，以适配团队自己的文档规范。
    - 新增 tech-review.md（技术评审报告）
 
 ---
+
+## 9. Harness Engineer 架构
+
+### 9.1 概述
+
+Harness Engineer 是 Boss Skill 的**流水线工程化层**，负责将 Agent 编排从硬编码流程升级为可声明、可插拔、可观测的工业级流水线引擎。它通过"四件套"架构（Pipeline + Gate + Metrics + Runner）实现流水线的模板化管理、门禁质量卡点、运行时度量采集和阶段级执行控制。
+
+### 9.2 四件套架构
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Harness Engineer                              │
+│                   （流水线工程化层 - 四件套）                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌───────────────┐  ┌───────────────┐                               │
+│  │   Pipeline     │  │     Gate      │                               │
+│  │  （流水线模板）  │  │  （质量门禁）  │                               │
+│  │               │  │               │                               │
+│  │  pipeline.json │  │  gate.sh      │                               │
+│  │  定义阶段编排   │  │  检查+拦截    │                               │
+│  │  选择 Agent 组  │  │  通过/拒绝    │                               │
+│  └───────┬───────┘  └───────┬───────┘                               │
+│          │                  │                                        │
+│          ▼                  ▼                                        │
+│  ┌───────────────┐  ┌───────────────┐                               │
+│  │   Metrics     │  │    Runner     │                               │
+│  │ （运行时度量）  │  │ （阶段执行器） │                               │
+│  │               │  │               │                               │
+│  │  execution.json│  │  check-stage  │                               │
+│  │  阶段计时      │  │  update-stage │                               │
+│  │  重试计数      │  │  retry-stage  │                               │
+│  │  产物追踪      │  │  load-plugins │                               │
+│  └───────────────┘  └───────────────┘                               │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                         Boss Agent                                   │
+│                    （编排层 - 调用四件套）                              │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**四件套职责矩阵**：
+
+| 组件 | 职责 | 核心文件 | 说明 |
+|------|------|----------|------|
+| **Pipeline** | 流水线模板定义 | `pipeline.json` | 声明阶段编排、Agent 组合、Gate 绑定，按场景选择不同模板 |
+| **Gate** | 质量门禁检查 | `gate.sh` + `plugin.json` | 阶段间卡点，执行安全审计/质量检查，通过才允许进入下一阶段 |
+| **Metrics** | 运行时度量采集 | `execution.json` | 记录阶段计时、重试次数、产物列表、门禁结果 |
+| **Runner** | 阶段级执行控制 | `check/update/retry-stage.sh` | 状态机驱动，管理阶段生命周期和状态转换 |
+
+### 9.3 Pipeline Pack（流水线模板包）
+
+Pipeline Pack 是预置的流水线配置模板，通过声明式 JSON 定义阶段编排和 Agent 组合，实现"一键切换"不同开发场景。
+
+**内置模板**：
+
+| Pack 名称 | 适用场景 | Agent 数 | 阶段 | 特点 |
+|-----------|----------|----------|------|------|
+| `default` | 全流程标准项目 | 9 | 1-2-3-4 | BMAD 完整 9-Agent 流水线 |
+| `core` | 轻量快速开发 | 5 | 1-3-4 | 跳过 UI 设计和技术评审，直接进入开发 |
+| `api-only` | 纯 API 后端服务 | 7 | 1-2-3-4 | 无 UI Designer/Frontend，专注后端 |
+| `solana-contract` | Solana 智能合约 | 5 | 1-2-3-4 | Anchor + Rust，集成 security-audit 门禁 |
+
+**Pipeline 配置结构**：
+
+```json
+{
+  "name": "default",
+  "version": "1.0.0",
+  "type": "pipeline-pack",
+  "config": {
+    "stages": [1, 2, 3, 4],
+    "roles": "full",
+    "agents": ["boss-pm", "boss-architect", "..."],
+    "gates": ["gate0", "gate1", "gate2"],
+    "skipUI": false,
+    "skipFrontend": false
+  }
+}
+```
+
+### 9.4 Runner（阶段执行器）
+
+Runner 由三个脚本组成，基于**有限状态机**管理阶段生命周期。
+
+**状态转换图**：
+
+```
+                    ┌──────────┐
+                    │ pending  │
+                    └────┬─────┘
+                         │
+                    ┌────▼─────┐     ┌──────────┐
+              ┌────►│ running  ├────►│ completed│
+              │     └────┬─────┘     └──────────┘
+              │          │
+              │     ┌────▼─────┐
+              │     │  failed  │
+              │     └────┬─────┘
+              │          │
+              │     ┌────▼─────┐
+              └─────┤ retrying │
+                    └──────────┘
+
+    特殊路径:
+      pending ──► skipped（跳过不执行）
+      completed ──► running（允许回退重跑）
+```
+
+**合法状态转换表**：
+
+| 当前状态 | 允许转换到 |
+|----------|-----------|
+| `pending` | `running`、`skipped` |
+| `running` | `completed`、`failed` |
+| `failed` | `retrying` |
+| `retrying` | `running` |
+| `completed` | `running`（回退重跑） |
+
+**Runner 脚本**：
+
+| 脚本 | 功能 | 关键能力 |
+|------|------|----------|
+| `check-stage.sh` | 阶段状态查询 | 前置依赖检查（`--can-proceed`）、重试检查（`--can-retry`）、摘要输出（`--summary`）、JSON 导出 |
+| `update-stage.sh` | 阶段状态更新 | 状态转换校验、计时记录、产物记录、Gate 结果记录、全局状态自动推导 |
+| `retry-stage.sh` | 阶段重试 | 自动检查重试上限、`failed → retrying → running` 两步转换 |
+
+### 9.5 插件协议
+
+Harness 支持通过插件扩展流水线能力。每个插件必须包含一个 `plugin.json` 清单文件，遵循 `plugin-schema.json` 规范。
+
+**插件类型**：
+
+| 类型 | 说明 | 必需钩子 |
+|------|------|----------|
+| `gate` | 门禁插件，在阶段间执行质量/安全检查 | `hooks.gate` |
+| `agent` | Agent 扩展插件，增加新的专业 Agent | — |
+| `pipeline-pack` | 流水线模板包，预置阶段和 Agent 组合 | — |
+| `reporter` | 报告生成器，自定义报告格式 | `hooks.report` |
+
+**插件清单结构（plugin.json）**：
+
+```json
+{
+  "name": "security-audit",
+  "version": "1.0.0",
+  "type": "gate",
+  "description": "安全审计门禁",
+  "hooks": {
+    "pre-stage": "pre.sh",
+    "gate": "gate.sh",
+    "post-gate": "post.sh"
+  },
+  "config": { ... },
+  "stages": [3],
+  "dependencies": [],
+  "enabled": true
+}
+```
+
+**钩子生命周期**：
+
+```
+阶段执行前 ──► pre-stage
+                  │
+            阶段正常执行
+                  │
+阶段执行后 ──► post-stage
+                  │
+门禁检查前 ──► pre-gate
+                  │
+门禁检查   ──► gate（返回 JSON 检查结果，exit 0 通过 / exit 1 拦截）
+                  │
+门禁检查后 ──► post-gate
+```
+
+**插件加载器（load-plugins.sh）功能**：
+
+| 命令 | 功能 |
+|------|------|
+| `--list` | 列出所有已注册且启用的插件 |
+| `--type <type>` | 按类型过滤插件 |
+| `--validate` | 校验所有插件的 plugin.json 格式完整性 |
+| `--register <feature>` | 将发现的插件注册到 execution.json |
+| `--run-hook <hook> <feature> [stage]` | 执行指定钩子，自动按阶段范围过滤 |
+
+### 9.6 新增目录结构
+
+```
+harness/
+├── pipeline-packs/                  # 流水线模板包
+│   ├── default/
+│   │   └── pipeline.json            # 默认 9-Agent 全流程模板
+│   ├── core/
+│   │   └── pipeline.json            # 轻量 5-Agent 核心模板
+│   ├── api-only/
+│   │   └── pipeline.json            # 纯 API 后端模板
+│   └── solana-contract/
+│       └── pipeline.json            # Solana 智能合约模板
+├── plugins/                         # 插件目录
+│   └── security-audit/
+│       ├── plugin.json              # 插件清单（遵循 plugin-schema.json）
+│       └── gate.sh                  # 安全审计门禁脚本
+└── plugin-schema.json               # 插件清单 JSON Schema 规范
+
+scripts/harness/                     # Harness Runner 脚本
+├── check-stage.sh                   # 阶段状态查询 & 前置检查
+├── update-stage.sh                  # 阶段状态更新 & 度量记录
+├── retry-stage.sh                   # 阶段重试（含上限检查）
+└── load-plugins.sh                  # 插件发现、验证、注册、钩子执行
+```
+
+### 9.7 Claude Code Hooks 集成
+
+#### 设计理念
+
+Claude Code Hooks 是 Coding Agent 宿主提供的**生命周期回调机制**，允许在 Agent 运行过程中的关键节点注入自定义逻辑。Boss Skill 利用该机制在流水线执行的各个环节实现自动化守护，将"被动依赖 Agent 自觉遵守规范"升级为"主动在生命周期节点强制执行检查与同步"。
+
+核心价值：
+
+| 维度 | 说明 |
+|------|------|
+| **环境一致性** | 会话启动/恢复时自动校验运行环境，确保流水线所需的目录结构和依赖就绪 |
+| **产物完整性** | 文件写入前后自动校验产物格式与路径规范，拦截不合规写入 |
+| **流水线可观测** | 子 Agent 启动/结束时记录度量，Bash 命令执行后采集结果，实现全链路追踪 |
+| **优雅终止** | Agent 停止或会话结束时自动保存状态快照，支持断点续跑 |
+
+#### 生命周期节点
+
+Hooks 覆盖 Agent 生命周期的 8 个关键节点：
+
+```
+SessionStart ──► SessionResume
+      │                │
+      ▼                ▼
+ PreToolUse(Write) ──► PostToolUse(Write)
+                       │
+                       ▼
+              PostToolUse(Bash)
+                       │
+                       ▼
+          SubagentStart ──► SubagentStop
+                              │
+                              ▼
+                   Stop / Notification
+                              │
+                              ▼
+                        SessionEnd
+```
+
+#### 分层策略
+
+Hooks 配置采用**两级分层**，实现"项目全局配置"与"Skill 级声明"的解耦：
+
+| 层级 | 配置位置 | 作用域 | 说明 |
+|------|----------|--------|------|
+| **项目级** | `.claude/settings.json` | 整个项目 | 定义 hooks 事件与脚本的绑定关系，Claude Code 启动时自动加载 |
+| **Skill 级** | Skill frontmatter | 单个 Skill | Skill 内部声明所需的 hook 脚本，安装插件时自动合并到项目级配置 |
+
+项目级配置示例（`.claude/settings.json`）：
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "command": "scripts/hooks/session-start.sh" }],
+    "PreToolUse": [{ "command": "scripts/hooks/pre-tool-write.sh", "tool": "Write" }],
+    "PostToolUse": [
+      { "command": "scripts/hooks/post-tool-write.sh", "tool": "Write" },
+      { "command": "scripts/hooks/post-tool-bash.sh", "tool": "Bash" }
+    ],
+    "SubagentStart": [{ "command": "scripts/hooks/subagent-start.sh" }],
+    "SubagentStop": [{ "command": "scripts/hooks/subagent-stop.sh" }],
+    "Stop": [{ "command": "scripts/hooks/on-stop.sh" }],
+    "Notification": [{ "command": "scripts/hooks/on-notification.sh" }],
+    "SessionEnd": [{ "command": "scripts/hooks/session-end.sh" }]
+  }
+}
+```
+
+#### Hook 脚本说明
+
+| 脚本 | 触发时机 | 职责 |
+|------|----------|------|
+| `session-start.sh` | 新会话启动时 | 校验运行环境（目录结构、依赖版本），初始化 `.boss/` 产物目录，加载流水线配置 |
+| `session-resume.sh` | 会话恢复/重连时 | 检测上次执行状态快照，恢复流水线断点，输出中断摘要供 Agent 上下文对齐 |
+| `pre-tool-write.sh` | 文件写入前 | 校验目标路径是否符合产物规范（如必须在 `.boss/<feature>/` 下），拦截不合规写入 |
+| `post-tool-write.sh` | 文件写入后 | 校验产物格式完整性（如模板必需 section 是否存在），更新 `execution.json` 产物清单 |
+| `post-tool-bash.sh` | Bash 命令执行后 | 采集命令退出码和关键输出，记录到度量日志，检测门禁相关命令（如测试、构建）的结果 |
+| `subagent-start.sh` | 子 Agent 启动时 | 记录子 Agent 启动时间和角色，更新 `execution.json` 阶段状态为 `running` |
+| `subagent-stop.sh` | 子 Agent 结束时 | 记录子 Agent 结束时间和耗时，采集产出物列表，触发阶段完成度检查 |
+| `on-stop.sh` | Agent 被用户中断时 | 保存当前流水线状态快照到 `.boss/<feature>/.meta/`，记录中断点位，支持后续断点续跑 |
+| `on-notification.sh` | 收到系统通知时 | 处理外部事件通知（如 CI 回调、部署状态变更），将通知内容路由到对应的流水线阶段 |
+| `session-end.sh` | 会话正常结束时 | 生成流水线执行摘要，归档度量数据，清理临时文件，输出最终状态报告 |
+
+---
+
+## 10. 版本历史（更新）
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v3.0 | 2026-04 | Harness Engineer 四件套架构（Pipeline + Gate + Metrics + Runner）、插件协议、Pipeline Pack 模板 |
+| v2.0 | 2025-01 | PM 需求穿透能力、UI Designer Apple 级设计、Tech Lead 技术评审、角色职责优化 |
+| v1.0 | 2024-12 | 初始版本，基础流水线 |
+
+### v3.0 主要变更
+
+1. **Harness Engineer 架构引入**
+   - 新增四件套架构（Pipeline + Gate + Metrics + Runner）
+   - 流水线编排从硬编码升级为声明式 JSON 配置
+   - 阶段执行基于有限状态机，支持自动重试和回退重跑
+
+2. **Pipeline Pack 模板机制**
+   - 内置 4 套流水线模板（default / core / api-only / solana-contract）
+   - 支持按场景选择 Agent 组合和阶段编排
+   - 支持自定义技术栈配置（如 Anchor + Rust）
+
+3. **插件协议**
+   - 定义标准 plugin.json 清单规范（含 JSON Schema 校验）
+   - 支持 4 类插件：gate / agent / pipeline-pack / reporter
+   - 完整的钩子生命周期（pre-stage → post-stage → pre-gate → gate → post-gate）
+   - 插件加载器支持发现、验证、注册和钩子执行
+
+4. **Runner 阶段执行器**
+   - check-stage：阶段状态查询、前置依赖检查、摘要输出
+   - update-stage：状态转换校验、计时记录、产物追踪、Gate 结果记录
+   - retry-stage：自动检查重试上限，两步状态转换
+
+5. **安全审计门禁**
+   - 内置 security-audit 插件（gate 类型）
+   - 敏感信息泄露扫描（AWS Key、API Key、Private Key、GitHub Token、OpenAI Key）
+   - 依赖漏洞审计（npm audit / pip-audit）
+   - 不安全代码模式检测（eval / dangerouslySetInnerHTML / innerHTML）
+
+---
