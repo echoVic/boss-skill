@@ -26,7 +26,6 @@
         "id": "session:resume"
       }
     ],
-
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
@@ -41,7 +40,6 @@
         "id": "pre:write:artifact-guard"
       }
     ],
-
     "PostToolUse": [
       {
         "matcher": "Write",
@@ -68,7 +66,6 @@
         "id": "post:bash:context"
       }
     ],
-
     "SubagentStart": [
       {
         "hooks": [
@@ -82,7 +79,6 @@
         "id": "subagent:start"
       }
     ],
-
     "SubagentStop": [
       {
         "hooks": [
@@ -96,7 +92,6 @@
         "id": "subagent:stop"
       }
     ],
-
     "Stop": [
       {
         "hooks": [
@@ -110,7 +105,6 @@
         "id": "stop:pipeline-guard"
       }
     ],
-
     "Notification": [
       {
         "hooks": [
@@ -125,7 +119,6 @@
         "id": "notification:log"
       }
     ],
-
     "SessionEnd": [
       {
         "hooks": [

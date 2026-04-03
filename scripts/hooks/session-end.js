@@ -20,7 +20,7 @@ function run(rawInput) {
   }
 
   const reportScript = path.join(
-    process.env.CLAUDE_PROJECT_DIR || '',
+    process.env.SKILL_DIR || process.env.CLAUDE_PROJECT_DIR || '',
     'scripts',
     'report',
     'generate-summary.sh'

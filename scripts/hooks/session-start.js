@@ -31,7 +31,7 @@ function run(rawInput) {
   }
 
   let pluginCount = 0;
-  const pluginDir = path.join(process.env.CLAUDE_PROJECT_DIR || '', 'harness', 'plugins');
+  const pluginDir = path.join(process.env.SKILL_DIR || process.env.CLAUDE_PROJECT_DIR || '', 'harness', 'plugins');
   if (fs.existsSync(pluginDir)) {
     try {
       const pluginEntries = fs.readdirSync(pluginDir, { withFileTypes: true });

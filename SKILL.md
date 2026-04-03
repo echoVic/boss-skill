@@ -1,35 +1,19 @@
 ---
 name: boss
-description: "BMAD 全自动项目编排 Skill。从需求到部署的完整研发流水线，编排多个专业 Agent（PM、架构师、UI 设计师、Tech Lead、Scrum Master、开发者、QA、DevOps）自动完成完整研发周期。当用户说 'boss mode'、'/boss'、'全自动开发'、'从需求到部署'、'帮我做一个'、'build this'、'ship it'、'全流程'、'自动化开发'、'一键开发'、'start a project'、'new feature' 时使用。适用于新项目搭建或现有代码库添加功能，也支持导出项目级文档模板。"
-argument-hint: "[需求描述] [--skip-ui] [--skip-deploy] [--quick] [--template]"
+description: |
+  BMAD 全自动研发流水线编排器。编排 9 个专业 Agent（PM、架构师、UI 设计师、Tech Lead、Scrum Master、开发者、QA、DevOps）从需求到部署一气呵成。
+
+  Triggers: 'boss mode', '/boss', '全自动开发', '从需求到部署', '帮我做一个', 'build this', 'ship it', '全流程', '自动化开发', '一键开发', 'start a project', 'new feature'
+
+  Does NOT trigger:
+  - 单文件修改或简单 bug 修复（直接编辑即可）
+  - 纯代码阅读或解释（使用 read 工具）
+  - 已有 pipeline 正在运行时的重复启动
+
+  Output: 完整项目代码 + PRD/架构/UI/测试/部署文档，写入 .boss/<feature>/ 目录
+version: 3.2.0
+license: MIT
 user-invocable: true
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "node \"$CLAUDE_PROJECT_DIR/scripts/lib/run-with-flags.js\" \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\""
-          timeout: 5
-      id: "pre:write:artifact-guard"
-  PostToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          command: "node \"$CLAUDE_PROJECT_DIR/scripts/lib/run-with-flags.js\" \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\" \"standard,strict\""
-          timeout: 10
-      id: "post:write:artifact-track"
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "node \"$CLAUDE_PROJECT_DIR/scripts/lib/run-with-flags.js\" \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\" \"standard,strict\""
-          timeout: 10
-      id: "post:bash:context"
-  Stop:
-    - hooks:
-        - type: command
-          command: "node \"$CLAUDE_PROJECT_DIR/scripts/lib/run-with-flags.js\" \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\""
-          timeout: 30
-      id: "stop:pipeline-guard"
 ---
 
 # Boss - BMAD 全自动研发流水线

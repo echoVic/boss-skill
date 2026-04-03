@@ -19,7 +19,8 @@ function passthrough(buf) {
 }
 
 function resolvePluginRoot() {
-  return process.env.CLAUDE_PROJECT_DIR
+  return process.env.SKILL_DIR
+    || process.env.CLAUDE_PROJECT_DIR
     || process.env.CLAUDE_PLUGIN_ROOT
     || path.resolve(__dirname, '..', '..');
 }

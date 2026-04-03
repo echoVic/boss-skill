@@ -1,7 +1,17 @@
 ---
 name: brainstorming
-description: "需求澄清 Skill。当用户只给了一句话或模糊描述时自动触发。通过提问把用户脑中的想法翻译成清晰、完整的需求描述，交给 Boss 流水线执行。当用户说 '我想做一个'、'帮我做'、'有个想法'、'brainstorm'、'帮我规划一下' 时使用。"
-argument-hint: "[初始想法描述]"
+description: |
+  需求澄清 Skill。当用户只给了模糊描述时自动触发，通过业务提问把一句话翻译成完整需求，交给 Boss 流水线执行。
+
+  Triggers: '我想做一个', '帮我做', '有个想法', 'brainstorm', '帮我规划一下', '做个XX', 'I want to build'
+
+  Does NOT trigger:
+  - 需求已经完整（包含做什么 + 给谁用 + 核心场景）
+  - 纯技术问题或 bug 修复
+
+  Output: .boss/<feature>/design-brief.md 需求设计简报
+version: 3.2.0
+license: MIT
 user-invocable: true
 ---
 
