@@ -182,6 +182,45 @@ Boss 支持项目级模板覆盖：
     └── execution.json  # 执行追踪（状态机 + 门禁 + 指标）
 ```
 
+## 开发
+
+### 环境要求
+
+- Node.js >= 16
+- jq（Shell 脚本依赖，`brew install jq`）
+
+### 安装与测试
+
+```bash
+git clone https://github.com/echoVic/boss-skill.git
+cd boss-skill
+npm test
+```
+
+### 发布
+
+使用统一发布脚本，自动同步所有文件的版本号（`package.json`、`SKILL.md`、`plugin.json`、`marketplace.json`）：
+
+```bash
+# 语义化升级
+npm run release -- patch          # 3.2.0 → 3.2.1
+npm run release -- minor          # 3.2.0 → 3.3.0
+npm run release -- major          # 3.2.0 → 4.0.0
+
+# 指定版本号
+npm run release -- 3.5.0
+
+# 预览（不改任何文件）
+npm run release -- 3.5.0 --dry-run
+
+# 只改版本 + 提交 + tag，不发 npm
+npm run release -- 3.5.0 --no-publish
+```
+
+发布流程：检查工作区干净 → 运行测试 → 同步版本号 → 验证一致性 → git commit + tag → npm publish。
+
+详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+
 ## 文件结构
 
 ```
@@ -226,11 +265,13 @@ boss-skill/
 │   └── quality-gate.md
 ├── templates/                        # 7 个产物模板
 ├── scripts/
+│   ├── release.js                    # 统一发布脚本
 │   ├── init-project.sh               # 项目初始化
 │   ├── resolve-template.sh           # 模板路径解析
 │   ├── prepare-artifact.sh           # 产物骨架准备
-│   ├── lib/                          # Node.js 共享库
-│   │   ├── boss-utils.js             # 工具函数
+│   ├── lib/                          # 共享库
+│   │   ├── common.sh                 # Shell 通用函数（颜色、日志、校验、日期）
+│   │   ├── boss-utils.js             # Node.js 工具函数
 │   │   ├── hook-flags.js             # Hook Profile 门控
 │   │   └── run-with-flags.js         # Hook 统一调度中间件
 │   ├── hooks/                        # 10 个 Node.js Hook 脚本
@@ -256,6 +297,18 @@ boss-skill/
 │   │   └── gate2-performance.sh
 │   └── report/
 │       └── generate-summary.sh
+├── test/                             # 自动化测试
+│   ├── helpers/
+│   │   └── fixtures.js
+│   ├── lib/
+│   │   ├── hook-flags.test.js
+│   │   └── boss-utils.test.js
+│   ├── hooks/
+│   │   ├── session-start.test.js
+│   │   ├── pre-tool-write.test.js
+│   │   └── on-stop.test.js
+│   └── bin/
+│       └── boss-skill.test.js
 ├── .claude/
 │   └── settings.json                 # Claude Code hooks 配置
 ├── .claude-plugin/
@@ -267,6 +320,10 @@ boss-skill/
 ## 设计理念
 
 基于 BMAD（Breakthrough Method of Agile AI-Driven Development）方法论，详见 `references/bmad-methodology.md` 和 `DESIGN.md`。
+
+## 贡献
+
+欢迎贡献！请阅读 [CONTRIBUTING.md](./CONTRIBUTING.md) 了解开发流程、代码规范和提交约定。
 
 ## Star History
 
