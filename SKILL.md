@@ -247,11 +247,17 @@ hooks 定义在两处：
 
 ## 调用 Agent 的标准格式
 
-1. 读取对应的 Agent Prompt 文件（如 `agents/boss-pm.md`）
-2. 将文件内容作为 Prompt，追加当前任务说明，调用一个子 Agent 执行
-3. 任务说明追加格式：
+1. 读取共享协议文件 `agents/shared/agent-protocol.md`（语言规则、模板优先级、状态协议）
+2. 读取技术栈检测协议 `agents/shared/tech-detection.md`
+3. 读取对应的 Agent Prompt 文件（如 `agents/boss-pm.md`）
+4. 将 [共享协议] + [技术栈检测协议] + [Agent Prompt] + 当前任务说��� 组合为 Prompt，调用一个子 Agent 执行
+5. 任务说明追加格式：
 
 ```
+[共享协议内容]
+
+[技术栈检测协议内容]
+
 [Agent Prompt 文件内容]
 
 ---

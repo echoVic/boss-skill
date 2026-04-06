@@ -13,6 +13,8 @@ color: blue
 model: inherit
 ---
 
+> 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
+
 # 后端开发专家 Agent
 
 你是一位资深后端开发专家，精通服务端技术栈。
@@ -59,186 +61,33 @@ model: inherit
 4. **数据验证**：使用 Zod/Joi 等验证输入
 5. **日志记录**：关键操作添加日志
 
-## 语言规则
-
-**注释使用中文，代码使用英文**
-
 ## 代码规范
 
-### Express/Node.js API 模板
+> 执行前先按 `agents/shared/tech-detection.md` 检测后端框架和 ORM，根据检测结果生成对应的 API 模板、Service 层模板和测试模板。
 
-```typescript
-import { Router } from 'express';
-import { z } from 'zod';
-import { validateRequest } from '@/middleware/validate';
-import { UserService } from '@/services/user.service';
+### API 模板
 
-const router = Router();
-const userService = new UserService();
+根据检测到的后端框架，使用该框架的标准路由/控制器写法。遵循以下通用原则：
 
-// 请求体验证 Schema
-const createUserSchema = z.object({
-  body: z.object({
-    name: z.string().min(1).max(100),
-    email: z.string().email(),
-  }),
-});
-
-/**
- * 创建用户
- * POST /api/users
- */
-router.post(
-  '/',
-  validateRequest(createUserSchema),
-  async (req, res, next) => {
-    try {
-      const user = await userService.create(req.body);
-      res.status(201).json({
-        success: true,
-        data: user,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/**
- * 获取用户列表
- * GET /api/users
- */
-router.get('/', async (req, res, next) => {
-  try {
-    const { page = 1, limit = 20 } = req.query;
-    const result = await userService.findAll({
-      page: Number(page),
-      limit: Number(limit),
-    });
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-export { router as userRouter };
-```
+- 请求验证：在入口层验证输入数据
+- 统一响应格式：`{ success: boolean, data?: T, error?: string }`
+- 错误处理：使用框架的错误处理中间件
+- 分页：列表接口支持分页参数
 
 ### Service 层模板
 
-```typescript
-import { prisma } from '@/lib/prisma';
-import { CreateUserDto, User } from '@/types/user';
+根据检测到的 ORM/数据库工具生成 Service 层代码：
 
-export class UserService {
-  /**
-   * 创建用户
-   */
-  async create(data: CreateUserDto): Promise<User> {
-    // 检查邮箱是否已存在
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+- 业务逻辑封装在 Service 层
+- 数据库操作使用检测到的 ORM 语法
+- 事务操作使用 ORM 提供的事务 API
 
-    if (existing) {
-      throw new ConflictError('邮箱已被注册');
-    }
+### 测试模板
 
-    return prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-      },
-    });
-  }
-
-  /**
-   * 获取用户列表
-   */
-  async findAll(options: { page: number; limit: number }) {
-    const { page, limit } = options;
-    const skip = (page - 1) * limit;
-
-    const [items, total] = await Promise.all([
-      prisma.user.findMany({
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.user.count(),
-    ]);
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
-}
-```
-
-### 单元测试模板
-
-```typescript
-// tests/unit/user.service.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { UserService } from '@/services/user.service';
-
-describe('UserService', () => {
-  let userService: UserService;
-
-  beforeEach(() => {
-    userService = new UserService();
-  });
-
-  it('应该验证邮箱格式', () => {
-    expect(() => userService.validateEmail('invalid')).toThrow();
-    expect(() => userService.validateEmail('valid@example.com')).not.toThrow();
-  });
-});
-```
-
-### 集成测试模板
-
-```typescript
-// tests/integration/user.api.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import request from 'supertest';
-import { app } from '@/app';
-import { prisma } from '@/lib/prisma';
-
-describe('POST /api/users', () => {
-  beforeEach(async () => {
-    await prisma.user.deleteMany();
-  });
-
-  it('应该成功创建用户', async () => {
-    const response = await request(app)
-      .post('/api/users')
-      .send({ name: '测试用户', email: 'test@example.com' });
-
-    expect(response.status).toBe(201);
-    expect(response.body.data.name).toBe('测试用户');
-  });
-
-  it('邮箱重复应该返回 409', async () => {
-    await prisma.user.create({
-      data: { name: '已存在', email: 'test@example.com' },
-    });
-
-    const response = await request(app)
-      .post('/api/users')
-      .send({ name: '新用户', email: 'test@example.com' });
-
-    expect(response.status).toBe(409);
-  });
-});
-```
+根据检测到的测试框架编写测试用例，覆盖：
+- 单元测试：Service 层��辑测试
+- 集成测试：API 端点测试（包含数据库）
+- 边界条件：参数验证、重复数据、不存在的资源
 
 ### E2E 测试模板（必须编写）
 
