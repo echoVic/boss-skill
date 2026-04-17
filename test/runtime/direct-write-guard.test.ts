@@ -1,14 +1,11 @@
-'use strict';
+import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('node:child_process');
+const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..');
-
-function read(relativePath) {
+function read(relativePath: string) {
   return fs.readFileSync(path.join(REPO_ROOT, relativePath), 'utf8');
 }
 
@@ -34,7 +31,7 @@ describe('phase-1 direct-write guard', () => {
     for (const relativePath of criticalFiles) {
       const source = read(relativePath);
       for (const pattern of forbiddenPatterns) {
-        assert.doesNotMatch(source, pattern, `${relativePath} should not directly mutate execution.json`);
+        expect(source, `${relativePath} should not directly mutate execution.json`).not.toMatch(pattern);
       }
     }
   });
@@ -57,23 +54,23 @@ describe('phase-1 direct-write guard', () => {
     for (const relativePath of runtimeFirstFiles) {
       const source = read(relativePath);
       for (const pattern of wrapperPatterns) {
-        assert.doesNotMatch(
+        expect(
           source,
-          pattern,
           `${relativePath} should use runtime APIs directly instead of shell wrappers`
-        );
+        ).not.toMatch(pattern);
       }
     }
   });
 
   it('plugin registration help describes event-sourced read-model semantics', () => {
     const registerPluginsCli = path.join(REPO_ROOT, 'runtime', 'cli', 'register-plugins.js');
-    const registerResult = spawnSync('node', [registerPluginsCli, '--help'], {
+    const registerResult = spawnSync(process.execPath, [registerPluginsCli, '--help'], {
       cwd: REPO_ROOT,
       encoding: 'utf8'
     });
-    assert.equal(registerResult.status, 0, registerResult.stderr);
-    assert.match(registerResult.stdout, /事件/);
-    assert.match(registerResult.stdout, /read model/);
+
+    expect(registerResult.status, registerResult.stderr).toBe(0);
+    expect(registerResult.stdout).toMatch(/事件/);
+    expect(registerResult.stdout).toMatch(/read model/);
   });
 });

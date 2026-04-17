@@ -1,16 +1,17 @@
-'use strict';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert/strict');
-const { createTempBossDir, createExecData, cleanupTempDir } = require('../helpers/fixtures');
+import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('on-stop hook', () => {
-  let hook;
-  let tmpDir;
+  let hook: typeof import('../../scripts/hooks/on-stop.js');
+  let tmpDir: string | null = null;
 
-  beforeEach(() => {
-    delete require.cache[require.resolve('../../scripts/hooks/on-stop')];
-    hook = require('../../scripts/hooks/on-stop');
+  beforeEach(async () => {
+    vi.resetModules();
+    hook = await import('../../scripts/hooks/on-stop.js');
   });
 
   afterEach(() => {
@@ -21,14 +22,12 @@ describe('on-stop hook', () => {
   });
 
   it('returns empty when stop_hook_active is true', () => {
-    const result = hook.run(JSON.stringify({ stop_hook_active: true, cwd: '/tmp' }));
-    assert.equal(result, '');
+    expect(hook.run(JSON.stringify({ stop_hook_active: true, cwd: '/tmp' }))).toBe('');
   });
 
   it('returns empty when no active pipeline', () => {
-    tmpDir = require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'boss-test-'));
-    const result = hook.run(JSON.stringify({ cwd: tmpDir }));
-    assert.equal(result, '');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-test-'));
+    expect(hook.run(JSON.stringify({ cwd: tmpDir }))).toBe('');
   });
 
   it('blocks when stages are running', () => {
@@ -43,10 +42,14 @@ describe('on-stop hook', () => {
       }
     });
     tmpDir = createTempBossDir('blocking-feat', execData);
-    const result = hook.run(JSON.stringify({ cwd: tmpDir }));
-    const parsed = JSON.parse(result);
-    assert.equal(parsed.decision, 'block');
-    assert.ok(parsed.reason.includes('blocking-feat'));
+
+    const parsed = JSON.parse(hook.run(JSON.stringify({ cwd: tmpDir }))) as {
+      decision: string;
+      reason: string;
+    };
+
+    expect(parsed.decision).toBe('block');
+    expect(parsed.reason).toContain('blocking-feat');
   });
 
   it('allows stop when no stages are running', () => {
@@ -61,7 +64,7 @@ describe('on-stop hook', () => {
       }
     });
     tmpDir = createTempBossDir('done-feat', execData);
-    const result = hook.run(JSON.stringify({ cwd: tmpDir }));
-    assert.equal(result, '');
+
+    expect(hook.run(JSON.stringify({ cwd: tmpDir }))).toBe('');
   });
 });

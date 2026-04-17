@@ -1,15 +1,13 @@
-'use strict';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const runtime = require('../../runtime/cli/lib/pipeline-runtime');
+import * as runtime from '../../runtime/cli/lib/pipeline-runtime.js';
 
 describe('recordArtifact', () => {
-  let tmpDir;
-  let cwd;
+  let tmpDir: string;
+  let cwd: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-record-'));
@@ -25,21 +23,23 @@ describe('recordArtifact', () => {
 
   it('appends ArtifactRecorded and materializes the artifact list', () => {
     const execution = runtime.recordArtifact('test-feat', 'prd.md', 1, { cwd: tmpDir });
-    assert.ok(execution.stages['1'].artifacts.includes('prd.md'));
+
+    expect(execution.stages['1']?.artifacts.includes('prd.md')).toBe(true);
+
     const eventsPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
     const events = fs.readFileSync(eventsPath, 'utf8').trim().split('\n');
-    assert.equal(JSON.parse(events.at(-1)).type, 'ArtifactRecorded');
+    expect(JSON.parse(events.at(-1) ?? '{}').type).toBe('ArtifactRecorded');
   });
 
   it('rejects non-integer stages', () => {
-    assert.throws(() => {
+    expect(() => {
       runtime.recordArtifact('test-feat', 'prd.md', 1.5, { cwd: tmpDir });
-    }, /stage 必须是整数/);
+    }).toThrow(/stage 必须是整数/);
   });
 
   it('rejects out-of-range stages', () => {
-    assert.throws(() => {
+    expect(() => {
       runtime.recordArtifact('test-feat', 'prd.md', 0, { cwd: tmpDir });
-    }, /stage 必须是 1-4/);
+    }).toThrow(/stage 必须是 1-4/);
   });
 });

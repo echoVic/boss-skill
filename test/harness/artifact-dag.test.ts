@@ -1,18 +1,19 @@
-'use strict';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { execFileSync } = require('child_process');
+const GET_READY_ARTIFACTS_CLI = path.join(import.meta.dirname, '..', '..', 'runtime', 'cli', 'get-ready-artifacts.js');
+const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
 
-const GET_READY_ARTIFACTS_CLI = path.join(__dirname, '..', '..', 'runtime', 'cli', 'get-ready-artifacts.js');
-const DAG_PATH = path.join(__dirname, '..', '..', 'harness', 'artifact-dag.json');
+function getExecFileError(error: unknown) {
+  return error as Error & { status?: number; stdout?: string; stderr?: string };
+}
 
 describe('artifact-dag', () => {
-  let tmpDir;
-  let origCwd;
+  let tmpDir: string;
+  let origCwd: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-dag-'));
@@ -55,43 +56,53 @@ describe('artifact-dag', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function runCli(args) {
+  function runCli(args: string[]) {
     try {
-      return execFileSync('node', [GET_READY_ARTIFACTS_CLI, ...args], {
+      return execFileSync(process.execPath, [GET_READY_ARTIFACTS_CLI, ...args], {
         encoding: 'utf8',
         cwd: tmpDir,
         env: { ...process.env, PATH: process.env.PATH }
       }).trim();
-    } catch (err) {
-      if (err.status !== 0) throw new Error(err.stderr || err.message);
-      return err.stdout ? err.stdout.trim() : '';
+    } catch (error) {
+      const execError = getExecFileError(error);
+      if (execError.status !== 0) {
+        throw new Error(execError.stderr || execError.message);
+      }
+      return execError.stdout ? String(execError.stdout).trim() : '';
     }
   }
 
   it('DAG file is valid JSON with expected structure', () => {
-    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8'));
-    assert.ok(dag.artifacts);
-    assert.ok(dag.artifacts['prd.md']);
-    assert.ok(dag.artifacts['architecture.md']);
-    assert.ok(dag.artifacts['qa-report.md']);
-    assert.deepEqual(dag.artifacts['prd.md'].inputs, ['design-brief']);
-    assert.deepEqual(dag.artifacts['architecture.md'].inputs, ['prd.md']);
+    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
+      artifacts: Record<string, { inputs?: string[] }>;
+    };
+
+    expect(dag.artifacts).toBeTruthy();
+    expect(dag.artifacts['prd.md']).toBeTruthy();
+    expect(dag.artifacts['architecture.md']).toBeTruthy();
+    expect(dag.artifacts['qa-report.md']).toBeTruthy();
+    expect(dag.artifacts['prd.md']?.inputs).toEqual(['design-brief']);
+    expect(dag.artifacts['architecture.md']?.inputs).toEqual(['prd.md']);
   });
 
   it('detects no circular dependencies in default DAG', () => {
-    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8'));
-    // Simple topological sort to check for cycles
-    const visited = new Set();
-    const visiting = new Set();
+    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
+      artifacts: Record<string, { inputs?: string[] }>;
+    };
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
 
-    function visit(name) {
-      if (visiting.has(name)) return false; // cycle!
+    function visit(name: string): boolean {
+      if (visiting.has(name)) return false;
       if (visited.has(name)) return true;
+
       visiting.add(name);
       const def = dag.artifacts[name];
-      if (def && def.inputs) {
+      if (def?.inputs) {
         for (const input of def.inputs) {
-          if (dag.artifacts[input] && !visit(input)) return false;
+          if (dag.artifacts[input] && !visit(input)) {
+            return false;
+          }
         }
       }
       visiting.delete(name);
@@ -100,57 +111,58 @@ describe('artifact-dag', () => {
     }
 
     for (const name of Object.keys(dag.artifacts)) {
-      assert.ok(visit(name), `Circular dependency detected involving ${name}`);
+      expect(visit(name), `Circular dependency detected involving ${name}`).toBe(true);
     }
   });
 
   it('--ready returns prd.md initially (design-brief is optional)', () => {
-    const output = runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json']);
-    const ready = JSON.parse(output);
-    assert.ok(ready.includes('prd.md'), 'prd.md should be ready initially');
+    const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
+    expect(ready).toContain('prd.md');
   });
 
   it('--ready returns architecture.md and ui-spec.md after prd.md done', () => {
-    // Add prd.md to completed artifacts
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
-    const data = JSON.parse(fs.readFileSync(execPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
     data.stages['1'].artifacts = ['prd.md'];
     fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
 
-    const output = runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json']);
-    const ready = JSON.parse(output);
-    assert.ok(ready.includes('architecture.md'));
-    assert.ok(ready.includes('ui-spec.md'));
-    assert.ok(!ready.includes('prd.md'), 'prd.md should not be in ready list (already done)');
+    const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
+    expect(ready).toContain('architecture.md');
+    expect(ready).toContain('ui-spec.md');
+    expect(ready).not.toContain('prd.md');
   });
 
   it('--can-start checks dependency satisfaction', () => {
-    // architecture.md depends on prd.md, which is not done
-    assert.throws(() => {
+    expect(() => {
       runCli(['test-feat', 'architecture.md', '--can-start', '--dag', DAG_PATH]);
-    }, /缺少依赖/);
+    }).toThrow(/缺少依赖/);
   });
 
   it('--can-start succeeds when dependencies are met', () => {
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
-    const data = JSON.parse(fs.readFileSync(execPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
     data.stages['1'].artifacts = ['prd.md'];
     fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
 
-    const output = runCli(['test-feat', 'architecture.md', '--can-start', '--dag', DAG_PATH]);
-    assert.ok(output.includes('可以开始'));
+    expect(runCli(['test-feat', 'architecture.md', '--can-start', '--dag', DAG_PATH])).toContain('可以开始');
   });
 
   it('skips ui-spec.md when skipUI is true', () => {
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
-    const data = JSON.parse(fs.readFileSync(execPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      parameters: { skipUI: boolean };
+      stages: { '1': { artifacts: string[] } };
+    };
     data.parameters.skipUI = true;
     data.stages['1'].artifacts = ['prd.md'];
     fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
 
-    const output = runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json']);
-    const ready = JSON.parse(output);
-    assert.ok(!ready.includes('ui-spec.md'), 'ui-spec.md should be skipped');
-    assert.ok(ready.includes('architecture.md'));
+    const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
+    expect(ready).not.toContain('ui-spec.md');
+    expect(ready).toContain('architecture.md');
   });
 });

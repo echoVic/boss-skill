@@ -1,65 +1,72 @@
-'use strict';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
-const { createTempBossDir, createExecData, cleanupTempDir } = require('../helpers/fixtures');
+import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('session-end hook', () => {
-  let hook;
-  let tmpDir;
+  let hook: typeof import('../../scripts/hooks/session-end.js');
+  let tmpDir: string | null = null;
+  const originalSkillDir = process.env.SKILL_DIR;
+  const originalClaudeProjectDir = process.env.CLAUDE_PROJECT_DIR;
 
-  beforeEach(() => {
-    delete require.cache[require.resolve('../../scripts/hooks/session-end')];
-    hook = require('../../scripts/hooks/session-end');
+  beforeEach(async () => {
+    vi.resetModules();
+    hook = await import('../../scripts/hooks/session-end.js');
   });
 
   afterEach(() => {
-    if (tmpDir) { cleanupTempDir(tmpDir); tmpDir = null; }
+    if (tmpDir) {
+      cleanupTempDir(tmpDir);
+      tmpDir = null;
+    }
+
+    if (originalSkillDir !== undefined) {
+      process.env.SKILL_DIR = originalSkillDir;
+    } else {
+      delete process.env.SKILL_DIR;
+    }
+
+    if (originalClaudeProjectDir !== undefined) {
+      process.env.CLAUDE_PROJECT_DIR = originalClaudeProjectDir;
+    } else {
+      delete process.env.CLAUDE_PROJECT_DIR;
+    }
   });
 
   it('returns empty string when no .boss dir', () => {
-    const result = hook.run(JSON.stringify({ cwd: '/nonexistent' }));
-    assert.equal(result, '');
+    expect(hook.run(JSON.stringify({ cwd: '/nonexistent' }))).toBe('');
   });
 
   it('saves session state for running pipeline', () => {
     const execData = createExecData({ feature: 'test-feat', status: 'running' });
     tmpDir = createTempBossDir('test-feat', execData);
 
-    // Ensure SKILL_DIR points nowhere so report script is not found
-    const origSkill = process.env.SKILL_DIR;
     process.env.SKILL_DIR = '/nonexistent';
-    try {
-      hook.run(JSON.stringify({ cwd: tmpDir }));
-    } finally {
-      if (origSkill !== undefined) process.env.SKILL_DIR = origSkill;
-      else delete process.env.SKILL_DIR;
-    }
+
+    hook.run(JSON.stringify({ cwd: tmpDir }));
 
     const sessionStatePath = path.join(tmpDir, '.boss', '.session-state.json');
-    assert.ok(fs.existsSync(sessionStatePath));
-    const state = JSON.parse(fs.readFileSync(sessionStatePath, 'utf8'));
-    assert.equal(state.feature, 'test-feat');
-    assert.equal(state.pipelineStatus, 'running');
+    expect(fs.existsSync(sessionStatePath)).toBe(true);
+
+    const state = JSON.parse(fs.readFileSync(sessionStatePath, 'utf8')) as {
+      feature: string;
+      pipelineStatus: string;
+    };
+    expect(state.feature).toBe('test-feat');
+    expect(state.pipelineStatus).toBe('running');
   });
 
   it('skips features with unknown/initialized status', () => {
     const execData = createExecData({ feature: 'test-feat', status: 'initialized' });
     tmpDir = createTempBossDir('test-feat', execData);
 
-    const origSkill = process.env.SKILL_DIR;
     process.env.SKILL_DIR = '/nonexistent';
-    try {
-      hook.run(JSON.stringify({ cwd: tmpDir }));
-    } finally {
-      if (origSkill !== undefined) process.env.SKILL_DIR = origSkill;
-      else delete process.env.SKILL_DIR;
-    }
+
+    hook.run(JSON.stringify({ cwd: tmpDir }));
 
     const sessionStatePath = path.join(tmpDir, '.boss', '.session-state.json');
-    assert.ok(!fs.existsSync(sessionStatePath));
+    expect(fs.existsSync(sessionStatePath)).toBe(false);
   });
 
   it('generates summary report through runtime modules even without SKILL_DIR', () => {
@@ -94,19 +101,13 @@ describe('session-end hook', () => {
     });
     tmpDir = createTempBossDir('test-feat', execData);
 
-    const origSkill = process.env.SKILL_DIR;
-    const origClaude = process.env.CLAUDE_PROJECT_DIR;
     delete process.env.SKILL_DIR;
     delete process.env.CLAUDE_PROJECT_DIR;
-    try {
-      hook.run(JSON.stringify({ cwd: tmpDir }));
-    } finally {
-      if (origSkill !== undefined) process.env.SKILL_DIR = origSkill;
-      if (origClaude !== undefined) process.env.CLAUDE_PROJECT_DIR = origClaude;
-    }
+
+    hook.run(JSON.stringify({ cwd: tmpDir }));
 
     const summaryPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md');
-    assert.ok(fs.existsSync(summaryPath));
-    assert.match(fs.readFileSync(summaryPath, 'utf8'), /# 流水线执行报告/);
+    expect(fs.existsSync(summaryPath)).toBe(true);
+    expect(fs.readFileSync(summaryPath, 'utf8')).toMatch(/# 流水线执行报告/);
   });
 });

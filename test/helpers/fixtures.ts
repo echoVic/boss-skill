@@ -1,10 +1,22 @@
-'use strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+type StageState = {
+  name: string;
+  status: string;
+  artifacts: string[];
+};
 
-function createTempBossDir(feature, execData) {
+type ExecData = {
+  feature: string;
+  status: string;
+  version: string;
+  createdAt?: string;
+  stages: Record<string, StageState>;
+} & Record<string, unknown>;
+
+function createTempBossDir(feature: string, execData?: ExecData | null) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-test-'));
   const metaDir = path.join(tmpDir, '.boss', feature, '.meta');
   fs.mkdirSync(metaDir, { recursive: true });
@@ -12,18 +24,18 @@ function createTempBossDir(feature, execData) {
   if (execData) {
     fs.writeFileSync(
       path.join(metaDir, 'execution.json'),
-      JSON.stringify(execData, null, 2) + '\n',
+      `${JSON.stringify(execData, null, 2)}\n`,
       'utf8'
     );
-    const timestamp = execData.createdAt || '2024-01-01T00:00:00Z';
+    const timestamp = typeof execData.createdAt === 'string' ? execData.createdAt : '2024-01-01T00:00:00Z';
     fs.writeFileSync(
       path.join(metaDir, 'events.jsonl'),
-      JSON.stringify({
+      `${JSON.stringify({
         id: 1,
         type: 'PipelineInitialized',
         timestamp,
         data: { initialState: execData }
-      }) + '\n',
+      })}\n`,
       'utf8'
     );
   }
@@ -31,7 +43,7 @@ function createTempBossDir(feature, execData) {
   return tmpDir;
 }
 
-function createExecData(overrides) {
+function createExecData(overrides: Record<string, unknown> = {}) {
   return {
     feature: 'test-feature',
     status: 'running',
@@ -46,8 +58,8 @@ function createExecData(overrides) {
   };
 }
 
-function cleanupTempDir(dir) {
+function cleanupTempDir(dir: string) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-module.exports = { createTempBossDir, createExecData, cleanupTempDir };
+export { cleanupTempDir, createExecData, createTempBossDir };
