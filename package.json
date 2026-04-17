@@ -48,18 +48,27 @@
     "SKILL.md",
     "DESIGN.md"
   ],
+  "type": "module",
   "bin": {
-    "boss-skill": "bin/boss-skill.js"
+    "boss-skill": "dist/bin/boss-skill.js"
   },
   "scripts": {
-    "test": "node --test test/**/*.test.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "release": "node scripts/release.js",
-    "prepublishOnly": "node bin/boss-skill.js --version"
+    "prepublishOnly": "npm run build && node dist/bin/boss-skill.js --version"
   },
   "publishConfig": {
     "access": "public"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
   }
 }
