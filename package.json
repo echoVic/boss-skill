@@ -1,6 +1,6 @@
 {
   "name": "@blade-ai/boss-skill",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "BMAD Harness Engineer — pluggable pipeline skill for coding agents. Compatible with Claude Code, OpenClaw, Codex & Antigravity. Auto-detect install.",
   "author": {
     "name": "echoVic",

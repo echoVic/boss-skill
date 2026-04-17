@@ -1,7 +1,7 @@
 {
   "name": "boss-skill",
   "description": "BMAD 全自动项目编排插件市场",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "owner": {
     "name": "echoVic",
     "email": "137844255@qq.com"
@@ -11,7 +11,7 @@
       "name": "boss",
       "source": "./",
       "description": "BMAD 全自动研发流水线。编排 9 个专业 Agent，从需求到部署一键完成。",
-      "version": "3.4.0",
+      "version": "3.5.0",
       "author": {
         "name": "echoVic",
         "email": "137844255@qq.com"
