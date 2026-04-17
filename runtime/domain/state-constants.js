@@ -1,5 +1,3 @@
-'use strict';
-
 const PIPELINE_STATUS = Object.freeze({
   INITIALIZED: 'initialized',
   RUNNING: 'running',
@@ -25,7 +23,7 @@ const AGENT_STATUS = Object.freeze({
 
 const DEFAULT_SCHEMA_VERSION = '0.2.0';
 
-module.exports = {
+export {
   PIPELINE_STATUS,
   STAGE_STATUS,
   AGENT_STATUS,

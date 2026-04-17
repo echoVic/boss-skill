@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-'use strict';
-
-const runtime = require('./lib/pipeline-runtime');
+import * as runtime from './lib/pipeline-runtime.js';
 
 function showHelp() {
   process.stdout.write(`Boss Harness - Artifact DAG 检查

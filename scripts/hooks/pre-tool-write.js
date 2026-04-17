@@ -1,8 +1,7 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const { STAGE_MAP, loadArtifactDag, getReadyArtifacts } = require('../lib/boss-utils');
+import { STAGE_MAP, loadArtifactDag, getReadyArtifacts } from '../lib/boss-utils.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);
@@ -73,4 +72,4 @@ function run(rawInput) {
   return '';
 }
 
-module.exports = { run };
+export { run };

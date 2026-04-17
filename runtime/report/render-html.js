@@ -1,5 +1,3 @@
-'use strict';
-
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -168,6 +166,6 @@ function renderHtml(model) {
 `;
 }
 
-module.exports = {
+export {
   renderHtml
 };

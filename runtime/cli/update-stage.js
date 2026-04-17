@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const runtime = require('./lib/pipeline-runtime');
+import * as runtime from './lib/pipeline-runtime.js';
 
 function showHelp() {
   process.stderr.write([

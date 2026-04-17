@@ -1,5 +1,3 @@
-'use strict';
-
 function buildRecord(base) {
   return {
     influence: 'preference',
@@ -107,6 +105,6 @@ function extractFeatureMemories({ feature, events = [], execution = {}, now }) {
   return records;
 }
 
-module.exports = {
+export {
   extractFeatureMemories
 };

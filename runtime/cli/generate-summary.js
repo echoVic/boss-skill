@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-const { buildSummaryModel } = require('../report/summary-model');
-const { renderJson } = require('../report/render-json');
-const { renderMarkdown } = require('../report/render-markdown');
+import { buildSummaryModel } from '../report/summary-model.js';
+import { renderJson } from '../report/render-json.js';
+import { renderMarkdown } from '../report/render-markdown.js';
 
 function printHelp() {
   process.stdout.write([
@@ -83,7 +83,7 @@ function run(argv = process.argv.slice(2), { cwd = process.cwd() } = {}) {
   return 0;
 }
 
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     process.exit(run(process.argv.slice(2), { cwd: process.cwd() }));
   } catch (err) {
@@ -92,7 +92,7 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   parseArgs,
   run
 };

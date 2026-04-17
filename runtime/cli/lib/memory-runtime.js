@@ -1,16 +1,15 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const {
+import {
   saveFeatureMemory,
   saveFeatureSummary,
   saveGlobalMemory,
   saveGlobalSummary,
   paths
-} = require('../../memory/store');
-const { extractFeatureMemories } = require('../../memory/extractor');
-const { buildStartupSummary, buildAgentSections } = require('../../memory/summarizer');
+} from '../../memory/store.js';
+import { extractFeatureMemories } from '../../memory/extractor.js';
+import { buildStartupSummary, buildAgentSections } from '../../memory/summarizer.js';
 
 function readJson(filePath, fallback) {
   if (!fs.existsSync(filePath)) {
@@ -145,7 +144,7 @@ function queryAgentSection(feature, { cwd = process.cwd(), agent, stage, limit =
   return section.slice(0, limit);
 }
 
-module.exports = {
+export {
   buildFeatureSummary,
   queryAgentSection,
   readFeatureMemory,

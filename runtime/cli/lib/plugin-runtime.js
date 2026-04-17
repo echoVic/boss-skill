@@ -1,11 +1,13 @@
-'use strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
-const { materializeState } = require('../../projectors/materialize-state');
-const { EVENT_TYPES } = require('../../domain/event-types');
+import { EVENT_TYPES } from '../../domain/event-types.js';
+import { materializeState } from '../../projectors/materialize-state.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const PLUGIN_TYPES = new Set(['gate', 'agent', 'pipeline-pack', 'reporter']);
 const PLUGIN_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
@@ -452,7 +454,7 @@ function runHook(hook, feature, { cwd = process.cwd(), repoRoot = REPO_ROOT, sta
   };
 }
 
-module.exports = {
+export {
   discoverPlugins,
   validatePlugins,
   registerPlugins,

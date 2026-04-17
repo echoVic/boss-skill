@@ -1,8 +1,4 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const { findActiveFeature, readExecJson } = require('../lib/boss-utils');
+import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);
@@ -43,4 +39,4 @@ function run(rawInput) {
   });
 }
 
-module.exports = { run };
+export { run };

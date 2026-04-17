@@ -1,7 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const STAGE_MAP = {
   'prd.md': 1,
@@ -146,7 +144,7 @@ function getReadyArtifacts(dag, execData, params) {
   return ready;
 }
 
-module.exports = {
+export {
   STAGE_MAP,
   AGENT_STAGE_MAP,
   readExecJson,

@@ -1,5 +1,3 @@
-'use strict';
-
 const EVENT_TYPES = Object.freeze({
   PIPELINE_INITIALIZED: 'PipelineInitialized',
   PACK_APPLIED: 'PackApplied',
@@ -24,7 +22,7 @@ const EVENT_TYPES = Object.freeze({
 
 const EVENT_TYPE_VALUES = Object.freeze(Object.values(EVENT_TYPES));
 
-module.exports = {
+export {
   EVENT_TYPES,
   EVENT_TYPE_VALUES
 };

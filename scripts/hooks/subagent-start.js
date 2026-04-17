@@ -1,9 +1,7 @@
-'use strict';
-
-const { findActiveFeature, readExecJson, AGENT_STAGE_MAP } = require('../lib/boss-utils');
-const { emitProgress } = require('../lib/progress-emitter');
-const runtime = require('../../runtime/cli/lib/pipeline-runtime');
-const memoryRuntime = require('../../runtime/cli/lib/memory-runtime');
+import { findActiveFeature, readExecJson, AGENT_STAGE_MAP } from '../lib/boss-utils.js';
+import { emitProgress } from '../lib/progress-emitter.js';
+import * as runtime from '../../runtime/cli/lib/pipeline-runtime.js';
+import * as memoryRuntime from '../../runtime/cli/lib/memory-runtime.js';
 
 function buildMemoryContext(feature, agentType, stage, cwd) {
   try {
@@ -80,4 +78,4 @@ function run(rawInput) {
   });
 }
 
-module.exports = { run };
+export { run };

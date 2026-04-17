@@ -1,7 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 function readExecution(feature, cwd = process.cwd()) {
   const executionPath = path.join(cwd, '.boss', feature, '.meta', 'execution.json');
@@ -66,6 +64,6 @@ function buildSummaryModel(feature, { cwd = process.cwd() } = {}) {
   };
 }
 
-module.exports = {
+export {
   buildSummaryModel
 };

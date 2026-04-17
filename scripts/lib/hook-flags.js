@@ -1,5 +1,3 @@
-'use strict';
-
 const VALID_PROFILES = ['minimal', 'standard', 'strict'];
 
 function getActiveProfile() {
@@ -40,4 +38,4 @@ function isHookEnabled(hookId, options) {
   return allowed.indexOf(getActiveProfile()) !== -1;
 }
 
-module.exports = { isHookEnabled: isHookEnabled };
+export { isHookEnabled };

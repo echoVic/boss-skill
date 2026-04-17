@@ -1,16 +1,26 @@
-'use strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
-const { materializeState } = require('../../projectors/materialize-state');
-const { EVENT_TYPES, EVENT_TYPE_VALUES } = require('../../domain/event-types');
-const { resolvePipelinePack, getPackStateParameters } = require('./pack-runtime');
-const { registerPlugins: registerPluginsRuntime } = require('./plugin-runtime');
-const { emitProgress } = require('../../../scripts/lib/progress-emitter');
+import { EVENT_TYPES, EVENT_TYPE_VALUES } from '../../domain/event-types.js';
+import { materializeState } from '../../projectors/materialize-state.js';
+import { getPackStateParameters, resolvePipelinePack } from './pack-runtime.js';
+import { registerPlugins as registerPluginsRuntime } from './plugin-runtime.js';
+import { emitProgress } from '../../../scripts/lib/progress-emitter.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const DEFAULT_DAG_PATH = path.join(REPO_ROOT, 'harness', 'artifact-dag.json');
+const MEMORY_RUNTIME_MODULE_URL = pathToFileURL(path.join(__dirname, 'memory-runtime.js')).href;
+const MEMORY_REFRESH_RUNNER = [
+  'const [, feature, cwd, moduleUrl] = process.argv;',
+  'const memoryRuntime = await import(moduleUrl);',
+  'memoryRuntime.rebuildFeatureMemory(feature, { cwd });',
+  'memoryRuntime.rebuildGlobalMemory({ cwd });',
+  'memoryRuntime.buildFeatureSummary(feature, { cwd });'
+].join(' ');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -343,10 +353,24 @@ function appendRuntimeEvent(cwd, feature, eventType, data = {}) {
 
 function refreshMemory(feature, cwd) {
   try {
-    const memoryRuntime = require('./memory-runtime');
-    memoryRuntime.rebuildFeatureMemory(feature, { cwd });
-    memoryRuntime.rebuildGlobalMemory({ cwd });
-    memoryRuntime.buildFeatureSummary(feature, { cwd });
+    const child = spawnSync(
+      process.execPath,
+      ['--input-type=module', '-e', MEMORY_REFRESH_RUNNER, feature, cwd, MEMORY_RUNTIME_MODULE_URL],
+      {
+        cwd,
+        encoding: 'utf8',
+        timeout: 30000,
+        maxBuffer: 1024 * 1024
+      }
+    );
+
+    if (child.error) {
+      throw child.error;
+    }
+
+    if (child.status !== 0) {
+      throw new Error((child.stderr || child.stdout || `exit ${child.status}`).trim());
+    }
   } catch (err) {
     process.stderr.write(`[boss-skill] memory refresh skipped: ${err.message}\n`);
   }
@@ -700,7 +724,12 @@ function registerPlugins(feature, { cwd = process.cwd(), type } = {}) {
   return registerPluginsRuntime(feature, { cwd, type });
 }
 
-module.exports = {
+const _internal = {
+  getArtifactStatus,
+  loadDagForFeature
+};
+
+export {
   initPipeline,
   getReadyArtifacts,
   getArtifactStatus,
@@ -710,8 +739,5 @@ module.exports = {
   updateAgent,
   registerPlugins,
   evaluateGates,
-  _internal: {
-    getArtifactStatus,
-    loadDagForFeature
-  }
+  _internal
 };

@@ -1,9 +1,8 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const pipelineRuntime = require('./pipeline-runtime');
-const { projectState } = require('../../projectors/materialize-state');
+import * as pipelineRuntime from './pipeline-runtime.js';
+import { projectState } from '../../projectors/materialize-state.js';
 
 function ensureFeatureName(feature) {
   if (!feature) {
@@ -145,9 +144,12 @@ function getRecentFailures(execution) {
 }
 
 function readFeatureSummary(feature, cwd = process.cwd()) {
+  const summaryPath = path.join(cwd, '.boss', feature, '.meta', 'memory-summary.json');
   try {
-    const memoryRuntime = require('./memory-runtime');
-    return memoryRuntime.readFeatureSummary(feature, { cwd });
+    if (!fs.existsSync(summaryPath)) {
+      throw new Error('missing summary');
+    }
+    return JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   } catch {
     return {
       feature,
@@ -321,7 +323,7 @@ function replaySnapshot(feature, at, { cwd = process.cwd() } = {}) {
   };
 }
 
-module.exports = {
+export {
   inspectPipeline,
   inspectEvents,
   inspectProgress,

@@ -13,12 +13,13 @@
  *   node scripts/release.js minor
  */
 
-'use strict';
+import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
 // ── 需要��步版本号的文件 ───────────────────────────────

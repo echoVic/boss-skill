@@ -1,5 +1,3 @@
-'use strict';
-
 function score(record, target) {
   let value = (record.decayScore || 0) * 100 + (record.confidence || 0) * 10;
   if (record.agent && record.agent === target.agent) {
@@ -26,6 +24,6 @@ function queryAgentMemories(records, { agent, stage, limit = 3 } = {}) {
     .slice(0, limit);
 }
 
-module.exports = {
+export {
   queryAgentMemories
 };

@@ -1,7 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);
@@ -82,4 +80,4 @@ function run(rawInput) {
   return JSON.stringify(result);
 }
 
-module.exports = { run };
+export { run };

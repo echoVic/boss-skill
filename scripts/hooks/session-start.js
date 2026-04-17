@@ -1,9 +1,8 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const { findActiveFeature, readExecJson } = require('../lib/boss-utils');
-const { inspectPipeline } = require('../../runtime/cli/lib/inspection-runtime');
+import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
+import { inspectPipeline } from '../../runtime/cli/lib/inspection-runtime.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);
@@ -67,4 +66,4 @@ function run(rawInput) {
   return JSON.stringify(result);
 }
 
-module.exports = { run };
+export { run };

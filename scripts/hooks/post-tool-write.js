@@ -1,10 +1,9 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const { STAGE_MAP } = require('../lib/boss-utils');
-const { emitProgress } = require('../lib/progress-emitter');
-const runtime = require('../../runtime/cli/lib/pipeline-runtime');
+import { STAGE_MAP } from '../lib/boss-utils.js';
+import { emitProgress } from '../lib/progress-emitter.js';
+import * as runtime from '../../runtime/cli/lib/pipeline-runtime.js';
 
 function hasArtifactInEventLog(eventsPath, artifact, stage) {
   if (!fs.existsSync(eventsPath)) return false;
@@ -81,4 +80,4 @@ function run(rawInput) {
   });
 }
 
-module.exports = { run };
+export { run };

@@ -1,10 +1,9 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const { writeJson } = require('../lib/boss-utils');
-const { buildSummaryModel } = require('../../runtime/report/summary-model');
-const { renderMarkdown } = require('../../runtime/report/render-markdown');
+import { writeJson } from '../lib/boss-utils.js';
+import { buildSummaryModel } from '../../runtime/report/summary-model.js';
+import { renderMarkdown } from '../../runtime/report/render-markdown.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);
@@ -76,4 +75,4 @@ function run(rawInput) {
   return '';
 }
 
-module.exports = { run };
+export { run };

@@ -1,14 +1,14 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-const { EVENT_TYPES, EVENT_TYPE_VALUES } = require('../domain/event-types');
-const {
+import { EVENT_TYPES, EVENT_TYPE_VALUES } from '../domain/event-types.js';
+import {
   PIPELINE_STATUS,
   STAGE_STATUS,
   AGENT_STATUS,
   DEFAULT_SCHEMA_VERSION
-} = require('../domain/state-constants');
+} from '../domain/state-constants.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -748,11 +748,11 @@ function runCli(argv = process.argv.slice(2)) {
   }
 }
 
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   runCli();
 }
 
-module.exports = {
+export {
   materializeState,
   defaultExecutionState,
   finalizeState,

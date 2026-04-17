@@ -1,7 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -104,16 +102,18 @@ function saveGlobalSummary(summary, { cwd = process.cwd() } = {}) {
   return summary;
 }
 
-module.exports = {
+const paths = {
+  featureMemoryPath,
+  featureSummaryPath,
+  globalMemoryPath,
+  globalSummaryPath
+};
+
+export {
   mergeRecords,
   saveFeatureMemory,
   saveFeatureSummary,
   saveGlobalMemory,
   saveGlobalSummary,
-  paths: {
-    featureMemoryPath,
-    featureSummaryPath,
-    globalMemoryPath,
-    globalSummaryPath
-  }
+  paths
 };

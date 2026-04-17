@@ -1,11 +1,11 @@
-'use strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const path = require('path');
-const {
+import {
   discoverPlugins,
   validatePlugins,
   registerPlugins
-} = require('./lib/plugin-runtime');
+} from './lib/plugin-runtime.js';
 
 function printHelp() {
   process.stdout.write([
@@ -108,7 +108,7 @@ function run(argv = process.argv.slice(2), { cwd = process.cwd() } = {}) {
   throw new Error(`不支持的 action: ${parsed.action}`);
 }
 
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const code = run(process.argv.slice(2), { cwd: process.cwd() });
     process.exit(code);
@@ -118,7 +118,7 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   run,
   parseArgs
 };

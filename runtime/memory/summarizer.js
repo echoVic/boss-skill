@@ -1,6 +1,4 @@
-'use strict';
-
-const { queryAgentMemories } = require('./query');
+import { queryAgentMemories } from './query.js';
 
 function buildStartupSummary(records, { limit = 3 } = {}) {
   return records
@@ -34,7 +32,7 @@ function buildAgentSections(records, agents) {
   return sections;
 }
 
-module.exports = {
+export {
   buildStartupSummary,
   buildAgentSections
 };

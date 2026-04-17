@@ -1,10 +1,9 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const fs = require('fs');
-const path = require('path');
-const { findActiveFeature, readExecJson, AGENT_STAGE_MAP } = require('../lib/boss-utils');
-const { emitProgress } = require('../lib/progress-emitter');
-const runtime = require('../../runtime/cli/lib/pipeline-runtime');
+import { findActiveFeature, readExecJson, AGENT_STAGE_MAP } from '../lib/boss-utils.js';
+import { emitProgress } from '../lib/progress-emitter.js';
+import * as runtime from '../../runtime/cli/lib/pipeline-runtime.js';
 
 function parseStructuredStatus(message) {
   const match = message.match(/\[BOSS_STATUS\]([\s\S]*?)\[\/BOSS_STATUS\]/i);
@@ -110,7 +109,7 @@ function run(rawInput) {
   return '';
 }
 
-module.exports = {
+export {
   run,
   parseStatus
 };

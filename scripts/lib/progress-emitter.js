@@ -1,7 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Emit a structured progress event to .meta/progress.jsonl
@@ -37,4 +35,4 @@ function emitProgress(cwd, feature, event) {
   }
 }
 
-module.exports = { emitProgress };
+export { emitProgress };

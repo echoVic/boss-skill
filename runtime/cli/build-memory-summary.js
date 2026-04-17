@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-'use strict';
-
-const runtime = require('./lib/memory-runtime');
+import * as runtime from './lib/memory-runtime.js';
 
 function printHelp() {
   process.stdout.write([

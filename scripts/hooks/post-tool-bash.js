@@ -1,9 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const { findActiveFeature } = require('../lib/boss-utils');
-const { emitProgress } = require('../lib/progress-emitter');
+import { findActiveFeature } from '../lib/boss-utils.js';
+import { emitProgress } from '../lib/progress-emitter.js';
 
 function isGateCommand(command) {
   return /runtime\/cli\/evaluate-gates\.js|gate-runner\.sh|gate0-|gate1-|gate2-/.test(command);
@@ -59,4 +55,4 @@ function run(rawInput) {
   });
 }
 
-module.exports = { run };
+export { run };

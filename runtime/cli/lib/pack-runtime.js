@@ -1,8 +1,9 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const PACKS_DIR = path.join(REPO_ROOT, 'harness', 'pipeline-packs');
 
@@ -127,7 +128,7 @@ function getPackStateParameters(pack) {
   return parameters;
 }
 
-module.exports = {
+export {
   resolvePipelinePack,
   getPackStateParameters
 };

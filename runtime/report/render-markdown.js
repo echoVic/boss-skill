@@ -1,5 +1,3 @@
-'use strict';
-
 function statusIcon(status) {
   switch (status) {
     case 'completed': return '✅';
@@ -73,6 +71,6 @@ function renderMarkdown(model) {
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = {
+export {
   renderMarkdown
 };

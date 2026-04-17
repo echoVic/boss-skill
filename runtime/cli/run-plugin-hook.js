@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-'use strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const { runHook } = require('./lib/plugin-runtime');
+import { runHook } from './lib/plugin-runtime.js';
 
 function printHelp() {
   process.stdout.write([
@@ -82,7 +83,7 @@ function run(argv = process.argv.slice(2), { cwd = process.cwd() } = {}) {
   return 0;
 }
 
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const code = run(process.argv.slice(2), { cwd: process.cwd() });
     process.exit(code);
@@ -92,7 +93,7 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   parseArgs,
   run
 };
