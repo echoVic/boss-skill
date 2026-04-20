@@ -179,8 +179,12 @@ function main() {
     run('npm publish');
   }
 
+  // 7. Push
+  console.log('\n📤 推送到远程...');
+  run('git push');
+  run('git push --tags');
+
   console.log(`\n✅ v${next} 发布完成！`);
-  console.log(`   记得推送: git push && git push --tags`);
 }
 
 main();
