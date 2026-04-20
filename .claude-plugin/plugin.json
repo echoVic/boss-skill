@@ -18,5 +18,5 @@
     "devops",
     "project-management"
   ],
-  "skills": "./"
+  "skills": ["./", "./skills/"]
 }

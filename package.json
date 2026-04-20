@@ -38,6 +38,7 @@
     "agents/",
     "commands/",
     "harness/",
+    "hooks/",
     "runtime/",
     "references/",
     "scripts/",

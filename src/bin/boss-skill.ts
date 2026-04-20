@@ -16,7 +16,7 @@ interface Agent {
   name: string;
   detect: () => boolean;
   dest: () => string;
-  method: 'copy' | 'hooks';
+  method: 'copy' | 'hooks' | 'plugin';
 }
 
 const METADATA: Record<string, string> = {
@@ -87,8 +87,8 @@ const AGENTS: Agent[] = [
   {
     name: 'Claude Code',
     detect: () => true,
-    dest: () => path.resolve(process.cwd(), '.claude'),
-    method: 'hooks',
+    dest: () => PKG_ROOT,
+    method: 'plugin',
   },
 ];
 
@@ -110,7 +110,7 @@ Auto-detect logic (checks all, installs to every detected agent):
   ~/.openclaw/                →  ~/.openclaw/skills/boss/     (copy + inject metadata)
   ~/.codex/                   →  ~/.codex/skills/boss/        (copy + inject metadata)
   ~/.gemini/antigravity/      →  ~/.gemini/.../skills/boss/   (copy + inject metadata)
-  (always)                    →  .claude/settings.json        (hooks)
+  Claude Code                 →  plugin mode (--plugin-dir)
 `;
 
 function injectMetadata(content: string, agentName: string): string {
@@ -175,84 +175,15 @@ function copyInstall(agent: Agent, dryRun: boolean): void {
   console.log(`  ✅ ${agent.name}: ${dest} (copied + metadata injected)`);
 }
 
-interface HookEntry {
-  id?: string;
-  command?: string;
-  [key: string]: unknown;
-}
-
-interface SettingsJson {
-  hooks?: Record<string, HookEntry[]>;
-  [key: string]: unknown;
-}
-
-function hooksInstall(dryRun: boolean): void {
-  const dest = path.resolve(process.cwd(), '.claude');
-  const src = path.join(PKG_ROOT, '.claude', 'settings.json');
-
-  if (!fs.existsSync(src)) {
-    console.log('  ⚠️  Claude Code: .claude/settings.json not found in package, skipped.');
-    return;
-  }
-
-  if (!fs.existsSync(dest)) {
-    fs.mkdirSync(dest, { recursive: true });
-  }
-
-  const settings = JSON.parse(fs.readFileSync(src, 'utf8')) as SettingsJson;
-  const hookEvents = Object.keys(settings.hooks ?? {});
-
-  for (const event of hookEvents) {
-    const hooks = settings.hooks?.[event];
-    if (!Array.isArray(hooks)) continue;
-    for (const hook of hooks) {
-      if (hook.command?.includes('$CLAUDE_PROJECT_DIR')) {
-        hook.command = hook.command.replace(
-          /"\$CLAUDE_PROJECT_DIR"/g,
-          JSON.stringify(PKG_ROOT),
-        );
-      }
-    }
-  }
-
-  const destFile = path.join(dest, 'settings.json');
-
+function pluginInstall(dryRun: boolean): void {
   if (dryRun) {
-    console.log(`  [dry-run] Claude Code: would merge ${hookEvents.length} hook events → ${destFile}`);
+    console.log(`  [dry-run] Claude Code: would register plugin at ${PKG_ROOT}`);
     return;
   }
 
-  if (fs.existsSync(destFile)) {
-    const existing = JSON.parse(fs.readFileSync(destFile, 'utf8')) as SettingsJson;
-    if (!existing.hooks) existing.hooks = {};
-
-    for (const event of Object.keys(settings.hooks ?? {})) {
-      const bossHooks = settings.hooks?.[event];
-      if (!Array.isArray(bossHooks)) continue;
-      if (!Array.isArray(existing.hooks[event])) {
-        existing.hooks[event] = [];
-      }
-
-      for (const bossHook of bossHooks) {
-        const bossId = bossHook.id ?? '';
-        const idx = bossId
-          ? existing.hooks[event]!.findIndex((h) => h.id === bossId)
-          : -1;
-
-        if (idx >= 0) {
-          existing.hooks[event]![idx] = bossHook;
-        } else {
-          existing.hooks[event]!.push(bossHook);
-        }
-      }
-    }
-
-    fs.writeFileSync(destFile, JSON.stringify(existing, null, 2) + '\n');
-  } else {
-    fs.writeFileSync(destFile, JSON.stringify(settings, null, 2) + '\n');
-  }
-
-  console.log(`  ✅ Claude Code: ${hookEvents.length} hook events → .claude/settings.json`);
+  console.log(`  ✅ Claude Code: plugin ready at ${PKG_ROOT}`);
+  console.log(`     Use:  claude --plugin-dir "${PKG_ROOT}"`);
+  console.log(`     Or:   claude --plugin-dir "$(boss-skill path)"`);
 }
 
 function autoInstall(dryRun: boolean): void {
@@ -265,7 +196,7 @@ function autoInstall(dryRun: boolean): void {
     if (agent.method === 'copy') {
       copyInstall(agent, dryRun);
     } else {
-      hooksInstall(dryRun);
+      pluginInstall(dryRun);
     }
   }
 
@@ -291,37 +222,8 @@ function uninstall(): void {
     }
   }
 
-  const destFile = path.resolve(process.cwd(), '.claude', 'settings.json');
-  if (fs.existsSync(destFile)) {
-    try {
-      const existing = JSON.parse(fs.readFileSync(destFile, 'utf8')) as SettingsJson;
-      if (existing.hooks) {
-        let removedCount = 0;
-        for (const event of Object.keys(existing.hooks)) {
-          if (!Array.isArray(existing.hooks[event])) continue;
-          const before = existing.hooks[event]!.length;
-          existing.hooks[event] = existing.hooks[event]!.filter(
-            (h) => !h.id || !h.id.startsWith('boss-'),
-          );
-          removedCount += before - existing.hooks[event]!.length;
-          if (existing.hooks[event]!.length === 0) {
-            delete existing.hooks[event];
-          }
-        }
-        if (Object.keys(existing.hooks).length === 0) {
-          delete existing.hooks;
-        }
-        fs.writeFileSync(destFile, JSON.stringify(existing, null, 2) + '\n');
-        console.log(`  ✅ Claude Code: removed ${removedCount} boss-skill hooks from ${destFile}`);
-      } else {
-        console.log('  ⏭️  Claude Code: no hooks found in settings.json');
-      }
-    } catch (err) {
-      console.error(`  ❌ Claude Code: failed to clean settings.json: ${(err as Error).message}`);
-    }
-  } else {
-    console.log('  ⏭️  Claude Code: .claude/settings.json not found');
-  }
+  console.log(`  ℹ️  Claude Code: plugin mode — no files to clean up.`);
+  console.log(`     If loaded via --plugin-dir, simply stop passing the flag.`);
 
   console.log('\nUninstall complete.');
 }
