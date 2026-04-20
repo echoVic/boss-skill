@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -326,6 +326,10 @@ function uninstall(): void {
   console.log('\nUninstall complete.');
 }
 
+export function showHelp(): void {
+  console.log(USAGE);
+}
+
 export function main(argv: string[] = process.argv.slice(2)): void {
   const cmd = argv[0];
   const rest = argv.slice(1);
@@ -362,4 +366,7 @@ export function main(argv: string[] = process.argv.slice(2)): void {
   }
 }
 
-main();
+const entrypoint = process.argv[1];
+if (entrypoint && fs.realpathSync(entrypoint) === fs.realpathSync(__filename)) {
+  main();
+}
