@@ -77,12 +77,13 @@ if [[ -n "$COVERAGE_CMD" ]]; then
 
     if [[ -n "$COVERAGE_PCT" ]]; then
         COVERAGE_INT=${COVERAGE_PCT%.*}
-        if [[ "$COVERAGE_INT" -ge 70 ]]; then
-            gate_pass "测试覆盖率: ${COVERAGE_PCT}% (≥ 70%)"
+        THRESHOLD="${GATE_COVERAGE_THRESHOLD:-70}"
+        if [[ "$COVERAGE_INT" -ge "$THRESHOLD" ]]; then
+            gate_pass "测试覆盖率: ${COVERAGE_PCT}% (≥ ${THRESHOLD}%)"
             add_check "coverage" true "${COVERAGE_PCT}%"
         else
-            gate_fail "测试覆盖率: ${COVERAGE_PCT}% (< 70%)"
-            add_check "coverage" false "${COVERAGE_PCT}% < 70%"
+            gate_fail "测试覆盖率: ${COVERAGE_PCT}% (< ${THRESHOLD}%)"
+            add_check "coverage" false "${COVERAGE_PCT}% < ${THRESHOLD}%"
             ALL_PASSED=false
         fi
     else

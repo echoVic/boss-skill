@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { replayEvents } from '../../src/runtime/cli/lib/inspection-runtime.js';
+
 const APPEND_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'append-event.sh');
 const MATERIALIZE_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'materialize-state.sh');
-const REPLAY_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'replay-events.sh');
 
 function getExecError(error: unknown) {
   return error as Error & { status?: number; stdout?: string; stderr?: string };
@@ -117,12 +118,13 @@ describe('event-sourcing', () => {
     expect(execJson.stages['1'].artifacts).toContain('prd.md');
   });
 
-  it('replay-events.sh --compact lists events', () => {
+  it('replayEvents lists events', () => {
     runScript(APPEND_SCRIPT, 'test-feat StageStarted --stage 1');
 
-    const output = runScript(REPLAY_SCRIPT, 'test-feat --compact');
-    expect(output).toContain('PipelineInitialized');
-    expect(output).toContain('StageStarted');
+    const result = replayEvents('test-feat', { cwd: tmpDir, limit: 20 });
+    const types = (result.events || []).map((e: { type: string }) => e.type);
+    expect(types).toContain('PipelineInitialized');
+    expect(types).toContain('StageStarted');
   });
 
   it('append-event.sh rejects invalid event type', () => {

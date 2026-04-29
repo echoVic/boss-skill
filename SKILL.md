@@ -43,7 +43,7 @@ user-invocable: true
 | `--skip-deploy` | 跳过部署阶段（只开发不部署） |
 | `--quick` | 跳过所有确认节点，全自动执行 |
 | `--template` | 初始化项目级模板目录（`.boss/templates/`）并暂停流水线，供用户先修改模板 |
-| `--continue-from <1-4>` | 从指定阶段继续，跳过已完成阶段（需 `.boss/<feature>/` 产物已存在） |
+| `--continue-from <artifact-name>` | 从指定产物继续，标记该产物及其上游为已完成（如 `--continue-from prd.md`） |
 | `--hitl-level <level>` | 人机协作级别：`auto`（仅关键节点，默认）/ `interactive`（所有决策）/ `off`（等同 --quick） |
 | `--roles <preset>` | 角色预设：`full`（全部 9 个，默认）/ `core`（PM、Architect、Dev、QA） |
 
@@ -127,12 +127,13 @@ Copy this checklist and check off items as you complete them:
     - 对同一阶段的就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）
     - 不同阶段的就绪产物也可并行（DAG 保证依赖已满足）
     - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`
+    - 🧠 **注入 Memory 上下文**：调用 `runtime/cli/query-memory.js <feature> --agent <agent-name> --json`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
   - [ ] **D.6 标记产物完成**：调用 `runtime/cli/update-stage.js <feature> <N> completed --artifact <name>` 记录产物（当阶段内所有产物都完成时标记阶段 completed）
-  - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `runtime/cli/check-stage.js <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `scripts/harness/retry-agent.sh <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `scripts/harness/retry-stage.sh <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
+  - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `runtime/cli/check-stage.js <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `runtime/cli/retry-agent.js <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `runtime/cli/retry-stage.js <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
   - [ ] **D.7a 🔄 反馈循环**：若 Agent 报告 `REVISION_NEEDED`（仅 Tech Lead / QA 可发起）：
-    1. 调用 `scripts/harness/record-feedback.sh <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
+    1. 调用 `runtime/cli/record-feedback.js <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
     2. 若返回错误（轮次已达上限），暂停并报告用户
     3. 重新派发目标 Agent 修订上游产物（将修订原因作为额外上下文传入）
     4. 修订完成后，重新派发 Critic Agent 验证
@@ -149,6 +150,7 @@ Copy this checklist and check off items as you complete them:
     - 扫描 `harness/plugins/` 中 type=gate 的插件，依次执行
     - 门禁失败时修复后重新执行门禁
   - [ ] **D.10 回到 D.1**：重新查询就绪产物，直到 DAG 中所有非跳过产物都已完成
+  - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `runtime/cli/extract-memory.js <feature>` 提取本次流水线的关键决策和经验，写入全局记忆库供后续 feature 参考。
 
 - [ ] **收尾**
   - [ ] F.1 📊 调用 `runtime/cli/generate-summary.js <feature>` 生成最终流水线报告

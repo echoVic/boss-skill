@@ -11,7 +11,7 @@ import {
   type RuntimeEvent,
   type StageState
 } from '../../projectors/materialize-state.js';
-import { getPackStateParameters, resolvePipelinePack, type PipelinePackStateParameters } from './pack-runtime.js';
+import { getPackStateParameters, resolvePipelinePack, type PipelinePackConfig, type PipelinePackStateParameters } from './pack-runtime.js';
 import { registerPlugins as registerPluginsRuntime } from './plugin-runtime.js';
 import { emitProgress } from '../../../scripts/lib/progress-emitter.js';
 
@@ -490,6 +490,50 @@ function refreshMemory(feature: string, cwd: string): void {
   }
 }
 
+export function getArtifactVersion(
+  feature: string,
+  artifactName: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): number {
+  ensureFeatureName(feature);
+  const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+  if (!fs.existsSync(eventsFile)) return 0;
+  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
+  if (!raw) return 0;
+  return raw.split('\n').filter(Boolean)
+    .map(line => JSON.parse(line) as RuntimeEvent)
+    .filter(e => e.type === EVENT_TYPES.ARTIFACT_RECORDED && e.data.artifact === artifactName)
+    .length;
+}
+
+export function collectCompletedArtifactsVersioned(
+  feature: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): Map<string, number> {
+  ensureFeatureName(feature);
+  const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+  if (!fs.existsSync(eventsFile)) return new Map();
+  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
+  if (!raw) return new Map();
+  const map = new Map<string, number>();
+  for (const line of raw.split('\n').filter(Boolean)) {
+    const event = JSON.parse(line) as RuntimeEvent;
+    if (event.type === EVENT_TYPES.ARTIFACT_RECORDED) {
+      const name = String(event.data.artifact);
+      map.set(name, (map.get(name) ?? 0) + 1);
+    }
+  }
+  return map;
+}
+
+function backupArtifactVersion(cwd: string, feature: string, artifactName: string, version: number): void {
+  const artifactPath = path.join(cwd, '.boss', feature, artifactName);
+  if (!fs.existsSync(artifactPath)) return;
+  const versionsDir = path.join(cwd, '.boss', feature, '.versions');
+  fs.mkdirSync(versionsDir, { recursive: true });
+  fs.copyFileSync(artifactPath, path.join(versionsDir, `${artifactName}.v${version}`));
+}
+
 export function recordArtifact(
   feature: string,
   artifact: string,
@@ -515,15 +559,162 @@ export function recordArtifact(
     throw new Error(`未找到事件文件: ${path.relative(cwd, eventsFile)}`);
   }
 
+  const currentVersion = getArtifactVersion(feature, artifact, { cwd });
+  const newVersion = currentVersion + 1;
+  if (currentVersion >= 1) {
+    backupArtifactVersion(cwd, feature, artifact, currentVersion);
+  }
+
   const now = new Date().toISOString();
   appendEvent(eventsFile, {
     type: EVENT_TYPES.ARTIFACT_RECORDED,
     timestamp: now,
     data: {
       artifact,
-      stage: stageNumber
+      stage: stageNumber,
+      version: newVersion
     }
   });
+
+  const { state } = materializeState(feature, cwd);
+  refreshMemory(feature, cwd);
+  return state as PipelineExecutionState;
+}
+
+export function skipUpTo(
+  feature: string,
+  artifactName: string,
+  { cwd = process.cwd(), dagPath }: { cwd?: string; dagPath?: string } = {}
+): string[] {
+  ensureFeatureName(feature);
+  if (!artifactName) throw new Error('缺少 artifact 参数');
+  const { dag } = loadDagForFeature(cwd, feature, dagPath);
+  const artifacts = dag.artifacts || {};
+  if (!artifacts[artifactName]) {
+    throw new Error(`DAG 中未定义产物: ${artifactName}`);
+  }
+
+  // BFS: collect artifactName + all transitive inputs
+  const toSkip = new Set<string>();
+  const queue = [artifactName];
+  while (queue.length > 0) {
+    const current = queue.pop()!;
+    if (toSkip.has(current)) continue;
+    toSkip.add(current);
+    const def = artifacts[current];
+    if (def && Array.isArray(def.inputs)) {
+      for (const input of def.inputs) {
+        if (!toSkip.has(input)) queue.push(input);
+      }
+    }
+  }
+
+  // Read current completed set to avoid duplicate events
+  const execution = readExecutionView(cwd, feature);
+  const completed = collectCompletedArtifacts(execution);
+  const skipped: string[] = [];
+  const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+
+  for (const name of toSkip) {
+    const def = artifacts[name];
+    if (!def) continue;
+    // Filter out gate entries
+    if (def.type === 'gate') continue;
+    skipped.push(name);
+    if (completed.has(name)) continue;
+    const stage = typeof def.stage === 'number' ? def.stage : 1;
+    // stage-0 artifacts (like design-brief) cannot be recorded via events
+    if (stage < 1) continue;
+    appendEvent(eventsFile, {
+      type: EVENT_TYPES.ARTIFACT_RECORDED,
+      timestamp: new Date().toISOString(),
+      data: { artifact: name, stage, version: 1 }
+    });
+  }
+
+  materializeState(feature, cwd);
+  refreshMemory(feature, cwd);
+  return skipped;
+}
+
+export function recordFeedback(
+  feature: string,
+  opts: {
+    from: string; to: string; artifact: string; reason: string;
+    priority?: string; cwd?: string;
+  }
+): PipelineExecutionState {
+  const { cwd = process.cwd(), from, to, artifact, reason, priority = 'recommended' } = opts;
+  ensureFeatureName(feature);
+  if (!from) throw new Error('缺少 from 参数');
+  if (!to) throw new Error('缺少 to 参数');
+  if (!artifact) throw new Error('缺少 artifact 参数');
+  if (!reason) throw new Error('缺少 reason 参数');
+
+  const execution = readExecutionView(cwd, feature);
+  const feedbackLoops = (execution as any).feedbackLoops || { currentRound: 0, maxRounds: 2 };
+  const { currentRound = 0, maxRounds = 2 } = feedbackLoops;
+  if (currentRound >= maxRounds) {
+    throw new Error(`反馈循环已达上限（${currentRound}/${maxRounds}），不再接受修订请求`);
+  }
+
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.REVISION_REQUESTED, {
+    from, to, artifact, reason, priority
+  });
+
+  const { state } = materializeState(feature, cwd);
+  refreshMemory(feature, cwd);
+  return state as PipelineExecutionState;
+}
+
+export function retryAgent(
+  feature: string,
+  stage: number | string,
+  agentName: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): PipelineExecutionState {
+  ensureFeatureName(feature);
+  if (!agentName) throw new Error('缺少 agent 参数');
+  const stageNum = Number(stage);
+
+  const { state: cur } = materializeState(feature, cwd);
+  const agentState = cur.stages?.[String(stageNum)]?.agents?.[agentName];
+  if (!agentState || agentState.status !== 'failed') {
+    throw new Error(`Agent ${agentName} 状态为 ${agentState?.status ?? 'unknown'}，只有 failed 状态可以重试`);
+  }
+  const maxRetries = agentState.maxRetries ?? 2;
+  if ((agentState.retryCount ?? 0) >= maxRetries) {
+    throw new Error(`Agent ${agentName} 已达最大重试次数（${agentState.retryCount}/${maxRetries}）`);
+  }
+
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.AGENT_RETRY_SCHEDULED, { agent: agentName, stage: stageNum });
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.AGENT_STARTED, { agent: agentName, stage: stageNum });
+
+  const { state } = materializeState(feature, cwd);
+  refreshMemory(feature, cwd);
+  return state as PipelineExecutionState;
+}
+
+export function retryStage(
+  feature: string,
+  stage: number | string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): PipelineExecutionState {
+  ensureFeatureName(feature);
+  const stageNum = Number(stage);
+
+  const { state: cur } = materializeState(feature, cwd);
+  const stageState = cur.stages?.[String(stageNum)];
+  if (!stageState || stageState.status !== 'failed') {
+    throw new Error(`阶段 ${stageNum} 状态为 ${stageState?.status ?? 'pending'}，只有 failed 状态可以重试`);
+  }
+  const maxRetries = stageState.maxRetries ?? 2;
+  if ((stageState.retryCount ?? 0) >= maxRetries) {
+    throw new Error(`阶段 ${stageNum} 已达最大重试次数（${stageState.retryCount}/${maxRetries}）`);
+  }
+
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.STAGE_RETRYING, { stage: stageNum });
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.STAGE_STARTED, { stage: stageNum });
 
   const { state } = materializeState(feature, cwd);
   refreshMemory(feature, cwd);
@@ -821,6 +1012,19 @@ function parseGateChecks(output: string): unknown[] {
     .filter(Boolean);
 }
 
+export function resolveGateConfig(
+  feature: string,
+  _gateName: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): { coverage: number } {
+  const defaults = { coverage: 70 };
+  try {
+    const execution = readExecutionView(cwd, feature);
+    const packConfig = (execution as any).parameters?.packConfig as PipelinePackConfig | undefined;
+    return { coverage: packConfig?.gateConfig?.coverage ?? defaults.coverage };
+  } catch { return defaults; }
+}
+
 export function evaluateGates(
   feature: string,
   gateName: string,
@@ -852,10 +1056,12 @@ export function evaluateGates(
     };
   }
 
+  const gateConfig = resolveGateConfig(feature, gateName, { cwd });
   const result = spawnSync('bash', [gateScript, feature], {
     cwd,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, GATE_COVERAGE_THRESHOLD: String(gateConfig.coverage) }
   });
 
   if (result.error) {
