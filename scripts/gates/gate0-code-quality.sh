@@ -86,5 +86,55 @@ else
     add_check "dependency-audit" true "跳过：无 package.json"
 fi
 
+# --- Secrets scan (core check; see harness/plugins/security-audit/ for enhanced version) ---
+gate_info "检查敏感信息泄露..."
+SECRETS_FOUND=0
+SECRET_PATTERNS=(
+    'AKIA[0-9A-Z]{16}'
+    '-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'
+    'ghp_[a-zA-Z0-9]{36}'
+    'sk-[a-zA-Z0-9]{48}'
+)
+
+for pattern in "${SECRET_PATTERNS[@]}"; do
+    if grep -rEl "$pattern" --include="*.ts" --include="*.js" --include="*.py" --include="*.go" --include="*.env" --include="*.yaml" --include="*.yml" . 2>/dev/null | grep -v node_modules | grep -v ".git" | head -5 | grep -q .; then
+        SECRETS_FOUND=$((SECRETS_FOUND + 1))
+    fi
+done
+
+if [[ "$SECRETS_FOUND" -gt 0 ]]; then
+    gate_fail "检测到 $SECRETS_FOUND 类潜在敏感信息泄露"
+    add_check "secrets-scan" false "$SECRETS_FOUND 类敏感信息模式"
+    ALL_PASSED=false
+else
+    gate_pass "未检测到敏感信息泄露"
+    add_check "secrets-scan" true
+fi
+
+# --- Unsafe code patterns (core check; see harness/plugins/security-audit/ for enhanced version) ---
+gate_info "检查不安全代码模式..."
+UNSAFE_FOUND=0
+
+if grep -rl "eval(" --include="*.js" --include="*.ts" . 2>/dev/null | grep -v node_modules | grep -v ".git" | head -3 | grep -q .; then
+    UNSAFE_FOUND=$((UNSAFE_FOUND + 1))
+fi
+
+if grep -rl "dangerouslySetInnerHTML" --include="*.jsx" --include="*.tsx" . 2>/dev/null | grep -v node_modules | head -3 | grep -q .; then
+    UNSAFE_FOUND=$((UNSAFE_FOUND + 1))
+fi
+
+if grep -rl 'innerHTML\s*=' --include="*.js" --include="*.ts" . 2>/dev/null | grep -v node_modules | grep -v ".git" | head -3 | grep -q .; then
+    UNSAFE_FOUND=$((UNSAFE_FOUND + 1))
+fi
+
+if [[ "$UNSAFE_FOUND" -gt 0 ]]; then
+    gate_fail "检测到 $UNSAFE_FOUND 类不安全代码模式"
+    add_check "unsafe-patterns" false "发现 $UNSAFE_FOUND 类不安全模式"
+    ALL_PASSED=false
+else
+    gate_pass "未检测到常见不安全代码模式"
+    add_check "unsafe-patterns" true
+fi
+
 echo "$CHECKS"
 [[ "$ALL_PASSED" == true ]] && exit 0 || exit 1

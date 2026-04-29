@@ -38,6 +38,18 @@
         ],
         "description": "Protect execution.json and validate stage status before artifact writes",
         "id": "pre:write:artifact-guard"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"pre:bash:dangerous-cmd-guard\" \"scripts/hooks/pre-tool-bash.js\" \"standard,strict\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Intercept dangerous shell commands (rm -rf, git push --force, DROP TABLE, etc.)",
+        "id": "pre:bash:dangerous-cmd-guard"
       }
     ],
     "PostToolUse": [

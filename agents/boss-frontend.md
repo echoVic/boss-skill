@@ -60,6 +60,21 @@ model: inherit
 4. **响应式**：确保移动端和桌面端适配
 5. **无障碍**：添加正确的 ARIA 属性
 
+## API 契约管理
+
+### 契约来源
+
+实现前端 API 调用前，**必须**阅读以下内容：
+1. **architecture.md §5（API 设计）** — 获取 API 端点列表、请求/响应格式、认证方式
+2. **后端实现的共享类型**（如有）— 复用后端导出的请求/响应类型定义
+
+### 契约遵守
+
+1. **API 调用层**：创建统一的 API 服务层（如 `services/api/`），封装所有后端调用
+2. **类型对齐**：API 请求/响应类型必须与 architecture.md §5 定义一致
+3. **错误处理**：按 architecture.md 定义的错误响应格式统一处理 API 错误
+4. **Mock 策略**：在后端未就绪时，基于 architecture.md §5 的响应格式创建 Mock 数据进行开发
+
 ## 代码规范
 
 > 按 `agents/shared/agent-protocol.md` 的「技术适配协议」执行：已有项目探索现有模式，新项目读取 architecture.md 技术决策。

@@ -4,219 +4,378 @@
 
 BMAD（Breakthrough Method of Agile AI-Driven Development）是一种突破性的敏捷 AI 驱动开发方法论，专为人机协作设计，通过专业化的 AI Agent 团队完成完整的软件开发生命周期。
 
+**v3.x 核心特性**：
+- 事件溯源（Event Sourcing）驱动的状态管理
+- DAG 依赖系统控制产物流转
+- 三层质量门禁（Quality Gates）
+- Pipeline Pack 自动适配项目类型
+- 可扩展的插件系统
+- Claude Code Hooks 生命周期集成
+
 ---
 
 ## 核心理念
 
 ### 1. 专业化分工
 
-BMAD 的核心是将软件开发流程分解为专业化角色，每个角色由专门的 AI Agent 承担：
+BMAD 将软件开发流程分解为 9 个专业化角色，每个角色由专门的 AI Agent 承担：
 
-| 角色 | 职责 | 输出产物 |
-|------|------|----------|
-| 产品经理 (PM) | 需求分析、PRD 编写 | PRD 文档 |
-| UI/UX 设计师 | 界面设计、用户体验 | UI 规范文档 |
-| 系统架构师 | 技术架构、选型决策 | 架构文档 |
-| 技术负责人 | 故事分解、风险评估 | 用户故事 |
-| Scrum Master | 任务细化、开发规划 | 开发任务 |
-| 开发者 | 代码实现 | 源代码 |
-| QA 工程师 | 测试验证 | QA 报告 |
-| DevOps | 部署运维 | 部署报告 |
+| 角色 | Agent 文件 | 职责 | 输出产物 |
+|------|-----------|------|----------|
+| 产品经理 (PM) | `boss-pm.md` | 需求分析、PRD 编写 | `prd.md` |
+| 系统架构师 | `boss-architect.md` | 技术架构、选型决策、API 契约 | `architecture.md` |
+| UI/UX 设计师 | `boss-ui-designer.md` | 界面设计、用户体验 | `ui-spec.md`（可选） |
+| 技术负责人 | `boss-tech-lead.md` | 技术评审、风险评估 | `tech-review.md` |
+| Scrum Master | `boss-scrum-master.md` | 任务拆解、开发规划 | `tasks.md` |
+| 前端开发 | `boss-frontend.md` | 前端代码实现 | 源代码 |
+| 后端开发 | `boss-backend.md` | 后端代码实现 | 源代码 |
+| QA 工程师 | `boss-qa.md` | 测试验证 | `qa-report.md` |
+| DevOps | `boss-devops.md` | 部署运维 | `deploy-report.md` |
 
-### 2. 产物驱动
+### 2. 产物驱动（DAG）
 
-每个阶段产出明确的文档产物，作为下一阶段的输入：
+产物之间的依赖关系由 `harness/artifact-dag.json` 定义为有向无环图（DAG），而非简单线性流：
 
 ```
-用户需求
+design-brief (Stage 0, 可选)
     ↓
-PRD → Architecture → UI Spec
+┌───────────────────────────────────┐
+│  prd.md ← architecture.md ← ui-spec.md  │  Stage 1（可并行）
+└───────────────────────────────────┘
     ↓
-Stories → Tasks
+tech-review.md → tasks.md                    Stage 2（串行）
     ↓
-Code → QA Report
+code ← qa-report.md                          Stage 3（code 完成后 QA）
     ↓
-Deploy Report + 可访问产物
+deploy-report.md                              Stage 4
 ```
+
+**DAG 规则**：
+- 每个产物声明其 `inputs`（依赖）和 `stage`
+- 只有当所有 inputs 的产物状态为 `done` 时，该产物才进入 `ready` 状态
+- `qa-report.md` 依赖 `code` + `prd.md`（QA 需要对照 PRD 验收标准）
 
 ### 3. 全自动流水线
 
 区别于传统的分步确认模式，Boss Mode 采用全自动流水线：
 - 一次性完成从需求到部署的完整流程
-- 无需中间人工确认
+- 由事件溯源系统追踪每一步状态
+- 质量门禁在阶段间自动执行
 - 最终交付可运行、可访问的产物
 
 ---
 
-## 四阶段工作流
+## 五阶段工作流
 
-### 阶段 1：规划（Planning）
+### Stage 0：准备（可选）
+
+**产物**：`design-brief`（设计摘要）
+**说明**：用户可提供初始设计简介，作为后续 Agent 的参考输入。跳过时直接进入 Stage 1。
+
+### Stage 1：规划（Planning）
 
 **目标**：将用户想法转化为可执行规格
 
 **参与 Agent**：
-- PM Agent → 创建 PRD
-- Architect Agent → 设计架构
-- UI Designer Agent → 创建 UI 规范
+- PM Agent → 创建 `prd.md`
+- Architect Agent → 设计 `architecture.md`（包含 API 契约定义）
+- UI Designer Agent → 创建 `ui-spec.md`（可选，`skipUI` 时跳过）
 
-**产物**：
-- `.boss/<feature>/prd.md`
-- `.boss/<feature>/architecture.md`
-- `.boss/<feature>/ui-spec.md`
+**并行执行**：三个 Agent 可以并行工作
 
-**并行执行**：三个 Agent 可以并行工作，提高效率
+**质量门禁**：Stage 1 完成后执行 Gate 0（代码质量基线）
 
-### 阶段 2：拆解（Decomposition）
+### Stage 2：拆解（Decomposition）
 
 **目标**：将规格转化为可实施的开发计划
 
 **参与 Agent**：
-- Tech Lead Agent → 分解用户故事
-- Scrum Master Agent → 创建详细任务
+- Tech Lead Agent → 技术评审，产出 `tech-review.md`
+- Scrum Master Agent → 创建详细任务 `tasks.md`
 
-**产物**：
-- `.boss/<feature>/stories.md`
-- `.boss/<feature>/tasks.md`
+**串行执行**：Tech Lead 评审完成后，Scrum Master 才能拆解任务
 
-**串行执行**：故事分解完成后才能创建详细任务
+**Tech Lead 职责**（非故事分解）：
+- 评审架构设计的合理性
+- 识别技术风险和依赖
+- 可发起 `REVISION_NEEDED` 请求架构师修订
 
-### 阶段 3：开发（Development）
+### Stage 3：开发（Development）
 
 **目标**：实现代码并持续验证
 
 **参与 Agent**：
-- Developer Agent → 实现代码
-- QA Agent → 持续验证
+- Frontend Agent + Backend Agent → 并行实现代码
+- QA Agent → 对照 PRD 验收标准验证
 
 **工作模式**：
-1. 按任务顺序实现代码
-2. 每完成几个任务，QA 进行验证
+1. 按任务顺序实现代码（前后端并行）
+2. 代码完成后 QA 进行验证
 3. 发现问题及时修复
-4. 循环直到所有任务完成
 
-### 阶段 4：部署（Deployment）
+**质量门禁**：Gate 1（测试门禁）、Gate 2（性能门禁）
+
+### Stage 4：部署（Deployment）
 
 **目标**：部署应用并生成报告
 
 **参与 Agent**：
-- QA Agent → 全面测试验证
 - DevOps Agent → 部署应用
 
 **产物**：
-- `.boss/<feature>/qa-report.md`
-- `.boss/<feature>/deploy-report.md`
-- **可访问的 URL**
+- `deploy-report.md`
+- 可访问的 URL
 
 ---
 
-## Agent 详解
+## 事件溯源系统
 
-### PM Agent（产品经理）
+### 核心架构
 
-**核心能力**：
-- 需求分析与挖掘
-- 用户画像创建
-- PRD 文档编写
-- 优先级排序
+Boss Mode 采用 **Event Sourcing + CQRS** 模式管理流水线状态：
 
-**输出格式**：EARS (Easy Approach to Requirements Syntax)
-- 通用需求：「系统应该...」
-- 事件驱动：「当 [触发条件] 时，系统应该...」
-- 状态驱动：「在 [状态] 下，系统应该...」
+```
+命令（Agent 动作）
+    ↓
+追加事件 → events.jsonl（append-only，唯一事实源）
+    ↓
+Projector 投影 → execution.json（物化视图，可随时从事件重建）
+```
 
-### Architect Agent（架构师）
+### 事件类型
 
-**核心能力**：
-- 系统架构设计
-- 技术选型决策
-- 数据模型设计
-- API 设计
+| 类别 | 事件 | 说明 |
+|------|------|------|
+| Pipeline | `PipelineInitialized` | 流水线创建 |
+| Pipeline | `PackApplied` | Pipeline Pack 应用 |
+| Stage | `StageStarted` / `StageCompleted` / `StageFailed` | 阶段生命周期 |
+| Stage | `StageRetrying` / `StageSkipped` | 重试与跳过 |
+| Artifact | `ArtifactRecorded` | 产物写入完成 |
+| Gate | `GateEvaluated` | 门禁评估结果 |
+| Agent | `AgentStarted` / `AgentCompleted` / `AgentFailed` | Agent 执行追踪 |
+| Agent | `AgentRetryScheduled` | Agent 重试调度 |
+| Feedback | `RevisionRequested` | 修订请求（如 Tech Lead 要求架构师修改） |
+| Plugin | `PluginDiscovered` / `PluginActivated` / `PluginHookExecuted` | 插件生命周期 |
 
-**决策维度**：
-- 可扩展性
-- 性能
-- 安全性
-- 可维护性
+### 状态机
 
-### UI Designer Agent（UI 设计师）
+```
+Pipeline: initialized → running → completed | failed
+Stage:    pending → running → completed | failed | retrying | skipped
+Agent:    pending → running → completed | failed
+```
 
-**核心能力**：
-- 用户流程设计
-- 界面规范定义
-- 设计系统创建
-- 无障碍设计
+### 运行时数据结构
 
-**输出内容**：
-- 用户流程图（Mermaid）
-- 设计令牌（颜色、排版、间距）
-- 组件规格
-- 响应式断点
+```
+.boss/<feature>/.meta/
+├── execution.json      # 物化状态（CQRS read model）
+├── events.jsonl        # 事件日志（append-only truth source）
+├── agent-log.jsonl     # Agent 执行记录
+└── notifications.jsonl # 通知日志
+```
 
-### Tech Lead Agent（技术负责人）
+### Projector
 
-**核心能力**：
-- 需求到故事的转化
-- 复杂度评估
-- 依赖分析
-- 风险识别
+`runtime/projectors/materialize-state.js` 从 `events.jsonl` 重建 `execution.json`：
+- 逐条读取事件 → apply 到状态
+- 计算派生指标：totalDuration, stageTimings, gatePassRate, retryTotal, agentSuccessRate
+- 支持随时从事件完全重建状态
 
-**故事格式**：
-- 作为 [用户类型]
-- 我想要 [目标行为]
-- 以便 [预期价值]
+---
 
-### Scrum Master Agent（Scrum Master）
+## DAG 依赖系统
 
-**核心能力**：
-- 故事到任务的分解
-- 文件级变更规划
-- 测试用例定义
-- 实现步骤指导
+### 定义文件
 
-**任务粒度**：每个任务应该能在 1-2 个工具调用内完成
+`harness/artifact-dag.json` 定义了产物依赖图：
 
-### Developer Agent（开发者）
+```json
+{
+  "artifacts": {
+    "prd.md": {
+      "stage": 1,
+      "agent": "boss-pm",
+      "inputs": ["design-brief"],
+      "template": "templates/prd.md.template"
+    },
+    "qa-report.md": {
+      "stage": 3,
+      "agent": "boss-qa",
+      "inputs": ["code", "prd.md"],
+      "template": "templates/qa-report.md.template"
+    }
+  }
+}
+```
 
-**核心能力**：
-- 代码实现
-- 测试编写
-- 代码规范遵循
-- 增量开发
+### DAG 规则
 
-**工作原则**：
-- 先读后写
-- 小步快跑
-- 测试覆盖
-- 类型安全
+1. **就绪判断**：产物的所有 `inputs` 状态为 `done` 时，该产物进入 `ready`
+2. **可选依赖**：标记为 `optional: true` 的产物（如 `design-brief`、`ui-spec.md`）跳过时不阻塞下游
+3. **并行检测**：同一 stage 内无互相依赖的产物可并行执行
+4. **模板绑定**：每个产物关联 `templates/` 下的模板文件
 
-### QA Agent（QA 工程师）
+### 相关脚本
 
-**核心能力**：
-- 测试执行
-- 验收验证
-- Bug 发现与记录
-- 边界测试
+| 脚本 | 功能 |
+|------|------|
+| `scripts/harness/check-artifact.sh` | 检查产物是否 ready |
+| `scripts/harness/check-stage.sh` | 检查阶段状态 |
+| `scripts/harness/append-event.sh` | 记录 ArtifactRecorded 事件 |
 
-**测试类型**：
-- 单元测试
-- 集成测试
-- 端到端测试
-- 边界情况测试
+---
 
-### DevOps Agent（DevOps 工程师）
+## 质量门禁（Quality Gates）
 
-**核心能力**：
-- 环境配置
-- 依赖安装
-- 应用部署
-- 健康检查
+### 三层门禁体系
 
-**支持的项目类型**：
-- React/Vue/Next.js
-- Node.js API
-- Python Flask/Django
-- 静态 HTML
-- Docker
+| 门禁 | 文件 | 执行时机 | 检查内容 |
+|------|------|----------|----------|
+| Gate 0 | `gate0-code-quality.sh` | Stage 1 后 | TypeScript 编译、Lint、npm audit、敏感信息扫描、不安全代码模式 |
+| Gate 1 | `gate1-testing.sh` | Stage 3 后 | 单元测试、覆盖率（≥70%）、E2E 测试 |
+| Gate 2 | `gate2-performance.sh` | Stage 3 后 | Lighthouse 性能分数（≥80）、API P99 延迟（<500ms） |
+
+### Gate 0 默认安全检查
+
+Gate 0 内置两类安全检查（无需额外插件）：
+
+1. **敏感信息扫描**（secrets-scan）：检测 AWS Key、Private Key、GitHub Token、OpenAI Key 等
+2. **不安全代码模式**（unsafe-patterns）：检测 `eval()`、`dangerouslySetInnerHTML`、`innerHTML =` 等
+
+### 门禁输出格式
+
+```json
+{
+  "checks": [
+    { "name": "typescript-compile", "status": "pass" },
+    { "name": "secrets-scan", "status": "fail", "detail": "发现敏感信息" }
+  ]
+}
+```
+
+### 统一入口
+
+`scripts/gates/gate-runner.sh` 是门禁统一入口：
+- 委托给 `runtime/cli/evaluate-gates.js`
+- 支持内置 gate 和插件 gate
+- exit 0 = 通过，exit 1 = 不通过
+
+---
+
+## Pipeline Pack
+
+### 概念
+
+Pipeline Pack 是预定义的流水线配置，指定启用哪些 Agent、Stage、Gate，以及跳过哪些环节。系统根据项目特征自动检测适用的 Pack。
+
+### 内置 Pack
+
+| Pack | Agent 数量 | 特点 | 自动检测条件 |
+|------|-----------|------|-------------|
+| **default** | 9（全部） | BMAD 全流程 | 默认 |
+| **core** | 5 | 轻量核心，跳过 UI/评审/拆解 | — |
+| **api-only** | 7（无 Frontend, UI） | 纯 API 项目 | `package.json` 存在但无 `app/` 或 `pages/` 目录 |
+| **solana-contract** | 5 | Anchor 框架 Solana 合约 | 特定依赖 |
+
+### Pack 配置结构
+
+```json
+{
+  "name": "core",
+  "agents": ["boss-pm", "boss-architect", "boss-frontend", "boss-backend", "boss-qa"],
+  "stages": [1, 3, 4],
+  "gates": ["gate0", "gate1"],
+  "flags": { "skipUI": true, "skipReview": true }
+}
+```
+
+### 自动检测
+
+`scripts/harness/detect-pack.sh` 根据以下条件自动选择 Pack：
+- `when.fileExists` — 文件存在
+- `when.noFileExists` — 文件不存在
+- `when.packageJsonHas` — package.json 含特定字段
+- `priority` — 数值越高优先级越高
+
+---
+
+## 插件系统
+
+### 插件类型
+
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| `gate` | 自定义门禁 | `security-audit`（安全审计） |
+| `agent` | 自定义 Agent | — |
+| `pipeline-pack` | 自定义 Pack | — |
+| `reporter` | 自定义报告生成 | — |
+
+### 插件目录结构
+
+```
+harness/plugins/<plugin-name>/
+├── plugin.json    # 插件声明（类型、触发阶段、Schema 定义）
+├── gate.sh        # 门禁脚本（gate 类型）
+└── ...
+```
+
+### 插件 Schema
+
+`harness/plugin-schema.json` 定义插件格式：
+- Hook 阶段：`pre-stage, post-stage, pre-gate, gate, post-gate, report`
+- 支持条件激活和优先级
+
+### 插件事件
+
+插件生命周期产生事件：
+- `PluginDiscovered` — 发现插件
+- `PluginActivated` — 激活插件
+- `PluginHookExecuted` — 插件 Hook 执行成功
+- `PluginHookFailed` — 插件 Hook 执行失败
+
+---
+
+## Hooks 生命周期
+
+### 概念
+
+Boss Mode 通过 Claude Code Hooks 机制在关键时点注入行为，实现流水线自动化。所有 Hook 定义在 `hooks/hooks.json`。
+
+### Hook 事件类型
+
+| 事件 | 触发时机 | 用途 |
+|------|----------|------|
+| `SessionStart` (startup) | 新会话启动 | 加载 pipeline 上下文 |
+| `SessionStart` (resume) | 会话恢复 | 列出未完成 pipeline |
+| `PreToolUse` (Write/Edit) | 写文件前 | 产物守卫：保护 execution.json、验证 stage 状态 |
+| `PreToolUse` (Bash) | 执行命令前 | 危险命令拦截（rm -rf, git push --force 等） |
+| `PostToolUse` (Write) | 写文件后 | 自动追踪产物到 execution.json |
+| `PostToolUse` (Bash) | 执行命令后 | 捕获 gate/harness/test 上下文 |
+| `SubagentStart` | 子 Agent 启动 | 注入 pipeline stage 上下文 |
+| `SubagentStop` | 子 Agent 结束 | 记录执行到 agent-log.jsonl |
+| `Stop` | 会话即将结束 | 阻止 pipeline 阶段运行时提前退出 |
+| `Notification` | 通知事件 | 异步记录到 notifications.jsonl |
+| `SessionEnd` | 会话结束 | 保存状态并生成摘要 |
+
+### 危险命令拦截
+
+`PreToolUse(Bash)` Hook 拦截以下模式：
+
+| 模式 | 风险 |
+|------|------|
+| `rm -rf` / `rm -r` | 不可恢复数据丢失 |
+| `git push --force` | 覆盖远程历史 |
+| `git reset --hard` | 丢弃未提交更改 |
+| `DROP TABLE/DATABASE` | 删除数据库对象 |
+| `TRUNCATE TABLE` | 清空表数据 |
+| `chmod 777` | 过于宽泛的权限 |
+| `mkfs` | 格式化磁盘 |
+| `dd of=/dev/` | 写入设备文件 |
+
+### Hook 执行机制
+
+所有 Hook 通过 `scripts/hooks/run-with-flags.js` 中间层执行，路径使用 `${CLAUDE_PLUGIN_ROOT}` 前缀（支持插件模式）。
 
 ---
 
@@ -224,25 +383,71 @@ Deploy Report + 可访问产物
 
 ### 目录结构
 
-所有产物保存在项目根目录的 `.boss/` 下：
-
 ```
 .boss/
 ├── <feature-name>/
 │   ├── prd.md              # 产品需求文档
-│   ├── architecture.md     # 系统架构文档
-│   ├── ui-spec.md          # UI/UX 规范（如需要）
-│   ├── stories.md          # 用户故事
+│   ├── architecture.md     # 系统架构文档（含 API 契约）
+│   ├── ui-spec.md          # UI/UX 规范（可选）
+│   ├── tech-review.md      # 技术评审报告
 │   ├── tasks.md            # 开发任务
 │   ├── qa-report.md        # QA 测试报告
-│   └── deploy-report.md    # 部署报告
+│   ├── deploy-report.md    # 部署报告
+│   └── .meta/
+│       ├── execution.json      # 物化状态
+│       ├── events.jsonl        # 事件日志
+│       ├── agent-log.jsonl     # Agent 执行记录
+│       └── notifications.jsonl # 通知日志
 ```
 
-### 模板使用
+### 模板
 
-每种产物都有对应的模板文件：
-- 位置：`~/.blade/skills/boss/templates/`
-- 格式：Markdown + 占位符
+每种产物都有对应的模板文件，位于 `templates/` 目录：
+
+| 模板 | 产物 |
+|------|------|
+| `templates/prd.md.template` | 产品需求文档 |
+| `templates/architecture.md.template` | 架构设计文档 |
+| `templates/ui-spec.md.template` | UI/UX 规范 |
+| `templates/tech-review.md.template` | 技术评审报告 |
+| `templates/tasks.md.template` | 任务拆解 |
+| `templates/qa-report.md.template` | QA 测试报告 |
+| `templates/deploy-report.md.template` | 部署报告 |
+
+---
+
+## Agent 协作协议
+
+### 状态报告
+
+每个 Agent 任务完成后必须输出结构化状态块：
+
+```
+[BOSS_STATUS]
+status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED
+summary: 一句话总结执行结果
+concerns: [仅 DONE_WITH_CONCERNS 时填写]
+missing: [仅 NEEDS_CONTEXT 时填写]
+blocker: [仅 BLOCKED 时填写]
+revision_target: [仅 REVISION_NEEDED 时填写，如 architecture.md]
+revision_reason: [仅 REVISION_NEEDED 时填写]
+[/BOSS_STATUS]
+```
+
+### 修订循环
+
+当 Tech Lead 发现架构问题时：
+1. Tech Lead 输出 `REVISION_NEEDED`，指明 `revision_target` 和 `revision_reason`
+2. 系统生成 `RevisionRequested` 事件
+3. Architect 接收修订请求，针对性修改
+4. 修订最多 2 轮，避免无限循环
+
+### API 契约管理
+
+- Architect 在 `architecture.md` §5 定义 API 契约
+- Backend Agent 严格实现契约，偏差需记录
+- Frontend Agent 基于契约实现统一 API 服务层
+- 类型定义由后端导出，前端对齐
 
 ---
 
@@ -256,31 +461,18 @@ Deploy Report + 可访问产物
 - 核心场景
 - 技术约束（如有）
 
-示例：
-```
-我想要创建一个任务管理应用，用户可以：
-- 创建、编辑、删除任务
-- 设置任务截止日期
-- 按优先级排序
-- 标记任务完成
+### 2. Pipeline Pack 选择
 
-技术要求：使用 React + TypeScript，数据存储在 LocalStorage
-```
+- 全功能项目 → `default`
+- 纯 API 无前端 → `api-only`
+- 快速原型 → `core`（跳过 UI 和评审）
+- 系统会自动检测，也可手动指定
 
-### 2. 迭代优化
+### 3. 质量门禁
 
-如果结果不满意，可以：
-- 指定修改某个阶段的产物
-- 提供更详细的需求
-- 调整技术约束
-
-### 3. 项目类型
-
-Boss Mode 最适合：
-- 新功能开发
-- 小型完整项目
-- 原型验证
-- 学习项目
+- Gate 0 是基线，所有 Pack 都包含
+- 如需额外安全审计，使用 `security-audit` 插件
+- 门禁失败时 Stage 标记为 `failed`，可重试
 
 ---
 

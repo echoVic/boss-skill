@@ -85,6 +85,15 @@ describe('artifact-dag', () => {
     expect(dag.artifacts['architecture.md']?.inputs).toEqual(['prd.md']);
   });
 
+  it('qa-report.md depends on both code and prd.md', () => {
+    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
+      artifacts: Record<string, { inputs?: string[] }>;
+    };
+
+    expect(dag.artifacts['qa-report.md']?.inputs).toContain('code');
+    expect(dag.artifacts['qa-report.md']?.inputs).toContain('prd.md');
+  });
+
   it('detects no circular dependencies in default DAG', () => {
     const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
       artifacts: Record<string, { inputs?: string[] }>;

@@ -227,5 +227,23 @@ describe('boss-utils', () => {
       // and ui-spec.md is optional
       expect(names).toContain('tech-review.md');
     });
+
+    it('does not mark qa-report.md as ready when prd.md is missing', () => {
+      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
+      const dag = bossUtils.loadArtifactDag(dagPath);
+      const execData = {
+        stages: {
+          '1': { artifacts: [] },
+          '2': { artifacts: [] },
+          '3': { artifacts: ['code'] },
+          '4': { artifacts: [] }
+        }
+      };
+
+      const ready = bossUtils.getReadyArtifacts(dag, execData, {});
+      const names = ready.map((item) => item.artifact);
+
+      expect(names).not.toContain('qa-report.md');
+    });
   });
 });

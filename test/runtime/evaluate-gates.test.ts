@@ -150,4 +150,12 @@ describe('evaluateGates', () => {
       fs.rmSync(repoPluginDir, { recursive: true, force: true });
     }
   });
+
+  it('gate0 includes secrets-scan and unsafe-patterns checks', () => {
+    const gate0Path = path.join(REPO_ROOT, 'scripts', 'gates', 'gate0-code-quality.sh');
+    const gate0Content = fs.readFileSync(gate0Path, 'utf8');
+
+    expect(gate0Content).toContain('secrets-scan');
+    expect(gate0Content).toContain('unsafe-patterns');
+  });
 });

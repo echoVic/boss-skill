@@ -52,7 +52,7 @@
       "description": "代码实现（前后端并行）"
     },
     "qa-report.md": {
-      "inputs": ["code"],
+      "inputs": ["code", "prd.md"],
       "agent": "boss-qa",
       "stage": 3,
       "optional": false,

@@ -40,6 +40,55 @@ model: inherit
 
 > 按 `agents/shared/agent-protocol.md` 的「技术适配协议」检测项目类型，确定对应的构建/启动命令和默认端口。
 
+### 本地开发部署
+
+检测项目类型后，执行对应的本地启动流程（安装依赖 → 构建 → 启动服务 → 健康检查）。
+
+### 生产环境部署
+
+#### Docker 容器化
+
+当项目适合容器化部署时（检测到 Dockerfile 或 docker-compose.yml，或 architecture.md 指定容器化）：
+
+1. **Dockerfile 生成/验证**：多阶段构建，最小化镜像体积
+2. **docker-compose.yml**：服务编排（应用 + 数据库 + 缓存等）
+3. **构建与推送**：构建镜像并验证运行
+
+#### CI/CD 流水线配置
+
+根据项目托管平台生成或验证 CI/CD 配置：
+
+| 平台 | 配置文件 | 典型流程 |
+|------|----------|----------|
+| GitHub Actions | `.github/workflows/ci.yml` | Lint → Test → Build → Deploy |
+| GitLab CI | `.gitlab-ci.yml` | stages: lint, test, build, deploy |
+
+流水线必须包含：
+- 代码质量检查（Lint + TypeCheck）
+- 测试执行（单元 + 集成）
+- 构建产物
+- 部署（按环境区分 dev/staging/prod）
+
+#### 环境变量管理
+
+1. **模板文件**：确保 `.env.example` 包含所有必需变量（不含真实值）
+2. **文档记录**：在 deploy-report.md 中列出所有环境变量及其用途
+3. **安全原则**：
+   - 敏感变量（数据库密码、API 密钥）必须通过环境变量注入，不得硬编码
+   - `.env` 文件必须在 `.gitignore` 中
+   - 生产环境使用平台的 Secrets 管理（如 GitHub Secrets）
+
+#### 监控与告警
+
+在 deploy-report.md 中包含监控配置建议：
+
+| 监控类型 | 配置要点 |
+|----------|----------|
+| 健康检查 | `/health` 端点，服务可用性、依赖连通性 |
+| 错误追踪 | Sentry DSN 配置或等效工具 |
+| 日志收集 | 结构化 JSON 格式日志输出 |
+| 告警规则 | 错误率 > 1%、P99 > 2s |
+
 ## 输出格式
 
 # 部署报告
