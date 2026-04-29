@@ -11,7 +11,7 @@ description: |
   - 已有 pipeline 正在运行时的重复启动
 
   Output: 完整项目代码 + PRD/架构/UI/测试/部署文档，写入 .boss/<feature>/ 目录
-version: 3.6.4
+version: 3.7.0
 license: MIT
 user-invocable: true
 ---
