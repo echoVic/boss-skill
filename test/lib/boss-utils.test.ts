@@ -204,5 +204,28 @@ describe('boss-utils', () => {
       expect(names).not.toContain('ui-spec.md');
       expect(names).toContain('architecture.md');
     });
+
+    it('collects artifacts from stages beyond 4', () => {
+      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
+      const dag = bossUtils.loadArtifactDag(dagPath);
+      const execData = {
+        stages: {
+          '1': { artifacts: ['prd.md'] },
+          '2': { artifacts: [] },
+          '3': { artifacts: [] },
+          '4': { artifacts: [] },
+          '5': { artifacts: ['architecture.md'] }
+        }
+      };
+
+      const ready = bossUtils.getReadyArtifacts(dag, execData, {});
+      const names = ready.map((item) => item.artifact);
+
+      // architecture.md is in stage 5's artifacts, so it should be considered completed
+      expect(names).not.toContain('architecture.md');
+      // its downstream (tech-review.md) should now be ready since architecture.md is done
+      // and ui-spec.md is optional
+      expect(names).toContain('tech-review.md');
+    });
   });
 });

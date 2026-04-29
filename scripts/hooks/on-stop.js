@@ -17,11 +17,11 @@ function run(rawInput) {
 
   const pendingStages = [];
   const stages = execData.stages || {};
-  for (let s = 1; s <= 4; s++) {
-    const stage = stages[String(s)] || {};
+  for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+    const stage = stages[sKey] || {};
     if (stage.status === 'running') {
       const sName = stage.name || 'unknown';
-      pendingStages.push(`Stage ${s} (${sName}) is still running`);
+      pendingStages.push(`Stage ${sKey} (${sName}) is still running`);
     }
   }
 

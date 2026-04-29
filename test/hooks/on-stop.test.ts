@@ -67,4 +67,27 @@ describe('on-stop hook', () => {
 
     expect(hook.run(JSON.stringify({ cwd: tmpDir }))).toBe('');
   });
+
+  it('detects running stage beyond stage 4', () => {
+    const execData = createExecData({
+      feature: 'extra-feat',
+      status: 'running',
+      stages: {
+        '1': { name: 'Planning', status: 'completed' },
+        '2': { name: 'Review', status: 'completed' },
+        '3': { name: 'Development', status: 'completed' },
+        '4': { name: 'Deployment', status: 'completed' },
+        '5': { name: 'PostDeploy', status: 'running' }
+      }
+    });
+    tmpDir = createTempBossDir('extra-feat', execData);
+
+    const parsed = JSON.parse(hook.run(JSON.stringify({ cwd: tmpDir }))) as {
+      decision: string;
+      reason: string;
+    };
+
+    expect(parsed.decision).toBe('block');
+    expect(parsed.reason).toContain('extra-feat');
+  });
 });

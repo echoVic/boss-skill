@@ -39,10 +39,10 @@ function run(rawInput) {
     if (status === 'running' || status === 'initialized' || status === 'failed') {
       let nextStage = 'done';
       const stages = data.stages || {};
-      for (let s = 1; s <= 4; s++) {
-        const sStatus = (stages[String(s)] || {}).status || 'unknown';
+      for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+        const sStatus = (stages[sKey] || {}).status || 'unknown';
         if (sStatus === 'pending' || sStatus === 'running' || sStatus === 'failed') {
-          nextStage = String(s);
+          nextStage = sKey;
           break;
         }
       }

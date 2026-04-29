@@ -39,9 +39,9 @@ function run(rawInput) {
     if (status === 'running' || status === 'completed' || status === 'failed') {
       const stages = data.stages || {};
       const stagesSummary = {};
-      for (let s = 1; s <= 4; s++) {
-        const stage = stages[String(s)] || {};
-        stagesSummary[String(s)] = {
+      for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+        const stage = stages[sKey] || {};
+        stagesSummary[sKey] = {
           name: stage.name || 'unknown',
           status: stage.status || 'unknown'
         };

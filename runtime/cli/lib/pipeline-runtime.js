@@ -117,6 +117,7 @@ function isArtifactSkipped(artifact, context) {
   const params = context.execution.parameters || {};
   if (artifact === 'ui-spec.md' && params.skipUI === true) return true;
   if (artifact === 'deploy-report.md' && params.skipDeploy === true) return true;
+  if ((artifact === 'tech-review.md' || artifact === 'tasks.md') && params.skipReview === true) return true;
   return false;
 }
 
@@ -634,7 +635,7 @@ function resolveGateStage(cwd, gateName) {
     const plugin = readJson(pluginJson);
     if (plugin && Array.isArray(plugin.stages) && plugin.stages.length > 0) {
       const stage = Number(plugin.stages[0]);
-      if (Number.isInteger(stage) && stage >= 1 && stage <= 4) return stage;
+      if (Number.isInteger(stage) && stage >= 1) return stage;
     }
   } catch {
     return 3;

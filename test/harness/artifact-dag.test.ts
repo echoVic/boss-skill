@@ -165,4 +165,20 @@ describe('artifact-dag', () => {
     expect(ready).not.toContain('ui-spec.md');
     expect(ready).toContain('architecture.md');
   });
+
+  it('skips tech-review.md and tasks.md when skipReview is true', () => {
+    const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      parameters: { skipUI: boolean; skipReview?: boolean };
+      stages: { '1': { artifacts: string[] } };
+    };
+    data.parameters.skipReview = true;
+    data.stages['1'].artifacts = ['prd.md', 'architecture.md'];
+    fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
+
+    const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
+    expect(ready).not.toContain('tech-review.md');
+    expect(ready).not.toContain('tasks.md');
+    expect(ready).toContain('code');
+  });
 });

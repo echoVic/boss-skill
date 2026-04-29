@@ -127,4 +127,27 @@ describe('session-start hook', () => {
 
     expect(parsed.hookSpecificOutput.additionalContext).toMatch(/1 plugin\(s\) registered/);
   });
+
+  it('includes stages beyond 4 in context output', () => {
+    const execData = createExecData({
+      feature: 'extended-feat',
+      status: 'running',
+      stages: {
+        '1': { name: 'Planning', status: 'completed', artifacts: [] },
+        '2': { name: 'Review', status: 'completed', artifacts: [] },
+        '3': { name: 'Development', status: 'completed', artifacts: [] },
+        '4': { name: 'Deployment', status: 'completed', artifacts: [] },
+        '5': { name: 'PostDeploy', status: 'running', artifacts: [] }
+      }
+    });
+    tmpDir = createTempBossDir('extended-feat', execData);
+
+    const result = run(JSON.stringify({ cwd: tmpDir }));
+    const parsed = JSON.parse(result) as {
+      hookSpecificOutput: { additionalContext: string };
+    };
+
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('Stage 5');
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('PostDeploy');
+  });
 });

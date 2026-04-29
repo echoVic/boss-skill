@@ -130,7 +130,7 @@ describe('evaluateGates', () => {
     const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'bad-stage-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 0\n', 'utf8');
-    fs.writeFileSync(path.join(pluginDir, 'plugin.json'), '{ "stages": [9] }\n', 'utf8');
+    fs.writeFileSync(path.join(pluginDir, 'plugin.json'), '{ "stages": [0] }\n', 'utf8');
     fs.chmodSync(path.join(pluginDir, 'gate.sh'), 0o755);
 
     const result = evaluateGates('test-feat', 'bad-stage-gate', { cwd: tmpDir });

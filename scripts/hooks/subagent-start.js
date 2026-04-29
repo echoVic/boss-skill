@@ -35,10 +35,10 @@ function run(rawInput) {
   let currentStage = '';
   let stageName = '';
   const stages = execData.stages || {};
-  for (let s = 1; s <= 4; s++) {
-    const stage = stages[String(s)] || {};
+  for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+    const stage = stages[sKey] || {};
     if (stage.status === 'running') {
-      currentStage = String(s);
+      currentStage = sKey;
       stageName = stage.name || 'unknown';
       break;
     }
@@ -66,7 +66,7 @@ function run(rawInput) {
   context += buildMemoryContext(active.feature, agentType, currentStage, cwd);
   context += '\n请在最终消息中附带固定状态块：';
   context += '\n[BOSS_STATUS]';
-  context += '\nstatus: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED';
+  context += '\nstatus: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED';
   context += '\nreason: <optional>';
   context += '\n[/BOSS_STATUS]';
 

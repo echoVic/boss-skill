@@ -20,11 +20,11 @@ function run(rawInput) {
       const pipelineStatus = summary.status || 'unknown';
       let stagesInfo = '';
       const stages = execData.stages || {};
-      for (let s = 1; s <= 4; s++) {
-        const stage = stages[String(s)] || {};
+      for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+        const stage = stages[sKey] || {};
         const sName = stage.name || 'unknown';
         const sStatus = stage.status || 'unknown';
-        stagesInfo += `  Stage ${s} (${sName}): ${sStatus}\n`;
+        stagesInfo += `  Stage ${sKey} (${sName}): ${sStatus}\n`;
       }
       context += `[Boss Harness] Active pipeline detected: ${active.feature} (status: ${pipelineStatus})\n${stagesInfo}`;
       if (summary.currentStage) {

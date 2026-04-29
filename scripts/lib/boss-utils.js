@@ -106,8 +106,8 @@ function getReadyArtifacts(dag, execData, params) {
 
   const completedArtifacts = new Set();
   const stages = execData.stages || {};
-  for (let s = 1; s <= 4; s++) {
-    const stage = stages[String(s)] || {};
+  for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+    const stage = stages[sKey] || {};
     for (const a of (stage.artifacts || [])) {
       completedArtifacts.add(a);
     }

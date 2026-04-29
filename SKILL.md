@@ -32,7 +32,7 @@ user-invocable: true
 6. **状态可追踪** — 每个阶段的开始、完成、失败、重试都先追加到事件流，再物化为只读的 `execution.json`
 7. **能力发现** — 每个 Agent 执行前主动发现环境中可用的 Skill，按需调用以增强能力
 8. **插件可扩展** — 通过 Harness 插件协议注册额外的 gate、agent 或 pipeline 模板包
-9. **子代理标准协议** — 所有子代理必须使用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED` 状态报告（详见 `agents/prompts/subagent-protocol.md`）
+9. **子代理标准协议** — 所有子代理必须使用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED` 五种状态报告（详见 `agents/prompts/subagent-protocol.md`）
 10. **模型分级** — 根据任务复杂度选择模型：轻量级（机械任务）/ 标准级（集成任务）/ 旗舰级（架构任务）
 
 ## 参数

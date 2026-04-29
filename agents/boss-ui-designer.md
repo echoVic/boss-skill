@@ -586,3 +586,19 @@ flowchart TD
 ---
 
 **设计原则**：每一个像素都有意义，每一个交互都经过深思熟虑。追求极致，永不妥协。
+
+## 状态报告
+
+任务完成后，必须在输出末尾附加结构化状态块（详见 `agents/prompts/subagent-protocol.md`）：
+
+```
+[BOSS_STATUS]
+status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED
+summary: 一句话总结执行结果
+concerns: [仅 DONE_WITH_CONCERNS 时填写]
+missing: [仅 NEEDS_CONTEXT 时填写]
+blocker: [仅 BLOCKED 时填写]
+revision_target: [仅 REVISION_NEEDED 时填写，如 architecture.md]
+revision_reason: [仅 REVISION_NEEDED 时填写]
+[/BOSS_STATUS]
+```

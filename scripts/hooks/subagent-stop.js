@@ -76,10 +76,10 @@ function run(rawInput) {
     if (execData) {
       let currentStage = '';
       const stages = execData.stages || {};
-      for (let s = 1; s <= 4; s++) {
-        const stage = stages[String(s)] || {};
+      for (const sKey of Object.keys(stages).sort((a, b) => Number(a) - Number(b))) {
+        const stage = stages[sKey] || {};
         if (stage.status === 'running') {
-          currentStage = String(s);
+          currentStage = sKey;
           break;
         }
       }
