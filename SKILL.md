@@ -108,7 +108,7 @@ Copy this checklist and check off items as you complete them:
   - [ ] 0.1 **判断需求完整度**：用户给的信息是否包含"做什么 + 给谁用 + 核心场景"？
     - ✅ 三者都有 → 跳到 0.4
     - ❌ 缺任何一项 → 进入 brainstorming
-  - [ ] 0.2 **Brainstorming 需求澄清**：读取 `skills/brainstorming/SKILL.md` 的流程，以 Boss 的身份执行需求澄清（不需要启动子 Agent，你自己来问）。一次一个问题，优先给选项，只问业务问题不问技术问题。
+  - [ ] 0.2 **Brainstorming 需求澄清**：读取 `skills/brainstorming/SKILL.md` 的流程，以 Boss 的身份执行需求澄清（不需要启动子 Agent，你自己来问）。**已有项目先执行 SKILL.md 中的"项目环境感知"步骤**，再进入提问环节。一次一个问题，优先给选项，只问业务问题不问技术问题。
   - [ ] 0.3 **输出设计简报**：澄清完毕后，写入 `.boss/<feature>/design-brief.md`，向用户确认
   - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `scripts/init-project.sh <feature-name>` 创建占位产物骨架
   - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `scripts/harness/detect-pack.sh <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
