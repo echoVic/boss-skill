@@ -190,4 +190,36 @@ describe('artifact-dag', () => {
     expect(ready).not.toContain('tasks.md');
     expect(ready).toContain('code');
   });
+
+  it('DAG contains gate entries with type "gate"', () => {
+    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
+      artifacts: Record<string, { type?: string; agent?: string | null; stage?: number; script?: string }>;
+    };
+    const gateEntries = Object.entries(dag.artifacts)
+      .filter(([, def]) => def.type === 'gate');
+    expect(gateEntries.length).toBeGreaterThanOrEqual(3);
+    for (const [, def] of gateEntries) {
+      expect(def.type).toBe('gate');
+      expect(def.agent).toBeNull();
+      expect(typeof def.stage).toBe('number');
+      expect(typeof def.script).toBe('string');
+    }
+  });
+
+  it('gate entries are not returned by --ready', () => {
+    // Mark all stage 3 prerequisites as done so gates would theoretically be "ready"
+    const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      parameters: { skipUI: boolean; skipReview?: boolean };
+      stages: Record<string, { artifacts: string[] }>;
+    };
+    data.parameters.skipReview = true;
+    data.stages['1'].artifacts = ['prd.md', 'architecture.md'];
+    data.stages['3'] = { ...data.stages['3'], artifacts: ['code'] };
+    fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
+
+    const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
+    const gateNames = ready.filter((name: string) => name.startsWith('gate'));
+    expect(gateNames).toEqual([]);
+  });
 });

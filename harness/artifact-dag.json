@@ -64,6 +64,33 @@
       "stage": 4,
       "optional": false,
       "description": "部署报告"
+    },
+    "gate0": {
+      "inputs": ["code"],
+      "agent": null,
+      "stage": 3,
+      "type": "gate",
+      "script": "scripts/gates/gate0-code-quality.sh",
+      "optional": false,
+      "description": "代码质量门禁（编译 + Lint + 安全扫描）"
+    },
+    "gate1": {
+      "inputs": ["code"],
+      "agent": null,
+      "stage": 3,
+      "type": "gate",
+      "script": "scripts/gates/gate1-testing.sh",
+      "optional": false,
+      "description": "测试门禁（覆盖率 + 通过率 + E2E）"
+    },
+    "gate2": {
+      "inputs": ["code"],
+      "agent": null,
+      "stage": 3,
+      "type": "gate",
+      "script": "scripts/gates/gate2-performance.sh",
+      "optional": true,
+      "description": "性能门禁（Lighthouse + API P99，仅 Web 项目）"
     }
   }
 }

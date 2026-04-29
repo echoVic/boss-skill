@@ -115,6 +115,7 @@ Copy this checklist and check off items as you complete them:
   - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `harness/artifact-dag.json`（或 pipeline pack 自定义 DAG），确定产物依赖图
   - [ ] 0.5 🔌 扫描 `harness/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
+  - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`runtime/cli/update-stage.js <feature> 1 running`，进入 DAG 执行循环 ↓
 
 - [ ] **DAG 执行循环** — 重复以下步骤直到所有产物完成或被跳过：
 
@@ -136,13 +137,15 @@ Copy this checklist and check off items as you complete them:
     3. 重新派发目标 Agent 修订上游产物（将修订原因作为额外上下文传入）
     4. 修订完成后，重新派发 Critic Agent 验证
     5. 若验证通过（DONE/DONE_WITH_CONCERNS），结束循环继续 DAG
+  - [ ] **D.7b ⏱ 超时检测**：周期性调用 `checkStall(feature, { maxDurationMs })` 检测停滞 Agent。若 Agent 超过阈值（默认 30 分钟）无响应，标记 `AgentFailed`（reason: timeout）并进入 D.7 失败处理流程。
   - [ ] **D.8 确认节点**（仅在阶段边界且非 `--quick` 时）：
     - 阶段 1 完成后 → 确认规划结果 ⚠️ REQUIRED
     - 阶段 3 门禁后 → 可选确认
   - [ ] **D.9 🚦 门禁**（阶段 3 产物完成后）：
-    - 调用 `runtime/cli/evaluate-gates.js <feature> gate0`（代码质量检查）
-    - 调用 `runtime/cli/evaluate-gates.js <feature> gate1`（测试门禁）
-    - 调用 `runtime/cli/evaluate-gates.js <feature> gate2`（性能门禁，仅 Web 项目）
+    - 读取 DAG 中 `type: "gate"` 的条目，对 `inputs` 已满足的 gate 依次调用 `runtime/cli/evaluate-gates.js <feature> <gate-name>`
+    - gate0：代码质量检查（编译 + Lint + 安全扫描）
+    - gate1：测试门禁（覆盖率 + 通过率 + E2E）
+    - gate2：性能门禁（Lighthouse + API P99，仅 Web 项目，optional）
     - 扫描 `harness/plugins/` 中 type=gate 的插件，依次执行
     - 门禁失败时修复后重新执行门禁
   - [ ] **D.10 回到 D.1**：重新查询就绪产物，直到 DAG 中所有非跳过产物都已完成

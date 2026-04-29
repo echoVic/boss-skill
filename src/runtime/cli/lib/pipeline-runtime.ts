@@ -51,6 +51,8 @@ export interface ArtifactDefinition {
   stage?: number;
   optional?: boolean;
   description?: string;
+  type?: string;
+  script?: string;
 }
 
 export interface ArtifactDag {
@@ -732,6 +734,16 @@ export function getReadyArtifacts(
 }
 
 function resolveGateScript(cwd: string, gateName: string, skipOnError: boolean): string {
+  // Try to resolve from DAG first
+  try {
+    const dag = readJson<ArtifactDag>(DEFAULT_DAG_PATH);
+    const gateDef = dag.artifacts?.[gateName];
+    if (gateDef && gateDef.type === 'gate' && gateDef.script) {
+      const dagScript = path.join(REPO_ROOT, gateDef.script);
+      if (fs.existsSync(dagScript)) return dagScript;
+    }
+  } catch { /* fall through to legacy resolution */ }
+
   let scriptPath = '';
   switch (gateName) {
     case 'gate0':
@@ -761,6 +773,15 @@ function resolveGateScript(cwd: string, gateName: string, skipOnError: boolean):
 }
 
 function resolveGateStage(cwd: string, gateName: string): number {
+  // Try to resolve from DAG first
+  try {
+    const dag = readJson<ArtifactDag>(DEFAULT_DAG_PATH);
+    const gateDef = dag.artifacts?.[gateName];
+    if (gateDef && gateDef.type === 'gate' && typeof gateDef.stage === 'number') {
+      return gateDef.stage;
+    }
+  } catch { /* fall through to legacy resolution */ }
+
   if (gateName === 'gate0' || gateName === 'gate1' || gateName === 'gate2') {
     return 3;
   }
@@ -883,4 +904,88 @@ export function registerPlugins(
 ): ReturnType<typeof registerPluginsRuntime> {
   ensureFeatureName(feature);
   return registerPluginsRuntime(feature, { cwd, type });
+}
+
+// --- Tech Stack Cache ---
+
+export function cacheTechStack(
+  feature: string,
+  techStack: Record<string, unknown>,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): void {
+  ensureFeatureName(feature);
+  const metaDir = path.join(cwd, '.boss', feature, '.meta');
+  ensureDir(metaDir);
+  writeJson(path.join(metaDir, 'tech-stack.json'), techStack);
+}
+
+export function readCachedTechStack(
+  feature: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): Record<string, unknown> | null {
+  ensureFeatureName(feature);
+  const filePath = path.join(cwd, '.boss', feature, '.meta', 'tech-stack.json');
+  if (!fs.existsSync(filePath)) return null;
+  return readJson<Record<string, unknown>>(filePath);
+}
+
+// --- Stall Detection ---
+
+export interface StalledAgent {
+  agent: string;
+  stage: number;
+  startTime: string;
+  elapsedMs: number;
+  failed?: boolean;
+}
+
+export interface CheckStallResult {
+  stalled: StalledAgent[];
+}
+
+const DEFAULT_MAX_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
+export function checkStall(
+  feature: string,
+  {
+    cwd = process.cwd(),
+    maxDurationMs = DEFAULT_MAX_DURATION_MS,
+    autoFail = false
+  }: { cwd?: string; maxDurationMs?: number; autoFail?: boolean } = {}
+): CheckStallResult {
+  ensureFeatureName(feature);
+  const execution = readExecutionView(cwd, feature);
+  const now = Date.now();
+  const stalled: StalledAgent[] = [];
+
+  for (const [stageKey, stage] of Object.entries(execution.stages || {})) {
+    if (!stage || !stage.agents) continue;
+    for (const [agentName, agentState] of Object.entries(stage.agents)) {
+      if (!agentState || agentState.status !== 'running' || !agentState.startTime) continue;
+      const elapsed = now - new Date(agentState.startTime).getTime();
+      if (elapsed > maxDurationMs) {
+        const entry: StalledAgent = {
+          agent: agentName,
+          stage: Number(stageKey),
+          startTime: agentState.startTime,
+          elapsedMs: elapsed
+        };
+        if (autoFail) {
+          appendRuntimeEvent(cwd, feature, EVENT_TYPES.AGENT_FAILED, {
+            agent: agentName,
+            stage: Number(stageKey),
+            reason: 'timeout'
+          });
+          entry.failed = true;
+        }
+        stalled.push(entry);
+      }
+    }
+  }
+
+  if (autoFail && stalled.length > 0) {
+    materializeState(feature, cwd);
+  }
+
+  return { stalled };
 }

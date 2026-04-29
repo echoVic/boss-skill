@@ -23,7 +23,6 @@ dependencies: [prd]
 - **设计系统**：[是否使用现有 UI 库]
 
 ---
----
 
 ## 1. 设计概述
 
@@ -90,7 +89,50 @@ flowchart TD
 | Gray 700 | #374151 | 正文文字 |
 | Gray 900 | #111827 | 标题文字 |
 
-### 3.2 排版系统
+### 3.2 暗色模式
+
+#### 语义映射
+| 语义名称 | 亮色值 | 暗色值 | 用途 |
+|----------|--------|--------|------|
+| --color-bg | #FFFFFF | #1A1A2E | 页面背景 |
+| --color-surface | #F9FAFB | #16213E | 卡片/面板背景 |
+| --color-text | #111827 | #E2E8F0 | 正文文字 |
+| --color-text-secondary | #6B7280 | #94A3B8 | 辅助文字 |
+| --color-border | #D1D5DB | #334155 | 边框 |
+| --color-shadow | rgba(0,0,0,0.1) | rgba(0,0,0,0.4) | 阴影 |
+
+#### 主题切换机制
+1. **系统偏好**：`prefers-color-scheme: dark` 作为默认
+2. **手动切换**：`<html data-theme="dark">` 属性覆盖
+3. **持久化**：`localStorage.setItem('theme', 'dark'|'light'|'system')`
+
+#### CSS 实现
+```css
+:root {
+  --color-bg: #FFFFFF;
+  --color-surface: #F9FAFB;
+  --color-text: #111827;
+  --color-border: #D1D5DB;
+}
+
+[data-theme="dark"],
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #1A1A2E;
+    --color-surface: #16213E;
+    --color-text: #E2E8F0;
+    --color-border: #334155;
+  }
+}
+```
+
+#### 暗色模式无障碍
+- 暗色背景上文字对比度仍需满足 ≥ 4.5:1
+- 避免纯黑 (#000) 背景，减少视觉疲劳
+- 暗色模式下阴影使用更深的 rgba 值
+- 图标/插画需提供暗色适配版本或使用 `currentColor`
+
+### 3.3 排版系统
 
 | 名称 | 大小 | 行高 | 字重 | 用途 |
 |------|------|------|------|------|
@@ -106,7 +148,7 @@ flowchart TD
 - 英文：Inter / -apple-system / system-ui
 - 中文：PingFang SC / Microsoft YaHei
 
-### 3.3 间距系统
+### 3.4 间距系统
 
 基础单位：8px
 
@@ -121,7 +163,7 @@ flowchart TD
 | spacing-8 | 32px | 区块间距 |
 | spacing-10 | 40px | 大区块间距 |
 
-### 3.4 圆角
+### 3.5 圆角
 
 | 名称 | 值 | 用途 |
 |------|-----|------|
@@ -131,7 +173,7 @@ flowchart TD
 | rounded-xl | 12px | 模态框 |
 | rounded-full | 9999px | 圆形 |
 
-### 3.5 阴影
+### 3.6 阴影
 
 | 名称 | 值 | 用途 |
 |------|-----|------|

@@ -113,6 +113,42 @@
 | `package-lock.json` | npm |
 | `bun.lockb` | bun |
 
+### Step 6: 构建工具检测
+
+| 标志文件 | 构建工具 |
+|---------|---------|
+| `vite.config.*` | Vite |
+| `webpack.config.*` | Webpack |
+| `turbopack.config.*` | Turbopack |
+| `esbuild.config.*` / `build.mjs`（含 esbuild import） | esbuild |
+| `rollup.config.*` | Rollup |
+| `parcel` in package.json scripts | Parcel |
+| `.swcrc` | SWC |
+
+### Step 7: 部署环境检测
+
+| 标志文件 | 部署环境 |
+|---------|---------|
+| `Dockerfile` / `docker-compose.yml` | Docker |
+| `vercel.json` / `.vercel/` | Vercel |
+| `netlify.toml` | Netlify |
+| `fly.toml` | Fly.io |
+| `railway.json` / `railway.toml` | Railway |
+| `k8s/` / `kubernetes/` / `*.yaml`（含 kind: Deployment） | Kubernetes |
+| `serverless.yml` | Serverless Framework |
+| `.github/workflows/*.yml`（含 deploy） | GitHub Actions CD |
+
+### Step 8: Monorepo 检测
+
+| 标志文件 | Monorepo 工具 |
+|---------|-------------|
+| `pnpm-workspace.yaml` | pnpm workspace |
+| `lerna.json` | Lerna |
+| `nx.json` | Nx |
+| `turbo.json` | Turborepo |
+| `rush.json` | Rush |
+| `workspaces` in package.json | npm/yarn workspaces |
+
 ---
 
 ## 输出格式
@@ -130,6 +166,9 @@
 | 测试框架 | [检测到的框架] |
 | ORM/数据库 | [检测到的工具 或 "无 ORM"] |
 | 包管理器 | [检测到的包管理器] |
+| 构建工具 | [检测到的工具 或 "未检测到"] |
+| 部署环境 | [检测到的环境 或 "未检测到"] |
+| Monorepo | [检测到的工具 或 "否"] |
 ```
 
 ---
@@ -140,3 +179,4 @@
 2. **多语言友好**：如果检测到多种语言/框架，输出中全部列出
 3. **缺失容错**：如果某个维度无法检测到（如无 ORM），标记为"未检测到"而非假设一个默认值
 4. **增量检测**：如果项目是新建的（无 manifest 文件），由 Agent 根据需求决定技术选型，并在产物中记录选型理由
+5. **缓存复用**：首次检测后将结果缓存到 `.boss/<feature>/.meta/tech-stack.json`，后续 Agent 直接读取缓存

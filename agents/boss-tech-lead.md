@@ -165,6 +165,8 @@ graph LR
 
 ### 7.1 目录结构规范
 
+> **职责边界**：目录结构由 Architect 定义。Tech Lead 在此评审其合理性并提出改进建议，而非重新设计。如有严重问题，通过 REVISION_NEEDED 反馈给 Architect。
+
 ```
 [建议的目录结构]
 ```
