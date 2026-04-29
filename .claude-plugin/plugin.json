@@ -1,6 +1,6 @@
 {
   "name": "boss",
-  "version": "3.6.3",
+  "version": "3.6.4",
   "description": "BMAD 全自动项目编排插件。从需求到部署的完整研发流水线，编排 9 个专业 Agent（PM、架构师、UI 设计师、Tech Lead、Scrum Master、开发者、QA、DevOps）自动完成完整研发周期。",
   "author": {
     "name": "echoVic",
