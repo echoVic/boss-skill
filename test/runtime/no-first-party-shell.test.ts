@@ -52,11 +52,19 @@ describe('TypeScript CLI architecture', () => {
   it('does not hard-code root harness asset paths in runtime source', () => {
     const runtimeFiles = walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime'))
       .filter((file) => file.endsWith('.ts'));
+    const forbiddenRootHarnessPatterns = [
+      /REPO_ROOT[^\n;]*['"]harness['"]/,
+      /repoRoot[^\n;]*['"]harness['"]/,
+      /path\.(?:join|resolve)\([^\n;]*['"]harness['"]/,
+      /['"]harness\//,
+      /['"]\.\.\/.*harness\//
+    ];
 
     for (const file of runtimeFiles) {
       const source = fs.readFileSync(file, 'utf8');
-      expect(source, path.relative(REPO_ROOT, file)).not.toContain("REPO_ROOT, 'harness'");
-      expect(source, path.relative(REPO_ROOT, file)).not.toContain('"harness",');
+      for (const pattern of forbiddenRootHarnessPatterns) {
+        expect(source, `${path.relative(REPO_ROOT, file)} matched ${pattern}`).not.toMatch(pattern);
+      }
     }
   });
 });

@@ -75,10 +75,13 @@ describe('package metadata', () => {
   });
 
   it('documents Boss CLI assets instead of a root harness directory', () => {
+    const rootHarnessPathPattern = /(?:^|[^.\w-])harness\/(?:plugins|pipeline-packs|artifact-dag|plugin-schema)?/;
+
     expect(readme).toContain('packages/boss-cli/assets/');
-    expect(readme).not.toContain('├── harness/');
+    expect(readme).not.toMatch(rootHarnessPathPattern);
     expect(contributing).toContain('packages/boss-cli/assets/');
-    expect(skill).not.toContain('harness/plugins/');
+    expect(contributing).not.toMatch(rootHarnessPathPattern);
+    expect(skill).not.toMatch(rootHarnessPathPattern);
   });
 });
 
