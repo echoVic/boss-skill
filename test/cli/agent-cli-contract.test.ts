@@ -110,10 +110,24 @@ describe('agent-friendly boss CLI contract', () => {
   });
 
   it('limits and picks fields for list-like JSON output', () => {
-    const result = runBoss(['runtime', 'inspect-events', 'missing-feature', '--limit=1', '--fields=events', '--json'], tmpDir);
+    const init = runBoss(['runtime', 'init-pipeline', 'events-feature'], tmpDir);
+    expect(init.status).toBe(0);
 
-    expect(result.status).toBe(1);
-    const payload = JSON.parse(result.stderr) as { error: { code: string } };
-    expect(payload.error.code).toBe('feature_not_found');
+    const running = runBoss(['runtime', 'update-stage', 'events-feature', '1', 'running', '--json'], tmpDir);
+    expect(running.status).toBe(0);
+
+    const completed = runBoss(['runtime', 'update-stage', 'events-feature', '1', 'completed', '--json'], tmpDir);
+    expect(completed.status).toBe(0);
+
+    const result = runBoss(
+      ['runtime', 'inspect-events', 'events-feature', '--limit=1', '--fields=events', '--json'],
+      tmpDir
+    );
+
+    expect(result.status).toBe(0);
+    const payload = parseJson(result.stdout) as { events: unknown[] };
+    expect(Object.keys(payload)).toEqual(['events']);
+    expect(Array.isArray(payload.events)).toBe(true);
+    expect(payload.events).toHaveLength(1);
   });
 });
