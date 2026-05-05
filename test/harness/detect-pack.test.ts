@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { detectPipelinePacks } from '../../packages/boss-cli/src/runtime/cli/lib/pack-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -60,7 +61,11 @@ describe('boss packs detect', () => {
     );
     fs.writeFileSync(path.join(tmpDir, 'custom-api.marker'), '', 'utf8');
 
-    expect(run(tmpDir)).toBe('api-only');
+    const result = detectPipelinePacks(tmpDir);
+    expect(result.detected.name).toBe('api-only');
+    expect(result.detected.version).toBe('9.9.9');
+    expect(result.detected.config.stages).toEqual([1]);
+    expect(result.detected.config.agents).toEqual(['boss-pm']);
   });
 
   it('does not detect api-only when src/app exists', () => {
