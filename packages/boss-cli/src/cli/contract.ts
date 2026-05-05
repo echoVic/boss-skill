@@ -71,9 +71,14 @@ export function createCliContext(
   {
     command,
     stdinIsTTY = Boolean(process.stdin.isTTY),
-    stdoutIsTTY = Boolean(process.stdout.isTTY)
-  }: { command: string; stdinIsTTY?: boolean; stdoutIsTTY?: boolean }
+    stdoutIsTTY = Boolean(process.stdout.isTTY),
+    validateOptionValues = true
+  }: { command: string; stdinIsTTY?: boolean; stdoutIsTTY?: boolean; validateOptionValues?: boolean }
 ): CliContext {
+  if (validateOptionValues) {
+    validateCliContractOptionValues(argv);
+  }
+
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -132,6 +137,63 @@ export function pickFields<T extends JsonObject>(obj: T, fields?: string): JsonO
 
 export function outputList(items: JsonObject[], context: CliContext): JsonObject[] {
   return items.slice(0, parseLimit(context.values.limit)).map((item) => pickFields(item, context.values.fields));
+}
+
+function isLikelyOptionToken(value: string): boolean {
+  return value.startsWith('--') || /^-[A-Za-z]$/.test(value);
+}
+
+function missingValueError(option: string): CliUserError {
+  return new CliUserError({
+    code: 'missing_option_value',
+    message: `${option} requires a value`,
+    input: { option },
+    retryable: false,
+    suggestion: `Pass a value after ${option}`
+  });
+}
+
+export function validateCliContractOptionValues(argv: string[]): void {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    if (arg !== '--fields' && arg !== '--limit' && arg !== '--json-input') {
+      continue;
+    }
+
+    const nextValue = argv[index + 1];
+    if (
+      nextValue === undefined ||
+      (isLikelyOptionToken(nextValue) && !(arg === '--json-input' && nextValue === '-'))
+    ) {
+      throw missingValueError(arg);
+    }
+
+    index += 1;
+  }
+}
+
+export function consumeCliContractOption(argv: string[], index: number): number | null {
+  const arg = argv[index]!;
+  if (arg === '--json' || arg === '--describe' || arg === '--dry-run' || arg === '--yes' || arg === '-y') {
+    return index;
+  }
+
+  if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
+    const nextValue = argv[index + 1];
+    if (
+      nextValue === undefined ||
+      (isLikelyOptionToken(nextValue) && !(arg === '--json-input' && nextValue === '-'))
+    ) {
+      throw missingValueError(arg);
+    }
+    return index + 1;
+  }
+
+  if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+    return index;
+  }
+
+  return null;
 }
 
 function isJsonObject(value: unknown): value is JsonObject {

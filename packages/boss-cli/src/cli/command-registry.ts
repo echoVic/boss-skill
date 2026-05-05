@@ -99,22 +99,75 @@ export const runtimeCommandNames = [
   'retry-stage'
 ] as const;
 
-export const runtimeCommandDescriptions: Record<string, CommandDescription> = Object.fromEntries(
-  runtimeCommandNames.map((name) => [
-    name,
-    {
-      command: `boss runtime ${name}`,
-      summary: `Run runtime command ${name}`,
-      parameters: [{ name: 'feature', type: 'string', required: false }],
-      options: [
-        { name: 'json', type: 'boolean', default: false },
-        { name: 'describe', type: 'boolean', default: false },
-        { name: 'fields', type: 'string' },
-        { name: 'limit', type: 'string', default: '100' },
-        { name: 'dry-run', type: 'boolean', default: false },
-        { name: 'json-input', type: 'string' }
-      ],
-      risk_tier: 'low'
-    }
-  ])
-) as Record<string, CommandDescription>;
+const runtimeBaseOptions = [
+  { name: 'json', type: 'boolean' as const, default: false },
+  { name: 'describe', type: 'boolean' as const, default: false }
+];
+
+const runtimeFieldOptions = [
+  ...runtimeBaseOptions,
+  { name: 'fields', type: 'string' as const }
+];
+
+const runtimeListOptions = [
+  ...runtimeFieldOptions,
+  { name: 'limit', type: 'string' as const, default: '20' }
+];
+
+const runtimeDryRunOptions = [
+  ...runtimeFieldOptions,
+  { name: 'dry-run', type: 'boolean' as const, default: false }
+];
+
+const runtimeDescriptions: Record<string, CommandDescription> = {};
+
+for (const name of runtimeCommandNames) {
+  runtimeDescriptions[name] = {
+    command: `boss runtime ${name}`,
+    summary: `Run runtime command ${name}`,
+    parameters: [{ name: 'feature', type: 'string', required: false }],
+    options: runtimeBaseOptions,
+    risk_tier: 'low'
+  };
+}
+
+for (const name of [
+  'check-stage',
+  'get-ready-artifacts',
+  'inspect-pipeline',
+  'inspect-plugins',
+  'query-memory'
+]) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: runtimeFieldOptions
+  };
+}
+
+for (const name of ['inspect-events', 'inspect-progress', 'replay-events']) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: runtimeListOptions
+  };
+}
+
+for (const name of ['generate-summary', 'render-diagnostics']) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: [
+      ...runtimeDryRunOptions,
+      { name: 'stdout', type: 'boolean' as const, default: false }
+    ],
+    risk_tier: 'medium'
+  };
+}
+
+for (const name of ['build-memory-summary', 'extract-memory']) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: runtimeDryRunOptions,
+    risk_tier: 'medium'
+  };
+}
+
+export const runtimeCommandDescriptions: Record<string, CommandDescription> = runtimeDescriptions;

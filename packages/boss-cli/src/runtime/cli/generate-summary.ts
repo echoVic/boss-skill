@@ -3,6 +3,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { renderJson } from '../report/render-json.js';
 import { renderMarkdown } from '../report/render-markdown.js';
 import { buildSummaryModel } from '../report/summary-model.js';
@@ -17,6 +26,8 @@ function printHelp(): void {
       '选项:',
       '  --json     输出 JSON 格式而非 Markdown',
       '  --stdout   输出到标准输出而非文件',
+      '  --dry-run  预览将写入的报告文件',
+      '  --describe 输出命令 schema',
       '  -h, --help 查看帮助',
       ''
     ].join('\n')
@@ -34,13 +45,19 @@ export function parseArgs(argv: string[]) {
     stdout: false
   };
 
-  for (const arg of argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
     if (arg === '--json') {
       parsed.json = true;
       continue;
     }
     if (arg === '--stdout') {
       parsed.stdout = true;
+      continue;
+    }
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
       continue;
     }
     if (arg.startsWith('-')) {
@@ -59,37 +76,80 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime generate-summary' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['generate-summary']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['generate-summary'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  const model = buildSummaryModel(parsed.feature, { cwd });
-  const rendered = parsed.json ? renderJson(model) : renderMarkdown(model);
-  const outputPath = path.join(
-    cwd,
+  const format = parsed.json ? 'json' : 'markdown';
+  const relativeOutputPath = path.posix.join(
     '.boss',
     parsed.feature,
     parsed.json ? 'summary-report.json' : 'summary-report.md'
   );
+  const outputPath = path.join(cwd, '.boss', parsed.feature, parsed.json ? 'summary-report.json' : 'summary-report.md');
 
-  if (parsed.stdout) {
-    process.stdout.write(rendered);
+  try {
+    if (context.values.dryRun && !parsed.stdout) {
+      writeOutput(
+        {
+          actions: [{ type: 'write_file', path: relativeOutputPath, format }],
+          risk_tier: 'medium',
+          requires_approval: false
+        },
+        context,
+        () => `would write ${relativeOutputPath}\n`
+      );
+      return 0;
+    }
+
+    const model = buildSummaryModel(parsed.feature, { cwd });
+    const rendered = parsed.json ? renderJson(model) : renderMarkdown(model);
+
+    if (parsed.stdout) {
+      process.stdout.write(rendered);
+      return 0;
+    }
+
+    fs.writeFileSync(outputPath, rendered, 'utf8');
+    writeOutput(
+      { feature: parsed.feature, outputPath: relativeOutputPath, format },
+      context,
+      () => `报告已生成: ${outputPath}\n`
+    );
     return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
   }
-
-  fs.writeFileSync(outputPath, rendered, 'utf8');
-  process.stdout.write(`报告已生成: ${outputPath}\n`);
-  return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime generate-summary', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

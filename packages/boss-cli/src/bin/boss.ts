@@ -419,7 +419,7 @@ function runHooksCommand(argv: string[]): number {
 }
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
-  const rootContext = createCliContext(argv, { command: 'boss' });
+  const rootContext = createCliContext(argv, { command: 'boss', validateOptionValues: false });
 
   if (rootContext.values.describe && rootContext.positionals.length === 0) {
     writeDescription(describeRoot(), rootContext);
@@ -481,6 +481,6 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename)) {
-  const context = createCliContext(process.argv.slice(2), { command: 'boss' });
+  const context = createCliContext(process.argv.slice(2), { command: 'boss', validateOptionValues: false });
   process.exit(await runMain(() => main(process.argv.slice(2)), context));
 }

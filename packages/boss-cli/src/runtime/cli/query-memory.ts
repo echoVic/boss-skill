@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CliUserError,
+  consumeCliContractOption,
   createCliContext,
   describeCommand,
   runMain,
@@ -39,19 +40,16 @@ export function parseArgs(argv: string[]) {
     json: false
   };
 
-  for (const arg of argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
     if (arg === '--startup') {
       parsed.startup = true;
       continue;
     }
-    if (arg === '--json' || arg === '--describe' || arg === '--dry-run') {
-      parsed.json = true;
-      continue;
-    }
-    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
-      continue;
-    }
-    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      if (arg === '--json') parsed.json = true;
+      index = contractOptionEnd;
       continue;
     }
     if (arg.startsWith('-')) {
@@ -122,6 +120,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime query-memory' });
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime query-memory', validateOptionValues: false });
   process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CliUserError,
+  consumeCliContractOption,
   createCliContext,
   describeCommand,
   runMain,
@@ -46,7 +47,8 @@ export function parseArgs(argv: string[]) {
     summary: false
   };
 
-  for (const arg of argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
     if (arg === '--can-proceed') {
       parsed.canProceed = true;
       continue;
@@ -63,16 +65,9 @@ export function parseArgs(argv: string[]) {
       parsed.json = true;
       continue;
     }
-    if (arg === '--describe' || arg === '--dry-run') {
-      continue;
-    }
-    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
-      if (argv[argv.indexOf(arg) + 1] && !argv[argv.indexOf(arg) + 1]!.startsWith('-')) {
-        continue;
-      }
-      continue;
-    }
-    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
       continue;
     }
     if (arg === '--summary') {
@@ -203,6 +198,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime check-stage' });
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime check-stage', validateOptionValues: false });
   process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

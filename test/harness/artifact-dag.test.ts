@@ -157,7 +157,10 @@ describe('artifact-dag', () => {
     data.stages['1'].artifacts = ['prd.md'];
     fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
 
-    expect(runCli(['test-feat', 'architecture.md', '--can-start', '--dag', DAG_PATH])).toContain('可以开始');
+    const status = JSON.parse(runCli(['test-feat', 'architecture.md', '--can-start', '--dag', DAG_PATH])) as {
+      status: string;
+    };
+    expect(status.status).toBe('ready');
   });
 
   it('skips ui-spec.md when skipUI is true', () => {

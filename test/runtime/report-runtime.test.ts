@@ -203,6 +203,16 @@ describe('runtime report generation', () => {
     const mdResult = runRuntimeCommand('generate-summary', ['test-feat']);
     expect(mdResult.status).toBe(0);
     expect(mdResult.stderr).toBe('');
+    const mdPayload = JSON.parse(mdResult.stdout) as {
+      feature: string;
+      outputPath: string;
+      format: string;
+    };
+    expect(mdPayload).toEqual({
+      feature: 'test-feat',
+      outputPath: '.boss/test-feat/summary-report.md',
+      format: 'markdown'
+    });
     const markdownPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md');
     expect(fs.existsSync(markdownPath)).toBe(true);
     expect(fs.readFileSync(markdownPath, 'utf8')).toMatch(/# 流水线执行报告/);
@@ -210,6 +220,16 @@ describe('runtime report generation', () => {
     const jsonResult = runRuntimeCommand('generate-summary', ['test-feat', '--json']);
     expect(jsonResult.status).toBe(0);
     expect(jsonResult.stderr).toBe('');
+    const jsonStdoutPayload = JSON.parse(jsonResult.stdout) as {
+      feature: string;
+      outputPath: string;
+      format: string;
+    };
+    expect(jsonStdoutPayload).toEqual({
+      feature: 'test-feat',
+      outputPath: '.boss/test-feat/summary-report.json',
+      format: 'json'
+    });
     const jsonPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.json');
     expect(fs.existsSync(jsonPath)).toBe(true);
     const payload = JSON.parse(fs.readFileSync(jsonPath, 'utf8')) as {
@@ -218,6 +238,44 @@ describe('runtime report generation', () => {
     };
     expect(payload.feature).toBe('test-feat');
     expect(payload.pack.name).toBe('api-only');
+  });
+
+  it('report writer runtime CLIs support structured dry-run without writing files', () => {
+    const summaryResult = runRuntimeCommand('generate-summary', ['test-feat', '--dry-run', '--json']);
+    expect(summaryResult.status).toBe(0);
+    expect(summaryResult.stderr).toBe('');
+    const summaryPayload = JSON.parse(summaryResult.stdout) as {
+      actions: Array<{ type: string; path: string; format: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+    };
+    expect(summaryPayload).toEqual({
+      actions: [
+        {
+          type: 'write_file',
+          path: '.boss/test-feat/summary-report.json',
+          format: 'json'
+        }
+      ],
+      risk_tier: 'medium',
+      requires_approval: false
+    });
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.json'))).toBe(false);
+
+    const diagnosticsResult = runRuntimeCommand('render-diagnostics', ['test-feat', '--dry-run', '--json']);
+    expect(diagnosticsResult.status).toBe(0);
+    expect(diagnosticsResult.stderr).toBe('');
+    const diagnosticsPayload = JSON.parse(diagnosticsResult.stdout) as {
+      actions: Array<{ type: string; path: string; format: string }>;
+    };
+    expect(diagnosticsPayload.actions).toEqual([
+      {
+        type: 'write_file',
+        path: '.boss/test-feat/diagnostics.html',
+        format: 'html'
+      }
+    ]);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'diagnostics.html'))).toBe(false);
   });
 
   it('normalizes empty failure reasons to null when materializing state', () => {

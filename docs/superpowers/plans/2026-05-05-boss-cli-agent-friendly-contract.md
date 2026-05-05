@@ -1404,7 +1404,7 @@ git commit -m "feat: make top level boss commands agent friendly"
   - `packages/boss-cli/src/runtime/cli/extract-memory.ts`
 - Modify: `test/runtime/runtime-cli-contract.test.ts`
 
-- [ ] **Step 1: Add read-only runtime tests**
+- [x] **Step 1: Add read-only runtime tests**
 
 Append to `test/runtime/runtime-cli-contract.test.ts`:
 
@@ -1436,7 +1436,7 @@ Append to `test/runtime/runtime-cli-contract.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run read-only tests to verify red**
+- [x] **Step 2: Run read-only tests to verify red**
 
 Run:
 
@@ -1452,7 +1452,7 @@ FAIL
 
 The failing assertions should show text output for non-TTY commands and unstructured stderr errors.
 
-- [ ] **Step 3: Add runtime command descriptions**
+- [x] **Step 3: Add runtime command descriptions**
 
 Add descriptions for read-only runtime commands to `packages/boss-cli/src/cli/command-registry.ts`:
 
@@ -1478,7 +1478,7 @@ export const runtimeCommandDescriptions: Record<string, CommandDescription> = Ob
 ) as Record<string, CommandDescription>;
 ```
 
-- [ ] **Step 4: Migrate `inspect-events.ts` as the reference pattern**
+- [x] **Step 4: Migrate `inspect-events.ts` as the reference pattern**
 
 Replace manual JSON/text branching with:
 
@@ -1506,7 +1506,7 @@ const context = createCliContext(process.argv.slice(2), { command: 'boss runtime
 process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 ```
 
-- [ ] **Step 5: Apply the read-only pattern to the remaining files**
+- [x] **Step 5: Apply the read-only pattern to the remaining files**
 
 For `check-stage.ts`, add:
 
@@ -1651,7 +1651,7 @@ if (context.values.dryRun && !parsed.stdout) {
 }
 ```
 
-- [ ] **Step 6: Convert thrown missing feature errors to structured codes**
+- [x] **Step 6: Convert thrown missing feature errors to structured codes**
 
 Wrap runtime call sites with:
 
@@ -1673,7 +1673,7 @@ try {
 }
 ```
 
-- [ ] **Step 7: Run read-only runtime tests**
+- [x] **Step 7: Run read-only runtime tests**
 
 Run:
 
@@ -1688,7 +1688,7 @@ Expected:
 PASS
 ```
 
-- [ ] **Step 8: Commit read-only runtime migration**
+- [x] **Step 8: Commit read-only runtime migration**
 
 ```bash
 git add packages/boss-cli/src/cli/command-registry.ts packages/boss-cli/src/runtime/cli/check-stage.ts packages/boss-cli/src/runtime/cli/generate-summary.ts packages/boss-cli/src/runtime/cli/get-ready-artifacts.ts packages/boss-cli/src/runtime/cli/inspect-events.ts packages/boss-cli/src/runtime/cli/inspect-pipeline.ts packages/boss-cli/src/runtime/cli/inspect-plugins.ts packages/boss-cli/src/runtime/cli/inspect-progress.ts packages/boss-cli/src/runtime/cli/query-memory.ts packages/boss-cli/src/runtime/cli/replay-events.ts packages/boss-cli/src/runtime/cli/render-diagnostics.ts packages/boss-cli/src/runtime/cli/build-memory-summary.ts packages/boss-cli/src/runtime/cli/extract-memory.ts test/runtime/runtime-cli-contract.test.ts

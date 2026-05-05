@@ -273,18 +273,160 @@ describe('runtime CLI contract', () => {
   it('read-only runtime commands default to json in non-tty mode and support fields/limit', () => {
     initPipeline('test-feat', { cwd: tmpDir });
 
-    const events = runCli('inspect-events', ['test-feat', '--limit=1', '--fields=events']);
+    const events = runCli('inspect-events', ['test-feat', '--limit', '1', '--fields', 'events']);
     expect(events.status).toBe(0);
     const eventsPayload = JSON.parse(events.stdout) as { events: unknown[] };
     expect(Object.keys(eventsPayload)).toEqual(['events']);
     expect(eventsPayload.events.length).toBeLessThanOrEqual(1);
 
-    const pipeline = runCli('inspect-pipeline', ['test-feat', '--fields=feature,status']);
+    const pipeline = runCli('inspect-pipeline', ['test-feat', '--fields', 'feature,status']);
     expect(pipeline.status).toBe(0);
     expect(JSON.parse(pipeline.stdout)).toEqual({
       feature: 'test-feat',
       status: 'initialized'
     });
+  });
+
+  it('runtime field selectors consume space-separated option values consistently', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    writeFeatureMemory(
+      'test-feat',
+      [
+        {
+          id: 'm1',
+          scope: 'feature',
+          kind: 'execution',
+          category: 'historical_risk',
+          summary: 'Stage 3 is unstable',
+          source: { type: 'events' },
+          evidence: [{ type: 'event', ref: '2' }],
+          tags: ['stage3'],
+          confidence: 0.8,
+          createdAt: '2026-04-17T00:00:00Z',
+          lastSeenAt: '2026-04-17T00:00:00Z',
+          expiresAt: null,
+          decayScore: 10,
+          influence: 'preference'
+        }
+      ],
+      { cwd: tmpDir }
+    );
+    buildFeatureSummary('test-feat', { cwd: tmpDir });
+
+    const query = runCli('query-memory', ['test-feat', '--startup', '--fields', 'feature,startupSummary']);
+    expect(query.status).toBe(0);
+    expect(Object.keys(JSON.parse(query.stdout))).toEqual(['feature', 'startupSummary']);
+
+    const plugins = runCli('inspect-plugins', ['test-feat', '--fields', 'feature,active']);
+    expect(plugins.status).toBe(0);
+    expect(Object.keys(JSON.parse(plugins.stdout))).toEqual(['feature', 'active']);
+
+    const stage = runCli('check-stage', ['test-feat', '--summary', '--fields', 'status']);
+    expect(stage.status).toBe(0);
+    expect(JSON.parse(stage.stdout)).toEqual({ status: 'initialized' });
+  });
+
+  it('runtime describe metadata matches implemented fields and limit options', () => {
+    const inspectPipeline = runCli('inspect-pipeline', ['--describe']);
+    expect(inspectPipeline.status).toBe(0);
+    const inspectPipelineMetadata = JSON.parse(inspectPipeline.stdout) as {
+      options: Array<{ name: string; default?: unknown }>;
+    };
+    expect(inspectPipelineMetadata.options.map((option) => option.name)).toContain('fields');
+    expect(inspectPipelineMetadata.options.map((option) => option.name)).not.toContain('limit');
+
+    const inspectEvents = runCli('inspect-events', ['--describe']);
+    expect(inspectEvents.status).toBe(0);
+    const inspectEventsMetadata = JSON.parse(inspectEvents.stdout) as {
+      options: Array<{ name: string; default?: unknown }>;
+    };
+    expect(inspectEventsMetadata.options.find((option) => option.name === 'limit')?.default).toBe('20');
+
+    const updateStage = runCli('update-stage', ['--describe']);
+    expect(updateStage.status).toBe(0);
+    const updateStageMetadata = JSON.parse(updateStage.stdout) as {
+      options: Array<{ name: string }>;
+    };
+    expect(updateStageMetadata.options.map((option) => option.name)).toEqual(['json', 'describe']);
+  });
+
+  it('runtime contract flags reject missing values before another option', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const fields = runCli('inspect-pipeline', ['test-feat', '--fields', '--json']);
+    expect(fields.status).toBe(1);
+    const fieldsPayload = JSON.parse(fields.stderr) as {
+      error: { code: string; input: Record<string, unknown>; retryable: boolean };
+    };
+    expect(fieldsPayload.error).toMatchObject({
+      code: 'missing_option_value',
+      input: { option: '--fields' },
+      retryable: false
+    });
+
+    const limit = runCli('inspect-events', ['test-feat', '--limit', '--fields', 'events']);
+    expect(limit.status).toBe(1);
+    const limitPayload = JSON.parse(limit.stderr) as {
+      error: { code: string; input: Record<string, unknown> };
+    };
+    expect(limitPayload.error).toMatchObject({
+      code: 'missing_option_value',
+      input: { option: '--limit' }
+    });
+
+    const direct = spawnSync(
+      process.execPath,
+      [distCli('inspect-pipeline'), 'test-feat', '--fields', '--json'],
+      {
+        cwd: tmpDir,
+        encoding: 'utf8'
+      }
+    );
+    expect(direct.status).toBe(1);
+    expect(direct.stderr).not.toContain('CliUserError');
+    const directPayload = JSON.parse(direct.stderr) as {
+      error: { code: string; input: Record<string, unknown> };
+    };
+    expect(directPayload.error).toMatchObject({
+      code: 'missing_option_value',
+      input: { option: '--fields' }
+    });
+  });
+
+  it('memory writer runtime commands support dry-run without creating memory files', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    fs.rmSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'feature-memory.json'), { force: true });
+    fs.rmSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'memory-summary.json'), { force: true });
+
+    const extractResult = runCli('extract-memory', ['test-feat', '--dry-run', '--json']);
+    expect(extractResult.status).toBe(0);
+    const extractPayload = JSON.parse(extractResult.stdout) as {
+      actions: Array<{ type: string; path: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+    };
+    expect(extractPayload.actions).toEqual([
+      {
+        type: 'write_file',
+        path: '.boss/test-feat/.meta/feature-memory.json'
+      }
+    ]);
+    expect(extractPayload.risk_tier).toBe('medium');
+    expect(extractPayload.requires_approval).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'feature-memory.json'))).toBe(false);
+
+    const summaryResult = runCli('build-memory-summary', ['test-feat', '--dry-run', '--json']);
+    expect(summaryResult.status).toBe(0);
+    const summaryPayload = JSON.parse(summaryResult.stdout) as {
+      actions: Array<{ type: string; path: string }>;
+    };
+    expect(summaryPayload.actions).toEqual([
+      {
+        type: 'write_file',
+        path: '.boss/test-feat/.meta/memory-summary.json'
+      }
+    ]);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'memory-summary.json'))).toBe(false);
   });
 
   it('read-only runtime command errors are structured in non-tty mode', () => {
