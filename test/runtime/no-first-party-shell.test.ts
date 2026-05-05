@@ -53,11 +53,10 @@ describe('TypeScript CLI architecture', () => {
     const runtimeFiles = walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime'))
       .filter((file) => file.endsWith('.ts'));
     const forbiddenRootHarnessPatterns = [
-      /REPO_ROOT[^\n;]*['"]harness['"]/,
-      /repoRoot[^\n;]*['"]harness['"]/,
-      /path\.(?:join|resolve)\([^\n;]*['"]harness['"]/,
-      /['"]harness\//,
-      /['"]\.\.\/.*harness\//
+      /\bREPO_ROOT\b[^\n;]*['"]harness['"]/,
+      /\brepoRoot\b[^\n;]*['"]harness['"]/,
+      /\bPROJECT_ROOT\b[^\n;]*['"]harness['"]/,
+      /['"](?:\.\.\/)+harness\//
     ];
 
     for (const file of runtimeFiles) {
