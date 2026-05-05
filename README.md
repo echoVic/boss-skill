@@ -308,11 +308,8 @@ boss-skill/
 │   └── pipeline-packs/               # 4 套流水线预设
 ├── scripts/
 │   ├── release.js                    # 统一发布脚本
-│   ├── lib/                          # 共享库（run-with-flags、hook-flags、boss-utils）
-│   ├── hooks/                        # 10 个 Node.js Hook 脚本
-│   ├── harness/                      # 事件追加、物化、重试等辅助脚本
-│   ├── gates/                        # 具体 gate 实现脚本
-│   └── report/                       # 报告相关脚本
+│   ├── lib/                          # Hook 运行辅助 JS
+│   └── hooks/                        # 10 个 Node.js Hook 脚本
 ├── .claude-plugin/
 │   ├── plugin.json                   # Claude Code Plugin 清单
 │   └── marketplace.json

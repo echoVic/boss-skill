@@ -61,9 +61,12 @@ describe('configurable gate coverage threshold', () => {
     expect(check?.detail).toBe('70');
   });
 
-  it('gate1-testing.sh reads GATE_COVERAGE_THRESHOLD variable', () => {
-    const gate1Path = path.join(REPO_ROOT, 'scripts', 'gates', 'gate1-testing.sh');
-    const content = fs.readFileSync(gate1Path, 'utf8');
-    expect(content).toContain('GATE_COVERAGE_THRESHOLD');
+  it('built-in gate1 receives the resolved coverage threshold', () => {
+    const source = fs.readFileSync(
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'lib', 'pipeline-runtime.ts'),
+      'utf8'
+    );
+    expect(source).toContain('coverageThreshold');
+    expect(source).toContain('runGate1');
   });
 });

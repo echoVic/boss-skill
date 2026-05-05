@@ -6,7 +6,7 @@
   "author": "Boss Harness Team",
   "license": "MIT",
   "hooks": {
-    "gate": "gate.sh"
+    "gate": "gate.js"
   },
   "config": {
     "severity": "high",

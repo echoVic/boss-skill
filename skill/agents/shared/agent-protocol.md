@@ -19,7 +19,7 @@
 
 1. 如果当前任务提供了目标产物文件或模板路径，必须先读取它们，并以其结构为准输出内容
 2. 优先级：`.boss/templates/<name>.template` > Skill 内置 `templates/<name>.template` > Agent Prompt 中的默认输出格式
-3. 如果目标产物已经通过 `scripts/prepare-artifact.sh` 准备好骨架，直接在该骨架上填充内容，不要改写成你自己的固定章节
+3. 如果目标产物已经通过 `boss artifact prepare` 准备好骨架，直接在该骨架上填充内容，不要改写成你自己的固定章节
 4. Agent Prompt 中的"输出格式"仅在模板不存在或任务未提供骨架时作为兜底参考
 5. **占位符约定**：`{{VAR}}` 表示由脚本/运行时替换的机器变量（如 FEATURE_NAME, DATE）；`[描述]` 表示由 Agent 根据上下文填写的内容
 

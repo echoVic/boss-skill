@@ -31,10 +31,9 @@ npm test
 |------|------|
 | `skill/` | 安装到 Coding Agent 的薄 Skill bundle（`SKILL.md`、agents、commands、templates、hooks、子 skills） |
 | `packages/boss-cli/src/runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
-| `scripts/lib/` | 共享库（`common.sh` Shell 工具、`boss-utils.js` Node.js 工具） |
-| `scripts/hooks/` | 10 个 Claude Code Hook 脚本 |
-| `scripts/harness/` | 内部 Shell 辅助脚本（非 public runtime surface） |
-| `scripts/gates/` | 质量门禁脚本 |
+| `packages/boss-cli/src/commands/` | `boss project`、`boss artifact`、`boss packs` 等 TypeScript 命令 |
+| `scripts/hooks/` | 10 个 Claude Code Hook 脚本（由 `boss hooks run` 调度） |
+| `scripts/lib/` | Hook 运行辅助 JS（无 first-party shell 编排） |
 | `harness/` | 插件系统和 Pipeline Pack 配置 |
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
 | `test/` | 自动化测试 |
@@ -43,27 +42,11 @@ npm test
 
 ## 开发规范
 
-### Shell 脚本
+### TypeScript CLI
 
-所有 Shell 脚本必须使用共享库 `scripts/lib/common.sh`，不要重复定义颜色变量或日志函数：
-
-```bash
-#!/bin/bash
-set -e
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/common.sh"
-LOG_TAG="YOUR_TAG"
-
-info "开始执行..."
-```
-
-`common.sh` 提供两组日志函数：
-
-- **标准模式**：`info`、`success`、`warn`、`error`（error 会 exit 1）
-- **Gate 模式**：`gate_info`、`gate_pass`、`gate_fail`（输出到 stderr，stdout 保留给 JSON）
-
-其他可用的工具函数：`require_jq`、`require_exec_json`、`validate_stage`、`add_check`、`iso_now`、`date_ymd`、`iso_to_epoch`。
+- First-party 编排入口必须落在 `packages/boss-cli/src/`，并通过 `boss ...` 或 `boss runtime ...` 暴露。
+- 不新增 `.sh` 作为实现面；需要执行外部项目命令时，在 TypeScript 中用 Node 内置模块封装。
+- 插件仍可通过 `plugin.json` 指向用户自己的可执行文件，但仓库内置能力不依赖 shell wrapper。
 
 ### Node.js Hook 脚本
 
@@ -88,7 +71,7 @@ try {
 ### Runtime 优先原则
 
 - 需要新增或修改编排行为时，优先改 `packages/boss-cli/src/runtime/cli/*`、`packages/boss-cli/src/runtime/cli/lib/*`、`packages/boss-cli/src/runtime/projectors/*`、`packages/boss-cli/src/runtime/report/*`。
-- `scripts/harness/*.sh`、`scripts/gates/*.sh`、`scripts/report/*.sh` 只应作为内部辅助层；新的编排语义必须落在 `packages/boss-cli/src/runtime/*` 并通过 `boss runtime <command>` 暴露。
+- 新的编排语义必须落在 `packages/boss-cli/src/runtime/*` 或 `packages/boss-cli/src/commands/*` 并通过 `boss <command>` 暴露。
 - 不要直接写 `execution.json`；状态变更必须先进入事件流，再由 projector 物化。
 
 ## 测试
@@ -180,8 +163,8 @@ npm run release -- <version|major|minor|patch> [--dry-run] [--no-publish]
 
 ```
 feat: 添加 Rust 项目 pipeline pack
-fix: 修复 gate-runner 在 Linux 下日期解析错误
-refactor: 提取 Shell 脚本公共函数到 common.sh
+fix: 修复 gate runtime 在 Linux 下日期解析错误
+refactor: 提取重复的 CLI 参数解析逻辑
 test: 为 post-tool-write hook 添加单元测试
 docs: 更新 README 安装说明
 ```
@@ -198,7 +181,7 @@ docs: 更新 README 安装说明
 
 - [ ] `npm test` 全部通过
 - [ ] 新增代码有对应测试
-- [ ] Shell 脚本使用 `common.sh`，无重复样板
+- [ ] 未新增 first-party `.sh` 实现面
 - [ ] Hook 脚本无空 `catch {}` 块
 - [ ] 版本号未手动修改（由发布脚本管理）
 
@@ -215,7 +198,7 @@ docs: 更新 README 安装说明
 ```
 harness/plugins/<name>/
 ├── plugin.json    # 插件清单（必须符合 plugin-schema.json）
-└── gate.sh        # 门禁脚本（type: gate 时必需）
+└── gate.js        # 门禁可执行文件示例（type: gate 时必需）
 ```
 
 ## 问题反馈

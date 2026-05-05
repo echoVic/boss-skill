@@ -1,17 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { replayEvents } from '../../packages/boss-cli/src/runtime/cli/lib/inspection-runtime.js';
-
-const APPEND_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'append-event.sh');
-const MATERIALIZE_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'materialize-state.sh');
-
-function getExecError(error: unknown) {
-  return error as Error & { status?: number; stdout?: string; stderr?: string };
-}
+import {
+  evaluateGates,
+  recordArtifact,
+  registerPlugins,
+  updateStage
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
 
 describe('event-sourcing', () => {
   let tmpDir: string;
@@ -68,24 +67,8 @@ describe('event-sourcing', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function runScript(script: string, args: string) {
-    try {
-      return execSync(`bash "${script}" ${args}`, {
-        encoding: 'utf8',
-        cwd: tmpDir,
-        env: { ...process.env, PATH: process.env.PATH }
-      }).trim();
-    } catch (error) {
-      const execError = getExecError(error);
-      if (execError.status !== 0) {
-        throw new Error(execError.stderr || execError.message);
-      }
-      return execError.stdout ? String(execError.stdout).trim() : '';
-    }
-  }
-
-  it('append-event.sh adds event to events.jsonl', () => {
-    runScript(APPEND_SCRIPT, 'test-feat StageStarted --stage 1');
+  it('runtime stage updates add events to events.jsonl', () => {
+    updateStage('test-feat', '1', 'running', { cwd: tmpDir });
 
     const lines = fs
       .readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl'), 'utf8')
@@ -103,11 +86,11 @@ describe('event-sourcing', () => {
     expect(event.id).toBe(2);
   });
 
-  it('materialize-state.sh rebuilds execution.json from events', () => {
-    runScript(APPEND_SCRIPT, 'test-feat StageStarted --stage 1');
-    runScript(APPEND_SCRIPT, 'test-feat ArtifactRecorded --artifact prd.md --stage 1');
-    runScript(APPEND_SCRIPT, 'test-feat StageCompleted --stage 1');
-    runScript(MATERIALIZE_SCRIPT, 'test-feat');
+  it('materializeState rebuilds execution.json from events', () => {
+    updateStage('test-feat', '1', 'running', { cwd: tmpDir });
+    recordArtifact('test-feat', 'prd.md', '1', { cwd: tmpDir });
+    updateStage('test-feat', '1', 'completed', { cwd: tmpDir });
+    materializeState('test-feat', tmpDir);
 
     const execJson = JSON.parse(
       fs.readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'), 'utf8')
@@ -119,7 +102,7 @@ describe('event-sourcing', () => {
   });
 
   it('replayEvents lists events', () => {
-    runScript(APPEND_SCRIPT, 'test-feat StageStarted --stage 1');
+    updateStage('test-feat', '1', 'running', { cwd: tmpDir });
 
     const result = replayEvents('test-feat', { cwd: tmpDir, limit: 20 });
     const types = (result.events || []).map((e: { type: string }) => e.type);
@@ -127,25 +110,26 @@ describe('event-sourcing', () => {
     expect(types).toContain('StageStarted');
   });
 
-  it('append-event.sh rejects invalid event type', () => {
+  it('materializeState rejects invalid event type', () => {
+    const eventsFile = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
+    fs.appendFileSync(
+      eventsFile,
+      `${JSON.stringify({
+        id: 2,
+        type: 'InvalidEvent',
+        timestamp: '2024-01-01T00:00:01Z',
+        data: { stage: 1 }
+      })}\n`,
+      'utf8'
+    );
+
     expect(() => {
-      runScript(APPEND_SCRIPT, 'test-feat InvalidEvent --stage 1');
+      materializeState('test-feat', tmpDir);
     }).toThrow();
   });
 
-  it('append-event.sh accepts plugin lifecycle event types from the runtime catalog', () => {
-    runScript(
-      APPEND_SCRIPT,
-      `test-feat PluginDiscovered --data '${JSON.stringify({
-        plugin: { name: 'security-audit', version: '1.0.0', type: 'gate' }
-      })}'`
-    );
-    runScript(
-      APPEND_SCRIPT,
-      `test-feat PluginActivated --data '${JSON.stringify({
-        plugin: { name: 'security-audit', version: '1.0.0', type: 'gate' }
-      })}'`
-    );
+  it('registerPlugins records plugin lifecycle event types from the runtime catalog', () => {
+    registerPlugins('test-feat', { cwd: tmpDir });
 
     const eventTypes = fs
       .readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl'), 'utf8')
@@ -153,37 +137,42 @@ describe('event-sourcing', () => {
       .split('\n')
       .map((line) => (JSON.parse(line) as { type: string }).type);
 
-    expect(eventTypes).toEqual(['PipelineInitialized', 'PluginDiscovered', 'PluginActivated']);
+    expect(eventTypes).toContain('PluginDiscovered');
+    expect(eventTypes).toContain('PluginActivated');
+    expect(eventTypes).toContain('PluginsRegistered');
   });
 
   it('materialize handles GateEvaluated events', () => {
-    runScript(APPEND_SCRIPT, 'test-feat StageStarted --stage 3');
-    runScript(APPEND_SCRIPT, 'test-feat GateEvaluated --gate gate0 --passed true --stage 3');
-    runScript(MATERIALIZE_SCRIPT, 'test-feat');
+    updateStage('test-feat', '3', 'running', { cwd: tmpDir });
+    evaluateGates('test-feat', 'gate1', { cwd: tmpDir });
 
     const execJson = JSON.parse(
       fs.readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'), 'utf8')
     ) as {
       qualityGates: { gate0: { status: string; passed: boolean } };
     };
-    expect(execJson.qualityGates.gate0.status).toBe('completed');
-    expect(execJson.qualityGates.gate0.passed).toBe(true);
+    expect(execJson.qualityGates.gate1.status).toBe('completed');
+    expect(execJson.qualityGates.gate1.passed).toBe(true);
   });
 
   it('materialize preserves gate checks and computes gate pass rate', () => {
-    runScript(
-      APPEND_SCRIPT,
-      `test-feat GateEvaluated --gate gate0 --passed true --stage 3 --data '${JSON.stringify({
-        checks: [{ name: 'lint', passed: true, detail: 'ok' }]
-      })}'`
+    const eventsFile = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
+    fs.appendFileSync(
+      eventsFile,
+      `${JSON.stringify({
+        id: 2,
+        type: 'GateEvaluated',
+        timestamp: '2024-01-01T00:00:01Z',
+        data: { gate: 'gate0', passed: true, stage: 3, checks: [{ name: 'lint', passed: true, detail: 'ok' }] }
+      })}\n${JSON.stringify({
+        id: 3,
+        type: 'GateEvaluated',
+        timestamp: '2024-01-01T00:00:02Z',
+        data: { gate: 'gate1', passed: false, stage: 3, checks: [{ name: 'unit-tests', passed: false, detail: 'failed' }] }
+      })}\n`,
+      'utf8'
     );
-    runScript(
-      APPEND_SCRIPT,
-      `test-feat GateEvaluated --gate gate1 --passed false --stage 3 --data '${JSON.stringify({
-        checks: [{ name: 'unit-tests', passed: false, detail: 'failed' }]
-      })}'`
-    );
-    runScript(MATERIALIZE_SCRIPT, 'test-feat');
+    materializeState('test-feat', tmpDir);
 
     const execJson = JSON.parse(
       fs.readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'), 'utf8')
@@ -200,23 +189,18 @@ describe('event-sourcing', () => {
   });
 
   it('materialize handles PluginsRegistered events', () => {
-    runScript(
-      APPEND_SCRIPT,
-      `test-feat PluginsRegistered --data '${JSON.stringify({
-        plugins: [{ name: 'security-audit', version: '1.0.0', type: 'gate' }]
-      })}'`
-    );
-    runScript(MATERIALIZE_SCRIPT, 'test-feat');
+    registerPlugins('test-feat', { cwd: tmpDir });
+    materializeState('test-feat', tmpDir);
 
     const execJson = JSON.parse(
       fs.readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'), 'utf8')
     ) as {
       plugins: Array<{ name: string; version: string; type: string }>;
     };
-    expect(execJson.plugins).toEqual([{ name: 'security-audit', version: '1.0.0', type: 'gate' }]);
+    expect(execJson.plugins.some((plugin) => plugin.name === 'security-audit')).toBe(true);
   });
 
-  it('materialize-state.sh rejects malformed ArtifactRecorded events', () => {
+  it('materializeState rejects malformed ArtifactRecorded events', () => {
     const eventsFile = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
     fs.appendFileSync(
       eventsFile,
@@ -230,11 +214,11 @@ describe('event-sourcing', () => {
     );
 
     expect(() => {
-      runScript(MATERIALIZE_SCRIPT, 'test-feat');
+      materializeState('test-feat', tmpDir);
     }).toThrow(/ArtifactRecorded.*stage/);
   });
 
-  it('materialize-state.sh rejects malformed GateEvaluated events', () => {
+  it('materializeState rejects malformed GateEvaluated events', () => {
     const eventsFile = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
     fs.appendFileSync(
       eventsFile,
@@ -248,7 +232,7 @@ describe('event-sourcing', () => {
     );
 
     expect(() => {
-      runScript(MATERIALIZE_SCRIPT, 'test-feat');
+      materializeState('test-feat', tmpDir);
     }).toThrow(/GateEvaluated.*passed/);
   });
 });

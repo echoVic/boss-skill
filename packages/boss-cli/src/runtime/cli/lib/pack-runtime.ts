@@ -52,6 +52,11 @@ export interface PipelinePackStateParameters {
   skipReview?: boolean;
 }
 
+export interface PipelinePackDetectionResult {
+  detected: PipelinePackDefinition;
+  matched: PipelinePackDefinition[];
+}
+
 function readJson<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
@@ -140,6 +145,10 @@ function evaluateWhen(projectDir: string, when: PipelinePackWhen | null): boolea
 }
 
 export function resolvePipelinePack(projectDir = process.cwd()): PipelinePackDefinition {
+  return detectPipelinePacks(projectDir).detected;
+}
+
+export function detectPipelinePacks(projectDir = process.cwd()): PipelinePackDetectionResult {
   const packs = listPackDefinitions();
   const defaultPack =
     packs.find((pack) => pack.name === 'default') ?? {
@@ -156,13 +165,24 @@ export function resolvePipelinePack(projectDir = process.cwd()): PipelinePackDef
     .sort((left, right) => right.priority - left.priority);
 
   const selected = matched[0] ?? defaultPack;
-  return {
+  const detected = {
     name: selected.name,
     version: selected.version,
     type: selected.type,
     priority: selected.priority,
     when: selected.when,
     config: clone(selected.config ?? {})
+  };
+  return {
+    detected,
+    matched: matched.map((pack) => ({
+      name: pack.name,
+      version: pack.version,
+      type: pack.type,
+      priority: pack.priority,
+      when: pack.when,
+      config: clone(pack.config ?? {})
+    }))
   };
 }
 

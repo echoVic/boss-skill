@@ -193,7 +193,7 @@ describe('artifact-dag', () => {
 
   it('DAG contains gate entries with type "gate"', () => {
     const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
-      artifacts: Record<string, { type?: string; agent?: string | null; stage?: number; script?: string }>;
+      artifacts: Record<string, { type?: string; agent?: string | null; stage?: number; runtime?: string; script?: string }>;
     };
     const gateEntries = Object.entries(dag.artifacts)
       .filter(([, def]) => def.type === 'gate');
@@ -202,7 +202,8 @@ describe('artifact-dag', () => {
       expect(def.type).toBe('gate');
       expect(def.agent).toBeNull();
       expect(typeof def.stage).toBe('number');
-      expect(typeof def.script).toBe('string');
+      expect(def.runtime).toBe('builtin');
+      expect(def.script).toBeUndefined();
     }
   });
 

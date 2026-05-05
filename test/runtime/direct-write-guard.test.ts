@@ -14,11 +14,10 @@ describe('phase-1 direct-write guard', () => {
   it('keeps critical writer paths free of direct execution.json mutations', () => {
     const criticalFiles = [
       'scripts/hooks/post-tool-write.js',
-      'scripts/gates/gate-runner.sh',
       'packages/boss-cli/src/runtime/cli/evaluate-gates.ts',
       'packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.ts',
       'packages/boss-cli/src/runtime/cli/register-plugins.ts',
-      'scripts/harness/load-plugins.sh'
+      'packages/boss-cli/src/commands/project.ts'
     ];
 
     const forbiddenPatterns = [

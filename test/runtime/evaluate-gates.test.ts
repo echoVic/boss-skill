@@ -150,11 +150,11 @@ describe('evaluateGates', () => {
     }
   });
 
-  it('gate0 includes secrets-scan and unsafe-patterns checks', () => {
-    const gate0Path = path.join(REPO_ROOT, 'scripts', 'gates', 'gate0-code-quality.sh');
-    const gate0Content = fs.readFileSync(gate0Path, 'utf8');
+  it('built-in gate0 includes secrets-scan and unsafe-patterns checks', () => {
+    const result = evaluateGates('test-feat', 'gate0', { cwd: tmpDir, dryRun: true });
+    const names = result.checks.map((item) => (item as { name?: string }).name);
 
-    expect(gate0Content).toContain('secrets-scan');
-    expect(gate0Content).toContain('unsafe-patterns');
+    expect(names).toContain('secrets-scan');
+    expect(names).toContain('unsafe-patterns');
   });
 });

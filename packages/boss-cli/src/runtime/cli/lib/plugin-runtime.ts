@@ -504,12 +504,14 @@ export function runHook(
       continue;
     }
 
-    const args = [fullPath, feature];
+    const args = [feature];
     if (stageNumber != null) {
       args.push(String(stageNumber));
     }
 
-    const execution = spawnSync('bash', args, {
+    const command = fullPath.endsWith('.sh') ? 'bash' : fullPath;
+    const commandArgs = fullPath.endsWith('.sh') ? [fullPath, ...args] : args;
+    const execution = spawnSync(command, commandArgs, {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe']

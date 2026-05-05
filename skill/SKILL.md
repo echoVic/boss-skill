@@ -204,22 +204,22 @@ Copy this checklist and check off items as you complete them:
 | 生成流水线报告 | `boss runtime generate-summary` | `buildSummaryModel(feature)`, `renderMarkdown(model)`, `renderJson(model)` |
 | 生成诊断页 | `boss runtime render-diagnostics` | `renderHtml(model)` |
 
-### Internal Shell Helpers
+### Boss CLI Helpers
 
-| 辅助脚本 | 用途 |
+| CLI | 用途 |
 |------|------|
-| `scripts/harness/retry-stage.sh` | 阶段重试（检查上限 → retrying → running） |
-| `scripts/harness/retry-agent.sh` | 单个 Agent 重试（不重跑整个阶段） |
+| `boss runtime retry-stage` | 阶段重试（检查上限 → retrying → running） |
+| `boss runtime retry-agent` | 单个 Agent 重试（不重跑整个阶段） |
 | `boss packs detect` | Pipeline Pack 自动检测（匹配项目文件） |
-| `scripts/harness/watch-progress.sh` | 实时进度监控（tail -f progress.jsonl） |
-| `scripts/harness/record-feedback.sh` | Agent 间反馈循环记录（REVISION_NEEDED） |
-| `scripts/gates/gate0-code-quality.sh` | Gate 0：代码质量（编译 + Lint） |
-| `scripts/gates/gate1-testing.sh` | Gate 1：测试门禁（覆盖率 + 通过率 + E2E） |
-| `scripts/gates/gate2-performance.sh` | Gate 2：性能门禁（Lighthouse + API P99） |
+| `boss runtime inspect-progress` | 实时进度监控（读取 progress.jsonl） |
+| `boss runtime record-feedback` | Agent 间反馈循环记录（REVISION_NEEDED） |
+| `boss runtime evaluate-gates <feature> gate0` | Gate 0：代码质量（编译 + Lint） |
+| `boss runtime evaluate-gates <feature> gate1` | Gate 1：测试门禁（覆盖率 + 通过率 + E2E） |
+| `boss runtime evaluate-gates <feature> gate2` | Gate 2：性能门禁（Lighthouse + API P99） |
 
 ### Runtime/CLI 编排对照
 
-运行时编排以 `boss runtime <command>` 为准；shell helper 只作为 CLI 内部实现，不是 skill 的 public contract。
+运行时编排以 `boss runtime <command>` 为准；first-party 编排能力由 `packages/boss-cli/src/` 的 TypeScript CLI 实现，不再依赖 shell helper。
 
 Pack 选择与插件生命周期都应进入事件流，而不是停留在 shell 日志里：
 - pack 应通过 `PackApplied` 进入 `execution.json` read model。
@@ -322,7 +322,7 @@ hooks 定义在两处：
 
 **并行调用**：需要同时执行多个 Agent 时（如阶段 1 的 Architect + UI Designer、阶段 3 的 Frontend + Backend），在同一步骤内同时发起多个子 Agent 调用，无需等待其中一个完成再启动另一个。
 
-**重试机制**：若子 Agent 执行失败，优先通过 runtime 状态检查后决定是调用内部 `retry-agent.sh` 还是 `retry-stage.sh`；shell helper 只负责执行重试，不承担对外编排语义。若已达上限，暂停并向用户报告失败原因及已完成的产物路径。
+**重试机制**：若子 Agent 执行失败，优先通过 runtime 状态检查后决定是调用 `boss runtime retry-agent` 还是 `boss runtime retry-stage`。若已达上限，暂停并向用户报告失败原因及已完成的产物路径。
 
 **摘要优先**：读取上游产物时，优先读取文档开头的 `## 摘要` section；仅在需要细节时读取完整内容，以节省 Token。
 

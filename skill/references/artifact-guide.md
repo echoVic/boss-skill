@@ -7,8 +7,8 @@
 **保存前，先按模板优先级为当前产物准备文档骨架，再基于该骨架生成内容。**
 
 推荐顺序：
-1. 若 `.boss/<feature>/` 尚不存在，先执行 `scripts/init-project.sh <feature-name>` 创建占位文件和 `.meta/execution.json`
-2. 对当前要产出的单个文档执行 `scripts/prepare-artifact.sh <feature-name> <artifact-name>`
+1. 若 `.boss/<feature>/` 尚不存在，先执行 `boss project init <feature-name>` 创建占位文件和 `.meta/execution.json`
+2. 对当前要产出的单个文档执行 `boss artifact prepare <feature-name> <artifact-name>`
 3. 读取刚准备好的目标产物文件，以其结构为基础填充真实内容
 
 不要在初始化阶段一次性把所有模板正文落入 `.boss/<feature>/`，只为当前阶段需要的产物逐个准备骨架。
@@ -34,9 +34,9 @@
 ## 保存格式
 
 ```
-scripts/prepare-artifact.sh <feature-name> prd.md
+boss artifact prepare <feature-name> prd.md
 Write(".boss/<feature>/prd.md", ...)
-scripts/prepare-artifact.sh <feature-name> architecture.md
+boss artifact prepare <feature-name> architecture.md
 Write(".boss/<feature>/architecture.md", ...)
 ```
 
@@ -46,7 +46,7 @@ Write(".boss/<feature>/architecture.md", ...)
 - [ ] 文件是否保存到了正确的 `.boss/<feature>/` 目录？
 - [ ] 文件名是否与规范一致？
 - [ ] 内容是否使用了中文？
-- [ ] 是否先为当前产物执行了 `scripts/prepare-artifact.sh`？
+- [ ] 是否先为当前产物执行了 `boss artifact prepare`？
 - [ ] 是否优先读取了 `.boss/templates/` 中的项目级模板？
 - [ ] 是否基于对应的 template 生成？
 - [ ] 是否只准备了当前阶段需要的产物，而不是一次性渲染全部模板？

@@ -70,7 +70,7 @@
       "agent": null,
       "stage": 3,
       "type": "gate",
-      "script": "scripts/gates/gate0-code-quality.sh",
+      "runtime": "builtin",
       "optional": false,
       "description": "代码质量门禁（编译 + Lint + 安全扫描）"
     },
@@ -79,7 +79,7 @@
       "agent": null,
       "stage": 3,
       "type": "gate",
-      "script": "scripts/gates/gate1-testing.sh",
+      "runtime": "builtin",
       "optional": false,
       "description": "测试门禁（覆盖率 + 通过率 + E2E）"
     },
@@ -88,7 +88,7 @@
       "agent": null,
       "stage": 3,
       "type": "gate",
-      "script": "scripts/gates/gate2-performance.sh",
+      "runtime": "builtin",
       "optional": true,
       "description": "性能门禁（Lighthouse + API P99，仅 Web 项目）"
     }

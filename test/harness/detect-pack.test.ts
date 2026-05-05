@@ -1,17 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const SCRIPT_PATH = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'detect-pack.sh');
+const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
-function getCommandOutput(error: unknown) {
-  const execError = error as Error & { stdout?: string };
-  return execError.stdout ? String(execError.stdout).trim() : '';
-}
-
-describe('detect-pack.sh', () => {
+describe('boss packs detect', () => {
   let tmpDir: string;
 
   beforeEach(() => {
@@ -22,15 +18,13 @@ describe('detect-pack.sh', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function run(projectDir: string, extraArgs = '') {
-    try {
-      return execSync(`bash "${SCRIPT_PATH}" ${extraArgs} "${projectDir}"`, {
-        encoding: 'utf8',
-        env: { ...process.env, PATH: process.env.PATH }
-      }).trim();
-    } catch (error) {
-      return getCommandOutput(error);
-    }
+  function run(projectDir: string, extraArgs: string[] = []) {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'packs', 'detect', ...extraArgs, projectDir], {
+      encoding: 'utf8',
+      cwd: REPO_ROOT
+    });
+    expect(result.status, result.stderr).toBe(0);
+    return result.stdout.trim();
   }
 
   it('returns "default" when no pack matches', () => {
@@ -60,7 +54,7 @@ describe('detect-pack.sh', () => {
   });
 
   it('returns JSON when --json flag is used', () => {
-    const parsed = JSON.parse(run(tmpDir, '--json')) as {
+    const parsed = JSON.parse(run(tmpDir, ['--json'])) as {
       detected: string;
       matched: unknown[];
     };

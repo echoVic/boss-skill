@@ -96,6 +96,10 @@ type RuntimeModule = {
   main: (argv: string[], options?: { cwd?: string }) => number | Promise<number>;
 };
 
+type CommandModule = {
+  main: (argv: string[], options?: { cwd?: string }) => number | Promise<number>;
+};
+
 const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'build-memory-summary': () => import('../runtime/cli/build-memory-summary.js'),
   'check-stage': () => import('../runtime/cli/check-stage.js'),
@@ -144,21 +148,6 @@ function runNodeScript(scriptPath: string, args: string[]): number {
   return result.status ?? 0;
 }
 
-function runBashScript(scriptPath: string, args: string[]): number {
-  const result = spawnSync('bash', [scriptPath, ...args], {
-    cwd: process.cwd(),
-    env: process.env,
-    stdio: 'inherit'
-  });
-
-  if (result.error) {
-    console.error(result.error.message);
-    return 1;
-  }
-
-  return result.status ?? 0;
-}
-
 async function runRuntimeCommand(argv: string[]): Promise<number> {
   const runtimeCommand = argv[0];
   if (!runtimeCommand || runtimeCommand === '-h' || runtimeCommand === '--help') {
@@ -177,7 +166,7 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
   return mod.main(argv.slice(1), { cwd: process.cwd() });
 }
 
-function runProjectCommand(argv: string[]): number {
+async function runProjectCommand(argv: string[]): Promise<number> {
   const subcommand = argv[0];
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     console.log(PROJECT_USAGE);
@@ -190,10 +179,11 @@ function runProjectCommand(argv: string[]): number {
     return 1;
   }
 
-  return runBashScript(path.join(PKG_ROOT, 'scripts', 'init-project.sh'), argv.slice(1));
+  const mod: CommandModule = await import('../commands/project.js');
+  return mod.main(argv.slice(1), { cwd: process.cwd() });
 }
 
-function runArtifactCommand(argv: string[]): number {
+async function runArtifactCommand(argv: string[]): Promise<number> {
   const subcommand = argv[0];
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     console.log(ARTIFACT_USAGE);
@@ -206,10 +196,11 @@ function runArtifactCommand(argv: string[]): number {
     return 1;
   }
 
-  return runBashScript(path.join(PKG_ROOT, 'scripts', 'prepare-artifact.sh'), argv.slice(1));
+  const mod: CommandModule = await import('../commands/artifact.js');
+  return mod.main(argv.slice(1), { cwd: process.cwd() });
 }
 
-function runPacksCommand(argv: string[]): number {
+async function runPacksCommand(argv: string[]): Promise<number> {
   const subcommand = argv[0];
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     console.log(PACKS_USAGE);
@@ -222,7 +213,8 @@ function runPacksCommand(argv: string[]): number {
     return 1;
   }
 
-  return runBashScript(path.join(PKG_ROOT, 'scripts', 'harness', 'detect-pack.sh'), argv.slice(1));
+  const mod: CommandModule = await import('../commands/packs.js');
+  return mod.main(argv.slice(1), { cwd: process.cwd() });
 }
 
 function runHooksCommand(argv: string[]): number {

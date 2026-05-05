@@ -1,11 +1,11 @@
 # 质量门禁
 
-Boss Harness Gate Engine 提供三层程序化门禁，由 `runtime/cli/evaluate-gates.js` 统一调度。
+Boss Harness Gate Engine 提供三层程序化门禁，由 `boss runtime evaluate-gates` 统一调度。
 所有门禁结果都会先追加到 `.meta/events.jsonl`，再物化到只读的 `.meta/execution.json` read model 中。
 
 ## Gate 0：代码质量（开发完成后，测试执行前）
 
-脚本：`scripts/gates/gate0-code-quality.sh`
+入口：`boss runtime evaluate-gates <feature> gate0`
 
 - [ ] TypeScript / 类型检查编译无错误
 - [ ] Lint（ESLint / Biome / Ruff）检查通过，无 error 级别问题
@@ -18,7 +18,7 @@ Boss Harness Gate Engine 提供三层程序化门禁，由 `runtime/cli/evaluate
 
 ## Gate 1：测试（QA 执行后，部署前）
 
-脚本：`scripts/gates/gate1-testing.sh`
+入口：`boss runtime evaluate-gates <feature> gate1`
 
 阶段 3 完成后，必须全部通过才能进入阶段 4。
 
@@ -35,7 +35,7 @@ Boss Harness Gate Engine 提供三层程序化门禁，由 `runtime/cli/evaluate
 
 ## Gate 2：性能（部署前，仅适用于 Web 项目）
 
-脚本：`scripts/gates/gate2-performance.sh`
+入口：`boss runtime evaluate-gates <feature> gate2`
 
 - [ ] 前端：Lighthouse Performance Score ≥ 80
 - [ ] 后端：API P99 响应时间 < 500ms
@@ -48,16 +48,16 @@ Boss Harness Gate Engine 提供三层程序化门禁，由 `runtime/cli/evaluate
 ## 插件门禁
 
 通过 Harness 插件协议可注册自定义门禁（如安全审计、许可证检查）。
-插件门禁脚本放置在 `harness/plugins/<name>/gate.sh`，由 `evaluate-gates.js` 统一调度。
+插件门禁通过 `harness/plugins/<name>/plugin.json` 的 `hooks.gate` 指向一个可执行文件，由 `boss runtime evaluate-gates` 统一调度。
 
 ## 调用方式
 
 ```bash
-runtime/cli/evaluate-gates.js <feature> gate0
-runtime/cli/evaluate-gates.js <feature> gate1
-runtime/cli/evaluate-gates.js <feature> gate2
-runtime/cli/evaluate-gates.js <feature> <plugin-gate-name>
-runtime/cli/evaluate-gates.js <feature> gate0 --dry-run
+boss runtime evaluate-gates <feature> gate0
+boss runtime evaluate-gates <feature> gate1
+boss runtime evaluate-gates <feature> gate2
+boss runtime evaluate-gates <feature> <plugin-gate-name>
+boss runtime evaluate-gates <feature> gate0 --dry-run
 ```
 
 ## 判断标准
@@ -70,9 +70,9 @@ runtime/cli/evaluate-gates.js <feature> gate0 --dry-run
 ## 未通过处理
 
 如果门禁未通过：
-1. `evaluate-gates.js` 自动追加门禁结果事件并物化 `execution.json` read model
-2. Boss Agent 调用 `runtime/cli/update-stage.js <feature> 3 failed` 标记阶段为 `failed`
-3. 尝试修复后通过 `retry-stage.sh` 重试
+1. `boss runtime evaluate-gates` 自动追加门禁结果事件并物化 `execution.json` read model
+2. Boss Agent 调用 `boss runtime update-stage <feature> 3 failed` 标记阶段为 `failed`
+3. 尝试修复后通过 `boss runtime retry-stage` 重试
 4. 重新执行对应门禁
 5. 再次检查是否通过
 
