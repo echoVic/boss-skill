@@ -2,7 +2,30 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  optionalInputString,
+  requireInputString,
+  requireOptionValue,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { runHook } from './lib/plugin-runtime.js';
+
+interface RunPluginHookInput {
+  hook: string;
+  feature: string;
+  stage: string | null;
+}
 
 function printHelp(): void {
   process.stdout.write(
@@ -11,87 +34,111 @@ function printHelp(): void {
       '',
       '用法: run-plugin-hook.js <hook> <feature> [options]',
       '',
-      '参数:',
-      '  hook             hook 名称（如 pre-stage、post-gate）',
-      '  feature          功能名称',
-      '',
       '选项:',
-      '  --stage <n>      按阶段过滤插件并透传 stage 参数',
-      '  -h, --help       查看帮助',
-      '',
-      '示例:',
-      '  run-plugin-hook.js post-gate my-feature --stage 3',
+      '  --stage <n>          按阶段过滤插件并透传 stage 参数',
+      '  --dry-run            预览变更而不执行 hook',
+      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
+      '  -h, --help           查看帮助',
       ''
     ].join('\n')
   );
 }
 
-export function parseArgs(argv: string[]) {
-  if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
-    return { help: true } as const;
-  }
-
-  const parsed = {
-    hook: '',
-    feature: '',
-    stage: null as string | null
-  };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i]!;
-    switch (arg) {
-      case '--stage':
-        if (!argv[i + 1]) throw new Error('--stage 需要指定值');
-        parsed.stage = argv[i + 1]!;
-        i += 1;
-        break;
-      default:
-        if (arg.startsWith('-')) {
-          throw new Error(`未知选项: ${arg}`);
-        }
-        if (!parsed.hook) {
-          parsed.hook = arg;
-        } else if (!parsed.feature) {
-          parsed.feature = arg;
-        } else {
-          throw new Error(`多余的参数: ${arg}`);
-        }
+function parseFlatInput(argv: string[]): RunPluginHookInput {
+  let hook = '';
+  let feature = '';
+  let stage: string | null = null;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    if (arg === '--stage') {
+      stage = requireOptionValue('--stage', argv[index + 1]);
+      index += 1;
+      continue;
     }
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+    if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
+    if (!hook) hook = arg;
+    else if (!feature) feature = arg;
+    else throw new Error(`多余的参数: ${arg}`);
   }
+  return {
+    hook: requireInputString(hook, 'hook'),
+    feature: requireInputString(feature, 'feature'),
+    stage
+  };
+}
 
-  if (!parsed.hook) throw new Error('缺少 hook 参数');
-  if (!parsed.feature) throw new Error('缺少 feature 参数');
-  return parsed;
+function resolveInput(argv: string[], context: CliContext): RunPluginHookInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    return {
+      hook: requireInputString(input.hook, 'hook'),
+      feature: requireInputString(input.feature, 'feature'),
+      stage: optionalInputString(input.stage) || null
+    };
+  }
+  return parseFlatInput(argv);
+}
+
+function actionFor(input: RunPluginHookInput) {
+  return {
+    type: 'run_plugin_hook',
+    feature: input.feature,
+    hook: input.hook,
+    stage: input.stage
+  };
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
-  const parsed = parseArgs(argv);
-  if ('help' in parsed) {
-    printHelp();
+  const context = createCliContext(argv, { command: 'boss runtime run-plugin-hook' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['run-plugin-hook']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['run-plugin-hook'], null, 2)}\n`
+    );
     return 0;
   }
 
-  const result = runHook(parsed.hook, parsed.feature, {
-    cwd,
-    stage: parsed.stage
-  });
+  if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
+    printHelp();
+    return argv.length === 0 ? 1 : 0;
+  }
 
-  process.stdout.write(
-    `${JSON.stringify({
-      hook: result.hook,
-      feature: result.feature,
-      stage: result.stage,
-      results: result.results
-    })}\n`
-  );
-  return result.results.some((item) => item.passed === false) ? 1 : 0;
+  const input = resolveInput(argv, context);
+  if (context.values.dryRun) {
+    writeActionPlan([actionFor(input)], context, 'medium');
+    return 0;
+  }
+
+  try {
+    const result = runHook(input.hook, input.feature, {
+      cwd,
+      stage: input.stage
+    });
+
+    writeOutput(
+      {
+        hook: result.hook,
+        feature: result.feature,
+        stage: result.stage,
+        results: result.results
+      },
+      context,
+      () => `${JSON.stringify({ hook: result.hook, feature: result.feature, stage: result.stage, results: result.results }, null, 2)}\n`
+    );
+    return result.results.some((item) => item.passed === false) ? 1 : 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, input.feature);
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`[PLUGIN] ${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime run-plugin-hook', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

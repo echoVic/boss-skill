@@ -2,7 +2,32 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  optionalInputString,
+  requireInputString,
+  requireOptionValue,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { discoverPlugins, registerPlugins, validatePlugins } from './lib/plugin-runtime.js';
+
+type RegisterPluginsAction = 'list' | 'validate' | 'register' | 'help';
+
+interface RegisterPluginsInput {
+  action: RegisterPluginsAction;
+  type: string;
+  feature: string;
+}
 
 function printHelp(): void {
   process.stdout.write(
@@ -16,102 +41,157 @@ function printHelp(): void {
       '  --type <type>          按类型过滤：gate | agent | pipeline-pack | reporter',
       '  --validate             验证插件清单与脚本引用',
       '  --register <feature>   追加插件注册事件并物化 read model（execution.json）',
+      '  --dry-run              预览注册事件而不写入',
+      '  --json-input <json|->  从 JSON 字符串或 stdin 读取输入',
       '  -h, --help             查看帮助',
       ''
     ].join('\n')
   );
 }
 
-export function parseArgs(argv: string[]) {
-  const parsed = {
+function parseFlatInput(argv: string[]): RegisterPluginsInput {
+  const parsed: RegisterPluginsInput = {
     action: 'list',
     type: '',
     feature: ''
   };
 
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i]!;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
     switch (arg) {
       case '-h':
       case '--help':
         parsed.action = 'help';
-        break;
+        continue;
       case '--list':
         parsed.action = 'list';
-        break;
+        continue;
       case '--validate':
         parsed.action = 'validate';
-        break;
+        continue;
       case '--type':
-        if (!argv[i + 1]) throw new Error('--type 需要指定值');
-        parsed.type = argv[i + 1]!;
-        i += 1;
-        break;
+        parsed.type = requireOptionValue('--type', argv[index + 1]);
+        index += 1;
+        continue;
       case '--register':
-        if (!argv[i + 1]) throw new Error('--register 需要指定 feature');
         parsed.action = 'register';
-        parsed.feature = argv[i + 1]!;
-        i += 1;
-        break;
-      default:
-        throw new Error(`未知选项: ${arg}`);
+        parsed.feature = requireOptionValue('--register', argv[index + 1]);
+        index += 1;
+        continue;
     }
+
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+    throw new Error(`未知选项: ${arg}`);
   }
 
   return parsed;
 }
 
+function resolveInput(argv: string[], context: CliContext): RegisterPluginsInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    const action = optionalInputString(input.action) || 'register';
+    return {
+      action: action as RegisterPluginsAction,
+      type: optionalInputString(input.type) || '',
+      feature: action === 'register' ? requireInputString(input.feature, 'feature') : optionalInputString(input.feature) || ''
+    };
+  }
+  return parseFlatInput(argv);
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
-  const parsed = parseArgs(argv);
-  if (parsed.action === 'help') {
+  const context = createCliContext(argv, { command: 'boss runtime register-plugins' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['register-plugins']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['register-plugins'], null, 2)}\n`
+    );
+    return 0;
+  }
+
+  const input = resolveInput(argv, context);
+  if (input.action === 'help') {
     printHelp();
     return 0;
   }
 
-  if (parsed.action === 'list') {
-    const result = discoverPlugins({ cwd, type: parsed.type, strict: false });
-    for (const plugin of result.plugins) {
-      process.stdout.write(`  ${plugin.name}@${plugin.version} (${plugin.type})\n`);
-    }
-    if (result.plugins.length === 0) {
-      process.stdout.write('未发现已启用插件\n');
-    } else {
-      process.stdout.write(`共发现 ${result.plugins.length} 个插件\n`);
-    }
-    if (result.errors.length > 0) {
+  if (input.action === 'list') {
+    const result = discoverPlugins({ cwd, type: input.type, strict: false });
+    writeOutput(
+      { plugins: result.plugins, errors: result.errors },
+      context,
+      () =>
+        result.plugins.length === 0
+          ? '未发现已启用插件\n'
+          : `${result.plugins.map((plugin) => `  ${plugin.name}@${plugin.version} (${plugin.type})`).join('\n')}\n共发现 ${result.plugins.length} 个插件\n`
+    );
+    if (result.errors.length > 0 && !context.useJson) {
       process.stderr.write(`${result.errors.join('\n')}\n`);
     }
     return result.errors.length > 0 ? 1 : 0;
   }
 
-  if (parsed.action === 'validate') {
-    const result = validatePlugins({ cwd, type: parsed.type });
-    for (const plugin of result.plugins) {
-      process.stdout.write(`${plugin.name}@${plugin.version} (${plugin.type}) — 有效\n`);
-    }
-    if (!result.valid) {
-      process.stderr.write(`${result.errors.join('\n')}\n`);
-      return 1;
-    }
-    process.stdout.write('所有插件验证通过\n');
-    return 0;
+  if (input.action === 'validate') {
+    const result = validatePlugins({ cwd, type: input.type });
+    writeOutput(
+      { valid: result.valid, plugins: result.plugins, errors: result.errors },
+      context,
+      () =>
+        result.valid
+          ? `${result.plugins.map((plugin) => `${plugin.name}@${plugin.version} (${plugin.type}) - valid`).join('\n')}\n所有插件验证通过\n`
+          : `${result.errors.join('\n')}\n`
+    );
+    return result.valid ? 0 : 1;
   }
 
-  if (parsed.action === 'register') {
-    const result = registerPlugins(parsed.feature, { cwd, type: parsed.type });
-    const execPath = path.join(cwd, '.boss', parsed.feature, '.meta', 'execution.json');
-    process.stdout.write(`已追加 ${result.plugins.length} 个插件注册事件，并物化 read model: ${execPath}\n`);
-    return 0;
+  if (input.action === 'register') {
+    if (context.values.dryRun) {
+      const result = discoverPlugins({ cwd, type: input.type, strict: false });
+      writeActionPlan(
+        [
+          {
+            type: 'register_plugins',
+            feature: input.feature,
+            plugin_count: result.plugins.length,
+            plugin_names: result.plugins.map((plugin) => plugin.name)
+          }
+        ],
+        context,
+        'medium'
+      );
+      return result.errors.length > 0 ? 1 : 0;
+    }
+
+    try {
+      const result = registerPlugins(input.feature, { cwd, type: input.type });
+      const executionPath = `.boss/${input.feature}/.meta/execution.json`;
+      writeOutput(
+        {
+          feature: input.feature,
+          plugin_count: result.plugins.length,
+          plugin_names: result.plugins.map((plugin) => plugin.name),
+          executionPath
+        },
+        context,
+        () => `已追加 ${result.plugins.length} 个插件注册事件，并物化 read model: ${path.join(cwd, executionPath)}\n`
+      );
+      return 0;
+    } catch (err) {
+      throw toFeatureNotFoundError(err, input.feature);
+    }
   }
 
-  throw new Error(`不支持的 action: ${parsed.action}`);
+  throw new Error(`不支持的 action: ${input.action}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`[PLUGIN] ${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime register-plugins', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

@@ -2,7 +2,28 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  requireInputString,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { recordArtifact } from './lib/pipeline-runtime.js';
+
+interface RecordArtifactInput {
+  feature: string;
+  artifact: string;
+  stage: string;
+}
 
 function showHelp(): void {
   process.stderr.write(
@@ -11,58 +32,105 @@ function showHelp(): void {
       '',
       '用法: record-artifact.js <feature> <artifact> <stage>',
       '',
-      '参数:',
-      '  feature    功能名称',
-      '  artifact   产物名称（如 prd.md、architecture.md、code）',
-      '  stage      所属阶段编号 (1-4)',
-      '',
-      '说明:',
-      '  1. 追加 ArtifactRecorded 事件',
-      '  2. 物化 execution.json 只读视图',
-      '  3. 返回该阶段当前已记录的产物列表',
-      '',
-      '示例:',
-      '  record-artifact.js my-feature prd.md 1',
+      '选项:',
+      '  --dry-run             预览变更而不写入',
+      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
+      '  --json                输出 JSON',
       ''
     ].join('\n')
   );
 }
 
+function parseFlatInput(argv: string[]): RecordArtifactInput {
+  let feature = '';
+  let artifact = '';
+  let stage = '';
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+    if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
+    if (!feature) feature = arg;
+    else if (!artifact) artifact = arg;
+    else if (!stage) stage = arg;
+    else throw new Error(`多余的参数: ${arg}`);
+  }
+  return {
+    feature: requireInputString(feature, 'feature'),
+    artifact: requireInputString(artifact, 'artifact'),
+    stage: requireInputString(stage, 'stage')
+  };
+}
+
+function resolveInput(argv: string[], context: CliContext): RecordArtifactInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    return {
+      feature: requireInputString(input.feature, 'feature'),
+      artifact: requireInputString(input.artifact, 'artifact'),
+      stage: requireInputString(input.stage, 'stage')
+    };
+  }
+  return parseFlatInput(argv);
+}
+
+function actionFor(input: RecordArtifactInput) {
+  return {
+    type: 'record_artifact',
+    feature: input.feature,
+    artifact: input.artifact,
+    stage: Number(input.stage)
+  };
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
-  const [feature, artifact, stage] = argv;
-  if (
-    !feature ||
-    feature === '-h' ||
-    feature === '--help' ||
-    !artifact ||
-    !stage ||
-    stage === '-h' ||
-    stage === '--help'
-  ) {
+  const context = createCliContext(argv, { command: 'boss runtime record-artifact' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['record-artifact']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['record-artifact'], null, 2)}\n`
+    );
+    return 0;
+  }
+
+  if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
     showHelp();
-    return feature === '-h' || feature === '--help' || (feature && artifact && stage) ? 0 : 1;
+    return argv.length === 0 ? 1 : 0;
+  }
+
+  const input = resolveInput(argv, context);
+  if (context.values.dryRun) {
+    writeActionPlan([actionFor(input)], context, 'medium');
+    return 0;
   }
 
   try {
-    const execution = recordArtifact(feature, artifact, Number(stage), { cwd });
-    const stageKey = String(stage);
+    const execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
+    const stageKey = String(input.stage);
     const artifacts =
       execution.stages && execution.stages[stageKey] ? execution.stages[stageKey]!.artifacts : [];
-    process.stdout.write(
-      `${JSON.stringify({
-        feature,
-        artifact,
-        stage: Number(stage),
+    writeOutput(
+      {
+        feature: input.feature,
+        artifact: input.artifact,
+        stage: Number(input.stage),
         artifacts
-      })}\n`
+      },
+      context,
+      () => `${JSON.stringify({ feature: input.feature, artifact: input.artifact, stage: Number(input.stage), artifacts }, null, 2)}\n`
     );
     return 0;
   } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    return 1;
+    throw toFeatureNotFoundError(err, input.feature);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime record-artifact', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

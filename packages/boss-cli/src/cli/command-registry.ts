@@ -119,6 +119,16 @@ const runtimeDryRunOptions = [
   { name: 'dry-run', type: 'boolean' as const, default: false }
 ];
 
+const runtimeMutationOptions = [
+  ...runtimeDryRunOptions,
+  { name: 'json-input', type: 'string' as const }
+];
+
+const runtimeHighRiskOptions = [
+  ...runtimeMutationOptions,
+  { name: 'yes', type: 'boolean' as const, short: 'y', default: false }
+];
+
 const runtimeDescriptions: Record<string, CommandDescription> = {};
 
 for (const name of runtimeCommandNames) {
@@ -167,6 +177,39 @@ for (const name of ['build-memory-summary', 'extract-memory']) {
     ...runtimeDescriptions[name]!,
     options: runtimeDryRunOptions,
     risk_tier: 'medium'
+  };
+}
+
+for (const name of [
+  'init-pipeline',
+  'update-stage',
+  'update-agent',
+  'record-artifact',
+  'record-feedback',
+  'register-plugins',
+  'run-plugin-hook'
+]) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: runtimeMutationOptions,
+    risk_tier: 'medium'
+  };
+}
+
+runtimeDescriptions['evaluate-gates'] = {
+  ...runtimeDescriptions['evaluate-gates']!,
+  options: [
+    ...runtimeMutationOptions,
+    { name: 'skip-on-error', type: 'boolean' as const, default: false }
+  ],
+  risk_tier: 'medium'
+};
+
+for (const name of ['retry-agent', 'retry-stage']) {
+  runtimeDescriptions[name] = {
+    ...runtimeDescriptions[name]!,
+    options: runtimeHighRiskOptions,
+    risk_tier: 'high'
   };
 }
 

@@ -136,19 +136,22 @@ describe('runtime CLI contract', () => {
     expect(result.status).toBe(0);
 
     const payload = JSON.parse(result.stdout) as {
-      feature: string;
-      gate: string;
-      passed: boolean;
-      checks: unknown[];
-      dryRun?: boolean;
-      skipped: boolean;
+      actions: Array<{ type: string; feature: string; gate: string; writes_event: boolean }>;
+      risk_tier: string;
+      requires_approval: boolean;
     };
-    expect(payload.feature).toBe('test-feat');
-    expect(payload.gate).toBe('gate1');
-    expect(typeof payload.passed).toBe('boolean');
-    expect(Array.isArray(payload.checks)).toBe(true);
-    expect(payload.dryRun).toBe(true);
-    expect(typeof payload.skipped).toBe('boolean');
+    expect(payload).toEqual({
+      actions: [
+        {
+          type: 'evaluate_gate',
+          feature: 'test-feat',
+          gate: 'gate1',
+          writes_event: false
+        }
+      ],
+      risk_tier: 'medium',
+      requires_approval: false
+    });
   });
 
   it('update-stage and update-agent CLIs expose runtime-first help text', () => {
@@ -347,7 +350,13 @@ describe('runtime CLI contract', () => {
     const updateStageMetadata = JSON.parse(updateStage.stdout) as {
       options: Array<{ name: string }>;
     };
-    expect(updateStageMetadata.options.map((option) => option.name)).toEqual(['json', 'describe']);
+    expect(updateStageMetadata.options.map((option) => option.name)).toEqual([
+      'json',
+      'describe',
+      'fields',
+      'dry-run',
+      'json-input'
+    ]);
   });
 
   it('runtime contract flags reject missing values before another option', () => {
@@ -427,6 +436,50 @@ describe('runtime CLI contract', () => {
       }
     ]);
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'memory-summary.json'))).toBe(false);
+  });
+
+  it('mutating runtime commands support dry-run plans and json input', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const updateStage = runCli('update-stage', [
+      '--json-input={"feature":"test-feat","stage":1,"status":"running"}',
+      '--dry-run',
+      '--json'
+    ]);
+    expect(updateStage.status).toBe(0);
+    expect(JSON.parse(updateStage.stdout)).toEqual({
+      actions: [
+        expect.objectContaining({
+          type: 'update_stage',
+          feature: 'test-feat',
+          stage: 1,
+          target_status: 'running'
+        })
+      ],
+      risk_tier: 'medium',
+      requires_approval: false
+    });
+
+    const retryStage = runCli('retry-stage', ['test-feat', '1', '--dry-run', '--json']);
+    expect(retryStage.status).toBe(0);
+    const retryPayload = JSON.parse(retryStage.stdout) as {
+      actions: Array<{ type: string; feature: string; stage: number }>;
+      requires_approval: boolean;
+    };
+    expect(retryPayload.actions[0]).toMatchObject({
+      type: 'retry_stage',
+      feature: 'test-feat',
+      stage: 1
+    });
+  });
+
+  it('mutating runtime commands require yes for non-interactive high risk retry execution', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runCli('retry-stage', ['test-feat', '1', '--json']);
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string } };
+    expect(payload.error.code).toBe('confirmation_required');
   });
 
   it('read-only runtime command errors are structured in non-tty mode', () => {

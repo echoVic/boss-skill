@@ -2,7 +2,29 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  requireInputString,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { evaluateGates } from './lib/pipeline-runtime.js';
+
+interface EvaluateGatesInput {
+  feature: string;
+  gateName: string;
+  dryRun: boolean;
+  skipOnError: boolean;
+}
 
 function showHelp(): void {
   process.stderr.write(
@@ -11,107 +33,115 @@ function showHelp(): void {
       '',
       '用法: evaluate-gates.js <feature> <gate-name> [options]',
       '',
-      '参数:',
-      '  feature     功能名称',
-      '  gate-name   门禁名称: gate0 | gate1 | gate2 | <plugin-gate>',
-      '',
       '选项:',
       '  --dry-run          只检查不写入结果',
       '  --skip-on-error    门禁脚本不存在时跳过而非失败',
-      '',
-      '门禁执行流程:',
-      '  1. 执行内置 TS gate 或插件 gate 可执行文件',
-      '  2. 收集检查结果',
-      '  3. 追加 GateEvaluated 事件并物化 .meta/execution.json',
-      '  4. 返回 exit code 0 (通过) 或 1 (未通过)',
-      '',
-      '示例:',
-      '  evaluate-gates.js my-feature gate0',
-      '  evaluate-gates.js my-feature gate1 --dry-run',
-      '  evaluate-gates.js my-feature security-audit --skip-on-error',
+      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
       ''
     ].join('\n')
   );
 }
 
+function parseFlatInput(argv: string[], context: CliContext): EvaluateGatesInput {
+  let feature = '';
+  let gateName = '';
+  let skipOnError = false;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    if (arg === '--skip-on-error') {
+      skipOnError = true;
+      continue;
+    }
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+    if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
+    if (!feature) feature = arg;
+    else if (!gateName) gateName = arg;
+    else throw new Error(`多余的参数: ${arg}`);
+  }
+
+  return {
+    feature: requireInputString(feature, 'feature'),
+    gateName: requireInputString(gateName, 'gate'),
+    dryRun: context.values.dryRun,
+    skipOnError
+  };
+}
+
+function resolveInput(argv: string[], context: CliContext): EvaluateGatesInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    return {
+      feature: requireInputString(input.feature, 'feature'),
+      gateName: requireInputString(input.gate || input.gateName, 'gate'),
+      dryRun: typeof input.dryRun === 'boolean' ? input.dryRun : context.values.dryRun,
+      skipOnError: typeof input.skipOnError === 'boolean' ? input.skipOnError : false
+    };
+  }
+  return parseFlatInput(argv, context);
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime evaluate-gates' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['evaluate-gates']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['evaluate-gates'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
     showHelp();
     return argv.length === 0 ? 1 : 0;
   }
 
-  let feature = '';
-  let gateName = '';
-  let dryRun = false;
-  let skipOnError = false;
-
-  let idx = 0;
-  while (idx < argv.length) {
-    const arg = argv[idx]!;
-    switch (arg) {
-      case '--dry-run':
-        dryRun = true;
-        idx += 1;
-        break;
-      case '--skip-on-error':
-        skipOnError = true;
-        idx += 1;
-        break;
-      default:
-        if (arg.startsWith('-')) {
-          throw new Error(`未知选项: ${arg}`);
+  const input = resolveInput(argv, context);
+  if (input.dryRun) {
+    writeActionPlan(
+      [
+        {
+          type: 'evaluate_gate',
+          feature: input.feature,
+          gate: input.gateName,
+          writes_event: false
         }
-        if (!feature) {
-          feature = arg;
-        } else if (!gateName) {
-          gateName = arg;
-        } else {
-          throw new Error(`多余的参数: ${arg}`);
-        }
-        idx += 1;
-    }
+      ],
+      context,
+      'medium'
+    );
+    return 0;
   }
 
-  if (!feature) throw new Error('缺少 feature 参数');
-  if (!gateName) throw new Error('缺少 gate-name 参数');
-
   try {
-    const result = evaluateGates(feature, gateName, {
+    const result = evaluateGates(input.feature, input.gateName, {
       cwd,
-      dryRun,
-      skipOnError
+      dryRun: false,
+      skipOnError: input.skipOnError
     });
 
-    if (dryRun) {
-      process.stdout.write(
-        `${JSON.stringify({
-          feature,
-          gate: result.gate,
-          passed: result.passed,
-          checks: result.checks,
-          dryRun: true,
-          skipped: Boolean(result.skipped)
-        })}\n`
-      );
-    } else {
-      process.stdout.write(
-        `${JSON.stringify({
-          feature,
-          gate: result.gate,
-          passed: result.passed,
-          checks: result.checks,
-          skipped: Boolean(result.skipped)
-        })}\n`
-      );
-    }
+    const payload = {
+      feature: input.feature,
+      gate: result.gate,
+      passed: result.passed,
+      checks: result.checks,
+      skipped: Boolean(result.skipped),
+    };
 
+    writeOutput(payload, context, () => `${JSON.stringify(payload, null, 2)}\n`);
     return result.passed ? 0 : 1;
   } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    return 1;
+    throw toFeatureNotFoundError(err, input.feature);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime evaluate-gates', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

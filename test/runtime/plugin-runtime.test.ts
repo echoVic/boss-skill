@@ -391,8 +391,16 @@ describe('plugin runtime registration', () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toMatch(/事件/);
-    expect(result.stdout).toMatch(/物化/);
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      plugin_count: number;
+      plugin_names: string[];
+      executionPath: string;
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.plugin_count).toBeGreaterThan(0);
+    expect(payload.plugin_names).toContain('security-audit');
+    expect(payload.executionPath).toBe('.boss/test-feat/.meta/execution.json');
     expect(result.stdout).not.toMatch(/注册 .* 到 .*execution\.json/);
   });
 });

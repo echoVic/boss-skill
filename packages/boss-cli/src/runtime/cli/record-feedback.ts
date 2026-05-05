@@ -2,7 +2,33 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  optionalInputString,
+  requireInputString,
+  requireOptionValue,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { recordFeedback } from './lib/pipeline-runtime.js';
+
+interface RecordFeedbackInput {
+  feature: string;
+  from: string;
+  to: string;
+  artifact: string;
+  reason: string;
+  priority: string;
+}
 
 function showHelp(): void {
   process.stderr.write(
@@ -17,38 +43,134 @@ function showHelp(): void {
       '  --artifact   需要修订的产物名称',
       '  --reason     修订原因',
       '  --priority   优先级（critical | recommended，默认 recommended）',
+      '  --dry-run    预览变更而不写入',
       ''
     ].join('\n')
   );
 }
 
-export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
-  let feature = '', from = '', to = '', artifact = '', reason = '', priority = 'recommended';
-  const args = [...argv];
-  while (args.length > 0) {
-    const arg = args.shift()!;
+function parseFlatInput(argv: string[]): RecordFeedbackInput {
+  let feature = '';
+  let from = '';
+  let to = '';
+  let artifact = '';
+  let reason = '';
+  let priority = 'recommended';
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
     switch (arg) {
-      case '-h': case '--help': showHelp(); return 0;
-      case '--from': from = args.shift() ?? ''; break;
-      case '--to': to = args.shift() ?? ''; break;
-      case '--artifact': artifact = args.shift() ?? ''; break;
-      case '--reason': reason = args.shift() ?? ''; break;
-      case '--priority': priority = args.shift() ?? 'recommended'; break;
-      default: if (!feature) feature = arg; break;
+      case '--from':
+        from = requireOptionValue('--from', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--to':
+        to = requireOptionValue('--to', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--artifact':
+        artifact = requireOptionValue('--artifact', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--reason':
+        reason = requireOptionValue('--reason', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--priority':
+        priority = requireOptionValue('--priority', argv[index + 1]);
+        index += 1;
+        continue;
     }
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+    if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
+    if (!feature) feature = arg;
+    else throw new Error(`多余的参数: ${arg}`);
   }
-  if (!feature || !from || !to || !artifact || !reason) { showHelp(); return 1; }
+
+  return {
+    feature: requireInputString(feature, 'feature'),
+    from: requireInputString(from, 'from'),
+    to: requireInputString(to, 'to'),
+    artifact: requireInputString(artifact, 'artifact'),
+    reason: requireInputString(reason, 'reason'),
+    priority
+  };
+}
+
+function resolveInput(argv: string[], context: CliContext): RecordFeedbackInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    return {
+      feature: requireInputString(input.feature, 'feature'),
+      from: requireInputString(input.from, 'from'),
+      to: requireInputString(input.to, 'to'),
+      artifact: requireInputString(input.artifact, 'artifact'),
+      reason: requireInputString(input.reason, 'reason'),
+      priority: optionalInputString(input.priority) || 'recommended'
+    };
+  }
+  return parseFlatInput(argv);
+}
+
+function actionFor(input: RecordFeedbackInput) {
+  return {
+    type: 'record_feedback',
+    feature: input.feature,
+    artifact: input.artifact,
+    priority: input.priority,
+    reason: input.reason
+  };
+}
+
+export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime record-feedback' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['record-feedback']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['record-feedback'], null, 2)}\n`
+    );
+    return 0;
+  }
+
+  if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
+    showHelp();
+    return argv.length === 0 ? 1 : 0;
+  }
+
+  const input = resolveInput(argv, context);
+  if (context.values.dryRun) {
+    writeActionPlan([actionFor(input)], context, 'medium');
+    return 0;
+  }
+
   try {
-    const state = recordFeedback(feature, { from, to, artifact, reason, priority, cwd });
-    const fl = (state as any).feedbackLoops || {};
-    process.stdout.write(JSON.stringify({ feature, round: fl.currentRound, maxRounds: fl.maxRounds }) + '\n');
+    const state = recordFeedback(input.feature, {
+      from: input.from,
+      to: input.to,
+      artifact: input.artifact,
+      reason: input.reason,
+      priority: input.priority,
+      cwd
+    });
+    const feedbackLoops = state.feedbackLoops || {};
+    writeOutput(
+      { feature: input.feature, round: feedbackLoops.currentRound, maxRounds: feedbackLoops.maxRounds },
+      context,
+      () => `${JSON.stringify({ feature: input.feature, round: feedbackLoops.currentRound, maxRounds: feedbackLoops.maxRounds }, null, 2)}\n`
+    );
     return 0;
   } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    return 1;
+    throw toFeatureNotFoundError(err, input.feature);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main());
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime record-feedback', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

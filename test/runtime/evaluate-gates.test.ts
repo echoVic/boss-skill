@@ -91,6 +91,41 @@ describe('evaluateGates', () => {
     expect(result.status).not.toBe(0);
   });
 
+  it('CLI dry-run returns an action plan without executing plugin gate scripts', () => {
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'side-effect-gate');
+    const sideEffectPath = path.join(tmpDir, 'dry-run-side-effect.txt');
+    fs.mkdirSync(pluginDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginDir, 'gate.sh'),
+      `#!/bin/bash\necho touched > ${JSON.stringify(sideEffectPath)}\necho "[]"\nexit 0\n`,
+      'utf8'
+    );
+    fs.chmodSync(path.join(pluginDir, 'gate.sh'), 0o755);
+
+    const result = spawnSync(
+      process.execPath,
+      [BOSS_BIN, 'runtime', 'evaluate-gates', 'test-feat', 'side-effect-gate', '--dry-run', '--json'],
+      {
+        cwd: tmpDir,
+        encoding: 'utf8'
+      }
+    );
+
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      actions: Array<{ type: string; gate: string }>;
+    };
+    expect(payload.actions).toEqual([
+      {
+        type: 'evaluate_gate',
+        feature: 'test-feat',
+        gate: 'side-effect-gate',
+        writes_event: false
+      }
+    ]);
+    expect(fs.existsSync(sideEffectPath)).toBe(false);
+  });
+
   it('uses cwd-local plugin stage metadata when materializing gate results', () => {
     const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'stage-gate');
     fs.mkdirSync(pluginDir, { recursive: true });

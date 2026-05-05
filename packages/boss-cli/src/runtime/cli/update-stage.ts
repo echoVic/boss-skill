@@ -3,7 +3,34 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  consumeCliContractOption,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  runMain,
+  writeOutput,
+  type CliContext
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
+  optionalInputString,
+  requireInputString,
+  requireOptionValue,
+  toFeatureNotFoundError,
+  writeActionPlan
+} from './lib/agent-command-utils.js';
 import { updateStage } from './lib/pipeline-runtime.js';
+
+interface UpdateStageInput {
+  feature: string;
+  stage: string;
+  status: string;
+  reason?: string;
+  artifacts: string[];
+  gate?: string;
+  gatePassed?: boolean | null;
+}
 
 function showHelp(): void {
   process.stderr.write(
@@ -23,6 +50,9 @@ function showHelp(): void {
       '  --gate <name>          记录关联的 gate 名称',
       '  --gate-passed          标记 gate 通过',
       '  --gate-failed          标记 gate 未通过',
+      '  --dry-run              预览变更而不写入',
+      '  --json-input <json|->  从 JSON 字符串或 stdin 读取输入',
+      '  --json                 输出 JSON',
       '',
       '示例:',
       '  update-stage.js my-feature 1 running',
@@ -48,108 +78,149 @@ function readCurrentStatus(cwd: string, feature: string, stage: string): string 
   }
 }
 
-function requireOptionValue(flag: string, value: string | undefined): string {
-  if (!value || value.startsWith('-')) {
-    throw new Error(`缺少 ${flag} 参数值`);
+function parseFlatInput(argv: string[]): UpdateStageInput {
+  let feature = '';
+  let stage = '';
+  let status = '';
+  let reason: string | undefined;
+  const artifacts: string[] = [];
+  let gate: string | undefined;
+  let gatePassed: boolean | null = null;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    switch (arg) {
+      case '--reason':
+        reason = requireOptionValue('--reason', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--artifact':
+        artifacts.push(requireOptionValue('--artifact', argv[index + 1]));
+        index += 1;
+        continue;
+      case '--gate':
+        gate = requireOptionValue('--gate', argv[index + 1]);
+        index += 1;
+        continue;
+      case '--gate-passed':
+        gatePassed = true;
+        continue;
+      case '--gate-failed':
+        gatePassed = false;
+        continue;
+    }
+
+    const contractOptionEnd = consumeCliContractOption(argv, index);
+    if (contractOptionEnd !== null) {
+      index = contractOptionEnd;
+      continue;
+    }
+
+    if (arg.startsWith('-')) {
+      throw new Error(`未知选项: ${arg}`);
+    }
+    if (!feature) {
+      feature = arg;
+    } else if (!stage) {
+      stage = arg;
+    } else if (!status) {
+      status = arg;
+    } else {
+      throw new Error(`多余的参数: ${arg}`);
+    }
   }
-  return value;
+
+  return {
+    feature: requireInputString(feature, 'feature'),
+    stage: requireInputString(stage, 'stage'),
+    status: requireInputString(status, 'status'),
+    reason,
+    artifacts,
+    gate,
+    gatePassed
+  };
+}
+
+function resolveInput(argv: string[], context: CliContext): UpdateStageInput {
+  const jsonInput = readJsonInput(context.values.jsonInput);
+  if (jsonInput) {
+    const input = jsonInput as Record<string, unknown>;
+    return {
+      feature: requireInputString(input.feature, 'feature'),
+      stage: requireInputString(input.stage, 'stage'),
+      status: requireInputString(input.status, 'status'),
+      reason: optionalInputString(input.reason),
+      artifacts: Array.isArray(input.artifacts) ? input.artifacts.map(String) : [],
+      gate: optionalInputString(input.gate),
+      gatePassed: typeof input.gatePassed === 'boolean' ? input.gatePassed : null
+    };
+  }
+  return parseFlatInput(argv);
+}
+
+function actionFor(input: UpdateStageInput) {
+  return {
+    type: 'update_stage',
+    feature: input.feature,
+    stage: Number(input.stage),
+    target_status: input.status,
+    artifacts: input.artifacts,
+    gate: input.gate,
+    gatePassed: input.gatePassed
+  };
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime update-stage' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['update-stage']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['update-stage'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
     showHelp();
     return argv.length === 0 ? 1 : 0;
   }
 
-  let feature = '';
-  let stage = '';
-  let status = '';
-  let reason = '';
-  const artifacts: string[] = [];
-  let gate = '';
-  let gatePassed: boolean | null = null;
-  let jsonOutput = false;
+  const input = resolveInput(argv, context);
 
-  let idx = 0;
-  while (idx < argv.length) {
-    const arg = argv[idx]!;
-    switch (arg) {
-      case '--reason':
-        reason = requireOptionValue('--reason', argv[idx + 1]);
-        idx += 2;
-        break;
-      case '--artifact':
-        artifacts.push(requireOptionValue('--artifact', argv[idx + 1]));
-        idx += 2;
-        break;
-      case '--gate':
-        gate = requireOptionValue('--gate', argv[idx + 1]);
-        idx += 2;
-        break;
-      case '--gate-passed':
-        gatePassed = true;
-        idx += 1;
-        break;
-      case '--gate-failed':
-        gatePassed = false;
-        idx += 1;
-        break;
-      case '--json':
-        jsonOutput = true;
-        idx += 1;
-        break;
-      default:
-        if (arg.startsWith('-')) {
-          throw new Error(`未知选项: ${arg}`);
-        }
-        if (!feature) {
-          feature = arg;
-        } else if (!stage) {
-          stage = arg;
-        } else if (!status) {
-          status = arg;
-        } else {
-          throw new Error(`多余的参数: ${arg}`);
-        }
-        idx += 1;
-    }
+  if (context.values.dryRun) {
+    writeActionPlan([actionFor(input)], context, 'medium');
+    return 0;
   }
 
-  if (!feature) throw new Error('缺少 feature 参数');
-  if (!stage) throw new Error('缺少 stage 参数');
-  if (!status) throw new Error('缺少 status 参数');
-
   try {
-    const currentStatus = readCurrentStatus(cwd, feature, stage);
-    updateStage(feature, stage, status, {
+    const currentStatus = readCurrentStatus(cwd, input.feature, input.stage);
+    updateStage(input.feature, input.stage, input.status, {
       cwd,
-      reason,
-      artifacts,
-      gate,
-      gatePassed
+      reason: input.reason || '',
+      artifacts: input.artifacts,
+      gate: input.gate || '',
+      gatePassed: input.gatePassed ?? null
     });
 
-    if (jsonOutput) {
-      process.stdout.write(
-        `${JSON.stringify({
-          feature,
-          stage: Number(stage),
-          previousStatus: currentStatus,
-          status,
-          executionPath: `.boss/${feature}/.meta/execution.json`
-        })}\n`
-      );
-    } else {
-      process.stdout.write(`阶段 ${stage}: ${currentStatus} → ${status}\n`);
-      process.stdout.write(`文件: .boss/${feature}/.meta/execution.json\n`);
-    }
+    writeOutput(
+      {
+        feature: input.feature,
+        stage: Number(input.stage),
+        previousStatus: currentStatus,
+        status: input.status,
+        executionPath: `.boss/${input.feature}/.meta/execution.json`
+      },
+      context,
+      () => `阶段 ${input.stage}: ${currentStatus} -> ${input.status}\n文件: .boss/${input.feature}/.meta/execution.json\n`
+    );
     return 0;
   } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    return 1;
+    throw toFeatureNotFoundError(err, input.feature);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime update-stage', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

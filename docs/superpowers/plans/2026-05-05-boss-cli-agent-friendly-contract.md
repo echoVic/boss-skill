@@ -1719,7 +1719,7 @@ git commit -m "feat: make read only runtime commands agent friendly"
   - `test/runtime/plugin-hook-runtime.test.ts`
   - `test/runtime/evaluate-gates.test.ts`
 
-- [ ] **Step 1: Add mutating runtime contract tests**
+- [x] **Step 1: Add mutating runtime contract tests**
 
 Append to `test/runtime/runtime-cli-contract.test.ts`:
 
@@ -1760,7 +1760,7 @@ Append to `test/runtime/runtime-cli-contract.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run mutating runtime tests to verify red**
+- [x] **Step 2: Run mutating runtime tests to verify red**
 
 Run:
 
@@ -1774,7 +1774,7 @@ Expected:
 FAIL
 ```
 
-- [ ] **Step 3: Add shared input resolvers per command**
+- [x] **Step 3: Add shared input resolvers per command**
 
 For each mutating runtime file, define an input interface and resolver.
 
@@ -1814,7 +1814,7 @@ function resolveInput(argv: string[]): { context: CliContext; input: UpdateStage
 
 For `update-agent.ts`, `record-artifact.ts`, `record-feedback.ts`, `retry-agent.ts`, `retry-stage.ts`, `register-plugins.ts`, `run-plugin-hook.ts`, and `evaluate-gates.ts`, follow the same pattern with command-specific input names. Use exact JSON property names matching existing output fields: `feature`, `stage`, `agent`, `status`, `artifact`, `gate`, `hook`, `priority`, `reason`.
 
-- [ ] **Step 4: Add dry-run action plans**
+- [x] **Step 4: Add dry-run action plans**
 
 Use these action payloads:
 
@@ -1861,7 +1861,7 @@ writeOutput({
 return 0;
 ```
 
-- [ ] **Step 5: Require `--yes` for high-risk mutation execution**
+- [x] **Step 5: Require `--yes` for high-risk mutation execution**
 
 Apply confirmation only to these execution paths when not `--dry-run`:
 
@@ -1877,7 +1877,7 @@ assertConfirmed(context, 'retry_agent');
 
 Do not require `--yes` for normal event recording and normal stage/agent status updates because existing hooks call them non-interactively.
 
-- [ ] **Step 6: Convert mutating runtime errors to structured errors**
+- [x] **Step 6: Convert mutating runtime errors to structured errors**
 
 Replace raw entrypoint catches with:
 
@@ -1914,7 +1914,7 @@ throw new CliUserError({
 });
 ```
 
-- [ ] **Step 7: Run mutating runtime tests**
+- [x] **Step 7: Run mutating runtime tests**
 
 Run:
 
@@ -1929,7 +1929,7 @@ Expected:
 PASS
 ```
 
-- [ ] **Step 8: Commit mutating runtime migration**
+- [x] **Step 8: Commit mutating runtime migration**
 
 ```bash
 git add packages/boss-cli/src/runtime/cli/evaluate-gates.ts packages/boss-cli/src/runtime/cli/init-pipeline.ts packages/boss-cli/src/runtime/cli/record-artifact.ts packages/boss-cli/src/runtime/cli/record-feedback.ts packages/boss-cli/src/runtime/cli/register-plugins.ts packages/boss-cli/src/runtime/cli/retry-agent.ts packages/boss-cli/src/runtime/cli/retry-stage.ts packages/boss-cli/src/runtime/cli/run-plugin-hook.ts packages/boss-cli/src/runtime/cli/update-agent.ts packages/boss-cli/src/runtime/cli/update-stage.ts test/runtime/runtime-cli-contract.test.ts test/runtime/stage-agent-runtime.test.ts test/runtime/record-artifact.test.ts test/runtime/feedback-retry-runtime.test.ts test/runtime/plugin-hook-runtime.test.ts test/runtime/evaluate-gates.test.ts
