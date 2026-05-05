@@ -30,8 +30,7 @@
       "boss-devops": 4
     },
     "skipUI": true,
-    "skipFrontend": true,
-    "artifactDag": "harness/artifact-dag.json"
+    "skipFrontend": true
   },
   "enabled": true
 }
