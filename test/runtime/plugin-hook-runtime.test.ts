@@ -18,7 +18,7 @@ describe('plugin hook execution', () => {
     manifest: Record<string, unknown>,
     scripts: Record<string, string> = {}
   ) {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', dirName);
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', dirName);
     fs.mkdirSync(pluginDir, { recursive: true });
     for (const [fileName, content] of Object.entries(scripts)) {
       fs.writeFileSync(path.join(pluginDir, fileName), content, 'utf8');

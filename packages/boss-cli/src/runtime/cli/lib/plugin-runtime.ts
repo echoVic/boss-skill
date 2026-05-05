@@ -126,38 +126,6 @@ function collectProjectDuplicateNameErrors(cwd: string): string[] {
   return errors;
 }
 
-function listLegacyHookManifestPaths(cwd: string): string[] {
-  const legacyRoot = path.join(cwd, 'harness', 'plugins');
-  if (!fs.existsSync(legacyRoot) || !fs.statSync(legacyRoot).isDirectory()) {
-    return [];
-  }
-  return fs
-    .readdirSync(legacyRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => path.join(legacyRoot, entry.name, 'plugin.json'))
-    .filter((manifestPath) => fs.existsSync(manifestPath))
-    .sort((left, right) => left.localeCompare(right));
-}
-
-function discoverLegacyHookPlugins(cwd: string, hook: string): DiscoveredPlugin[] {
-  const legacyRoot = path.join(cwd, 'harness', 'plugins');
-  const plugins: DiscoveredPlugin[] = [];
-  for (const manifestPath of listLegacyHookManifestPaths(cwd)) {
-    const pluginDir = path.dirname(manifestPath);
-    let manifest: Record<string, unknown>;
-    try {
-      manifest = readJson<Record<string, unknown>>(manifestPath);
-    } catch {
-      continue;
-    }
-    if (manifest.enabled === false) continue;
-    if (!isObject(manifest.hooks) || typeof manifest.hooks[hook] !== 'string') continue;
-    if (validatePluginManifest(manifest, pluginDir).length > 0) continue;
-    plugins.push(normalizePlugin(manifest, pluginDir, legacyRoot));
-  }
-  return sortPluginsByDependencies(plugins);
-}
-
 export function validatePluginManifest(manifest: unknown, pluginDir: string): string[] {
   const errors: string[] = [];
 
@@ -547,13 +515,10 @@ export function runHook(
   const eventsFile = ensureFeatureMeta(cwd, feature);
   const stageNumber = parseStage(stage);
   const discovery = discoverPlugins({ cwd, repoRoot, strict: true });
-  const hookPlugins = discovery.plugins.some((plugin) => typeof plugin.hooks[hook] === 'string')
-    ? discovery.plugins
-    : discoverLegacyHookPlugins(cwd, hook);
   const now = new Date().toISOString();
   const results: RunHookResultItem[] = [];
 
-  for (const plugin of hookPlugins) {
+  for (const plugin of discovery.plugins) {
     const fullPath = resolveHookScriptPath(plugin, hook);
     if (!fullPath) continue;
     if (

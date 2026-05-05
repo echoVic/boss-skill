@@ -25,7 +25,7 @@ describe('pack/plugin runtime integration', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-pack-plugin-'));
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"api-only-app"}\n', 'utf8');
 
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'local-reporter');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'local-reporter');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'report.sh'), '#!/bin/bash\nexit 0\n', 'utf8');
     fs.writeFileSync(
