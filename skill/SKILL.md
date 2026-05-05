@@ -85,7 +85,7 @@ pending → skipped（被 --skip-* 或 --continue-from 跳过）
 
 ## DAG 驱动工作流
 
-流水线由 Artifact DAG（`harness/artifact-dag.json`）驱动。每个产物声明其输入依赖和对应 Agent，依赖就绪即可执行，无需等待整个阶段完成。
+流水线由 Artifact DAG（`packages/boss-cli/assets/artifact-dag.json`，可由 `.boss/artifact-dag.json` 覆盖）驱动。每个产物声明其输入依赖和对应 Agent，依赖就绪即可执行，无需等待整个阶段完成。
 
 ### 默认 DAG
 
@@ -124,8 +124,8 @@ Copy this checklist and check off items as you complete them:
   - [ ] 0.3 **输出设计简报**：澄清完毕后，写入 `.boss/<feature>/design-brief.md`，向用户确认
   - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架
   - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
-  - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `harness/artifact-dag.json`（或 pipeline pack 自定义 DAG），确定产物依赖图
-  - [ ] 0.5 🔌 扫描 `harness/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
+  - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `packages/boss-cli/assets/artifact-dag.json`（可由 `.boss/artifact-dag.json` 或 pipeline pack 自定义 DAG 覆盖），确定产物依赖图
+  - [ ] 0.5 🔌 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
   - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`boss runtime update-stage <feature> 1 running`，进入 DAG 执行循环 ↓
 
@@ -159,7 +159,7 @@ Copy this checklist and check off items as you complete them:
     - gate0：代码质量检查（编译 + Lint + 安全扫描）
     - gate1：测试门禁（覆盖率 + 通过率 + E2E）
     - gate2：性能门禁（Lighthouse + API P99，仅 Web 项目，optional）
-    - 扫描 `harness/plugins/` 中 type=gate 的插件，依次执行
+    - 扫描 `.boss/plugins/` 中 type=gate 的插件，依次执行
     - 门禁失败时修复后重新执行门禁
   - [ ] **D.10 回到 D.1**：重新查询就绪产物，直到 DAG 中所有非跳过产物都已完成
   - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `boss runtime extract-memory <feature>` 提取本次流水线的关键决策和经验，写入全局记忆库供后续 feature 参考。

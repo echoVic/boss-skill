@@ -207,7 +207,7 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 
 ### 插件系统
 
-通过 `harness/plugins/` 注册自定义 gate、agent 或 pipeline 模板包。内置 4 套 Pipeline Pack（default、core、api-only、solana-contract）。
+通过 `.boss/plugins/` 注册自定义 gate、agent 或 pipeline 模板包。内置 4 套 Pipeline Pack（default、core、api-only、solana-contract）。
 
 ## 模板系统
 
@@ -258,6 +258,7 @@ npm test
 
 - `packages/boss-cli/src/` 是 CLI 和 runtime 的 TypeScript/ESM 源码入口。
 - `packages/boss-cli/dist/` 是 `npm publish` 和包内 `bin` 指向的构建产物，不要手改。
+- `packages/boss-cli/assets/` 保存 Boss CLI 内置 DAG、Pipeline Packs、plugin schema 和内置插件。
 - `boss runtime <command>` 是稳定入口，skill 和 hooks 不直接调用内部 runtime 文件。
 - `npm test` 运行 Vitest；测试文件统一放在 `test/**/*.test.ts`。
 
@@ -292,7 +293,8 @@ boss-skill/
 ├── packages/
 │   └── boss-cli/
 │       ├── src/                         # Boss CLI + runtime TypeScript 源码
-│       └── dist/                        # CLI 编译产物（npm bin）
+│       ├── dist/                        # CLI 编译产物（npm bin）
+│       └── assets/                      # 内置 DAG、packs、plugin schema、内置插件
 ├── skill/                            # 安装到 agent 的薄 skill bundle
 │   ├── SKILL.md                      # 核心编排流程（通用 frontmatter，无平台 metadata）
 │   ├── agents/                       # 9 个 Agent Prompt + shared/prompts
@@ -301,11 +303,6 @@ boss-skill/
 │   ├── references/                   # 按需加载的规范文档
 │   ├── templates/                    # 7 个产物模板
 │   └── skills/                       # 子 skill，如 brainstorming
-├── harness/                          # 流水线编排与插件系统
-│   ├── plugin-schema.json
-│   ├── plugins/
-│   │   └── security-audit/
-│   └── pipeline-packs/               # 4 套流水线预设
 ├── scripts/
 │   ├── release.js                    # 统一发布脚本
 │   ├── lib/                          # Hook 运行辅助 JS

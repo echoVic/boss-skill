@@ -48,7 +48,7 @@ Boss Harness Gate Engine 提供三层程序化门禁，由 `boss runtime evaluat
 ## 插件门禁
 
 通过 Harness 插件协议可注册自定义门禁（如安全审计、许可证检查）。
-插件门禁通过 `harness/plugins/<name>/plugin.json` 的 `hooks.gate` 指向一个可执行文件，由 `boss runtime evaluate-gates` 统一调度。
+插件门禁通过 `.boss/plugins/<name>/plugin.json` 的 `hooks.gate` 指向一个可执行文件，由 `boss runtime evaluate-gates` 统一调度。
 
 ## 调用方式
 

@@ -35,9 +35,9 @@
   ],
   "files": [
     "packages/boss-cli/dist/",
+    "packages/boss-cli/assets/",
     "packages/boss-cli/src/runtime/schema/",
     "skill/",
-    "harness/",
     "scripts/",
     ".claude/",
     ".claude-plugin/",

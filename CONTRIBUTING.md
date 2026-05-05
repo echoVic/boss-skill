@@ -34,7 +34,7 @@ npm test
 | `packages/boss-cli/src/commands/` | `boss project`、`boss artifact`、`boss packs` 等 TypeScript 命令 |
 | `scripts/hooks/` | 10 个 Claude Code Hook 脚本（由 `boss hooks run` 调度） |
 | `scripts/lib/` | Hook 运行辅助 JS（无 first-party shell 编排） |
-| `harness/` | 插件系统和 Pipeline Pack 配置 |
+| `packages/boss-cli/assets/` | Boss CLI 内置 DAG、packs、plugin schema、内置插件 |
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
 | `test/` | 自动化测试 |
 | `packages/boss-cli/src/` | Boss CLI/runtime 的 TypeScript/ESM 源码 |
@@ -189,14 +189,14 @@ docs: 更新 README 安装说明
 
 如需开发自定义插件，请参考：
 
-- 插件 Schema：`harness/plugin-schema.json`
-- 内置插件示例：`harness/plugins/security-audit/`
+- 插件 Schema：`packages/boss-cli/assets/plugin-schema.json`
+- 内置插件示例：`packages/boss-cli/assets/plugins/security-audit/`
 - 插件注册入口：`boss runtime register-plugins`
 
 插件目录结构：
 
 ```
-harness/plugins/<name>/
+.boss/plugins/<name>/
 ├── plugin.json    # 插件清单（必须符合 plugin-schema.json）
 └── gate.js        # 门禁可执行文件示例（type: gate 时必需）
 ```

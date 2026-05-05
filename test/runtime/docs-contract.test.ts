@@ -54,10 +54,12 @@ describe('tech-detection.md contract', () => {
 describe('package metadata', () => {
   it('publishes the boss CLI workspace dist and keeps script assets during migration', () => {
     expect(pkg.files).toContain('packages/boss-cli/dist/');
+    expect(pkg.files).toContain('packages/boss-cli/assets/');
     expect(pkg.files).toContain('skill/');
     expect(pkg.files).toContain('scripts/');
     expect(pkg.files).not.toContain('agents/');
     expect(pkg.files).not.toContain('commands/');
+    expect(pkg.files).not.toContain('harness/');
     expect(pkg.files).not.toContain('templates/');
     expect(pkg.files).not.toContain('SKILL.md');
   });
@@ -82,6 +84,14 @@ describe('package metadata', () => {
     expect(contributing).toContain('packages/boss-cli/assets/');
     expect(contributing).not.toMatch(rootHarnessPathPattern);
     expect(skill).not.toMatch(rootHarnessPathPattern);
+  });
+
+  it('documents .boss project extensions and built-in CLI assets', () => {
+    expect(readme).toContain('packages/boss-cli/assets/');
+    expect(readme).toContain('.boss/plugins/');
+    expect(skill).toContain('.boss/plugins/');
+    expect(skill).not.toContain('harness/plugins/');
+    expect(contributing).toContain('packages/boss-cli/assets/');
   });
 });
 

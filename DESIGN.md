@@ -728,7 +728,8 @@ Harness 支持通过插件扩展流水线能力。每个插件必须包含一个
 ### 9.6 新增目录结构
 
 ```
-harness/
+packages/boss-cli/assets/
+├── artifact-dag.json                 # 内置产物依赖 DAG
 ├── pipeline-packs/                  # 流水线模板包
 │   ├── default/
 │   │   └── pipeline.json            # 默认 9-Agent 全流程模板
@@ -743,6 +744,11 @@ harness/
 │       ├── plugin.json              # 插件清单（遵循 plugin-schema.json）
 │       └── gate.js                  # 安全审计门禁可执行文件
 └── plugin-schema.json               # 插件清单 JSON Schema 规范
+
+.boss/
+├── artifact-dag.json                 # 项目级 DAG 覆盖（可选）
+├── pipeline-packs/                   # 项目级流水线模板包（可选）
+└── plugins/                          # 项目级插件目录（可选）
 
 packages/boss-cli/src/runtime/       # Harness Runtime TypeScript 源码
 ├── cli/                             # runtime CLI entrypoints
