@@ -139,6 +139,11 @@ function isJsonObject(value: unknown): value is JsonObject {
 }
 
 export function writeOutput(data: unknown, context: CliContext, renderText: (data: unknown) => string): void {
+  if (!context.useJson) {
+    process.stdout.write(renderText(data));
+    return;
+  }
+
   const payload = Array.isArray(data)
     ? data
         .slice(0, parseLimit(context.values.limit))
@@ -147,7 +152,7 @@ export function writeOutput(data: unknown, context: CliContext, renderText: (dat
       ? pickFields(data, context.values.fields)
       : data;
 
-  process.stdout.write(context.useJson ? `${JSON.stringify(payload)}\n` : renderText(payload));
+  process.stdout.write(`${JSON.stringify(payload)}\n`);
 }
 
 export function readJsonInputText(raw: string, stdinText: string): unknown {
@@ -166,7 +171,7 @@ export function readJsonInputText(raw: string, stdinText: string): unknown {
 }
 
 export function readJsonInput(raw: string | undefined): unknown | null {
-  if (!raw) return null;
+  if (raw === undefined) return null;
   return readJsonInputText(raw, raw === '-' ? readFileSync(0, 'utf8') : '');
 }
 

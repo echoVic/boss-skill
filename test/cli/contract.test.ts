@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 
 import {
@@ -8,8 +8,10 @@ import {
   exitCodeForError,
   outputList,
   pickFields,
+  readJsonInput,
   readJsonInputText,
-  validatePathInside
+  validatePathInside,
+  writeOutput
 } from '../../packages/boss-cli/src/cli/contract.js';
 
 describe('CLI contract utilities', () => {
@@ -55,6 +57,42 @@ describe('CLI contract utilities', () => {
   it('parses direct and stdin json input text', () => {
     expect(readJsonInputText('{"feature":"demo"}', '')).toEqual({ feature: 'demo' });
     expect(readJsonInputText('-', '{"feature":"stdin-demo"}')).toEqual({ feature: 'stdin-demo' });
+  });
+
+  it('rejects invalid and empty direct json input', () => {
+    for (const raw of ['{', '']) {
+      try {
+        readJsonInput(raw);
+      } catch (err) {
+        expect(err).toBeInstanceOf(CliUserError);
+        expect((err as CliUserError).code).toBe('invalid_json_input');
+        continue;
+      }
+
+      throw new Error(`Expected json input ${JSON.stringify(raw)} to be rejected`);
+    }
+  });
+
+  it('passes unfiltered data to text output renderers', () => {
+    const context = createCliContext(['--fields=name'], {
+      command: 'boss test',
+      stdoutIsTTY: true,
+      stdinIsTTY: true
+    });
+    const data = { name: 'demo', secret: 'visible-in-text-mode' };
+    let renderedData: unknown;
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    try {
+      writeOutput(data, context, (payload) => {
+        renderedData = payload;
+        return 'rendered\n';
+      });
+    } finally {
+      stdoutWrite.mockRestore();
+    }
+
+    expect(renderedData).toBe(data);
   });
 
   it('describes commands with stable metadata', () => {
