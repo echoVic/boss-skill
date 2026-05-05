@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { resolveBuiltInAssetPath } from '../../assets.js';
 import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../../domain/event-types.js';
 import {
   materializeState,
@@ -899,31 +900,31 @@ export function getReadyArtifacts(
 }
 
 function resolveGateScript(cwd: string, gateName: string, skipOnError: boolean): string {
-  const cwdPluginDir = path.join(cwd, 'harness', 'plugins', gateName);
-  const repoPluginDir = path.join(REPO_ROOT, 'harness', 'plugins', gateName);
-  const pluginDir = fs.existsSync(cwdPluginDir) ? cwdPluginDir : repoPluginDir;
-  const pluginJson = path.join(pluginDir, 'plugin.json');
-  if (fs.existsSync(pluginJson)) {
-    try {
-      const plugin = readJson<Record<string, unknown>>(pluginJson);
-      const hooks = plugin.hooks && typeof plugin.hooks === 'object' ? plugin.hooks as Record<string, unknown> : {};
-      if (typeof hooks.gate === 'string' && hooks.gate.length > 0) {
-        const hookPath = path.join(pluginDir, hooks.gate);
-        if (fs.existsSync(hookPath)) return hookPath;
+  const pluginDirs = [
+    path.join(cwd, '.boss', 'plugins', gateName),
+    resolveBuiltInAssetPath('plugins', gateName)
+  ];
+  for (const pluginDir of pluginDirs) {
+    const pluginJson = path.join(pluginDir, 'plugin.json');
+    if (fs.existsSync(pluginJson)) {
+      try {
+        const plugin = readJson<Record<string, unknown>>(pluginJson);
+        const hooks = plugin.hooks && typeof plugin.hooks === 'object' ? plugin.hooks as Record<string, unknown> : {};
+        if (typeof hooks.gate === 'string' && hooks.gate.length > 0) {
+          const hookPath = path.join(pluginDir, hooks.gate);
+          if (fs.existsSync(hookPath)) return hookPath;
+        }
+      } catch {
+        // Fall through to legacy gate.sh resolution for hand-written local plugins.
       }
-    } catch {
-      // Fall through to legacy gate.sh resolution for hand-written local plugins.
     }
+
+    const legacyGate = path.join(pluginDir, 'gate.sh');
+    if (fs.existsSync(legacyGate)) return legacyGate;
   }
 
-  const cwdPlugin = path.join(cwdPluginDir, 'gate.sh');
-  if (fs.existsSync(cwdPlugin)) return cwdPlugin;
-  const scriptPath = path.join(repoPluginDir, 'gate.sh');
-  if (!fs.existsSync(scriptPath)) {
-    if (skipOnError) return '';
-    throw new Error(`门禁脚本未找到: ${gateName}`);
-  }
-  return scriptPath;
+  if (skipOnError) return '';
+  throw new Error(`门禁脚本未找到: ${gateName}`);
 }
 
 function isBuiltInGate(gateName: string): boolean {
@@ -943,20 +944,21 @@ function resolveGateStage(cwd: string, gateName: string): number {
   if (gateName === 'gate0' || gateName === 'gate1' || gateName === 'gate2') {
     return 3;
   }
-  const cwdPluginJson = path.join(cwd, 'harness', 'plugins', gateName, 'plugin.json');
-  let pluginJson = cwdPluginJson;
-  if (!fs.existsSync(pluginJson)) {
-    pluginJson = path.join(REPO_ROOT, 'harness', 'plugins', gateName, 'plugin.json');
-  }
-  if (!fs.existsSync(pluginJson)) return 3;
-  try {
-    const plugin = readJson<Record<string, unknown>>(pluginJson);
-    if (plugin && Array.isArray(plugin.stages) && plugin.stages.length > 0) {
-      const stage = Number(plugin.stages[0]);
-      if (Number.isInteger(stage) && stage >= 1) return stage;
+  const pluginJsonPaths = [
+    path.join(cwd, '.boss', 'plugins', gateName, 'plugin.json'),
+    path.join(resolveBuiltInAssetPath('plugins', gateName), 'plugin.json')
+  ];
+  for (const pluginJson of pluginJsonPaths) {
+    if (!fs.existsSync(pluginJson)) continue;
+    try {
+      const plugin = readJson<Record<string, unknown>>(pluginJson);
+      if (plugin && Array.isArray(plugin.stages) && plugin.stages.length > 0) {
+        const stage = Number(plugin.stages[0]);
+        if (Number.isInteger(stage) && stage >= 1) return stage;
+      }
+    } catch {
+      return 3;
     }
-  } catch {
-    return 3;
   }
   return 3;
 }

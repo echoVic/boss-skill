@@ -32,8 +32,8 @@ describe('evaluateGates', () => {
     expect(result.execution.qualityGates.gate1.status).toBe('completed');
   });
 
-  it('resolves plugin gates from cwd-local harness/plugins', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'local-gate');
+  it('resolves plugin gates from project .boss/plugins', () => {
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'local-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 0\n', 'utf8');
     fs.chmodSync(path.join(pluginDir, 'gate.sh'), 0o755);
@@ -79,7 +79,7 @@ describe('evaluateGates', () => {
   });
 
   it('returns non-zero exit for failing gate via boss runtime CLI', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'fail-gate');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'fail-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 1\n', 'utf8');
     fs.chmodSync(path.join(pluginDir, 'gate.sh'), 0o755);
@@ -92,7 +92,7 @@ describe('evaluateGates', () => {
   });
 
   it('uses cwd-local plugin stage metadata when materializing gate results', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'stage-gate');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'stage-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 0\n', 'utf8');
     fs.writeFileSync(path.join(pluginDir, 'plugin.json'), '{ "stages": [2] }\n', 'utf8');
@@ -110,7 +110,7 @@ describe('evaluateGates', () => {
   });
 
   it('records stderr-only gate checks', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'stderr-gate');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'stderr-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(
       path.join(pluginDir, 'gate.sh'),
@@ -126,7 +126,7 @@ describe('evaluateGates', () => {
   });
 
   it('falls back to stage 3 when plugin stage metadata is invalid', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'bad-stage-gate');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'bad-stage-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 0\n', 'utf8');
     fs.writeFileSync(path.join(pluginDir, 'plugin.json'), '{ "stages": [0] }\n', 'utf8');
@@ -136,18 +136,9 @@ describe('evaluateGates', () => {
     expect(result.execution.stages['3'].gateResults['bad-stage-gate'].passed).toBe(true);
   });
 
-  it('falls back to repo-root plugins when cwd-local plugin is missing', () => {
-    const repoPluginDir = path.join(REPO_ROOT, 'harness', 'plugins', 'repo-gate');
-    fs.mkdirSync(repoPluginDir, { recursive: true });
-    fs.writeFileSync(path.join(repoPluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 0\n', 'utf8');
-    fs.chmodSync(path.join(repoPluginDir, 'gate.sh'), 0o755);
-
-    try {
-      const result = evaluateGates('test-feat', 'repo-gate', { cwd: tmpDir });
-      expect(result.passed).toBe(true);
-    } finally {
-      fs.rmSync(repoPluginDir, { recursive: true, force: true });
-    }
+  it('falls back to built-in asset plugins when project plugin is missing', () => {
+    const result = evaluateGates('test-feat', 'security-audit', { cwd: tmpDir });
+    expect(result.passed).toBe(true);
   });
 
   it('built-in gate0 includes secrets-scan and unsafe-patterns checks', () => {

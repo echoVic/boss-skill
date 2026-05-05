@@ -20,7 +20,7 @@ describe('plugin runtime registration', () => {
     manifest: Record<string, unknown>,
     scripts: Record<string, string> = {}
   ) {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', dirName);
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', dirName);
     fs.mkdirSync(pluginDir, { recursive: true });
     for (const [fileName, content] of Object.entries(scripts)) {
       fs.writeFileSync(path.join(pluginDir, fileName), content, 'utf8');
@@ -62,7 +62,43 @@ describe('plugin runtime registration', () => {
 
   it('discovers enabled plugins, validates manifests, and honors dependency order', () => {
     const result = discoverPlugins({ cwd: tmpDir });
-    expect(result.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha']);
+    expect(result.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
+  });
+
+  it('discovers project plugins from .boss/plugins and built-in plugins from CLI assets', () => {
+    const projectPluginDir = path.join(tmpDir, '.boss', 'plugins', 'project-gate');
+    fs.mkdirSync(projectPluginDir, { recursive: true });
+    fs.writeFileSync(path.join(projectPluginDir, 'gate.js'), '#!/usr/bin/env node\nprocess.stdout.write("[]\\n")\n', 'utf8');
+    fs.chmodSync(path.join(projectPluginDir, 'gate.js'), 0o755);
+    fs.writeFileSync(
+      path.join(projectPluginDir, 'plugin.json'),
+      JSON.stringify({
+        name: 'project-gate',
+        version: '1.0.0',
+        type: 'gate',
+        hooks: { gate: 'gate.js' },
+        enabled: true
+      }),
+      'utf8'
+    );
+
+    const result = discoverPlugins({ cwd: tmpDir });
+    expect(result.plugins.some((plugin) => plugin.name === 'project-gate')).toBe(true);
+    expect(result.plugins.some((plugin) => plugin.name === 'security-audit')).toBe(true);
+  });
+
+  it('does not discover root harness plugins', () => {
+    const rootHarnessPlugin = path.join(tmpDir, 'harness', 'plugins', 'legacy-gate');
+    fs.mkdirSync(rootHarnessPlugin, { recursive: true });
+    fs.writeFileSync(path.join(rootHarnessPlugin, 'gate.js'), '#!/usr/bin/env node\nprocess.exit(0)\n', 'utf8');
+    fs.writeFileSync(
+      path.join(rootHarnessPlugin, 'plugin.json'),
+      '{"name":"legacy-gate","version":"1.0.0","type":"gate","hooks":{"gate":"gate.js"}}\n',
+      'utf8'
+    );
+
+    const result = discoverPlugins({ cwd: tmpDir });
+    expect(result.plugins.some((plugin) => plugin.name === 'legacy-gate')).toBe(false);
   });
 
   it('excludes disabled plugins from discovery', () => {
@@ -135,7 +171,7 @@ describe('plugin runtime registration', () => {
   });
 
   it('orders independent plugins deterministically', () => {
-    const pluginsRoot = path.join(tmpDir, 'harness', 'plugins');
+    const pluginsRoot = path.join(tmpDir, '.boss', 'plugins');
     fs.rmSync(pluginsRoot, { recursive: true, force: true });
     fs.mkdirSync(pluginsRoot, { recursive: true });
 
@@ -161,7 +197,12 @@ describe('plugin runtime registration', () => {
     }
 
     const result = discoverPlugins({ cwd: tmpDir });
-    expect(result.plugins.map((plugin) => plugin.name)).toEqual(['delta', 'epsilon', 'zeta']);
+    expect(result.plugins.map((plugin) => plugin.name)).toEqual([
+      'delta',
+      'epsilon',
+      'security-audit',
+      'zeta'
+    ]);
   });
 
   it('fails validation when duplicate plugin names are declared', () => {
@@ -222,7 +263,7 @@ describe('plugin runtime registration', () => {
     );
 
     const registered = registerPlugins('test-feat', { cwd: tmpDir });
-    expect(registered.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha']);
+    expect(registered.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
 
     const events = fs
       .readFileSync(path.join(metaDir, 'events.jsonl'), 'utf8')
@@ -241,9 +282,17 @@ describe('plugin runtime registration', () => {
         activated: Array<{ name: string }>;
       };
     };
-    expect(execution.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha']);
-    expect(execution.pluginLifecycle.discovered.map((plugin) => plugin.name)).toEqual(['beta', 'alpha']);
-    expect(execution.pluginLifecycle.activated.map((plugin) => plugin.name)).toEqual(['beta', 'alpha']);
+    expect(execution.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
+    expect(execution.pluginLifecycle.discovered.map((plugin) => plugin.name)).toEqual([
+      'beta',
+      'alpha',
+      'security-audit'
+    ]);
+    expect(execution.pluginLifecycle.activated.map((plugin) => plugin.name)).toEqual([
+      'beta',
+      'alpha',
+      'security-audit'
+    ]);
   });
 
   it('preserves plugin union across sequential filtered registration', () => {
@@ -294,11 +343,13 @@ describe('plugin runtime registration', () => {
     expect(secondPass.plugins.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'security-audit',
       'echo-reporter'
     ]);
     expect(secondPass.execution.plugins.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'security-audit',
       'echo-reporter'
     ]);
   });

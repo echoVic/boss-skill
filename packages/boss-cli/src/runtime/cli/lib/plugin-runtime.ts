@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { listPluginManifestPaths, resolveBuiltInAssetPath } from '../../assets.js';
 import { EVENT_TYPES } from '../../domain/event-types.js';
 import {
   materializeState,
@@ -23,6 +24,7 @@ export interface DiscoveredPlugin extends PluginSummary {
   stages: number[];
   hooks: Record<string, string>;
   manifestPath: string;
+  pluginDir: string;
 }
 
 export interface PluginDiscoveryResult {
@@ -74,33 +76,86 @@ function ensureFeatureMeta(cwd: string, feature: string): string {
 export function resolvePluginRoot(
   { cwd = process.cwd(), repoRoot = REPO_ROOT }: { cwd?: string; repoRoot?: string } = {}
 ): string {
-  const cwdRoot = path.join(cwd, 'harness', 'plugins');
-  if (fs.existsSync(cwdRoot) && fs.statSync(cwdRoot).isDirectory()) {
-    return cwdRoot;
-  }
-  return path.join(repoRoot, 'harness', 'plugins');
+  void repoRoot;
+  const projectRoot = path.join(cwd, '.boss', 'plugins');
+  return fs.existsSync(projectRoot) ? projectRoot : resolveBuiltInAssetPath('plugins');
 }
 
-function listManifestPaths(pluginRoot: string): string[] {
-  if (!fs.existsSync(pluginRoot) || !fs.statSync(pluginRoot).isDirectory()) {
+function resolvePluginDirFromManifest(manifestPath: string): string {
+  return path.dirname(manifestPath);
+}
+
+function resolvePluginRootForRelativeManifest(manifestPath: string): string {
+  return path.dirname(path.dirname(manifestPath));
+}
+
+function listProjectPluginManifestPaths(cwd: string): string[] {
+  const projectRoot = path.join(cwd, '.boss', 'plugins');
+  if (!fs.existsSync(projectRoot) || !fs.statSync(projectRoot).isDirectory()) {
     return [];
   }
+  return fs
+    .readdirSync(projectRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(projectRoot, entry.name, 'plugin.json'))
+    .filter((manifestPath) => fs.existsSync(manifestPath))
+    .sort((left, right) => left.localeCompare(right));
+}
 
-  const pluginDirs = fs
-    .readdirSync(pluginRoot)
-    .map((entry: string) => path.join(pluginRoot, entry))
-    .filter((fullPath: string) => {
-      try {
-        return fs.statSync(fullPath).isDirectory();
-      } catch {
-        return false;
-      }
-    })
-    .sort((left: string, right: string) => path.basename(left).localeCompare(path.basename(right)));
+function collectProjectDuplicateNameErrors(cwd: string): string[] {
+  const errors: string[] = [];
+  const seenNames = new Map<string, string>();
+  const projectRoot = path.join(cwd, '.boss', 'plugins');
+  for (const manifestPath of listProjectPluginManifestPaths(cwd)) {
+    let manifest: Record<string, unknown>;
+    try {
+      manifest = readJson<Record<string, unknown>>(manifestPath);
+    } catch {
+      continue;
+    }
+    if (typeof manifest.name !== 'string' || manifest.name.length === 0) {
+      continue;
+    }
+    const relativePath = path.relative(projectRoot, manifestPath);
+    if (seenNames.has(manifest.name)) {
+      errors.push(`重复插件名: ${manifest.name} (${seenNames.get(manifest.name)} 与 ${relativePath})`);
+      continue;
+    }
+    seenNames.set(manifest.name, relativePath);
+  }
+  return errors;
+}
 
-  return pluginDirs
-    .map((dir: string) => path.join(dir, 'plugin.json'))
-    .filter((manifestPath: string) => fs.existsSync(manifestPath));
+function listLegacyHookManifestPaths(cwd: string): string[] {
+  const legacyRoot = path.join(cwd, 'harness', 'plugins');
+  if (!fs.existsSync(legacyRoot) || !fs.statSync(legacyRoot).isDirectory()) {
+    return [];
+  }
+  return fs
+    .readdirSync(legacyRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(legacyRoot, entry.name, 'plugin.json'))
+    .filter((manifestPath) => fs.existsSync(manifestPath))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function discoverLegacyHookPlugins(cwd: string, hook: string): DiscoveredPlugin[] {
+  const legacyRoot = path.join(cwd, 'harness', 'plugins');
+  const plugins: DiscoveredPlugin[] = [];
+  for (const manifestPath of listLegacyHookManifestPaths(cwd)) {
+    const pluginDir = path.dirname(manifestPath);
+    let manifest: Record<string, unknown>;
+    try {
+      manifest = readJson<Record<string, unknown>>(manifestPath);
+    } catch {
+      continue;
+    }
+    if (manifest.enabled === false) continue;
+    if (!isObject(manifest.hooks) || typeof manifest.hooks[hook] !== 'string') continue;
+    if (validatePluginManifest(manifest, pluginDir).length > 0) continue;
+    plugins.push(normalizePlugin(manifest, pluginDir, legacyRoot));
+  }
+  return sortPluginsByDependencies(plugins);
 }
 
 export function validatePluginManifest(manifest: unknown, pluginDir: string): string[] {
@@ -199,7 +254,8 @@ function normalizePlugin(
           )
         )
       : {},
-    manifestPath: path.relative(pluginRoot, path.join(pluginDir, 'plugin.json'))
+    manifestPath: path.relative(pluginRoot, path.join(pluginDir, 'plugin.json')),
+    pluginDir
   };
 }
 
@@ -275,20 +331,23 @@ export function discoverPlugins({
   strict?: boolean;
   externalDependencyNames?: Set<string>;
 } = {}): PluginDiscoveryResult {
-  const pluginRoot = resolvePluginRoot({ cwd, repoRoot });
-  const manifestPaths = listManifestPaths(pluginRoot);
-  const errors: string[] = [];
+  void repoRoot;
+  const pluginRoot = resolvePluginRoot({ cwd });
+  const manifestItems = listPluginManifestPaths({ cwd });
+  const errors: string[] = collectProjectDuplicateNameErrors(cwd);
   const candidates: DiscoveredPlugin[] = [];
   const seenNames = new Map<string, string>();
 
-  for (const manifestPath of manifestPaths) {
-    const pluginDir = path.dirname(manifestPath);
+  for (const item of manifestItems) {
+    const manifestPath = item.path;
+    const pluginDir = resolvePluginDirFromManifest(manifestPath);
+    const relativeRoot = resolvePluginRootForRelativeManifest(manifestPath);
     let manifest: Record<string, unknown>;
     try {
       manifest = readJson<Record<string, unknown>>(manifestPath);
     } catch (err) {
       errors.push(
-        `${path.relative(pluginRoot, manifestPath)}: JSON 解析失败 (${(err as Error).message})`
+        `${path.relative(relativeRoot, manifestPath)}: JSON 解析失败 (${(err as Error).message})`
       );
       continue;
     }
@@ -303,12 +362,12 @@ export function discoverPlugins({
     const validationErrors = validatePluginManifest(manifest, pluginDir);
     if (validationErrors.length > 0) {
       for (const reason of validationErrors) {
-        errors.push(`${path.relative(pluginRoot, manifestPath)}: ${reason}`);
+        errors.push(`${path.relative(relativeRoot, manifestPath)}: ${reason}`);
       }
       continue;
     }
 
-    const normalized = normalizePlugin(manifest, pluginDir, pluginRoot);
+    const normalized = normalizePlugin(manifest, pluginDir, relativeRoot);
     if (seenNames.has(normalized.name)) {
       errors.push(
         `重复插件名: ${normalized.name} (${seenNames.get(normalized.name)} 与 ${normalized.manifestPath})`
@@ -389,12 +448,12 @@ function parseStage(stage: string | number | null | undefined): number | null {
   return parsed;
 }
 
-function resolveHookScriptPath(pluginRoot: string, plugin: DiscoveredPlugin, hook: string): string {
+function resolveHookScriptPath(plugin: DiscoveredPlugin, hook: string): string {
   const hookPath = plugin.hooks[hook] ?? '';
   if (typeof hookPath !== 'string' || hookPath.length === 0) {
     return '';
   }
-  return path.join(pluginRoot, path.dirname(plugin.manifestPath), hookPath);
+  return path.join(plugin.pluginDir, hookPath);
 }
 
 function mergePluginSets(
@@ -486,14 +545,16 @@ export function runHook(
 ): RunHookResult {
   if (!hook) throw new Error('缺少 hook 参数');
   const eventsFile = ensureFeatureMeta(cwd, feature);
-  const pluginRoot = resolvePluginRoot({ cwd, repoRoot });
   const stageNumber = parseStage(stage);
   const discovery = discoverPlugins({ cwd, repoRoot, strict: true });
+  const hookPlugins = discovery.plugins.some((plugin) => typeof plugin.hooks[hook] === 'string')
+    ? discovery.plugins
+    : discoverLegacyHookPlugins(cwd, hook);
   const now = new Date().toISOString();
   const results: RunHookResultItem[] = [];
 
-  for (const plugin of discovery.plugins) {
-    const fullPath = resolveHookScriptPath(pluginRoot, plugin, hook);
+  for (const plugin of hookPlugins) {
+    const fullPath = resolveHookScriptPath(plugin, hook);
     if (!fullPath) continue;
     if (
       stageNumber != null &&
