@@ -2,7 +2,17 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  validatePathInside,
+  writeOutput
+} from '../cli/contract.js';
+import { commandDescriptions } from '../cli/command-registry.js';
 import { detectPipelinePacks } from '../runtime/cli/lib/pack-runtime.js';
+
+const packsDetectDescription = commandDescriptions['boss packs detect']!;
 
 function showHelp(): void {
   process.stdout.write(
@@ -16,39 +26,74 @@ function showHelp(): void {
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss packs detect' });
+  if (context.values.describe) {
+    writeOutput(describeCommand(packsDetectDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
+    return 0;
+  }
+
   if (argv.includes('-h') || argv.includes('--help')) {
     showHelp();
     return 0;
   }
 
-  let projectDir = cwd;
-  let jsonOutput = false;
-  for (const arg of argv) {
-    if (arg === '--json') {
-      jsonOutput = true;
-    } else if (arg.startsWith('-')) {
-      throw new Error(`未知选项: ${arg}`);
-    } else {
-      projectDir = path.isAbsolute(arg) ? arg : path.resolve(cwd, arg);
+  let projectArg = '.';
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (typeof arg !== 'string') continue;
+    if (
+      arg === '--json' ||
+      arg === '--dry-run' ||
+      arg === '--describe' ||
+      arg === '--yes' ||
+      arg === '-y'
+    ) {
+      continue;
+    }
+    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+      continue;
+    }
+    if (arg.startsWith('-')) {
+      throw new CliUserError({
+        code: 'unknown_option',
+        message: `未知选项: ${arg}`,
+        input: { option: arg },
+        retryable: false,
+        suggestion: 'Run boss packs detect --describe to verify supported options'
+      });
+    }
+    if (projectArg !== '.') {
+      throw new CliUserError({
+        code: 'extra_argument',
+        message: `多余的参数: ${arg}`,
+        input: { argument: arg },
+        retryable: false,
+        suggestion: 'Pass only one project directory'
+      });
+    }
+    projectArg = arg;
+  }
+
+  const projectDir = validatePathInside(projectArg, cwd, 'project directory');
+  const result = detectPipelinePacks(projectDir);
+  if (!context.useJson) {
+    for (const pack of result.matched) {
+      process.stderr.write(`[PACK-DETECT] 匹配: ${pack.name} (priority=${pack.priority})\n`);
     }
   }
 
-  const result = detectPipelinePacks(projectDir);
-  for (const pack of result.matched) {
-    process.stderr.write(`[PACK-DETECT] 匹配: ${pack.name} (priority=${pack.priority})\n`);
-  }
-
-  if (jsonOutput) {
-    process.stdout.write(
-      `${JSON.stringify({
-        detected: result.detected.name,
-        matched: result.matched.map((pack) => pack.name),
-        reason: result.matched.length === 0 ? 'no pack matched' : undefined
-      })}\n`
-    );
-  } else {
-    process.stdout.write(`${result.detected.name}\n`);
-  }
+  const payload = {
+    detected: result.detected.name,
+    detectedPack: result.detected,
+    matched: result.matched.map((pack) => pack.name),
+    matchedPacks: result.matched,
+    reason: result.matched.length === 0 ? 'no pack matched' : undefined
+  };
+  writeOutput(payload, context, () => `${result.detected.name}\n`);
   return 0;
 }
 

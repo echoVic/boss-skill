@@ -11,6 +11,7 @@ import {
   describeCommand,
   renderHelp,
   runMain,
+  validatePathInside,
   writeOutput
 } from '../cli/contract.js';
 import { commandDescriptions, runtimeCommandNames } from '../cli/command-registry.js';
@@ -205,6 +206,46 @@ function removeFirstPositional(argv: string[], positional: string | undefined): 
   return [...argv.slice(0, index), ...argv.slice(index + 1)];
 }
 
+function normalizeForwardedArgs(argv: string[]): string[] {
+  const normalized: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (typeof arg !== 'string') continue;
+    if (arg === '--fields') {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--fields=')) {
+      continue;
+    }
+    const equalsOption = ['--limit', '--json-input'].find((name) => arg.startsWith(`${name}=`));
+    if (equalsOption) {
+      normalized.push(equalsOption, arg.slice(equalsOption.length + 1));
+      continue;
+    }
+    normalized.push(arg);
+  }
+  return normalized;
+}
+
+async function runWithCapturedStdout(fn: () => number | Promise<number>): Promise<{ status: number; stdout: string }> {
+  const originalWrite = process.stdout.write;
+  let stdout = '';
+  process.stdout.write = ((chunk: string | Uint8Array, encodingOrCallback?: BufferEncoding | ((err?: Error) => void), callback?: (err?: Error) => void) => {
+    stdout += Buffer.isBuffer(chunk) ? chunk.toString() : String(chunk);
+    const cb = typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
+    if (cb) cb();
+    return true;
+  }) as typeof process.stdout.write;
+
+  try {
+    const status = await fn();
+    return { status, stdout };
+  } finally {
+    process.stdout.write = originalWrite;
+  }
+}
+
 function throwUnknownCommand(scope: string, command: string | undefined): never {
   throw new CliUserError({
     code: 'unknown_command',
@@ -227,6 +268,66 @@ function runNodeScript(scriptPath: string, args: string[]): number {
     return 1;
   }
 
+  return result.status ?? 0;
+}
+
+function ensureHookScriptInsideScripts(scriptRelativePath: string): void {
+  const scriptAbs = validatePathInside(scriptRelativePath, PKG_ROOT, 'hook script');
+  const scriptsRoot = path.join(PKG_ROOT, 'scripts');
+  const relativeToScripts = path.relative(scriptsRoot, scriptAbs);
+  if (
+    relativeToScripts === '..' ||
+    relativeToScripts.startsWith('../') ||
+    relativeToScripts.startsWith('..\\') ||
+    path.isAbsolute(relativeToScripts)
+  ) {
+    throw new CliUserError({
+      code: 'invalid_path',
+      message: `Path traversal rejected for hook script: ${scriptRelativePath}`,
+      input: { path: scriptRelativePath },
+      retryable: false,
+      suggestion: 'Use a script-relative-path inside the scripts directory'
+    });
+  }
+}
+
+function runHookScript(argv: string[], context: ReturnType<typeof createCliContext>): number {
+  const [hook, script] = context.positionals;
+  if (!hook || !script) {
+    throw new CliUserError({
+      code: 'missing_argument',
+      message: 'Usage: boss hooks run <hook-id> <script-relative-path> [profiles-csv]',
+      input: { hook, script },
+      retryable: false,
+      suggestion: 'Run boss hooks run --describe to verify command parameters'
+    });
+  }
+
+  ensureHookScriptInsideScripts(script);
+  const scriptPath = path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js');
+  if (!context.useJson) {
+    return runNodeScript(scriptPath, argv);
+  }
+
+  const stdin = context.stdinIsTTY ? undefined : fs.readFileSync(0);
+  const result = spawnSync(process.execPath, [scriptPath, ...argv], {
+    cwd: process.cwd(),
+    env: process.env,
+    input: stdin,
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+  if (result.error) {
+    throw result.error;
+  }
+
+  const payload = {
+    hook,
+    script,
+    exitCode: result.status ?? 0,
+    stdout: result.stdout.toString(),
+    stderr: result.stderr.toString()
+  };
+  writeOutput(payload, context, () => result.stdout.toString());
   return result.status ?? 0;
 }
 
@@ -255,7 +356,20 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
   }
 
   const mod = await load();
-  return mod.main(removeFirstPositional(argv, runtimeCommand), { cwd: process.cwd() });
+  const commandArgv = removeFirstPositional(argv, runtimeCommand);
+  const commandContext = createCliContext(commandArgv, { command: `boss runtime ${runtimeCommand}` });
+  const forwardedArgv = normalizeForwardedArgs(commandArgv);
+  if (commandContext.useJson && commandContext.values.fields) {
+    const result = await runWithCapturedStdout(() => mod.main(forwardedArgv, { cwd: process.cwd() }));
+    if (result.status === 0 && result.stdout.trim()) {
+      writeOutput(JSON.parse(result.stdout), commandContext, () => result.stdout);
+    } else if (result.stdout) {
+      process.stdout.write(result.stdout);
+    }
+    return result.status;
+  }
+
+  return mod.main(forwardedArgv, { cwd: process.cwd() });
 }
 
 async function runProjectCommand(argv: string[]): Promise<number> {
@@ -338,7 +452,14 @@ function runHooksCommand(argv: string[]): number {
     throwUnknownCommand('boss hooks', subcommand);
   }
 
-  return runNodeScript(path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js'), removeFirstPositional(argv, subcommand));
+  const commandArgv = removeFirstPositional(argv, subcommand);
+  const commandContext = createCliContext(commandArgv, { command: 'boss hooks run' });
+  if (commandContext.values.describe) {
+    writeDescription(describeRegisteredCommand('boss hooks run'), commandContext);
+    return 0;
+  }
+
+  return runHookScript(commandArgv, commandContext);
 }
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {

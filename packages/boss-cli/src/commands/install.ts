@@ -4,6 +4,15 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  assertConfirmed,
+  createCliContext,
+  describeCommand,
+  renderHelp,
+  writeOutput
+} from '../cli/contract.js';
+import { commandDescriptions } from '../cli/command-registry.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
@@ -19,6 +28,18 @@ interface Agent {
   dest: () => string;
   method: 'copy' | 'hooks' | 'plugin';
 }
+
+type InstallAction = {
+  type: 'install_skill' | 'register_plugin';
+  agent: string;
+  path: string;
+};
+
+type UninstallAction = {
+  type: 'remove_skill' | 'skip_missing';
+  agent: string;
+  path: string;
+};
 
 const METADATA: Record<string, string> = {
   OpenClaw: `metadata:
@@ -114,6 +135,11 @@ Auto-detect logic (checks all, installs to every detected agent):
   Claude Code                 →  plugin mode (--plugin-dir)
 `;
 
+const installDescription = commandDescriptions['boss install']!;
+const uninstallDescription = commandDescriptions['boss uninstall']!;
+const pathDescription = commandDescriptions['boss path']!;
+const INSTALL_HELP = renderHelp(installDescription, 'boss install [options]');
+
 function injectMetadata(content: string, agentName: string): string {
   const meta = METADATA[agentName];
   if (!meta) return content;
@@ -186,6 +212,25 @@ function pluginInstall(dryRun: boolean): void {
   console.log(`     Or:   claude --plugin-dir "$(boss-skill path)"`);
 }
 
+export function buildInstallPlan(): InstallAction[] {
+  return AGENTS.filter((agent) => agent.detect()).map((agent) => ({
+    type: agent.method === 'plugin' ? 'register_plugin' : 'install_skill',
+    agent: agent.name,
+    path: agent.dest()
+  }));
+}
+
+export function buildUninstallPlan(): UninstallAction[] {
+  return AGENTS.filter((agent) => agent.method === 'copy' && agent.detect()).map((agent) => {
+    const dest = agent.dest();
+    return {
+      type: fs.existsSync(dest) ? 'remove_skill' : 'skip_missing',
+      agent: agent.name,
+      path: dest
+    };
+  });
+}
+
 function autoInstall(dryRun: boolean): void {
   console.log(`@blade-ai/boss-skill v${pkg.version}${dryRun ? ' (dry-run)' : ''}\n`);
 
@@ -229,26 +274,56 @@ function uninstall(): void {
 }
 
 export function showHelp(): void {
-  console.log(USAGE);
+  console.log(`${USAGE}\n${INSTALL_HELP}`);
 }
 
 export function installMain(argv: string[] = process.argv.slice(2)): number {
+  const context = createCliContext(argv, { command: 'boss install' });
   const cmd = argv[0];
   const rest = argv.slice(1);
-  const dryRun = rest.includes('--dry-run');
+  const dryRun = context.values.dryRun;
 
   switch (cmd) {
     case 'install':
     case undefined:
+      if (context.values.describe) {
+        writeOutput(describeCommand(installDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
+        return 0;
+      }
+      if (dryRun && context.useJson) {
+        writeOutput(
+          { actions: buildInstallPlan(), risk_tier: 'medium', requires_approval: false },
+          context,
+          () => ''
+        );
+        return 0;
+      }
       autoInstall(dryRun);
       return 0;
 
     case 'uninstall':
+      if (context.values.describe) {
+        writeOutput(describeCommand(uninstallDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
+        return 0;
+      }
+      if (dryRun && context.useJson) {
+        writeOutput(
+          { actions: buildUninstallPlan(), risk_tier: 'high', requires_approval: true },
+          context,
+          () => ''
+        );
+        return 0;
+      }
+      assertConfirmed(context, 'uninstall');
       uninstall();
       return 0;
 
     case 'path':
-      process.stdout.write(PKG_ROOT + '\n');
+      if (context.values.describe) {
+        writeOutput(describeCommand(pathDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
+        return 0;
+      }
+      writeOutput({ path: PKG_ROOT }, context, () => `${PKG_ROOT}\n`);
       return 0;
 
     case '--version':

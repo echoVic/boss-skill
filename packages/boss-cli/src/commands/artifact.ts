@@ -3,10 +3,21 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  readJsonInput,
+  validatePathInside,
+  writeOutput
+} from '../cli/contract.js';
+import { commandDescriptions } from '../cli/command-registry.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const DEFAULT_TEMPLATE_DIR = path.join(PKG_ROOT, 'skill', 'templates');
+const artifactPrepareDescription = commandDescriptions['boss artifact prepare']!;
 
 function showHelp(): void {
   process.stdout.write(
@@ -26,7 +37,13 @@ function resolveTemplate(cwd: string, templateName: string): string {
   const defaultTemplate = path.join(DEFAULT_TEMPLATE_DIR, templateName);
   if (fs.existsSync(defaultTemplate)) return defaultTemplate;
 
-  throw new Error(`未找到模板文件: ${templateName}`);
+  throw new CliUserError({
+    code: 'template_not_found',
+    message: `未找到模板文件: ${templateName}`,
+    input: { template: templateName },
+    retryable: false,
+    suggestion: 'Create the project template or use a bundled template name'
+  });
 }
 
 function renderTemplate(content: string, feature: string): string {
@@ -44,28 +61,160 @@ function renderTemplate(content: string, feature: string): string {
   return rendered;
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateRelativeName(input: string, label: 'artifact' | 'template'): void {
+  validatePathInside(input, '/', label);
+  if (input.includes('..') || path.isAbsolute(input)) {
+    throw new CliUserError({
+      code: 'invalid_path',
+      message: `Path traversal rejected for ${label}: ${input}`,
+      input: { path: input },
+      retryable: false,
+      suggestion: `Use a relative ${label} name without path traversal`
+    });
+  }
+}
+
+function parseArtifactInput(argv: string[]): { feature: string; artifact: string; template?: string } {
+  const input: { feature: string; artifact: string; template?: string } = { feature: '', artifact: '' };
+  const jsonInputArg = createCliContext(argv, { command: 'boss artifact prepare' }).values.jsonInput;
+  const jsonInput = readJsonInput(jsonInputArg);
+  if (jsonInput !== null) {
+    if (!isJsonObject(jsonInput)) {
+      throw new CliUserError({
+        code: 'invalid_json_input',
+        message: '--json-input for artifact prepare must be an object',
+        input: { jsonInput },
+        retryable: false,
+        suggestion: 'Use fields: feature, artifact, template'
+      });
+    }
+    if (typeof jsonInput.feature === 'string') input.feature = jsonInput.feature;
+    if (typeof jsonInput.artifact === 'string') input.artifact = jsonInput.artifact;
+    if (typeof jsonInput.template === 'string') input.template = jsonInput.template;
+  }
+
+  const positionals: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (typeof arg !== 'string') continue;
+    if (
+      arg === '--json' ||
+      arg === '--dry-run' ||
+      arg === '--describe' ||
+      arg === '--yes' ||
+      arg === '-y'
+    ) {
+      continue;
+    }
+    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+      continue;
+    }
+    if (arg.startsWith('-')) {
+      throw new CliUserError({
+        code: 'unknown_option',
+        message: `未知选项: ${arg}`,
+        input: { option: arg },
+        retryable: false,
+        suggestion: 'Run boss artifact prepare --describe to verify supported options'
+      });
+    }
+    positionals.push(arg);
+  }
+
+  if (positionals[0]) input.feature = positionals[0];
+  if (positionals[1]) input.artifact = positionals[1];
+  if (positionals[2]) input.template = positionals[2];
+  if (positionals.length > 3) {
+    throw new CliUserError({
+      code: 'extra_argument',
+      message: `多余的参数: ${positionals[3]}`,
+      input: { argument: positionals[3] },
+      retryable: false,
+      suggestion: 'Pass feature, artifact, and an optional template name'
+    });
+  }
+
+  return input;
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss artifact prepare' });
+  if (context.values.describe) {
+    writeOutput(describeCommand(artifactPrepareDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
+    return 0;
+  }
+
   if (argv.includes('-h') || argv.includes('--help')) {
     showHelp();
     return 0;
   }
 
-  if (argv.length < 2 || argv.length > 3) {
-    throw new Error('用法: boss artifact prepare <feature-name> <artifact-name> [template-name]');
+  const { feature, artifact, template: templateArg } = parseArtifactInput(argv);
+  if (!feature || !artifact) {
+    throw new CliUserError({
+      code: 'missing_argument',
+      message: '用法: boss artifact prepare <feature-name> <artifact-name> [template-name]',
+      input: { feature, artifact },
+      retryable: false,
+      suggestion: 'Pass feature and artifact, or provide them with --json-input'
+    });
   }
 
-  const [feature, artifact, templateArg] = argv as [string, string, string | undefined];
+  validateRelativeName(artifact, 'artifact');
+  if (templateArg) validateRelativeName(templateArg, 'template');
+
   const targetDir = path.join(cwd, '.boss', feature);
   if (!fs.existsSync(targetDir)) {
-    throw new Error(`目标目录不存在: .boss/${feature}，请先执行 boss project init ${feature}`);
+    throw new CliUserError({
+      code: 'feature_not_found',
+      message: `目标目录不存在: .boss/${feature}，请先执行 boss project init ${feature}`,
+      input: { feature },
+      retryable: false,
+      suggestion: `Run boss project init ${feature}`
+    });
   }
 
   const templateName = templateArg ?? `${artifact}.template`;
+  validateRelativeName(templateName, 'template');
   const templatePath = resolveTemplate(cwd, templateName);
-  const content = fs.readFileSync(templatePath, 'utf8');
   const targetPath = path.join(targetDir, artifact);
+  const payload = {
+    actions: [
+      {
+        type: 'write_artifact',
+        path: path.relative(cwd, targetPath),
+        template: path.relative(cwd, templatePath)
+      }
+    ],
+    risk_tier: 'medium',
+    requires_approval: false
+  };
+
+  if (context.values.dryRun) {
+    const action = payload.actions[0]!;
+    writeOutput(payload, context, () => `  [dry-run] write_artifact: ${action.path} <- ${action.template}\nDry-run complete. No files were modified.\n`);
+    return 0;
+  }
+
+  const content = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(targetPath, renderTemplate(content, feature) + '\n', 'utf8');
-  process.stdout.write(`已按模板优先级准备产物骨架: ${path.relative(cwd, targetPath)} <- ${path.relative(cwd, templatePath)}\n`);
+  writeOutput(
+    {
+      path: path.relative(cwd, targetPath),
+      template: path.relative(cwd, templatePath),
+      written: true
+    },
+    context,
+    () => `已按模板优先级准备产物骨架: ${path.relative(cwd, targetPath)} <- ${path.relative(cwd, templatePath)}\n`
+  );
   return 0;
 }
 

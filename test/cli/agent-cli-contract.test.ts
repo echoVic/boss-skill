@@ -130,4 +130,49 @@ describe('agent-friendly boss CLI contract', () => {
     expect(Array.isArray(payload.events)).toBe(true);
     expect(payload.events).toHaveLength(1);
   });
+
+  it('install dry-run returns structured actions and writes nothing', () => {
+    const home = path.join(tmpDir, 'home');
+    fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
+
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'install', '--dry-run', '--json'], {
+      cwd: tmpDir,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      actions: Array<{ type: string; agent: string; path: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+    };
+    expect(payload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(payload.risk_tier).toBe('medium');
+    expect(payload.requires_approval).toBe(false);
+    expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(false);
+  });
+
+  it('artifact prepare dry-run returns a structured write plan', () => {
+    fs.mkdirSync(path.join(tmpDir, '.boss', 'demo'), { recursive: true });
+    const result = runBoss(['artifact', 'prepare', 'demo', 'prd.md', '--dry-run', '--json'], tmpDir);
+
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      actions: Array<{ type: string; path: string; template: string }>;
+      risk_tier: string;
+    };
+    expect(payload.actions).toEqual([
+      expect.objectContaining({ type: 'write_artifact', path: '.boss/demo/prd.md' })
+    ]);
+    expect(payload.risk_tier).toBe('medium');
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'demo', 'prd.md'))).toBe(false);
+  });
+
+  it('packs detect supports fields and limit', () => {
+    const result = runBoss(['packs', 'detect', '.', '--json', '--fields=detected', '--limit=1'], tmpDir);
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({ detected: 'default' });
+  });
 });
