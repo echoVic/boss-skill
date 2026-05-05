@@ -43,7 +43,7 @@ describe('configurable gate coverage threshold', () => {
 
   it('evaluateGates passes GATE_COVERAGE_THRESHOLD env var to gate scripts', () => {
     // Create a custom gate that echoes the env var in its output
-    const gateDir = path.join(tmpDir, 'harness', 'plugins', 'env-echo');
+    const gateDir = path.join(tmpDir, '.boss', 'plugins', 'env-echo');
     fs.mkdirSync(gateDir, { recursive: true });
     const gateScript = path.join(gateDir, 'gate.sh');
     fs.writeFileSync(gateScript, [
