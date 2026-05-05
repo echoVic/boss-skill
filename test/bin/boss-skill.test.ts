@@ -66,6 +66,28 @@ describe('boss-skill dist bin', () => {
     }
   });
 
+  it('returns structured root command metadata with --describe', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', '--describe']);
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      command: string;
+      commands: string[];
+      options: Array<{ name: string }>;
+    };
+    expect(payload.command).toBe('boss');
+    expect(payload.commands).toContain('project init');
+    expect(payload.commands).toContain('runtime COMMAND');
+    expect(payload.options.map((option) => option.name)).toContain('json');
+  });
+
+  it('returns structured errors for unknown root commands in non-tty mode', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'unknown-command']);
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input: Record<string, unknown> } };
+    expect(payload.error.code).toBe('unknown_command');
+    expect(payload.error.input).toEqual({ command: 'unknown-command' });
+  });
+
   it('builds the dist entrypoint used by both bins', () => {
     expect(existsSync(distEntry)).toBe(true);
   });

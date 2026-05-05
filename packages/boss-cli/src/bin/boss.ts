@@ -5,6 +5,15 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { installMain } from '../commands/install.js';
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  renderHelp,
+  runMain,
+  writeOutput
+} from '../cli/contract.js';
+import { runtimeCommandNames } from '../cli/command-registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,84 +22,103 @@ const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf
   version: string;
 };
 
-const USAGE = `
-@blade-ai/boss-skill v${pkg.version}
-BMAD Harness Engineer - pluggable pipeline skill for coding agents.
+const rootDescription = {
+  command: 'boss',
+  summary: 'Boss Skill CLI',
+  parameters: [{ name: 'command', type: 'string' as const, required: false }],
+  options: [
+    { name: 'json', type: 'boolean' as const, default: false },
+    { name: 'describe', type: 'boolean' as const, default: false },
+    { name: 'json-input', type: 'string' as const },
+    { name: 'fields', type: 'string' as const },
+    { name: 'limit', type: 'string' as const, default: '100' },
+    { name: 'dry-run', type: 'boolean' as const, default: false },
+    { name: 'yes', type: 'boolean' as const, short: 'y', default: false }
+  ],
+  risk_tier: 'low' as const
+};
 
-Usage:
-  boss install              Auto-detect all agents and install
-  boss uninstall            Remove boss-skill from all detected agents
-  boss path                 Print the installed skill root directory
-  boss runtime <command>    Run Boss runtime commands
-  boss project init         Initialize .boss feature workspaces
-  boss artifact prepare     Prepare an artifact from templates
-  boss packs detect         Detect the best pipeline pack
-  boss hooks run            Run a Boss hook with profile flags
-  boss --version            Print version
-  boss --help               Show this help
+const ROOT_USAGE = [
+  renderHelp(rootDescription, 'boss COMMAND [options]'),
+  'Commands:',
+  '  install',
+  '  uninstall',
+  '  path',
+  '  runtime COMMAND',
+  '  project init',
+  '  artifact prepare',
+  '  packs detect',
+  '  hooks run',
+  '',
+  'Compatibility:',
+  '  boss-skill install',
+  ''
+].join('\n');
 
-Compatibility:
-  boss-skill install        Same as boss install
-`;
+const runtimeDescription = {
+  ...rootDescription,
+  command: 'boss runtime',
+  summary: 'Run Boss runtime commands'
+};
 
-const RUNTIME_USAGE = `
-boss runtime
+const projectDescription = {
+  ...rootDescription,
+  command: 'boss project',
+  summary: 'Initialize .boss feature workspaces'
+};
 
-Usage:
-  boss runtime <command> [args...]
+const artifactDescription = {
+  ...rootDescription,
+  command: 'boss artifact',
+  summary: 'Prepare artifacts from templates'
+};
 
-Commands:
-  init-pipeline
-  update-stage
-  update-agent
-  record-artifact
-  get-ready-artifacts
-  evaluate-gates
-  check-stage
-  replay-events
-  inspect-progress
-  inspect-pipeline
-  inspect-events
-  inspect-plugins
-  render-diagnostics
-  extract-memory
-  query-memory
-  build-memory-summary
-  generate-summary
-  register-plugins
-  run-plugin-hook
-  record-feedback
-  retry-agent
-  retry-stage
-`;
+const packsDescription = {
+  ...rootDescription,
+  command: 'boss packs',
+  summary: 'Detect pipeline packs'
+};
 
-const PROJECT_USAGE = `
-boss project
+const hooksDescription = {
+  ...rootDescription,
+  command: 'boss hooks',
+  summary: 'Run Boss hooks'
+};
 
-Usage:
-  boss project init <feature-name> [--template] [--force]
-`;
+const RUNTIME_USAGE = [
+  renderHelp(runtimeDescription, 'boss runtime COMMAND [args...]'),
+  'Commands:',
+  ...runtimeCommandNames.map((name) => `  ${name}`),
+  ''
+].join('\n');
 
-const ARTIFACT_USAGE = `
-boss artifact
+const PROJECT_USAGE = [
+  renderHelp(projectDescription, 'boss project init <feature-name> [--template] [--force]'),
+  'Commands:',
+  '  init',
+  ''
+].join('\n');
 
-Usage:
-  boss artifact prepare <feature-name> <artifact-name> [template-name]
-`;
+const ARTIFACT_USAGE = [
+  renderHelp(artifactDescription, 'boss artifact prepare <feature-name> <artifact-name> [template-name]'),
+  'Commands:',
+  '  prepare',
+  ''
+].join('\n');
 
-const PACKS_USAGE = `
-boss packs
+const PACKS_USAGE = [
+  renderHelp(packsDescription, 'boss packs detect [project-dir]'),
+  'Commands:',
+  '  detect',
+  ''
+].join('\n');
 
-Usage:
-  boss packs detect [project-dir]
-`;
-
-const HOOKS_USAGE = `
-boss hooks
-
-Usage:
-  boss hooks run <hook-id> <script-relative-path> [profiles-csv]
-`;
+const HOOKS_USAGE = [
+  renderHelp(hooksDescription, 'boss hooks run <hook-id> <script-relative-path> [profiles-csv]'),
+  'Commands:',
+  '  run',
+  ''
+].join('\n');
 
 type RuntimeModule = {
   main: (argv: string[], options?: { cwd?: string }) => number | Promise<number>;
@@ -126,11 +154,46 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
 };
 
 export function showHelp(): void {
-  console.log(USAGE);
+  process.stdout.write(ROOT_USAGE);
+}
+
+function describeRoot() {
+  return {
+    ...describeCommand(rootDescription),
+    version: pkg.version,
+    commands: [
+      'install',
+      'uninstall',
+      'path',
+      'runtime COMMAND',
+      'project init',
+      'artifact prepare',
+      'packs detect',
+      'hooks run'
+    ],
+    runtime_commands: runtimeCommandNames
+  };
 }
 
 function showRuntimeHelp(): void {
-  console.log(RUNTIME_USAGE);
+  process.stdout.write(RUNTIME_USAGE);
+}
+
+function removeFirstPositional(argv: string[], positional: string | undefined): string[] {
+  if (!positional) return argv;
+  const index = argv.indexOf(positional);
+  if (index === -1) return argv;
+  return [...argv.slice(0, index), ...argv.slice(index + 1)];
+}
+
+function throwUnknownCommand(scope: string, command: string | undefined): never {
+  throw new CliUserError({
+    code: 'unknown_command',
+    message: `Unknown command: ${command}`,
+    input: { command },
+    retryable: false,
+    suggestion: `Run ${scope} --describe to list available commands`
+  });
 }
 
 function runNodeScript(scriptPath: string, args: string[]): number {
@@ -149,114 +212,127 @@ function runNodeScript(scriptPath: string, args: string[]): number {
 }
 
 async function runRuntimeCommand(argv: string[]): Promise<number> {
-  const runtimeCommand = argv[0];
-  if (!runtimeCommand || runtimeCommand === '-h' || runtimeCommand === '--help') {
+  const context = createCliContext(argv, { command: 'boss runtime' });
+  const runtimeCommand = context.positionals[0];
+  if (!runtimeCommand || argv.includes('-h') || argv.includes('--help')) {
     showRuntimeHelp();
     return 0;
   }
 
   const load = runtimeCommands[runtimeCommand];
   if (!load) {
-    console.error(`Unknown runtime command: ${runtimeCommand}\n`);
-    showRuntimeHelp();
-    return 1;
+    throwUnknownCommand('boss runtime', runtimeCommand);
   }
 
   const mod = await load();
-  return mod.main(argv.slice(1), { cwd: process.cwd() });
+  return mod.main(removeFirstPositional(argv, runtimeCommand), { cwd: process.cwd() });
 }
 
 async function runProjectCommand(argv: string[]): Promise<number> {
-  const subcommand = argv[0];
-  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
-    console.log(PROJECT_USAGE);
+  const context = createCliContext(argv, { command: 'boss project' });
+  const subcommand = context.positionals[0];
+  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(PROJECT_USAGE);
     return 0;
   }
 
   if (subcommand !== 'init') {
-    console.error(`Unknown project command: ${subcommand}\n`);
-    console.log(PROJECT_USAGE);
-    return 1;
+    throwUnknownCommand('boss project', subcommand);
   }
 
   const mod: CommandModule = await import('../commands/project.js');
-  return mod.main(argv.slice(1), { cwd: process.cwd() });
+  return mod.main(removeFirstPositional(argv, subcommand), { cwd: process.cwd() });
 }
 
 async function runArtifactCommand(argv: string[]): Promise<number> {
-  const subcommand = argv[0];
-  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
-    console.log(ARTIFACT_USAGE);
+  const context = createCliContext(argv, { command: 'boss artifact' });
+  const subcommand = context.positionals[0];
+  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(ARTIFACT_USAGE);
     return 0;
   }
 
   if (subcommand !== 'prepare') {
-    console.error(`Unknown artifact command: ${subcommand}\n`);
-    console.log(ARTIFACT_USAGE);
-    return 1;
+    throwUnknownCommand('boss artifact', subcommand);
   }
 
   const mod: CommandModule = await import('../commands/artifact.js');
-  return mod.main(argv.slice(1), { cwd: process.cwd() });
+  return mod.main(removeFirstPositional(argv, subcommand), { cwd: process.cwd() });
 }
 
 async function runPacksCommand(argv: string[]): Promise<number> {
-  const subcommand = argv[0];
-  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
-    console.log(PACKS_USAGE);
+  const context = createCliContext(argv, { command: 'boss packs' });
+  const subcommand = context.positionals[0];
+  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(PACKS_USAGE);
     return 0;
   }
 
   if (subcommand !== 'detect') {
-    console.error(`Unknown packs command: ${subcommand}\n`);
-    console.log(PACKS_USAGE);
-    return 1;
+    throwUnknownCommand('boss packs', subcommand);
   }
 
   const mod: CommandModule = await import('../commands/packs.js');
-  return mod.main(argv.slice(1), { cwd: process.cwd() });
+  return mod.main(removeFirstPositional(argv, subcommand), { cwd: process.cwd() });
 }
 
 function runHooksCommand(argv: string[]): number {
-  const subcommand = argv[0];
-  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
-    console.log(HOOKS_USAGE);
+  const context = createCliContext(argv, { command: 'boss hooks' });
+  const subcommand = context.positionals[0];
+  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(HOOKS_USAGE);
     return 0;
   }
 
   if (subcommand !== 'run') {
-    console.error(`Unknown hooks command: ${subcommand}\n`);
-    console.log(HOOKS_USAGE);
-    return 1;
+    throwUnknownCommand('boss hooks', subcommand);
   }
 
-  return runNodeScript(path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js'), argv.slice(1));
+  return runNodeScript(path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js'), removeFirstPositional(argv, subcommand));
 }
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
-  const cmd = argv[0];
+  const rootContext = createCliContext(argv, { command: 'boss' });
+
+  if (rootContext.values.describe && rootContext.positionals.length === 0) {
+    writeOutput(describeRoot(), rootContext, () => `${JSON.stringify(describeRoot(), null, 2)}\n`);
+    return 0;
+  }
+
+  const cmd = rootContext.positionals[0];
+  const commandArgv = removeFirstPositional(argv, cmd);
 
   switch (cmd) {
     case undefined:
+      if (argv.includes('--version') || argv.includes('-v')) {
+        console.log(pkg.version);
+        return 0;
+      }
+      if (argv.includes('--help') || argv.includes('-h')) {
+        showHelp();
+        return 0;
+      }
+      return installMain(argv);
+
     case 'install':
     case 'uninstall':
     case 'path':
       return installMain(argv);
 
     case 'runtime':
-      return runRuntimeCommand(argv.slice(1));
+      return runRuntimeCommand(commandArgv);
 
     case 'project':
-      return runProjectCommand(argv.slice(1));
+      return runProjectCommand(commandArgv);
 
     case 'artifact':
-      return runArtifactCommand(argv.slice(1));
+      return runArtifactCommand(commandArgv);
 
     case 'packs':
-      return runPacksCommand(argv.slice(1));
+      return runPacksCommand(commandArgv);
 
     case 'hooks':
-      return runHooksCommand(argv.slice(1));
+      return runHooksCommand(commandArgv);
 
     case '--version':
     case '-v':
@@ -269,12 +345,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 0;
 
     default:
-      console.error(`Unknown command: ${cmd}\n`);
-      showHelp();
-      return 1;
+      throwUnknownCommand('boss', cmd);
   }
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename)) {
-  process.exit(await main(process.argv.slice(2)));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss' });
+  process.exit(await runMain(() => main(process.argv.slice(2)), context));
 }
