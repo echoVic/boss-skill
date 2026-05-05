@@ -106,6 +106,17 @@ describe('boss-skill dist bin', () => {
     expect(payload.command).toBe('boss install');
   });
 
+  it('prints raw path by default and structured path with --json', () => {
+    const plain = runCli(['packages/boss-cli/dist/bin/boss.js', 'path']);
+    expect(plain.status).toBe(0);
+    expect(plain.stdout).toBe(`${root}\n`);
+    expect(() => JSON.parse(plain.stdout)).toThrow();
+
+    const json = runCli(['packages/boss-cli/dist/bin/boss.js', 'path', '--json']);
+    expect(json.status).toBe(0);
+    expect(JSON.parse(json.stdout)).toEqual({ path: root });
+  });
+
   it('returns structured project group metadata with --describe', () => {
     const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', '--describe']);
     expect(result.status).toBe(0);

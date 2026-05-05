@@ -206,46 +206,6 @@ function removeFirstPositional(argv: string[], positional: string | undefined): 
   return [...argv.slice(0, index), ...argv.slice(index + 1)];
 }
 
-function normalizeForwardedArgs(argv: string[]): string[] {
-  const normalized: string[] = [];
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (typeof arg !== 'string') continue;
-    if (arg === '--fields') {
-      index += 1;
-      continue;
-    }
-    if (arg.startsWith('--fields=')) {
-      continue;
-    }
-    const equalsOption = ['--limit', '--json-input'].find((name) => arg.startsWith(`${name}=`));
-    if (equalsOption) {
-      normalized.push(equalsOption, arg.slice(equalsOption.length + 1));
-      continue;
-    }
-    normalized.push(arg);
-  }
-  return normalized;
-}
-
-async function runWithCapturedStdout(fn: () => number | Promise<number>): Promise<{ status: number; stdout: string }> {
-  const originalWrite = process.stdout.write;
-  let stdout = '';
-  process.stdout.write = ((chunk: string | Uint8Array, encodingOrCallback?: BufferEncoding | ((err?: Error) => void), callback?: (err?: Error) => void) => {
-    stdout += Buffer.isBuffer(chunk) ? chunk.toString() : String(chunk);
-    const cb = typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
-    if (cb) cb();
-    return true;
-  }) as typeof process.stdout.write;
-
-  try {
-    const status = await fn();
-    return { status, stdout };
-  } finally {
-    process.stdout.write = originalWrite;
-  }
-}
-
 function throwUnknownCommand(scope: string, command: string | undefined): never {
   throw new CliUserError({
     code: 'unknown_command',
@@ -356,20 +316,7 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
   }
 
   const mod = await load();
-  const commandArgv = removeFirstPositional(argv, runtimeCommand);
-  const commandContext = createCliContext(commandArgv, { command: `boss runtime ${runtimeCommand}` });
-  const forwardedArgv = normalizeForwardedArgs(commandArgv);
-  if (commandContext.useJson && commandContext.values.fields) {
-    const result = await runWithCapturedStdout(() => mod.main(forwardedArgv, { cwd: process.cwd() }));
-    if (result.status === 0 && result.stdout.trim()) {
-      writeOutput(JSON.parse(result.stdout), commandContext, () => result.stdout);
-    } else if (result.stdout) {
-      process.stdout.write(result.stdout);
-    }
-    return result.status;
-  }
-
-  return mod.main(forwardedArgv, { cwd: process.cwd() });
+  return mod.main(removeFirstPositional(argv, runtimeCommand), { cwd: process.cwd() });
 }
 
 async function runProjectCommand(argv: string[]): Promise<number> {

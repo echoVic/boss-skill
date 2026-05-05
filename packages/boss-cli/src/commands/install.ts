@@ -323,7 +323,11 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
         writeOutput(describeCommand(pathDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
         return 0;
       }
-      writeOutput({ path: PKG_ROOT }, context, () => `${PKG_ROOT}\n`);
+      if (context.values.json) {
+        writeOutput({ path: PKG_ROOT }, context, () => `${PKG_ROOT}\n`);
+      } else {
+        process.stdout.write(`${PKG_ROOT}\n`);
+      }
       return 0;
 
     case '--version':
