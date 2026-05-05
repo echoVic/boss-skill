@@ -10,7 +10,7 @@ import {
   saveFeatureSummary,
   saveGlobalMemory,
   saveGlobalSummary
-} from '../../src/runtime/memory/store.js';
+} from '../../packages/boss-cli/src/runtime/memory/store.js';
 
 describe('memory store runtime', () => {
   let tmpDir: string;

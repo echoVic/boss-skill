@@ -269,7 +269,7 @@ EOF
 
 # 初始化运行时元数据与事件流
 command -v node >/dev/null 2>&1 || error "需要 node 才能运行初始化流程"
-node "$REPO_ROOT/runtime/cli/init-pipeline.js" "$FEATURE_NAME" >/dev/null
+node "$REPO_ROOT/packages/boss-cli/dist/bin/boss.js" runtime init-pipeline "$FEATURE_NAME" >/dev/null
 
     # 完成
     success "Boss Mode 项目目录初始化完成！"

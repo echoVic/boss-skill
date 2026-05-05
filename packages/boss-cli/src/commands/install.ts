@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..');
+const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')) as {
   version: string;
 };
@@ -232,7 +232,7 @@ export function showHelp(): void {
   console.log(USAGE);
 }
 
-export function main(argv: string[] = process.argv.slice(2)): void {
+export function installMain(argv: string[] = process.argv.slice(2)): number {
   const cmd = argv[0];
   const rest = argv.slice(1);
   const dryRun = rest.includes('--dry-run');
@@ -241,34 +241,36 @@ export function main(argv: string[] = process.argv.slice(2)): void {
     case 'install':
     case undefined:
       autoInstall(dryRun);
-      break;
+      return 0;
 
     case 'uninstall':
       uninstall();
-      break;
+      return 0;
 
     case 'path':
       process.stdout.write(PKG_ROOT + '\n');
-      break;
+      return 0;
 
     case '--version':
     case '-v':
       console.log(pkg.version);
-      break;
+      return 0;
 
     case '--help':
     case '-h':
       console.log(USAGE);
-      break;
+      return 0;
 
     default:
       console.error(`Unknown command: ${cmd}\n`);
       console.log(USAGE);
-      process.exit(1);
+      return 1;
   }
 }
 
+export const main = installMain;
+
 const entrypoint = process.argv[1];
 if (entrypoint && fs.realpathSync(entrypoint) === fs.realpathSync(__filename)) {
-  main();
+  process.exit(installMain());
 }

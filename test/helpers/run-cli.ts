@@ -18,7 +18,7 @@ function ensureBuilt(entrypoint: string): void {
 }
 
 export function runCli(args: string[]) {
-  ensureBuilt(args[0] ?? 'dist/bin/boss-skill.js');
+  ensureBuilt(args[0] ?? 'packages/boss-cli/dist/bin/boss.js');
   return spawnSync(process.execPath, args, {
     cwd: root,
     encoding: 'utf8'
@@ -26,7 +26,7 @@ export function runCli(args: string[]) {
 }
 
 export function runCliOrThrow(args: string[]) {
-  ensureBuilt(args[0] ?? 'dist/bin/boss-skill.js');
+  ensureBuilt(args[0] ?? 'packages/boss-cli/dist/bin/boss.js');
   return execFileSync(process.execPath, args, {
     cwd: root,
     encoding: 'utf8'

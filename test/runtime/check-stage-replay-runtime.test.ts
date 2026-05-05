@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('runtime check-stage and replay-events CLIs', () => {
   let tmpDir: string;
@@ -21,12 +22,8 @@ describe('runtime check-stage and replay-events CLIs', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function runtimeCli(name: string) {
-    return path.join(REPO_ROOT, 'dist', 'runtime', 'cli', `${name}.js`);
-  }
-
   function runRuntimeCommand(name: string, args: string[]) {
-    return spawnSync(process.execPath, [runtimeCli(name), ...args], {
+    return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], {
       cwd: tmpDir,
       encoding: 'utf8'
     });

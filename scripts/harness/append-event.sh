@@ -71,7 +71,7 @@ done
 [[ -z "$FEATURE" ]] && error "缺少 feature 参数"
 [[ -z "$EVENT_TYPE" ]] && error "缺少 event-type 参数"
 
-EVENT_TYPES_JS="$SCRIPT_DIR/../../runtime/domain/event-types.js"
+EVENT_TYPES_JS="$SCRIPT_DIR/../../packages/boss-cli/dist/runtime/domain/event-types.js"
 VALID_TYPES="$(node -e "const { EVENT_TYPE_VALUES } = require(process.argv[1]); process.stdout.write(EVENT_TYPE_VALUES.join(' '))" "$EVENT_TYPES_JS")"
 echo "$VALID_TYPES" | grep -qw "$EVENT_TYPE" || error "无效事件类型: $EVENT_TYPE"
 

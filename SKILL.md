@@ -99,7 +99,7 @@ Copy this checklist and check off items as you complete them:
 ### Boss Pipeline Progress:
 
 - [ ] **Step -1: 模板初始化**（若传入 `--template`）
-  - [ ] -1.1 调用 `scripts/init-project.sh <feature-name> --template`
+  - [ ] -1.1 调用 `boss project init <feature-name> --template`
   - [ ] -1.2 确认 `.boss/templates/` 已创建，并包含默认模板副本
   - [ ] -1.3 提示用户先修改模板，再重新运行 `/boss ...`
   - [ ] -1.4 ⛔ 本次执行到此结束，不进入 DAG 执行循环
@@ -114,7 +114,7 @@ Copy this checklist and check off items as you complete them:
     - “做一个 Todo 应用” → `todo-app`
     - “给现有项目加用户认证” → `user-auth`
     - “把现有原生 HTML 组件迁移成 shadcn 组件” → `shadcn-component-migration`
-  - [ ] 0a.5 归一化后的 slug 必须符合 `scripts/init-project.sh` 的格式校验；不确定时用一句话向用户确认 slug。
+  - [ ] 0a.5 归一化后的 slug 必须符合 `boss project init` 的格式校验；不确定时用一句话向用户确认 slug。
 
 - [ ] **Step 0: 需求澄清** ⚠️ REQUIRED (除非 `--quick`)
   - [ ] 0.1 **判断需求完整度**：用户给的信息是否包含"做什么 + 给谁用 + 核心场景"？
@@ -122,30 +122,30 @@ Copy this checklist and check off items as you complete them:
     - ❌ 缺任何一项 → 进入 brainstorming
   - [ ] 0.2 **Brainstorming 需求澄清**：读取 `skills/brainstorming/SKILL.md` 的流程，以 Boss 的身份执行需求澄清（不需要启动子 Agent，你自己来问）。**已有项目先执行 SKILL.md 中的"项目环境感知"步骤**，再进入提问环节。一次一个问题，优先给选项，只问业务问题不问技术问题。
   - [ ] 0.3 **输出设计简报**：澄清完毕后，写入 `.boss/<feature>/design-brief.md`，向用户确认
-  - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `scripts/init-project.sh <feature-name>` 创建占位产物骨架
-  - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `scripts/harness/detect-pack.sh <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
+  - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架
+  - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
   - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `harness/artifact-dag.json`（或 pipeline pack 自定义 DAG），确定产物依赖图
   - [ ] 0.5 🔌 扫描 `harness/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
-  - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`runtime/cli/update-stage.js <feature> 1 running`，进入 DAG 执行循环 ↓
+  - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`boss runtime update-stage <feature> 1 running`，进入 DAG 执行循环 ↓
 
 - [ ] **DAG 执行循环** — 重复以下步骤直到所有产物完成或被跳过：
 
-  - [ ] **D.1 查询就绪产物**：调用 `runtime/cli/get-ready-artifacts.js <feature> --ready --json` 获取当前所有输入依赖已满足的产物列表
-  - [ ] **D.2 阶段状态管理**：对就绪产物所属的阶段，若阶段状态为 `pending`，调用 `runtime/cli/update-stage.js <feature> <N> running` 标记阶段开始
-  - [ ] **D.3 准备产物骨架**：对每个就绪产物调用 `scripts/prepare-artifact.sh <feature-name> <artifact-name>`
+  - [ ] **D.1 查询就绪产物**：调用 `boss runtime get-ready-artifacts <feature> --ready --json` 获取当前所有输入依赖已满足的产物列表
+  - [ ] **D.2 阶段状态管理**：对就绪产物所属的阶段，若阶段状态为 `pending`，调用 `boss runtime update-stage <feature> <N> running` 标记阶段开始
+  - [ ] **D.3 准备产物骨架**：对每个就绪产物调用 `boss artifact prepare <feature-name> <artifact-name>`
   - [ ] **D.4 并行派发 Agent**：
     - Load `references/artifact-guide.md` 获取产物保存规范
     - 对同一阶段的就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）
     - 不同阶段的就绪产物也可并行（DAG 保证依赖已满足）
     - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`
-    - 🧠 **注入 Memory 上下文**：调用 `runtime/cli/query-memory.js <feature> --agent <agent-name> --json`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
+    - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name> --json`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
-  - [ ] **D.6 标记产物完成**：调用 `runtime/cli/update-stage.js <feature> <N> completed --artifact <name>` 记录产物（当阶段内所有产物都完成时标记阶段 completed）
-  - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `runtime/cli/check-stage.js <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `runtime/cli/retry-agent.js <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `runtime/cli/retry-stage.js <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
+  - [ ] **D.6 标记产物完成**：调用 `boss runtime update-stage <feature> <N> completed --artifact <name>` 记录产物（当阶段内所有产物都完成时标记阶段 completed）
+  - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
   - [ ] **D.7a 🔄 反馈循环**：若 Agent 报告 `REVISION_NEEDED`（仅 Tech Lead / QA 可发起）：
-    1. 调用 `runtime/cli/record-feedback.js <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
+    1. 调用 `boss runtime record-feedback <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
     2. 若返回错误（轮次已达上限），暂停并报告用户
     3. 重新派发目标 Agent 修订上游产物（将修订原因作为额外上下文传入）
     4. 修订完成后，重新派发 Critic Agent 验证
@@ -155,17 +155,17 @@ Copy this checklist and check off items as you complete them:
     - 阶段 1 完成后 → 确认规划结果 ⚠️ REQUIRED
     - 阶段 3 门禁后 → 可选确认
   - [ ] **D.9 🚦 门禁**（阶段 3 产物完成后）：
-    - 读取 DAG 中 `type: "gate"` 的条目，对 `inputs` 已满足的 gate 依次调用 `runtime/cli/evaluate-gates.js <feature> <gate-name>`
+    - 读取 DAG 中 `type: "gate"` 的条目，对 `inputs` 已满足的 gate 依次调用 `boss runtime evaluate-gates <feature> <gate-name>`
     - gate0：代码质量检查（编译 + Lint + 安全扫描）
     - gate1：测试门禁（覆盖率 + 通过率 + E2E）
     - gate2：性能门禁（Lighthouse + API P99，仅 Web 项目，optional）
     - 扫描 `harness/plugins/` 中 type=gate 的插件，依次执行
     - 门禁失败时修复后重新执行门禁
   - [ ] **D.10 回到 D.1**：重新查询就绪产物，直到 DAG 中所有非跳过产物都已完成
-  - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `runtime/cli/extract-memory.js <feature>` 提取本次流水线的关键决策和经验，写入全局记忆库供后续 feature 参考。
+  - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `boss runtime extract-memory <feature>` 提取本次流水线的关键决策和经验，写入全局记忆库供后续 feature 参考。
 
 - [ ] **收尾**
-  - [ ] F.1 📊 调用 `runtime/cli/generate-summary.js <feature>` 生成最终流水线报告
+  - [ ] F.1 📊 调用 `boss runtime generate-summary <feature>` 生成最终流水线报告
   - [ ] F.2 输出最终结果（文档位置 + 测试摘要 + 门禁结果 + 访问 URL + 流水线耗时）
 
 ---
@@ -190,19 +190,19 @@ Copy this checklist and check off items as you complete them:
 
 | 编排动作 | Runtime CLI | Runtime API |
 |---------|-------------|-------------|
-| 初始化流水线 | `runtime/cli/init-pipeline.js` | `initPipeline(feature)` |
-| 查询 ready artifacts | `runtime/cli/get-ready-artifacts.js` | `getReadyArtifacts(feature, options)` |
-| 阶段状态变更 | `runtime/cli/update-stage.js` | `updateStage(feature, stage, status, options)` |
-| 记录产物 | `runtime/cli/record-artifact.js` | `recordArtifact(feature, artifact, stage)` |
-| Agent 状态变更 | `runtime/cli/update-agent.js` | `updateAgent(feature, stage, agent, status, options)` |
-| 门禁评估 | `runtime/cli/evaluate-gates.js` | `evaluateGates(feature, gate, options)` |
-| 插件注册 | `runtime/cli/register-plugins.js` | `registerPlugins(feature, options)` |
-| 插件 Hook 执行 | `runtime/cli/run-plugin-hook.js` | `runHook(hook, feature, options)` |
-| 阶段状态检查 | `runtime/cli/check-stage.js` | `checkStage(feature, stage, options)` |
-| 事件回放 | `runtime/cli/replay-events.js` | `replayEvents(feature, options)`, `replaySnapshot(feature, at, options)` |
-| Progress 诊断 | `runtime/cli/inspect-progress.js` | `inspectProgress(feature, options)` |
-| 生成流水线报告 | `runtime/cli/generate-summary.js` | `buildSummaryModel(feature)`, `renderMarkdown(model)`, `renderJson(model)` |
-| 生成诊断页 | `runtime/cli/render-diagnostics.js` | `renderHtml(model)` |
+| 初始化流水线 | `boss runtime init-pipeline` | `initPipeline(feature)` |
+| 查询 ready artifacts | `boss runtime get-ready-artifacts` | `getReadyArtifacts(feature, options)` |
+| 阶段状态变更 | `boss runtime update-stage` | `updateStage(feature, stage, status, options)` |
+| 记录产物 | `boss runtime record-artifact` | `recordArtifact(feature, artifact, stage)` |
+| Agent 状态变更 | `boss runtime update-agent` | `updateAgent(feature, stage, agent, status, options)` |
+| 门禁评估 | `boss runtime evaluate-gates` | `evaluateGates(feature, gate, options)` |
+| 插件注册 | `boss runtime register-plugins` | `registerPlugins(feature, options)` |
+| 插件 Hook 执行 | `boss runtime run-plugin-hook` | `runHook(hook, feature, options)` |
+| 阶段状态检查 | `boss runtime check-stage` | `checkStage(feature, stage, options)` |
+| 事件回放 | `boss runtime replay-events` | `replayEvents(feature, options)`, `replaySnapshot(feature, at, options)` |
+| Progress 诊断 | `boss runtime inspect-progress` | `inspectProgress(feature, options)` |
+| 生成流水线报告 | `boss runtime generate-summary` | `buildSummaryModel(feature)`, `renderMarkdown(model)`, `renderJson(model)` |
+| 生成诊断页 | `boss runtime render-diagnostics` | `renderHtml(model)` |
 
 ### Internal Shell Helpers
 
@@ -210,7 +210,7 @@ Copy this checklist and check off items as you complete them:
 |------|------|
 | `scripts/harness/retry-stage.sh` | 阶段重试（检查上限 → retrying → running） |
 | `scripts/harness/retry-agent.sh` | 单个 Agent 重试（不重跑整个阶段） |
-| `scripts/harness/detect-pack.sh` | Pipeline Pack 自动检测（匹配项目文件） |
+| `boss packs detect` | Pipeline Pack 自动检测（匹配项目文件） |
 | `scripts/harness/watch-progress.sh` | 实时进度监控（tail -f progress.jsonl） |
 | `scripts/harness/record-feedback.sh` | Agent 间反馈循环记录（REVISION_NEEDED） |
 | `scripts/gates/gate0-code-quality.sh` | Gate 0：代码质量（编译 + Lint） |
@@ -219,7 +219,7 @@ Copy this checklist and check off items as you complete them:
 
 ### Runtime/CLI 编排对照
 
-运行时编排以 `runtime/cli/*.js` + `runtime/cli/lib/pipeline-runtime.js` 为准；shell helper 不是 public contract。
+运行时编排以 `boss runtime <command>` 为准；shell helper 只作为 CLI 内部实现，不是 skill 的 public contract。
 
 Pack 选择与插件生命周期都应进入事件流，而不是停留在 shell 日志里：
 - pack 应通过 `PackApplied` 进入 `execution.json` read model。
@@ -227,15 +227,15 @@ Pack 选择与插件生命周期都应进入事件流，而不是停留在 shell
 - 插件 hook 执行应通过 `PluginHookExecuted` / `PluginHookFailed` 进入 `pluginLifecycle`。
 
 报告生成也应走 runtime，而不是在 shell 中直接拼接状态：
-- `runtime/report/summary-model.js` 从 `execution.json` 构建统一 summary model。
-- `runtime/report/render-markdown.js` / `runtime/report/render-json.js` 负责不同输出格式。
-- `runtime/report/render-html.js` 负责最小 HTML 诊断页。
+- `packages/boss-cli/src/runtime/report/summary-model.ts` 从 `execution.json` 构建统一 summary model。
+- `packages/boss-cli/src/runtime/report/render-markdown.ts` / `packages/boss-cli/src/runtime/report/render-json.ts` 负责不同输出格式。
+- `packages/boss-cli/src/runtime/report/render-html.ts` 负责最小 HTML 诊断页。
 
 ## Claude Code Hooks（Agent 生命周期集成）
 
 Boss Skill 通过 Claude Code 的 hooks 机制，在 Agent 生命周期的关键节点自动介入流水线管控。
 
-所有 hooks 脚本使用 **Node.js** 实现（跨平台），通过 `run-with-flags.js` 中间件统一调度。
+所有 hooks 脚本使用 **Node.js** 实现（跨平台），通过 `boss hooks run` 中间件统一调度。
 
 ### Hook Profile 分级
 
@@ -315,7 +315,7 @@ hooks 定义在两处：
 ## 模板上下文
 
 - 当前产物：`.boss/<feature>/<artifact>.md`
-- 产物骨架：已通过 `scripts/prepare-artifact.sh <feature-name> <artifact>.md` 按模板优先级准备完成
+- 产物骨架：已通过 `boss artifact prepare <feature-name> <artifact>.md` 按模板优先级准备完成
 - 执行要求：先读取当前产物文件，再在该骨架基础上填充真实内容
 - 冲突处理：若骨架结构与 Agent Prompt 中的默认输出格式冲突，以骨架/模板为准
 ```
@@ -326,7 +326,7 @@ hooks 定义在两处：
 
 **摘要优先**：读取上游产物时，优先读取文档开头的 `## 摘要` section；仅在需要细节时读取完整内容，以节省 Token。
 
-**模板落文**：正常执行 `/boss` 时，先用 `scripts/init-project.sh <feature-name>` 创建轻量占位文件；真正写某个文档前，再单独调用 `scripts/prepare-artifact.sh <feature-name> <artifact-name>` 准备当前文档骨架。不要在初始化阶段一次性把全部模板正文落入 `.boss/<feature>/`。
+**模板落文**：正常执行 `/boss` 时，先用 `boss project init <feature-name>` 创建轻量占位文件；真正写某个文档前，再单独调用 `boss artifact prepare <feature-name> <artifact-name>` 准备当前文档骨架。不要在初始化阶段一次性把全部模板正文落入 `.boss/<feature>/`。
 
 ## 产物目录结构
 

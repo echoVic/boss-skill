@@ -7,7 +7,7 @@ import {
   initPipeline,
   evaluateGates,
   resolveGateConfig
-} from '../../src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');

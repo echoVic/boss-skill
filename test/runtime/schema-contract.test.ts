@@ -6,13 +6,13 @@ import { fileURLToPath } from 'node:url';
 import {
   EVENT_TYPES,
   EVENT_TYPE_VALUES
-} from '../../src/runtime/domain/event-types.js';
+} from '../../packages/boss-cli/src/runtime/domain/event-types.js';
 import {
   AGENT_STATUS,
   DEFAULT_SCHEMA_VERSION,
   PIPELINE_STATUS,
   STAGE_STATUS
-} from '../../src/runtime/domain/state-constants.js';
+} from '../../packages/boss-cli/src/runtime/domain/state-constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +24,7 @@ function loadJson(relativePath: string) {
 
 describe('runtime schema contract', () => {
   it('exports the runtime event catalog and status constants used by the schemas', () => {
-    const schema = loadJson('runtime/schema/event-schema.json');
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
 
     expect(EVENT_TYPES.ARTIFACT_RECORDED).toBe('ArtifactRecorded');
     expect(EVENT_TYPES.PLUGIN_HOOK_FAILED).toBe('PluginHookFailed');
@@ -43,7 +43,7 @@ describe('runtime schema contract', () => {
   });
 
   it('event schema documents ArtifactRecorded and GateEvaluated payload requirements', () => {
-    const schema = loadJson('runtime/schema/event-schema.json');
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
     const clauses = Array.isArray(schema.allOf) ? schema.allOf : [];
 
     const artifactClause = clauses.find(
@@ -65,7 +65,7 @@ describe('runtime schema contract', () => {
   });
 
   it('execution schema requires plugin lifecycle and expanded metrics fields', () => {
-    const schema = loadJson('runtime/schema/execution-schema.json');
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/execution-schema.json');
 
     expect(Array.isArray(schema.required) && schema.required.includes('pluginLifecycle')).toBe(true);
     expect(schema.properties.pluginLifecycle.required.slice().sort()).toEqual([
@@ -88,14 +88,14 @@ describe('runtime schema contract', () => {
   });
 
   it('progress schema requires feature on emitted progress events', () => {
-    const schema = loadJson('runtime/schema/progress-schema.json');
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/progress-schema.json');
 
     expect(Array.isArray(schema.required)).toBe(true);
     expect(schema.required.includes('feature')).toBe(true);
   });
 
   it('event schema documents plugin hook lifecycle payload requirements', () => {
-    const schema = loadJson('runtime/schema/event-schema.json');
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
     const clauses = Array.isArray(schema.allOf) ? schema.allOf : [];
 
     const executedClause = clauses.find(
@@ -121,8 +121,8 @@ describe('runtime schema contract', () => {
   });
 
   it('memory schemas require traceable records and injected summary views', () => {
-    const recordSchema = loadJson('runtime/schema/memory-record-schema.json');
-    const summarySchema = loadJson('runtime/schema/memory-summary-schema.json');
+    const recordSchema = loadJson('packages/boss-cli/src/runtime/schema/memory-record-schema.json');
+    const summarySchema = loadJson('packages/boss-cli/src/runtime/schema/memory-summary-schema.json');
 
     expect(recordSchema.required.slice().sort()).toEqual([
       'category',

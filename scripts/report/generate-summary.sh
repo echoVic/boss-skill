@@ -2,4 +2,4 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-node "$SCRIPT_DIR/../../runtime/cli/generate-summary.js" "$@"
+node "$SCRIPT_DIR/../../packages/boss-cli/dist/bin/boss.js" runtime generate-summary "$@"

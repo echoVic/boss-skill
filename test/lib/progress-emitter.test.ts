@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { emitProgress } from '../../src/scripts/lib/progress-emitter.js';
+import { emitProgress } from '../../packages/boss-cli/src/scripts/lib/progress-emitter.js';
 
 describe('progress emitter runtime', () => {
   let tmpDir: string;

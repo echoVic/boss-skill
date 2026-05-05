@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { initPipeline } from '../../src/runtime/cli/lib/pipeline-runtime.js';
-import { materializeState } from '../../src/runtime/projectors/materialize-state.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
 
 describe('initPipeline pack application', () => {
   let tmpDir: string;

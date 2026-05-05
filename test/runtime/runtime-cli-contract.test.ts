@@ -7,11 +7,11 @@ import path from 'node:path';
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../src/runtime/cli/lib/memory-runtime.js';
-import { initPipeline } from '../../src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/memory-runtime.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const DIST_ROOT = path.join(REPO_ROOT, 'dist', 'runtime', 'cli');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 const RUN_WITH_FLAGS = path.join(REPO_ROOT, 'scripts', 'lib', 'run-with-flags.js');
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
@@ -39,11 +39,11 @@ describe('runtime CLI contract', () => {
   });
 
   function distCli(name: string) {
-    return path.join(DIST_ROOT, `${name}.js`);
+    return path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'runtime', 'cli', `${name}.js`);
   }
 
   function runCli(name: string, args: string[]) {
-    return spawnSync(process.execPath, [distCli(name), ...args], {
+    return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], {
       cwd: tmpDir,
       encoding: 'utf8'
     });
@@ -51,7 +51,7 @@ describe('runtime CLI contract', () => {
 
   it('get-ready-artifacts CLI does not depend on runtime internal exports', () => {
     const source = fs.readFileSync(
-      path.join(REPO_ROOT, 'src', 'runtime', 'cli', 'get-ready-artifacts.ts'),
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'get-ready-artifacts.ts'),
       'utf8'
     );
 
@@ -59,7 +59,7 @@ describe('runtime CLI contract', () => {
   });
 
   it('dist init-pipeline artifact is rebuilt from the current source under review', () => {
-    const sourcePath = path.join(REPO_ROOT, 'src', 'runtime', 'cli', 'init-pipeline.ts');
+    const sourcePath = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'init-pipeline.ts');
     const distPath = distCli('init-pipeline');
 
     const sourceMtime = fs.statSync(sourcePath).mtimeMs;

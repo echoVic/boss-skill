@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
-import { inspectPipeline } from '../../runtime/cli/lib/inspection-runtime.js';
+import { inspectPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/inspection-runtime.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 function read(relativePath: string) {
   return fs.readFileSync(path.join(REPO_ROOT, relativePath), 'utf8');
@@ -14,9 +15,9 @@ describe('phase-1 direct-write guard', () => {
     const criticalFiles = [
       'scripts/hooks/post-tool-write.js',
       'scripts/gates/gate-runner.sh',
-      'runtime/cli/evaluate-gates.js',
-      'runtime/cli/lib/pipeline-runtime.js',
-      'runtime/cli/register-plugins.js',
+      'packages/boss-cli/src/runtime/cli/evaluate-gates.ts',
+      'packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.ts',
+      'packages/boss-cli/src/runtime/cli/register-plugins.ts',
       'scripts/harness/load-plugins.sh'
     ];
 
@@ -39,7 +40,7 @@ describe('phase-1 direct-write guard', () => {
   it('keeps runtime-first writer paths free of shell wrapper orchestration', () => {
     const runtimeFirstFiles = [
       'scripts/hooks/post-tool-write.js',
-      'runtime/cli/lib/pipeline-runtime.js',
+      'packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.ts',
       'scripts/hooks/subagent-start.js',
       'scripts/hooks/subagent-stop.js'
     ];
@@ -63,8 +64,7 @@ describe('phase-1 direct-write guard', () => {
   });
 
   it('plugin registration help describes event-sourced read-model semantics', () => {
-    const registerPluginsCli = path.join(REPO_ROOT, 'runtime', 'cli', 'register-plugins.js');
-    const registerResult = spawnSync(process.execPath, [registerPluginsCli, '--help'], {
+    const registerResult = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'register-plugins', '--help'], {
       cwd: REPO_ROOT,
       encoding: 'utf8'
     });

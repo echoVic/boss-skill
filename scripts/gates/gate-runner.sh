@@ -44,4 +44,4 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
-node "$SCRIPT_DIR/../../runtime/cli/evaluate-gates.js" "$@"
+node "$SCRIPT_DIR/../../packages/boss-cli/dist/bin/boss.js" runtime evaluate-gates "$@"

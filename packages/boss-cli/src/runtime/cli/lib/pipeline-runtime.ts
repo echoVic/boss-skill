@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../../domain/event-types.js';
 import {
@@ -13,23 +13,13 @@ import {
 } from '../../projectors/materialize-state.js';
 import { getPackStateParameters, resolvePipelinePack, type PipelinePackConfig, type PipelinePackStateParameters } from './pack-runtime.js';
 import { registerPlugins as registerPluginsRuntime } from './plugin-runtime.js';
+import { buildFeatureSummary, rebuildFeatureMemory, rebuildGlobalMemory } from './memory-runtime.js';
 import { emitProgress } from '../../../scripts/lib/progress-emitter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
 const DEFAULT_DAG_PATH = path.join(REPO_ROOT, 'harness', 'artifact-dag.json');
-const MEMORY_RUNTIME_MODULE_URL = pathToFileURL(path.join(__dirname, 'memory-runtime.js')).href;
-const SOURCE_MEMORY_RUNTIME_MODULE_URL = pathToFileURL(
-  path.join(REPO_ROOT, 'src', 'runtime', 'cli', 'lib', 'memory-runtime.js')
-).href;
-const MEMORY_REFRESH_RUNNER = [
-  'const [, feature, cwd, moduleUrl] = process.argv;',
-  'const memoryRuntime = await import(moduleUrl);',
-  'memoryRuntime.rebuildFeatureMemory(feature, { cwd });',
-  'memoryRuntime.rebuildGlobalMemory({ cwd });',
-  'memoryRuntime.buildFeatureSummary(feature, { cwd });'
-].join(' ');
 
 export interface PipelineParameters extends Record<string, unknown>, PipelinePackStateParameters {
   skipUI: boolean;
@@ -463,29 +453,11 @@ function appendRuntimeEvent(
 
 function refreshMemory(feature: string, cwd: string): void {
   try {
-    const child = spawnSync(
-      process.execPath,
-      ['--input-type=module', '-e', MEMORY_REFRESH_RUNNER, feature, cwd, MEMORY_RUNTIME_MODULE_URL],
-      {
-        cwd,
-        encoding: 'utf8',
-        timeout: 30000,
-        maxBuffer: 1024 * 1024
-      }
-    );
-
-    if (child.error) {
-      throw child.error;
-    }
-
-    if (child.status !== 0) {
-      throw new Error((child.stderr || child.stdout || `exit ${child.status}`).trim());
-    }
+    rebuildFeatureMemory(feature, { cwd });
+    rebuildGlobalMemory({ cwd });
+    buildFeatureSummary(feature, { cwd });
   } catch (err) {
     const message = (err as Error).message;
-    if (MEMORY_RUNTIME_MODULE_URL === SOURCE_MEMORY_RUNTIME_MODULE_URL) {
-      return;
-    }
     process.stderr.write(`[boss-skill] memory refresh skipped: ${message}\n`);
   }
 }

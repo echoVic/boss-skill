@@ -6,7 +6,7 @@ import {
   initPipeline,
   skipUpTo,
   getReadyArtifacts
-} from '../../src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 describe('skipUpTo (continue-from artifact)', () => {
   let tmpDir: string;

@@ -122,30 +122,30 @@ Boss 支持自然语言需求：执行前会先推导一个英文 kebab-case 的
 
 每个阶段遵循状态转换：`pending → running → completed/failed → retrying → running`
 
-状态变更通过 runtime 直接追加到 `.meta/events.jsonl`，再由 `runtime/projectors/materialize-state.js` 物化为只读的 `.meta/execution.json`。
+状态变更通过 `boss runtime ...` 直接追加到 `.meta/events.jsonl`，再由 CLI runtime 的 projector 物化为只读的 `.meta/execution.json`。
 
 ### Runtime / CLI 编排面
 
-`runtime/cli/*.js` 与 `runtime/cli/lib/pipeline-runtime.js` 是唯一的 runtime-first surface。对外能力以 runtime CLI 为准，不再把 shell wrapper 视为兼容契约。
+`boss runtime <command>` 是唯一的 runtime-first surface。对外能力以 Boss CLI 为准，不再把 shell wrapper 视为兼容契约。
 
 | 编排动作 | Runtime CLI |
 |------|------|
-| 初始化流水线 | `runtime/cli/init-pipeline.js` |
-| 查询 ready artifacts | `runtime/cli/get-ready-artifacts.js` |
-| 记录产物完成 | `runtime/cli/record-artifact.js` |
-| 更新阶段状态 | `runtime/cli/update-stage.js` |
-| 更新 Agent 状态 | `runtime/cli/update-agent.js` |
-| 执行门禁 | `runtime/cli/evaluate-gates.js` |
-| 注册插件 | `runtime/cli/register-plugins.js` |
-| 执行插件 Hook | `runtime/cli/run-plugin-hook.js` |
-| 检查阶段状态 | `runtime/cli/check-stage.js` |
-| 回放事件/快照 | `runtime/cli/replay-events.js` |
-| 诊断流水线状态 | `runtime/cli/inspect-pipeline.js` |
-| 查看最近事件 | `runtime/cli/inspect-events.js` |
-| 查看 progress 流 | `runtime/cli/inspect-progress.js` |
-| 查看插件生命周期 | `runtime/cli/inspect-plugins.js` |
-| 生成流水线报告 | `runtime/cli/generate-summary.js` |
-| 生成诊断页 | `runtime/cli/render-diagnostics.js` |
+| 初始化流水线 | `boss runtime init-pipeline` |
+| 查询 ready artifacts | `boss runtime get-ready-artifacts` |
+| 记录产物完成 | `boss runtime record-artifact` |
+| 更新阶段状态 | `boss runtime update-stage` |
+| 更新 Agent 状态 | `boss runtime update-agent` |
+| 执行门禁 | `boss runtime evaluate-gates` |
+| 注册插件 | `boss runtime register-plugins` |
+| 执行插件 Hook | `boss runtime run-plugin-hook` |
+| 检查阶段状态 | `boss runtime check-stage` |
+| 回放事件/快照 | `boss runtime replay-events` |
+| 诊断流水线状态 | `boss runtime inspect-pipeline` |
+| 查看最近事件 | `boss runtime inspect-events` |
+| 查看 progress 流 | `boss runtime inspect-progress` |
+| 查看插件生命周期 | `boss runtime inspect-plugins` |
+| 生成流水线报告 | `boss runtime generate-summary` |
+| 生成诊断页 | `boss runtime render-diagnostics` |
 
 Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell 侧副作用：
 - pack 选择通过 `PackApplied` 进入状态真相。
@@ -153,18 +153,18 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 - 插件 hook 执行通过 `PluginHookExecuted` / `PluginHookFailed` 进入事件流。
 
 四期排障 CLI 已开始补齐：
-- `runtime/cli/inspect-pipeline.js` 查看当前阶段、ready artifacts、active agents、pack、plugins、metrics。
-- `runtime/cli/inspect-events.js` 查看最近事件并支持按类型过滤。
-- `runtime/cli/inspect-progress.js` 查看 progress flow。
-- `runtime/cli/inspect-plugins.js` 查看 active/discovered/activated/executed/failed 插件状态。
-- `runtime/cli/check-stage.js` / `runtime/cli/replay-events.js` 直接承担状态排障和事件回放。
+- `boss runtime inspect-pipeline` 查看当前阶段、ready artifacts、active agents、pack、plugins、metrics。
+- `boss runtime inspect-events` 查看最近事件并支持按类型过滤。
+- `boss runtime inspect-progress` 查看 progress flow。
+- `boss runtime inspect-plugins` 查看 active/discovered/activated/executed/failed 插件状态。
+- `boss runtime check-stage` / `boss runtime replay-events` 直接承担状态排障和事件回放。
 
 四期报告 runtime 已抽离为独立的 summary model + renderer：
-- `runtime/cli/generate-summary.js` 是 canonical summary surface，默认输出 Markdown，也支持 `--json` 和 `--stdout`。
-- `runtime/report/summary-model.js` 负责从 `execution.json` 构建统一 summary model。
-- `runtime/report/render-markdown.js` 负责渲染 `summary-report.md`。
-- `runtime/report/render-json.js` 负责渲染机器可读的 JSON 报告。
-- `runtime/report/render-html.js` + `runtime/cli/render-diagnostics.js` 负责生成最小 HTML 诊断页。
+- `boss runtime generate-summary` 是 canonical summary surface，默认输出 Markdown，也支持 `--json` 和 `--stdout`。
+- `packages/boss-cli/src/runtime/report/summary-model.ts` 负责从 `execution.json` 构建统一 summary model。
+- `packages/boss-cli/src/runtime/report/render-markdown.ts` 负责渲染 `summary-report.md`。
+- `packages/boss-cli/src/runtime/report/render-json.ts` 负责渲染机器可读的 JSON 报告。
+- `packages/boss-cli/src/runtime/report/render-html.ts` + `boss runtime render-diagnostics` 负责生成最小 HTML 诊断页。
 
 ### 质量门禁
 
@@ -256,9 +256,9 @@ npm test
 
 ### 源码与产物布局
 
-- `src/` 是 CLI 和 runtime 的 TypeScript/ESM 源码入口。
-- `dist/` 是 `npm publish` 和包内 `bin` 指向的构建产物，不要手改。
-- `runtime/cli/*.js` 与 `runtime/cli/lib/*.js` 保留为稳定的 ESM wrapper，供 shell/hook 入口继续调用。
+- `packages/boss-cli/src/` 是 CLI 和 runtime 的 TypeScript/ESM 源码入口。
+- `packages/boss-cli/dist/` 是 `npm publish` 和包内 `bin` 指向的构建产物，不要手改。
+- `boss runtime <command>` 是稳定入口，skill 和 hooks 不直接调用内部 runtime 文件。
 - `npm test` 运行 Vitest；测试文件统一放在 `test/**/*.test.ts`。
 
 ### 发布
@@ -289,12 +289,10 @@ npm run release -- 3.5.0 --no-publish
 
 ```
 boss-skill/
-├── src/
-│   └── bin/
-│       └── boss-skill.ts                # CLI TypeScript 源码
-├── dist/
-│   └── bin/
-│       └── boss-skill.js                # CLI 编译产物（npm bin）
+├── packages/
+│   └── boss-cli/
+│       ├── src/                         # Boss CLI + runtime TypeScript 源码
+│       └── dist/                        # CLI 编译产物（npm bin）
 ├── SKILL.md                          # 核心编排流程（通用 frontmatter，无平台 metadata）
 ├── skills/
 │   └── brainstorming/
@@ -320,9 +318,6 @@ boss-skill/
 │   ├── plugins/
 │   │   └── security-audit/
 │   └── pipeline-packs/               # 4 套流水线预设
-├── runtime/                          # Canonical runtime surface
-│   ├── cli/                          # Runtime CLI 编排命令
-│   └── report/                       # 报告生成器
 ├── references/                       # 按需加载的规范文档
 ├── templates/                        # 7 个产物模板
 ├── scripts/

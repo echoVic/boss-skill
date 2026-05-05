@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import * as runtime from '../../runtime/cli/lib/pipeline-runtime.js';
+import * as runtime from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+
+const BOSS_BIN = path.resolve(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 type RuntimeEvent = {
   type: string;
@@ -31,8 +33,8 @@ describe('stage/agent runtime updates', () => {
     return fs.readFileSync(eventsPath, 'utf8').trim().split('\n').map((line) => JSON.parse(line) as RuntimeEvent);
   }
 
-  function runCli(script: string, args: string[]) {
-    return spawnSync(process.execPath, [script, ...args], { cwd: tmpDir, encoding: 'utf8' });
+  function runRuntimeCommand(name: string, args: string[]) {
+    return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], { cwd: tmpDir, encoding: 'utf8' });
   }
 
   it('updates stage then agent status', () => {
@@ -77,23 +79,17 @@ describe('stage/agent runtime updates', () => {
   });
 
   it('fails CLI when option value is missing', () => {
-    const updateStageCli = path.resolve(import.meta.dirname, '..', '..', 'runtime', 'cli', 'update-stage.js');
-    const updateAgentCli = path.resolve(import.meta.dirname, '..', '..', 'runtime', 'cli', 'update-agent.js');
-
-    const stageResult = runCli(updateStageCli, ['test-feat', '1', 'running', '--reason']);
+    const stageResult = runRuntimeCommand('update-stage', ['test-feat', '1', 'running', '--reason']);
     expect(stageResult.status).not.toBe(0);
     expect(stageResult.stderr).toMatch(/--reason/);
 
-    const agentResult = runCli(updateAgentCli, ['test-feat', '1', 'boss-pm', 'running', '--reason', '--artifact']);
+    const agentResult = runRuntimeCommand('update-agent', ['test-feat', '1', 'boss-pm', 'running', '--reason', '--artifact']);
     expect(agentResult.status).not.toBe(0);
     expect(agentResult.stderr).toMatch(/--reason/);
   });
 
   it('supports machine-readable JSON output for stage and agent updates', () => {
-    const updateStageCli = path.resolve(import.meta.dirname, '..', '..', 'runtime', 'cli', 'update-stage.js');
-    const updateAgentCli = path.resolve(import.meta.dirname, '..', '..', 'runtime', 'cli', 'update-agent.js');
-
-    const stageResult = runCli(updateStageCli, ['test-feat', '1', 'running', '--json']);
+    const stageResult = runRuntimeCommand('update-stage', ['test-feat', '1', 'running', '--json']);
     expect(stageResult.status, stageResult.stderr).toBe(0);
     const stagePayload = JSON.parse(stageResult.stdout) as {
       feature: string;
@@ -106,7 +102,7 @@ describe('stage/agent runtime updates', () => {
     expect(stagePayload.previousStatus).toBe('pending');
     expect(stagePayload.status).toBe('running');
 
-    const agentResult = runCli(updateAgentCli, ['test-feat', '1', 'boss-pm', 'running', '--json']);
+    const agentResult = runRuntimeCommand('update-agent', ['test-feat', '1', 'boss-pm', 'running', '--json']);
     expect(agentResult.status, agentResult.stderr).toBe(0);
     const agentPayload = JSON.parse(agentResult.stdout) as {
       feature: string;

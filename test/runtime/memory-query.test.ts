@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { queryAgentMemories } from '../../src/runtime/memory/query.js';
-import { buildAgentSections, buildStartupSummary } from '../../src/runtime/memory/summarizer.js';
+import { queryAgentMemories } from '../../packages/boss-cli/src/runtime/memory/query.js';
+import { buildAgentSections, buildStartupSummary } from '../../packages/boss-cli/src/runtime/memory/summarizer.js';
 
 describe('memory query runtime', () => {
   it('returns startup summary ordered by decayScore and confidence', () => {

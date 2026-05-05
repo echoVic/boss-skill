@@ -1,0 +1,13 @@
+{
+  "name": "@blade-ai/boss-cli",
+  "version": "3.7.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "boss": "dist/bin/boss.js",
+    "boss-skill": "dist/bin/boss.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

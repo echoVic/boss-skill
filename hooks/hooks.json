@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"session:start\" \"scripts/hooks/session-start.js\"",
+            "command": "boss hooks run \"session:start\" \"scripts/hooks/session-start.js\"",
             "timeout": 10
           }
         ],
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"session:resume\" \"scripts/hooks/session-resume.js\"",
+            "command": "boss hooks run \"session:resume\" \"scripts/hooks/session-resume.js\"",
             "timeout": 10
           }
         ],
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"",
+            "command": "boss hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"",
             "timeout": 5
           }
         ],
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"pre:bash:dangerous-cmd-guard\" \"scripts/hooks/pre-tool-bash.js\" \"standard,strict\"",
+            "command": "boss hooks run \"pre:bash:dangerous-cmd-guard\" \"scripts/hooks/pre-tool-bash.js\" \"standard,strict\"",
             "timeout": 5
           }
         ],
@@ -58,7 +58,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\" \"standard,strict\"",
+            "command": "boss hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\" \"standard,strict\"",
             "timeout": 10
           }
         ],
@@ -70,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\" \"standard,strict\"",
+            "command": "boss hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\" \"standard,strict\"",
             "timeout": 10
           }
         ],
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"subagent:start\" \"scripts/hooks/subagent-start.js\"",
+            "command": "boss hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"",
             "timeout": 5
           }
         ],
@@ -96,7 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"",
+            "command": "boss hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"",
             "timeout": 10
           }
         ],
@@ -109,7 +109,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"",
+            "command": "boss hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"",
             "timeout": 30
           }
         ],
@@ -122,7 +122,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"notification:log\" \"scripts/hooks/on-notification.js\"",
+            "command": "boss hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"",
             "async": true,
             "timeout": 5
           }
@@ -136,7 +136,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/lib/run-with-flags.js\" \"session:end\" \"scripts/hooks/session-end.js\"",
+            "command": "boss hooks run \"session:end\" \"scripts/hooks/session-end.js\"",
             "timeout": 10
           }
         ],

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { replayEvents } from '../../src/runtime/cli/lib/inspection-runtime.js';
+import { replayEvents } from '../../packages/boss-cli/src/runtime/cli/lib/inspection-runtime.js';
 
 const APPEND_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'append-event.sh');
 const MATERIALIZE_SCRIPT = path.join(import.meta.dirname, '..', '..', 'scripts', 'harness', 'materialize-state.sh');

@@ -2,11 +2,11 @@ import { findActiveFeature } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
 
 function isGateCommand(command) {
-  return /runtime\/cli\/evaluate-gates\.js|gate-runner\.sh|gate0-|gate1-|gate2-/.test(command);
+  return /boss\s+runtime\s+evaluate-gates|runtime\/cli\/evaluate-gates\.js|gate-runner\.sh|gate0-|gate1-|gate2-/.test(command);
 }
 
 function isHarnessCommand(command) {
-  return /runtime\/cli\/(update-stage|check-stage|replay-events|generate-summary|register-plugins|inspect-|run-plugin-hook)\.js|update-stage\.sh|check-stage\.sh|retry-stage\.sh|generate-summary\.sh|load-plugins\.sh/.test(command);
+  return /boss\s+runtime\s+(update-stage|check-stage|replay-events|generate-summary|register-plugins|inspect-[^\s]+|run-plugin-hook)|runtime\/cli\/(update-stage|check-stage|replay-events|generate-summary|register-plugins|inspect-|run-plugin-hook)\.js|update-stage\.sh|check-stage\.sh|retry-stage\.sh|generate-summary\.sh|load-plugins\.sh/.test(command);
 }
 
 function isTestCommand(command) {

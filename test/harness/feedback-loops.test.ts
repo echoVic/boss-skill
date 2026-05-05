@@ -6,8 +6,8 @@ import {
   initPipeline,
   updateStage,
   recordFeedback
-} from '../../src/runtime/cli/lib/pipeline-runtime.js';
-import { materializeState } from '../../src/runtime/projectors/materialize-state.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
 
 describe('feedback-loops', () => {
   let tmpDir: string;

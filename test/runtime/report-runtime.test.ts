@@ -5,15 +5,16 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { materializeState } from '../../src/runtime/projectors/materialize-state.js';
-import { buildSummaryModel } from '../../src/runtime/report/summary-model.js';
-import { renderHtml } from '../../src/runtime/report/render-html.js';
-import { renderJson } from '../../src/runtime/report/render-json.js';
-import { renderMarkdown } from '../../src/runtime/report/render-markdown.js';
+import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { buildSummaryModel } from '../../packages/boss-cli/src/runtime/report/summary-model.js';
+import { renderHtml } from '../../packages/boss-cli/src/runtime/report/render-html.js';
+import { renderJson } from '../../packages/boss-cli/src/runtime/report/render-json.js';
+import { renderMarkdown } from '../../packages/boss-cli/src/runtime/report/render-markdown.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('runtime report generation', () => {
   let tmpDir: string;
@@ -145,16 +146,15 @@ describe('runtime report generation', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function runNode(script: string, args: string[]) {
-    return spawnSync('node', [script, ...args], {
+  function runRuntimeCommand(name: string, args: string[]) {
+    return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], {
       cwd: tmpDir,
       encoding: 'utf8'
     });
   }
 
   it('generate-summary runtime CLI emits machine-readable JSON via stdout', () => {
-    const cliPath = path.join(REPO_ROOT, 'runtime', 'cli', 'generate-summary.js');
-    const result = runNode(cliPath, ['test-feat', '--json', '--stdout']);
+    const result = runRuntimeCommand('generate-summary', ['test-feat', '--json', '--stdout']);
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
@@ -177,8 +177,7 @@ describe('runtime report generation', () => {
   });
 
   it('generate-summary runtime CLI emits markdown via stdout', () => {
-    const cliPath = path.join(REPO_ROOT, 'runtime', 'cli', 'generate-summary.js');
-    const result = runNode(cliPath, ['test-feat', '--stdout']);
+    const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
@@ -190,8 +189,7 @@ describe('runtime report generation', () => {
   });
 
   it('render-diagnostics runtime CLI emits an html diagnostics page', () => {
-    const cliPath = path.join(REPO_ROOT, 'runtime', 'cli', 'render-diagnostics.js');
-    const result = runNode(cliPath, ['test-feat', '--stdout']);
+    const result = runRuntimeCommand('render-diagnostics', ['test-feat', '--stdout']);
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
@@ -202,16 +200,14 @@ describe('runtime report generation', () => {
   });
 
   it('generate-summary runtime CLI writes markdown/json report files', () => {
-    const cliPath = path.join(REPO_ROOT, 'runtime', 'cli', 'generate-summary.js');
-
-    const mdResult = runNode(cliPath, ['test-feat']);
+    const mdResult = runRuntimeCommand('generate-summary', ['test-feat']);
     expect(mdResult.status).toBe(0);
     expect(mdResult.stderr).toBe('');
     const markdownPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md');
     expect(fs.existsSync(markdownPath)).toBe(true);
     expect(fs.readFileSync(markdownPath, 'utf8')).toMatch(/# 流水线执行报告/);
 
-    const jsonResult = runNode(cliPath, ['test-feat', '--json']);
+    const jsonResult = runRuntimeCommand('generate-summary', ['test-feat', '--json']);
     expect(jsonResult.status).toBe(0);
     expect(jsonResult.stderr).toBe('');
     const jsonPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.json');

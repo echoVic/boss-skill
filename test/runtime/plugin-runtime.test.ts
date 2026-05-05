@@ -7,9 +7,10 @@ import path from 'node:path';
 import {
   discoverPlugins,
   registerPlugins
-} from '../../src/runtime/cli/lib/plugin-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/plugin-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('plugin runtime registration', () => {
   let tmpDir: string;
@@ -333,8 +334,7 @@ describe('plugin runtime registration', () => {
       'utf8'
     );
 
-    const cliPath = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'register-plugins.js');
-    const result = spawnSync(process.execPath, [cliPath, '--register', 'test-feat'], {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'register-plugins', '--register', 'test-feat'], {
       cwd: tmpDir,
       encoding: 'utf8'
     });

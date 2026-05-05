@@ -30,7 +30,7 @@ npm test
 | 目录 | 职责 |
 |------|------|
 | `agents/` | 9 个 Agent 的 Prompt 定义（Markdown） |
-| `runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
+| `packages/boss-cli/src/runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
 | `scripts/lib/` | 共享库（`common.sh` Shell 工具、`boss-utils.js` Node.js 工具） |
 | `scripts/hooks/` | 10 个 Claude Code Hook 脚本 |
 | `scripts/harness/` | 内部 Shell 辅助脚本（非 public runtime surface） |
@@ -39,9 +39,8 @@ npm test
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
 | `templates/` | 产物模板 |
 | `test/` | 自动化测试 |
-| `src/` | CLI/runtime 的 TypeScript/ESM 源码 |
-| `dist/` | 构建后的发布产物 |
-| `runtime/` | 指向 `dist/` 的兼容 wrapper 与稳定入口 |
+| `packages/boss-cli/src/` | Boss CLI/runtime 的 TypeScript/ESM 源码 |
+| `packages/boss-cli/dist/` | 构建后的发布产物 |
 
 ## 开发规范
 
@@ -89,8 +88,8 @@ try {
 
 ### Runtime 优先原则
 
-- 需要新增或修改编排行为时，优先改 `runtime/cli/*`、`runtime/cli/lib/*`、`runtime/projectors/*`、`runtime/report/*`。
-- `scripts/harness/*.sh`、`scripts/gates/*.sh`、`scripts/report/*.sh` 只应作为内部辅助层；新的编排语义必须落在 `runtime/cli/*`、`runtime/cli/lib/*`、`runtime/projectors/*`、`runtime/report/*`。
+- 需要新增或修改编排行为时，优先改 `packages/boss-cli/src/runtime/cli/*`、`packages/boss-cli/src/runtime/cli/lib/*`、`packages/boss-cli/src/runtime/projectors/*`、`packages/boss-cli/src/runtime/report/*`。
+- `scripts/harness/*.sh`、`scripts/gates/*.sh`、`scripts/report/*.sh` 只应作为内部辅助层；新的编排语义必须落在 `packages/boss-cli/src/runtime/*` 并通过 `boss runtime <command>` 暴露。
 - 不要直接写 `execution.json`；状态变更必须先进入事件流，再由 projector 物化。
 
 ## 测试
@@ -210,7 +209,7 @@ docs: 更新 README 安装说明
 
 - 插件 Schema：`harness/plugin-schema.json`
 - 内置插件示例：`harness/plugins/security-audit/`
-- 插件注册入口：`runtime/cli/register-plugins.js`
+- 插件注册入口：`boss runtime register-plugins`
 
 插件目录结构：
 

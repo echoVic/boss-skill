@@ -34,12 +34,12 @@
     "automation"
   ],
   "files": [
-    "dist/",
+    "packages/boss-cli/dist/",
+    "packages/boss-cli/src/runtime/schema/",
     "agents/",
     "commands/",
     "harness/",
     "hooks/",
-    "runtime/",
     "references/",
     "scripts/",
     "templates/",
@@ -49,17 +49,21 @@
     "SKILL.md",
     "DESIGN.md"
   ],
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
   "bin": {
-    "boss-skill": "dist/bin/boss-skill.js"
+    "boss": "packages/boss-cli/dist/bin/boss.js",
+    "boss-skill": "packages/boss-cli/dist/bin/boss.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
+    "build": "tsc -p packages/boss-cli/tsconfig.json",
+    "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "release": "node scripts/release.js",
-    "prepublishOnly": "npm run build && node dist/bin/boss-skill.js --version"
+    "prepublishOnly": "npm run build && node packages/boss-cli/dist/bin/boss.js --version"
   },
   "publishConfig": {
     "access": "public"

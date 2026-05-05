@@ -22,4 +22,4 @@ EOF
 
 [[ "$1" == "-h" || "$1" == "--help" ]] && { show_help; exit 0; }
 
-node "$SCRIPT_DIR/../../runtime/projectors/materialize-state.js" "$@"
+node "$SCRIPT_DIR/../../packages/boss-cli/dist/runtime/projectors/materialize-state.js" "$@"

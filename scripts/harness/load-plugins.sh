@@ -104,20 +104,20 @@ case "$ACTION" in
     list)
         CLI_ARGS=(--list)
         [[ -n "$TYPE_FILTER" ]] && CLI_ARGS+=(--type "$TYPE_FILTER")
-        node "$REPO_ROOT/runtime/cli/register-plugins.js" "${CLI_ARGS[@]}"
+        node "$REPO_ROOT/packages/boss-cli/dist/bin/boss.js" runtime register-plugins "${CLI_ARGS[@]}"
         ;;
 
     validate)
         CLI_ARGS=(--validate)
         [[ -n "$TYPE_FILTER" ]] && CLI_ARGS+=(--type "$TYPE_FILTER")
-        node "$REPO_ROOT/runtime/cli/register-plugins.js" "${CLI_ARGS[@]}"
+        node "$REPO_ROOT/packages/boss-cli/dist/bin/boss.js" runtime register-plugins "${CLI_ARGS[@]}"
         ;;
 
     register)
         [[ -z "$FEATURE" ]] && error "--register 需要指定 feature"
         CLI_ARGS=(--register "$FEATURE")
         [[ -n "$TYPE_FILTER" ]] && CLI_ARGS+=(--type "$TYPE_FILTER")
-        node "$REPO_ROOT/runtime/cli/register-plugins.js" "${CLI_ARGS[@]}"
+        node "$REPO_ROOT/packages/boss-cli/dist/bin/boss.js" runtime register-plugins "${CLI_ARGS[@]}"
         ;;
 
     run-hook)
@@ -125,6 +125,6 @@ case "$ACTION" in
         [[ -z "$FEATURE" ]] && error "缺少 feature 参数"
         CLI_ARGS=("$HOOK_NAME" "$FEATURE")
         [[ -n "$STAGE" ]] && CLI_ARGS+=(--stage "$STAGE")
-        node "$REPO_ROOT/runtime/cli/run-plugin-hook.js" "${CLI_ARGS[@]}"
+        node "$REPO_ROOT/packages/boss-cli/dist/bin/boss.js" runtime run-plugin-hook "${CLI_ARGS[@]}"
         ;;
 esac

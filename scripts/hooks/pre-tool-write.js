@@ -15,7 +15,7 @@ function run(rawInput) {
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
-        permissionDecisionReason: 'execution.json 由 runtime 事件流管理，不允许直接编辑。请使用 runtime/cli/update-stage.js 或其他 runtime CLI'
+        permissionDecisionReason: 'execution.json 由 runtime 事件流管理，不允许直接编辑。请使用 boss runtime update-stage 或其他 runtime CLI'
       }
     });
   }

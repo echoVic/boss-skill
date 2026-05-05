@@ -11,7 +11,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 ## 执行步骤
 
 1. 读取 `skills/boss/SKILL.md`（如存在）或根目录的 `SKILL.md`，获取完整的 Boss 编排指令
-2. 自然语言需求会先归一化为 feature slug，再传给 `scripts/init-project.sh <feature-name>`
+2. 自然语言需求会先归一化为 feature slug，再传给 `boss project init <feature-name>`
 3. 约束类输入不会启动新流水线：如果用户只是补充技术栈、偏好或约束，先询问要应用到哪个已有或新 feature
 4. 按照 SKILL.md 中定义的四阶段工作流执行
 5. 用户传入的参数（如 `--skip-ui`、`--quick`、`--template` 等）直接透传给工作流

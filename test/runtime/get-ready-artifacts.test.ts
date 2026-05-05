@@ -9,9 +9,10 @@ import {
   getReadyArtifacts,
   initPipeline,
   recordArtifact
-} from '../../src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('getReadyArtifacts', () => {
   let tmpDir: string;
@@ -68,9 +69,8 @@ describe('getReadyArtifacts', () => {
     expect(names).toContain('code');
   });
 
-  it('rejects --dag without a value in the dist CLI wrapper', () => {
-    const cliPath = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'get-ready-artifacts.js');
-    const result = spawnSync(process.execPath, [cliPath, 'test-feat', '--ready', '--dag'], {
+  it('rejects --dag without a value in the boss runtime wrapper', () => {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'get-ready-artifacts', 'test-feat', '--ready', '--dag'], {
       cwd: tmpDir,
       encoding: 'utf8'
     });

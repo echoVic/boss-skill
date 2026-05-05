@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { initPipeline } from '../../src/runtime/cli/lib/pipeline-runtime.js';
-import { runHook } from '../../src/runtime/cli/lib/plugin-runtime.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+import { runHook } from '../../packages/boss-cli/src/runtime/cli/lib/plugin-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('plugin hook execution', () => {
   let tmpDir: string;
@@ -157,8 +158,7 @@ describe('plugin hook execution', () => {
       }
     );
 
-    const cliPath = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'run-plugin-hook.js');
-    const result = spawnSync(process.execPath, [cliPath, 'post-gate', 'test-feat', '--stage', '3'], {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'run-plugin-hook', 'post-gate', 'test-feat', '--stage', '3'], {
       cwd: tmpDir,
       encoding: 'utf8'
     });
@@ -196,8 +196,7 @@ describe('plugin hook execution', () => {
       }
     );
 
-    const cliPath = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'run-plugin-hook.js');
-    const result = spawnSync(process.execPath, [cliPath, 'post-gate', 'test-feat', '--stage', '3'], {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'run-plugin-hook', 'post-gate', 'test-feat', '--stage', '3'], {
       cwd: tmpDir,
       encoding: 'utf8'
     });

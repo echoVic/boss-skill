@@ -9,7 +9,7 @@ import {
   recordFeedback,
   retryAgent,
   retryStage
-} from '../../src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 describe('recordFeedback', () => {
   let tmpDir: string;

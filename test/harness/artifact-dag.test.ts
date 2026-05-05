@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const GET_READY_ARTIFACTS_CLI = path.join(import.meta.dirname, '..', '..', 'runtime', 'cli', 'get-ready-artifacts.js');
+const BOSS_BIN = path.join(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
 
 function getExecFileError(error: unknown) {
@@ -58,7 +58,7 @@ describe('artifact-dag', () => {
 
   function runCli(args: string[]) {
     try {
-      return execFileSync(process.execPath, [GET_READY_ARTIFACTS_CLI, ...args], {
+      return execFileSync(process.execPath, [BOSS_BIN, 'runtime', 'get-ready-artifacts', ...args], {
         encoding: 'utf8',
         cwd: tmpDir,
         env: { ...process.env, PATH: process.env.PATH }

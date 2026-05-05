@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { evaluateGates, initPipeline } from '../../src/runtime/cli/lib/pipeline-runtime.js';
+import { evaluateGates, initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
 describe('evaluateGates', () => {
   let tmpDir: string;
@@ -77,14 +78,13 @@ describe('evaluateGates', () => {
     expect(execution.qualityGates['missing-gate']).toBeUndefined();
   });
 
-  it('returns non-zero exit for failing gate via dist runtime CLI', () => {
+  it('returns non-zero exit for failing gate via boss runtime CLI', () => {
     const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'fail-gate');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'gate.sh'), '#!/bin/bash\necho "[]"\nexit 1\n', 'utf8');
     fs.chmodSync(path.join(pluginDir, 'gate.sh'), 0o755);
 
-    const cli = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'evaluate-gates.js');
-    const result = spawnSync(process.execPath, [cli, 'test-feat', 'fail-gate'], {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'evaluate-gates', 'test-feat', 'fail-gate'], {
       cwd: tmpDir,
       encoding: 'utf8'
     });
@@ -103,9 +103,8 @@ describe('evaluateGates', () => {
     expect(result.execution.stages['3'].gateResults['stage-gate']).toBeUndefined();
   });
 
-  it('reports missing args at dist runtime CLI boundary', () => {
-    const cli = path.join(REPO_ROOT, 'dist', 'runtime', 'cli', 'evaluate-gates.js');
-    const result = spawnSync(process.execPath, [cli], { cwd: tmpDir, encoding: 'utf8' });
+  it('reports missing args at boss runtime CLI boundary', () => {
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'evaluate-gates'], { cwd: tmpDir, encoding: 'utf8' });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/evaluate-gates\.js|缺少 gate-name 参数/);
   });

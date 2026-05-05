@@ -34,7 +34,7 @@ describe('post-tool-bash hook', () => {
     const parsed = JSON.parse(
       hook.run(
         JSON.stringify({
-          tool_input: { command: 'node runtime/cli/evaluate-gates.js my-feat gate0' },
+          tool_input: { command: 'boss runtime evaluate-gates my-feat gate0' },
           cwd: '/tmp'
         })
       )
@@ -50,7 +50,7 @@ describe('post-tool-bash hook', () => {
     const parsed = JSON.parse(
       hook.run(
         JSON.stringify({
-          tool_input: { command: 'node runtime/cli/update-stage.js my-feat 1 running' },
+          tool_input: { command: 'boss runtime update-stage my-feat 1 running' },
           cwd: '/tmp'
         })
       )
