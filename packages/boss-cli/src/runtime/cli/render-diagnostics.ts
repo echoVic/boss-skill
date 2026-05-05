@@ -12,26 +12,13 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { renderHtml } from '../report/render-html.js';
 import { buildSummaryModel } from '../report/summary-model.js';
 import { inspectEvents, inspectPipeline, inspectProgress } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 诊断页生成',
-      '',
-      '用法: render-diagnostics.js <feature> [options]',
-      '',
-      '选项:',
-      '  --stdout         输出到标准输出而非文件',
-      '  --dry-run        预览将写入的诊断页',
-      '  --json           输出 JSON 状态',
-      '  --describe       输出命令 schema',
-      '  -h, --help       查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('render-diagnostics', 'boss runtime render-diagnostics FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

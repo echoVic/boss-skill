@@ -62,14 +62,15 @@ describe('phase-1 direct-write guard', () => {
     }
   });
 
-  it('plugin registration help describes event-sourced read-model semantics', () => {
-    const registerResult = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'register-plugins', '--help'], {
+  it('plugin registration metadata describes event-sourced read-model semantics', () => {
+    const registerResult = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'register-plugins', '--describe'], {
       cwd: REPO_ROOT,
       encoding: 'utf8'
     });
 
     expect(registerResult.status, registerResult.stderr).toBe(0);
-    expect(registerResult.stdout).toMatch(/事件/);
-    expect(registerResult.stdout).toMatch(/read model/);
+    const metadata = JSON.parse(registerResult.stdout) as { summary: string };
+    expect(metadata.summary).toMatch(/event-sourced/);
+    expect(metadata.summary).toMatch(/read model/);
   });
 });

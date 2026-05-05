@@ -14,6 +14,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
+  printRuntimeHelp,
   requireInputString,
   toFeatureNotFoundError,
   writeActionPlan
@@ -26,23 +27,7 @@ interface RetryStageInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - 阶段重试',
-      '',
-      '用法: retry-stage.js <feature> <stage>',
-      '',
-      '参数:',
-      '  feature    功能名称',
-      '  stage      阶段编号',
-      '',
-      '选项:',
-      '  --dry-run          预览变更而不写入',
-      '  -y, --yes          确认执行高风险重试',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('retry-stage', 'boss runtime retry-stage FEATURE STAGE [options]');
 }
 
 function parseFlatInput(argv: string[]): RetryStageInput {

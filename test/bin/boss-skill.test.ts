@@ -54,7 +54,7 @@ describe('boss-skill dist bin', () => {
     const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'runtime', 'init-pipeline', '--help']);
 
     expect(result.status).toBe(0);
-    expect(result.stdout + result.stderr).toContain('用法: init-pipeline.js <feature>');
+    expect(result.stdout + result.stderr).toContain('Usage: boss runtime init-pipeline FEATURE [options]');
     expect(result.stdout + result.stderr).not.toContain('Usage: boss runtime COMMAND');
   });
 

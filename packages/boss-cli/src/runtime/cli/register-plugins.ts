@@ -14,6 +14,7 @@ import {
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
   optionalInputString,
+  printRuntimeHelp,
   requireInputString,
   requireOptionValue,
   toFeatureNotFoundError,
@@ -30,23 +31,7 @@ interface RegisterPluginsInput {
 }
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 插件加载器（Runtime）',
-      '',
-      '用法: register-plugins.js [options]',
-      '',
-      '选项:',
-      '  --list                 列出所有已启用插件',
-      '  --type <type>          按类型过滤：gate | agent | pipeline-pack | reporter',
-      '  --validate             验证插件清单与脚本引用',
-      '  --register <feature>   追加插件注册事件并物化 read model（execution.json）',
-      '  --dry-run              预览注册事件而不写入',
-      '  --json-input <json|->  从 JSON 字符串或 stdin 读取输入',
-      '  -h, --help             查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('register-plugins', 'boss runtime register-plugins [options]');
 }
 
 function parseFlatInput(argv: string[]): RegisterPluginsInput {

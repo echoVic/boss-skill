@@ -11,25 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { replayEvents, replaySnapshot } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 事件回放',
-      '',
-      '用法: replay-events.js <feature> [options]',
-      '',
-      '选项:',
-      '  --at <id>         显示指定事件 ID 时的状态快照',
-      '  --type <type>     仅显示指定类型的事件',
-      '  --limit <n>       返回最近 n 条事件（默认 20）',
-      '  --compact         紧凑输出（每个事件一行）',
-      '  --json            输出 JSON',
-      '  -h, --help        查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('replay-events', 'boss runtime replay-events FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

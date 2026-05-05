@@ -13,6 +13,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
+  printRuntimeHelp,
   requireInputString,
   toFeatureNotFoundError,
   writeActionPlan
@@ -27,19 +28,7 @@ interface EvaluateGatesInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Gate Engine - 门禁统一入口',
-      '',
-      '用法: evaluate-gates.js <feature> <gate-name> [options]',
-      '',
-      '选项:',
-      '  --dry-run          只检查不写入结果',
-      '  --skip-on-error    门禁脚本不存在时跳过而非失败',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('evaluate-gates', 'boss runtime evaluate-gates FEATURE GATE [options]');
 }
 
 function parseFlatInput(argv: string[], context: CliContext): EvaluateGatesInput {

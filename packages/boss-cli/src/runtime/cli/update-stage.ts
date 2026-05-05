@@ -15,6 +15,7 @@ import {
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
   optionalInputString,
+  printRuntimeHelp,
   requireInputString,
   requireOptionValue,
   toFeatureNotFoundError,
@@ -33,35 +34,7 @@ interface UpdateStageInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - 阶段状态更新',
-      '',
-      '用法: update-stage.js <feature> <stage> <status> [options]',
-      '',
-      '参数:',
-      '  feature   功能名称',
-      '  stage     阶段编号 (1-4)',
-      '  status    目标状态: running | completed | failed | retrying | skipped',
-      '',
-      '选项:',
-      '  --reason <text>        失败原因（status=failed 时使用）',
-      '  --artifact <name>      记录产出的产物文件名（可多次使用）',
-      '  --gate <name>          记录关联的 gate 名称',
-      '  --gate-passed          标记 gate 通过',
-      '  --gate-failed          标记 gate 未通过',
-      '  --dry-run              预览变更而不写入',
-      '  --json-input <json|->  从 JSON 字符串或 stdin 读取输入',
-      '  --json                 输出 JSON',
-      '',
-      '示例:',
-      '  update-stage.js my-feature 1 running',
-      '  update-stage.js my-feature 1 completed --artifact prd.md --artifact architecture.md',
-      '  update-stage.js my-feature 3 failed --reason "单元测试覆盖率不足"',
-      '  update-stage.js my-feature 3 completed --gate gate1 --gate-passed',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('update-stage', 'boss runtime update-stage FEATURE STAGE STATUS [options]');
 }
 
 function readCurrentStatus(cwd: string, feature: string, stage: string): string {

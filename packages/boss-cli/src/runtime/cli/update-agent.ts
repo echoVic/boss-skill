@@ -14,6 +14,7 @@ import {
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
   optionalInputString,
+  printRuntimeHelp,
   requireInputString,
   requireOptionValue,
   toFeatureNotFoundError,
@@ -30,20 +31,7 @@ interface UpdateAgentInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - Agent 状态更新',
-      '',
-      '用法: update-agent.js <feature> <stage> <agent-name> <status> [options]',
-      '',
-      '选项:',
-      '  --reason <text>       失败原因（status=failed 时使用）',
-      '  --dry-run             预览变更而不写入',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      '  --json                输出 JSON',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('update-agent', 'boss runtime update-agent FEATURE STAGE AGENT STATUS [options]');
 }
 
 function parseFlatInput(argv: string[]): UpdateAgentInput {

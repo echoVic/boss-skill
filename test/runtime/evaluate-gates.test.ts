@@ -141,7 +141,7 @@ describe('evaluateGates', () => {
   it('reports missing args at boss runtime CLI boundary', () => {
     const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'evaluate-gates'], { cwd: tmpDir, encoding: 'utf8' });
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toMatch(/evaluate-gates\.js|缺少 gate-name 参数/);
+    expect(result.stdout + result.stderr).toContain('Usage: boss runtime evaluate-gates FEATURE GATE [options]');
   });
 
   it('records stderr-only gate checks', () => {

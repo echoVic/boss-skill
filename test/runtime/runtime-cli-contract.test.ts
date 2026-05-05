@@ -64,14 +64,14 @@ describe('runtime CLI contract', () => {
     const source = fs.readFileSync(sourcePath, 'utf8');
     const dist = fs.readFileSync(distPath, 'utf8');
 
-    expect(source).toContain('用法: init-pipeline.js <feature>');
-    expect(dist).toContain('用法: init-pipeline.js <feature>');
+    expect(source).toContain('boss runtime init-pipeline FEATURE [options]');
+    expect(dist).toContain('boss runtime init-pipeline FEATURE [options]');
   });
 
   it('init-pipeline CLI exposes help text and stable JSON fields', () => {
     const help = runCli('init-pipeline', ['--help']);
     expect(help.status).toBe(0);
-    expect(help.stderr).toMatch(/用法: init-pipeline\.js <feature>/);
+    expect(help.stdout + help.stderr).toMatch(/Usage: boss runtime init-pipeline FEATURE \[options\]/);
 
     const result = runCli('init-pipeline', ['test-feat']);
     expect(result.status).toBe(0);
@@ -91,7 +91,7 @@ describe('runtime CLI contract', () => {
 
     const help = runCli('record-artifact', ['--help']);
     expect(help.status).toBe(0);
-    expect(help.stderr).toMatch(/用法: record-artifact\.js <feature> <artifact> <stage>/);
+    expect(help.stdout + help.stderr).toMatch(/Usage: boss runtime record-artifact FEATURE ARTIFACT STAGE \[options\]/);
 
     const result = runCli('record-artifact', ['test-feat', 'prd.md', '1']);
     expect(result.status).toBe(0);
@@ -113,10 +113,7 @@ describe('runtime CLI contract', () => {
 
     const help = runCli('get-ready-artifacts', ['--help']);
     expect(help.status).toBe(0);
-    expect(help.stdout).toMatch(/用法: get-ready-artifacts\.js <feature> <artifact> \[options\]/);
-    expect(help.stdout).toContain(
-      'DAG 文件路径（默认使用 .boss/artifact-dag.json 或内置 packages/boss-cli/assets/artifact-dag.json）'
-    );
+    expect(help.stdout).toMatch(/Usage: boss runtime get-ready-artifacts FEATURE \[ARTIFACT\] \[options\]/);
 
     const result = runCli('get-ready-artifacts', ['test-feat', '--ready', '--json']);
     expect(result.status).toBe(0);
@@ -130,7 +127,7 @@ describe('runtime CLI contract', () => {
 
     const help = runCli('evaluate-gates', ['--help']);
     expect(help.status).toBe(0);
-    expect(help.stderr).toMatch(/用法: evaluate-gates\.js <feature> <gate-name> \[options\]/);
+    expect(help.stdout + help.stderr).toMatch(/Usage: boss runtime evaluate-gates FEATURE GATE \[options\]/);
 
     const result = runCli('evaluate-gates', ['test-feat', 'gate1', '--dry-run']);
     expect(result.status).toBe(0);
@@ -157,45 +154,45 @@ describe('runtime CLI contract', () => {
   it('update-stage and update-agent CLIs expose runtime-first help text', () => {
     const stageHelp = runCli('update-stage', ['--help']);
     expect(stageHelp.status).toBe(0);
-    expect(stageHelp.stderr).toMatch(/用法: update-stage\.js <feature> <stage> <status> \[options\]/);
+    expect(stageHelp.stdout + stageHelp.stderr).toMatch(/Usage: boss runtime update-stage FEATURE STAGE STATUS \[options\]/);
 
     const agentHelp = runCli('update-agent', ['--help']);
     expect(agentHelp.status).toBe(0);
-    expect(agentHelp.stderr).toMatch(
-      /用法: update-agent\.js <feature> <stage> <agent-name> <status> \[options\]/
+    expect(agentHelp.stdout + agentHelp.stderr).toMatch(
+      /Usage: boss runtime update-agent FEATURE STAGE AGENT STATUS \[options\]/
     );
   });
 
   it('check-stage, replay-events, inspect-progress, and render-diagnostics expose help text', () => {
     const stageHelp = runCli('check-stage', ['--help']);
     expect(stageHelp.status).toBe(0);
-    expect(stageHelp.stdout + stageHelp.stderr).toMatch(/用法: check-stage\.js <feature>/);
+    expect(stageHelp.stdout + stageHelp.stderr).toMatch(/Usage: boss runtime check-stage FEATURE/);
 
     const replayHelp = runCli('replay-events', ['--help']);
     expect(replayHelp.status).toBe(0);
-    expect(replayHelp.stdout + replayHelp.stderr).toMatch(/用法: replay-events\.js <feature>/);
+    expect(replayHelp.stdout + replayHelp.stderr).toMatch(/Usage: boss runtime replay-events FEATURE/);
 
     const progressHelp = runCli('inspect-progress', ['--help']);
     expect(progressHelp.status).toBe(0);
-    expect(progressHelp.stdout + progressHelp.stderr).toMatch(/用法: inspect-progress\.js <feature>/);
+    expect(progressHelp.stdout + progressHelp.stderr).toMatch(/Usage: boss runtime inspect-progress FEATURE/);
 
     const diagnosticsHelp = runCli('render-diagnostics', ['--help']);
     expect(diagnosticsHelp.status).toBe(0);
-    expect(diagnosticsHelp.stdout + diagnosticsHelp.stderr).toMatch(/用法: render-diagnostics\.js <feature>/);
+    expect(diagnosticsHelp.stdout + diagnosticsHelp.stderr).toMatch(/Usage: boss runtime render-diagnostics FEATURE/);
   });
 
   it('extract-memory, query-memory, and build-memory-summary expose help text', () => {
     const extractHelp = runCli('extract-memory', ['--help']);
     expect(extractHelp.status).toBe(0);
-    expect(extractHelp.stdout + extractHelp.stderr).toMatch(/用法: extract-memory\.js <feature>/);
+    expect(extractHelp.stdout + extractHelp.stderr).toMatch(/Usage: boss runtime extract-memory FEATURE/);
 
     const queryHelp = runCli('query-memory', ['--help']);
     expect(queryHelp.status).toBe(0);
-    expect(queryHelp.stdout + queryHelp.stderr).toMatch(/用法: query-memory\.js <feature>/);
+    expect(queryHelp.stdout + queryHelp.stderr).toMatch(/Usage: boss runtime query-memory FEATURE/);
 
     const summaryHelp = runCli('build-memory-summary', ['--help']);
     expect(summaryHelp.status).toBe(0);
-    expect(summaryHelp.stdout + summaryHelp.stderr).toMatch(/用法: build-memory-summary\.js <feature>/);
+    expect(summaryHelp.stdout + summaryHelp.stderr).toMatch(/Usage: boss runtime build-memory-summary FEATURE/);
   });
 
   it('query-memory emits stable json payloads for startup summaries', () => {
@@ -350,13 +347,28 @@ describe('runtime CLI contract', () => {
     const updateStageMetadata = JSON.parse(updateStage.stdout) as {
       options: Array<{ name: string }>;
     };
-    expect(updateStageMetadata.options.map((option) => option.name)).toEqual([
-      'json',
-      'describe',
-      'fields',
-      'dry-run',
-      'json-input'
-    ]);
+    expect(updateStageMetadata.options.map((option) => option.name)).toEqual(
+      expect.arrayContaining(['json', 'describe', 'fields', 'dry-run', 'json-input', 'reason', 'artifact'])
+    );
+  });
+
+  it('runtime help mirrors describe metadata for representative command options', () => {
+    const updateStageHelp = runCli('update-stage', ['--help']);
+    expect(updateStageHelp.status).toBe(0);
+    const updateStageText = updateStageHelp.stdout + updateStageHelp.stderr;
+    expect(updateStageText).toContain('--reason <string>');
+    expect(updateStageText).toContain('--artifact <array>');
+    expect(updateStageText).toContain('--gate-passed');
+    expect(updateStageText).not.toContain('--yes');
+    expect(updateStageText).not.toContain('--limit');
+
+    const inspectEventsHelp = runCli('inspect-events', ['--help']);
+    expect(inspectEventsHelp.status).toBe(0);
+    const inspectEventsText = inspectEventsHelp.stdout + inspectEventsHelp.stderr;
+    expect(inspectEventsText).toContain('--limit <string>  [default: 20]');
+    expect(inspectEventsText).toContain('--type <string>');
+    expect(inspectEventsText).not.toContain('--dry-run');
+    expect(inspectEventsText).not.toContain('--json-input');
   });
 
   it('runtime contract flags reject missing values before another option', () => {
@@ -480,6 +492,47 @@ describe('runtime CLI contract', () => {
     expect(result.status).toBe(1);
     const payload = JSON.parse(result.stderr) as { error: { code: string } };
     expect(payload.error.code).toBe('confirmation_required');
+  });
+
+  it('all runtime command help is concise and lists agent contract flags', () => {
+    for (const command of [
+      'init-pipeline',
+      'update-stage',
+      'update-agent',
+      'record-artifact',
+      'get-ready-artifacts',
+      'evaluate-gates',
+      'check-stage',
+      'replay-events',
+      'inspect-progress',
+      'inspect-pipeline',
+      'inspect-events',
+      'inspect-plugins',
+      'render-diagnostics',
+      'extract-memory',
+      'query-memory',
+      'build-memory-summary',
+      'generate-summary',
+      'register-plugins',
+      'run-plugin-hook',
+      'record-feedback',
+      'retry-agent',
+      'retry-stage'
+    ]) {
+      const help = runCli(command, ['--help']);
+      expect(help.status, command).toBe(0);
+      const text = help.stdout + help.stderr;
+      expect(text).toContain('Usage:');
+      expect(text).toContain('--json');
+      expect(text).toContain('--describe');
+      expect(text.split('\n').length).toBeLessThanOrEqual(28);
+
+      const describe = runCli(command, ['--describe']);
+      expect(describe.status, `${command} --describe`).toBe(0);
+      const payload = JSON.parse(describe.stdout) as { command: string; risk_tier: string };
+      expect(payload.command).toBe(`boss runtime ${command}`);
+      expect(['low', 'medium', 'high']).toContain(payload.risk_tier);
+    }
   });
 
   it('read-only runtime command errors are structured in non-tty mode', () => {

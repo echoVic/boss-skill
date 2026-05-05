@@ -11,23 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { inspectProgress } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 进度诊断',
-      '',
-      '用法: inspect-progress.js <feature> [options]',
-      '',
-      '选项:',
-      '  --json            输出 JSON',
-      '  --limit <n>       返回最近 n 条进度事件（默认 20）',
-      '  --type <type>     仅返回指定类型',
-      '  -h, --help        查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('inspect-progress', 'boss runtime inspect-progress FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

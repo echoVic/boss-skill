@@ -14,6 +14,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
+  printRuntimeHelp,
   requireInputString,
   toFeatureNotFoundError,
   writeActionPlan
@@ -27,19 +28,7 @@ interface RetryAgentInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - Agent 重试',
-      '',
-      '用法: retry-agent.js <feature> <stage> <agent-name>',
-      '',
-      '选项:',
-      '  --dry-run             预览变更而不写入',
-      '  -y, --yes             确认执行高风险重试',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('retry-agent', 'boss runtime retry-agent FEATURE STAGE AGENT [options]');
 }
 
 function parseFlatInput(argv: string[]): RetryAgentInput {

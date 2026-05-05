@@ -2101,7 +2101,7 @@ git commit -m "test: enforce agent friendly cli safety contract"
 - Modify: `test/runtime/runtime-cli-contract.test.ts`
 - Modify: `test/bin/boss-skill.test.ts`
 
-- [ ] **Step 1: Add exhaustive help/describe tests**
+- [x] **Step 1: Add exhaustive help/describe tests**
 
 Append to `test/runtime/runtime-cli-contract.test.ts`:
 
@@ -2148,7 +2148,7 @@ Append to `test/runtime/runtime-cli-contract.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run help tests to verify red**
+- [x] **Step 2: Run help tests to verify red**
 
 Run:
 
@@ -2162,7 +2162,7 @@ Expected:
 FAIL
 ```
 
-- [ ] **Step 3: Normalize help text**
+- [x] **Step 3: Normalize help text**
 
 For every CLI command, replace long paragraphs and examples with this structure:
 
@@ -2186,7 +2186,7 @@ process.stdout.write(`${renderHelp(description, usage)}${extraOptions}`);
 
 Keep every help output under 28 lines.
 
-- [ ] **Step 4: Fill command registry metadata**
+- [x] **Step 4: Fill command registry metadata**
 
 Replace generic runtime metadata from Task 5 with explicit entries. Example:
 
@@ -2220,7 +2220,7 @@ export const runtimeCommandDescriptions: Record<string, CommandDescription> = {
 
 Provide explicit descriptions for all runtime command names listed in Task 1.
 
-- [ ] **Step 5: Run help and describe tests**
+- [x] **Step 5: Run help and describe tests**
 
 Run:
 
@@ -2235,7 +2235,7 @@ Expected:
 PASS
 ```
 
-- [ ] **Step 6: Commit help and describe metadata**
+- [x] **Step 6: Commit help and describe metadata**
 
 ```bash
 git add packages/boss-cli/src/cli/command-registry.ts packages/boss-cli/src/bin/boss.ts packages/boss-cli/src/commands packages/boss-cli/src/runtime/cli test/runtime/runtime-cli-contract.test.ts test/bin/boss-skill.test.ts

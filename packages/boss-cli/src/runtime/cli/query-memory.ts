@@ -11,22 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { readFeatureSummary } from './lib/memory-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 查询 memory',
-      '',
-      '用法: query-memory.js <feature> [options]',
-      '',
-      '选项:',
-      '  --startup         输出 startup summary',
-      '  --json            输出 JSON',
-      '  -h, --help        查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('query-memory', 'boss runtime query-memory FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

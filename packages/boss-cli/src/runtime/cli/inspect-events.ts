@@ -11,23 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { inspectEvents } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 事件流诊断',
-      '',
-      '用法: inspect-events.js <feature> [options]',
-      '',
-      '选项:',
-      '  --limit <n>       返回最近 N 条事件，默认 20',
-      '  --type <name>     按事件类型过滤',
-      '  --json            输出 JSON',
-      '  -h, --help        查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('inspect-events', 'boss runtime inspect-events FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

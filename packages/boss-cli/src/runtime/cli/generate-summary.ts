@@ -12,26 +12,13 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { renderJson } from '../report/render-json.js';
 import { renderMarkdown } from '../report/render-markdown.js';
 import { buildSummaryModel } from '../report/summary-model.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 流水线报告生成器（Runtime）',
-      '',
-      '用法: generate-summary.js <feature> [options]',
-      '',
-      '选项:',
-      '  --json     输出 JSON 格式而非 Markdown',
-      '  --stdout   输出到标准输出而非文件',
-      '  --dry-run  预览将写入的报告文件',
-      '  --describe 输出命令 schema',
-      '  -h, --help 查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('generate-summary', 'boss runtime generate-summary FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

@@ -11,21 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { inspectPipeline } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 流水线诊断',
-      '',
-      '用法: inspect-pipeline.js <feature> [options]',
-      '',
-      '选项:',
-      '  --json            输出 JSON',
-      '  -h, --help        查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('inspect-pipeline', 'boss runtime inspect-pipeline FEATURE [options]');
 }
 
 export function parseArgs(argv: string[]) {

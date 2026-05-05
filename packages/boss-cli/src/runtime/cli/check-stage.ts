@@ -11,25 +11,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { checkCanProceed, checkCanRetry, checkStage } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 阶段状态检查',
-      '',
-      '用法: check-stage.js <feature> [stage] [options]',
-      '',
-      '选项:',
-      '  --can-proceed      检查指定阶段是否可以开始执行',
-      '  --can-retry        检查指定阶段是否可以重试',
-      '  --agents           显示指定阶段中各 Agent 的状态',
-      '  --json             输出 JSON',
-      '  --summary          输出流水线摘要',
-      '  -h, --help         查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('check-stage', 'boss runtime check-stage FEATURE [stage] [options]');
 }
 
 export function parseArgs(argv: string[]) {

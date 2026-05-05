@@ -1,4 +1,11 @@
-import { CliUserError, type CliContext, writeOutput, type JsonObject } from '../../../cli/contract.js';
+import {
+  CliUserError,
+  type CliContext,
+  renderHelp,
+  writeOutput,
+  type JsonObject
+} from '../../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../../cli/command-registry.js';
 
 export function missingRequiredArgument(argument: string): CliUserError {
   return new CliUserError({
@@ -62,4 +69,12 @@ export function writeActionPlan(
     context,
     () => actions.map((action) => `Would ${String(action.type)}\n`).join('')
   );
+}
+
+export function printRuntimeHelp(commandName: string, usage: string): void {
+  const description = runtimeCommandDescriptions[commandName];
+  if (!description) {
+    throw new Error(`Missing runtime command description: ${commandName}`);
+  }
+  process.stdout.write(renderHelp(description, usage));
 }

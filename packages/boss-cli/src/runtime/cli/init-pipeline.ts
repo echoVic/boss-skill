@@ -13,6 +13,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
+  printRuntimeHelp,
   requireInputString,
   writeActionPlan
 } from './lib/agent-command-utils.js';
@@ -23,19 +24,7 @@ interface InitPipelineInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - 初始化流水线',
-      '',
-      '用法: init-pipeline.js <feature>',
-      '',
-      '选项:',
-      '  --dry-run             预览变更而不写入',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      '  --json                输出 JSON',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('init-pipeline', 'boss runtime init-pipeline FEATURE [options]');
 }
 
 function parseFlatInput(argv: string[]): InitPipelineInput {

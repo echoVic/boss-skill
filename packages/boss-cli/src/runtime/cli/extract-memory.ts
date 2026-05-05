@@ -9,17 +9,11 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { rebuildFeatureMemory } from './lib/memory-runtime.js';
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 提炼 feature memory',
-      '',
-      '用法: extract-memory.js <feature>',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('extract-memory', 'boss runtime extract-memory FEATURE [options]');
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {

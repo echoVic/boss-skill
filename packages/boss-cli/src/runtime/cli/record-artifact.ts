@@ -13,6 +13,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
+  printRuntimeHelp,
   requireInputString,
   toFeatureNotFoundError,
   writeActionPlan
@@ -26,19 +27,7 @@ interface RecordArtifactInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - 记录产物完成',
-      '',
-      '用法: record-artifact.js <feature> <artifact> <stage>',
-      '',
-      '选项:',
-      '  --dry-run             预览变更而不写入',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      '  --json                输出 JSON',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('record-artifact', 'boss runtime record-artifact FEATURE ARTIFACT STAGE [options]');
 }
 
 function parseFlatInput(argv: string[]): RecordArtifactInput {

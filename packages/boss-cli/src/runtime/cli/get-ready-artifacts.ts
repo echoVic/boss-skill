@@ -10,6 +10,7 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import {
   getArtifactStatus,
   getReadyArtifacts,
@@ -17,26 +18,7 @@ import {
 } from './lib/pipeline-runtime.js';
 
 function showHelp(): void {
-  process.stdout.write(`Boss Harness - Artifact DAG 检查
-
-用法: get-ready-artifacts.js <feature> <artifact> [options]
-
-检查指定产物在 DAG 中的就绪状态。
-
-参数:
-  feature     功能名称
-  artifact    产物名称（如 prd.md、architecture.md、code）
-
-选项:
-  --can-start       检查该产物的所有输入依赖是否已就绪
-  --ready           列出所有当前可以开始的产物
-  --dag <path>      指定 DAG 文件路径（默认使用 .boss/artifact-dag.json 或内置 packages/boss-cli/assets/artifact-dag.json）
-  --json            JSON 格式输出
-
-示例:
-  get-ready-artifacts.js my-feature --ready --json
-  get-ready-artifacts.js my-feature architecture.md --can-start
-`);
+  printRuntimeHelp('get-ready-artifacts', 'boss runtime get-ready-artifacts FEATURE [ARTIFACT] [options]');
 }
 
 function exitError(message: string): never {

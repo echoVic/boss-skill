@@ -14,6 +14,7 @@ import {
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
   optionalInputString,
+  printRuntimeHelp,
   requireInputString,
   requireOptionValue,
   toFeatureNotFoundError,
@@ -31,22 +32,7 @@ interface RecordFeedbackInput {
 }
 
 function showHelp(): void {
-  process.stderr.write(
-    [
-      'Boss Harness - 反馈循环记录',
-      '',
-      '用法: record-feedback.js <feature> --from <agent> --to <agent> --artifact <name> --reason <text>',
-      '',
-      '选项:',
-      '  --from       发起修订的 Agent 名称',
-      '  --to         需要修订的目标 Agent',
-      '  --artifact   需要修订的产物名称',
-      '  --reason     修订原因',
-      '  --priority   优先级（critical | recommended，默认 recommended）',
-      '  --dry-run    预览变更而不写入',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('record-feedback', 'boss runtime record-feedback FEATURE [options]');
 }
 
 function parseFlatInput(argv: string[]): RecordFeedbackInput {

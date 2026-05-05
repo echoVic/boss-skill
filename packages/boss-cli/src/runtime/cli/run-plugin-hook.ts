@@ -14,6 +14,7 @@ import {
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import {
   optionalInputString,
+  printRuntimeHelp,
   requireInputString,
   requireOptionValue,
   toFeatureNotFoundError,
@@ -28,20 +29,7 @@ interface RunPluginHookInput {
 }
 
 function printHelp(): void {
-  process.stdout.write(
-    [
-      'Boss Harness - 插件 Hook 执行（Runtime）',
-      '',
-      '用法: run-plugin-hook.js <hook> <feature> [options]',
-      '',
-      '选项:',
-      '  --stage <n>          按阶段过滤插件并透传 stage 参数',
-      '  --dry-run            预览变更而不执行 hook',
-      '  --json-input <json|-> 从 JSON 字符串或 stdin 读取输入',
-      '  -h, --help           查看帮助',
-      ''
-    ].join('\n')
-  );
+  printRuntimeHelp('run-plugin-hook', 'boss runtime run-plugin-hook HOOK FEATURE [options]');
 }
 
 function parseFlatInput(argv: string[]): RunPluginHookInput {

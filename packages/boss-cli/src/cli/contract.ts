@@ -292,18 +292,36 @@ export function describeCommand(description: CommandDescription): CommandDescrip
   };
 }
 
-export function renderHelp(_description: CommandDescription, usage: string): string {
+function optionValuePlaceholder(option: CommandOption): string {
+  if (option.name === 'json-input') return ' <json|->';
+  if (option.type === 'boolean') return '';
+  return ` <${option.type}>`;
+}
+
+function optionDetails(option: CommandOption): string {
+  const parts: string[] = [];
+  if (option.enum && option.enum.length > 0) {
+    parts.push(`(${option.enum.join('|')})`);
+  }
+  if (option.default !== undefined && option.default !== false) {
+    parts.push(`[default: ${String(option.default)}]`);
+  }
+  return parts.join(' ');
+}
+
+function renderOption(option: CommandOption): string {
+  const longFlag = `--${option.name}${optionValuePlaceholder(option)}`;
+  const flag = option.short ? `-${option.short}, ${longFlag}` : longFlag;
+  const details = optionDetails(option);
+  return details ? `  ${flag}  ${details}` : `  ${flag}`;
+}
+
+export function renderHelp(description: CommandDescription, usage: string): string {
   const lines = [
     `Usage: ${usage}`,
     '',
     'Options:',
-    '  --json              Output JSON',
-    '  --describe          Output command schema as JSON',
-    '  --fields <list>     Include only comma-separated JSON fields',
-    '  --limit <number>    Limit list output, default 100',
-    '  --json-input <json|-> Read input from JSON string or stdin',
-    '  --dry-run           Preview changes without executing',
-    '  -y, --yes           Skip confirmation for destructive actions',
+    ...description.options.map(renderOption),
     '  -h, --help          Show help',
     ''
   ];
