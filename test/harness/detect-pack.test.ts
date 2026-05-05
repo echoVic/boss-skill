@@ -25,21 +25,22 @@ describe('boss packs detect', () => {
       cwd: REPO_ROOT
     });
     expect(result.status, result.stderr).toBe(0);
-    return result.stdout.trim();
+    const parsed = JSON.parse(result.stdout) as { detected: string; matched: unknown[] };
+    return parsed;
   }
 
   it('returns "default" when no pack matches', () => {
-    expect(run(tmpDir)).toBe('default');
+    expect(run(tmpDir).detected).toBe('default');
   });
 
   it('detects solana-contract when Anchor.toml exists', () => {
     fs.writeFileSync(path.join(tmpDir, 'Anchor.toml'), '[programs]\n', 'utf8');
-    expect(run(tmpDir)).toBe('solana-contract');
+    expect(run(tmpDir).detected).toBe('solana-contract');
   });
 
   it('detects api-only when package.json exists but no frontend dirs', () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test","dependencies":{}}', 'utf8');
-    expect(run(tmpDir)).toBe('api-only');
+    expect(run(tmpDir).detected).toBe('api-only');
   });
 
   it('uses .boss pipeline pack overrides before built-in packs', () => {
@@ -71,20 +72,17 @@ describe('boss packs detect', () => {
   it('does not detect api-only when src/app exists', () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}', 'utf8');
     fs.mkdirSync(path.join(tmpDir, 'src', 'app'), { recursive: true });
-    expect(run(tmpDir)).toBe('default');
+    expect(run(tmpDir).detected).toBe('default');
   });
 
   it('prefers higher priority pack (solana-contract > api-only)', () => {
     fs.writeFileSync(path.join(tmpDir, 'Anchor.toml'), '[programs]\n', 'utf8');
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}', 'utf8');
-    expect(run(tmpDir)).toBe('solana-contract');
+    expect(run(tmpDir).detected).toBe('solana-contract');
   });
 
   it('returns JSON when --json flag is used', () => {
-    const parsed = JSON.parse(run(tmpDir, ['--json'])) as {
-      detected: string;
-      matched: unknown[];
-    };
+    const parsed = run(tmpDir, ['--json']);
 
     expect(parsed.detected).toBe('default');
     expect(Array.isArray(parsed.matched)).toBe(true);

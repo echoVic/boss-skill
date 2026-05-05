@@ -301,7 +301,7 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
         );
         return 0;
       }
-      if (context.values.json) {
+      if (context.useJson) {
         const actions = buildInstallPlan();
         autoInstall(false, true);
         writeOutput(
@@ -328,7 +328,7 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
         return 0;
       }
       assertConfirmed(context, 'uninstall');
-      if (context.values.json) {
+      if (context.useJson) {
         const actions = buildUninstallPlan();
         uninstall(true);
         writeOutput(

@@ -102,10 +102,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     matchedPacks: result.matched,
     reason: result.matched.length === 0 ? 'no pack matched' : undefined
   };
-  if (path.isAbsolute(projectArg) && !context.values.json) {
-    process.stdout.write(`${result.detected.name}\n`);
-    return 0;
-  }
   writeOutput(payload, context, () => `${result.detected.name}\n`);
   return 0;
 }

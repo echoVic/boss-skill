@@ -157,7 +157,7 @@ describe('agent-friendly boss CLI contract', () => {
     const home = path.join(tmpDir, 'home');
     fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
 
-    const install = spawnSync(process.execPath, [BOSS_BIN, 'install', '--json'], {
+    const install = spawnSync(process.execPath, [BOSS_BIN, 'install'], {
       cwd: tmpDir,
       env: { ...process.env, HOME: home },
       encoding: 'utf8'
@@ -177,7 +177,7 @@ describe('agent-friendly boss CLI contract', () => {
     expect(installPayload.requires_approval).toBe(false);
     expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(true);
 
-    const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes', '--json'], {
+    const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes'], {
       cwd: tmpDir,
       env: { ...process.env, HOME: home },
       encoding: 'utf8'
