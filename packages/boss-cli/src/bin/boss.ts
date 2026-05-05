@@ -19,13 +19,14 @@ import {
 } from '../cli/dispatcher.js';
 import { showRootHelp } from '../cli/help.js';
 import { rootDescription } from '../cli/registry.js';
+import { readJsonFile } from '../infrastructure/fs.js';
+import { packageRootFromImportMeta } from '../infrastructure/paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')) as {
+const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 4);
+const pkg = readJsonFile<{
   version: string;
-};
+}>(path.join(PKG_ROOT, 'package.json'));
 
 export function showHelp(): void {
   showRootHelp();

@@ -14,14 +14,15 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { commandDescriptions } from '../../cli/registry.js';
+import { copyDirectory, readJsonFile } from '../../infrastructure/fs.js';
+import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
+const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
 const SKILL_ROOT = path.join(PKG_ROOT, 'skill');
-const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')) as {
+const __filename = fileURLToPath(import.meta.url);
+const pkg = readJsonFile<{
   version: string;
-};
+}>(path.join(PKG_ROOT, 'package.json'));
 const HOME = os.homedir();
 
 interface Agent {
@@ -154,26 +155,6 @@ function injectBrainstormMetadata(content: string, agentName: string): string {
   return content.replace(/^(---\n[\s\S]*?)(^---)/m, `$1${meta}\n$2`);
 }
 
-function copyDir(src: string, dest: string, exclude?: string[]): void {
-  if (!fs.existsSync(dest)) {
-    fs.mkdirSync(dest, { recursive: true });
-  }
-
-  const entries = fs.readdirSync(src, { withFileTypes: true });
-  for (const entry of entries) {
-    if (exclude?.includes(entry.name)) continue;
-
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-
-    if (entry.isDirectory()) {
-      copyDir(srcPath, destPath, exclude);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
-    }
-  }
-}
-
 function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
   const dest = agent.dest();
 
@@ -186,7 +167,7 @@ function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
     fs.rmSync(dest, { recursive: true });
   }
 
-  copyDir(SKILL_ROOT, dest);
+  copyDirectory(SKILL_ROOT, dest);
 
   const skillMd = path.join(dest, 'SKILL.md');
   if (fs.existsSync(skillMd)) {

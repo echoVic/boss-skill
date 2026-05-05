@@ -14,10 +14,9 @@ import {
 } from '../../cli/contract.js';
 import { commandDescriptions } from '../../cli/registry.js';
 import { initPipeline } from '../../runtime/application/pipeline.js';
+import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
+const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
 const DEFAULT_TEMPLATE_DIR = path.join(PKG_ROOT, 'skill', 'templates');
 const PROJECT_TEMPLATE_DIR = path.join('.boss', 'templates');
 const projectInitDescription = commandDescriptions['boss project init']!;

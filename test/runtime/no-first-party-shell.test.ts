@@ -89,6 +89,7 @@ describe('TypeScript CLI architecture', () => {
       'runtime/application/memory.ts',
       'runtime/application/inspection.ts',
       'runtime/application/gates.ts',
+      'runtime/application/state.ts',
       'runtime/domain/event-types.ts',
       'runtime/projectors/materialize-state.ts',
       'runtime/report/render-markdown.ts',
@@ -165,6 +166,57 @@ describe('TypeScript CLI architecture', () => {
 
     for (const file of ['help.ts', 'dispatcher.ts', 'registry.ts']) {
       expect(fs.existsSync(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'cli', file))).toBe(true);
+    }
+  });
+
+  it('keeps gate execution in the gates application module instead of pipeline', () => {
+    const appRoot = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'application');
+    const pipelineSource = fs.readFileSync(path.join(appRoot, 'pipeline.ts'), 'utf8');
+    const gatesSource = fs.readFileSync(path.join(appRoot, 'gates.ts'), 'utf8');
+    const stateSource = fs.readFileSync(path.join(appRoot, 'state.ts'), 'utf8');
+    const evaluateCommand = fs.readFileSync(
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands', 'runtime', 'evaluate-gates.ts'),
+      'utf8'
+    );
+
+    expect(gatesSource).toContain('export function evaluateGates');
+    expect(gatesSource).toContain('function runGate0');
+    expect(gatesSource).not.toMatch(/^export\s+\{[^}]*evaluateGates[^}]*\}\s+from\s+['"]\.\/pipeline\.js['"]/m);
+    expect(pipelineSource).not.toContain('export function evaluateGates');
+    expect(pipelineSource).not.toContain('function runGate0');
+    expect(pipelineSource).not.toContain('function resolveGateScript');
+    expect(pipelineSource).not.toContain('export function appendRuntimeEvent');
+    expect(gatesSource).toContain("from './state.js'");
+    expect(gatesSource).not.toMatch(/from\s+['"]\.\/pipeline\.js['"]/);
+    expect(stateSource).toContain('export function appendRuntimeEvent');
+    expect(stateSource).toContain('export function readExecutionView');
+    expect(evaluateCommand).toContain("from '../../runtime/application/gates.js'");
+  });
+
+  it('uses infrastructure helpers for package paths and file operations instead of placeholder modules', () => {
+    const srcRoot = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src');
+    const pathSource = fs.readFileSync(path.join(srcRoot, 'infrastructure', 'paths.ts'), 'utf8');
+    const fsSource = fs.readFileSync(path.join(srcRoot, 'infrastructure', 'fs.ts'), 'utf8');
+    const filesWithPackageRoots = [
+      'bin/boss.ts',
+      'cli/dispatcher.ts',
+      'commands/project/index.ts',
+      'commands/artifact/index.ts',
+      'commands/install/index.ts',
+      'runtime/assets.ts',
+      'runtime/application/plugins.ts'
+    ];
+
+    expect(pathSource).toContain('export function packageRootFromImportMeta');
+    expect(pathSource).toContain('export function resolvePackagePath');
+    expect(fsSource).toContain('export function readJsonFile');
+    expect(fsSource).toContain('export function ensureDir');
+    expect(fsSource).not.toMatch(/^export\s+\{\s*fs\s*\};?\s*$/m);
+    expect(pathSource).not.toMatch(/^export\s+\{\s*path\s*\};?\s*$/m);
+
+    for (const relativePath of filesWithPackageRoots) {
+      const source = fs.readFileSync(path.join(srcRoot, relativePath), 'utf8');
+      expect(source, relativePath).not.toMatch(/path\.resolve\(__dirname,\s*['"]\.\./);
     }
   });
 });

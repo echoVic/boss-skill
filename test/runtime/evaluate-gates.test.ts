@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { evaluateGates, initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { evaluateGates } from '../../packages/boss-cli/src/runtime/application/gates.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');

@@ -1,6 +1,5 @@
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
 import {
   CliUserError,
@@ -24,10 +23,9 @@ import {
   PROJECT_USAGE,
   showRuntimeHelp
 } from './help.js';
+import { packageRootFromImportMeta } from '../infrastructure/paths.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 4);
 
 type RuntimeModule = {
   main: (argv: string[], options?: { cwd?: string }) => number | Promise<number>;

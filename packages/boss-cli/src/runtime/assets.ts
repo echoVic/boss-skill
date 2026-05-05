@@ -1,11 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolvePackagePath } from '../infrastructure/paths.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PKG_ROOT = path.resolve(__dirname, '..', '..');
-const ASSETS_ROOT = path.join(PKG_ROOT, 'assets');
+const ASSETS_ROOT = resolvePackagePath(import.meta.url, 2, 'assets');
 
 export interface AssetOptions {
   cwd?: string;

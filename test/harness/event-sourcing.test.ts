@@ -4,8 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { replayEvents } from '../../packages/boss-cli/src/runtime/application/inspection.js';
+import { evaluateGates } from '../../packages/boss-cli/src/runtime/application/gates.js';
 import {
-  evaluateGates,
   recordArtifact,
   registerPlugins,
   updateStage
