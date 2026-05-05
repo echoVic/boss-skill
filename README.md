@@ -128,6 +128,19 @@ Boss 支持自然语言需求：执行前会先推导一个英文 kebab-case 的
 
 `boss runtime <command>` 是唯一的 runtime-first surface。对外能力以 Boss CLI 为准，不再把 shell wrapper 视为兼容契约。
 
+### Agent-Friendly CLI Contract
+
+Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
+
+- `--json`: structured output; non-TTY stdout defaults to JSON
+- `--describe`: JSON command schema
+- `--dry-run`: structured action plan for writes or risky operations
+- `--json-input=<json|->`: JSON input payload
+- `--fields=<a,b>` and `--limit=<n>`: bounded output
+- `--yes`: required for destructive non-interactive execution
+
+Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`.
+
 | 编排动作 | Runtime CLI |
 |------|------|
 | 初始化流水线 | `boss runtime init-pipeline` |

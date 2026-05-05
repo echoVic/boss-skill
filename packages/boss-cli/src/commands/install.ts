@@ -9,6 +9,7 @@ import {
   createCliContext,
   describeCommand,
   renderHelp,
+  runMain,
   writeOutput
 } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/command-registry.js';
@@ -374,5 +375,6 @@ export const main = installMain;
 
 const entrypoint = process.argv[1];
 if (entrypoint && fs.realpathSync(entrypoint) === fs.realpathSync(__filename)) {
-  process.exit(installMain());
+  const context = createCliContext(process.argv.slice(2), { command: 'boss install', validateOptionValues: false });
+  process.exit(await runMain(() => installMain(), context));
 }

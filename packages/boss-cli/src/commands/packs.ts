@@ -6,6 +6,7 @@ import {
   CliUserError,
   createCliContext,
   describeCommand,
+  runMain,
   validatePathInside,
   writeOutput
 } from '../cli/contract.js';
@@ -107,5 +108,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss packs detect', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

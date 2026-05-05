@@ -1945,7 +1945,7 @@ git commit -m "feat: make mutating runtime commands agent friendly"
 - Create: `test/cli/agent-safety-contract.test.ts`
 - Modify: `test/runtime/docs-contract.test.ts`
 
-- [ ] **Step 1: Add source architecture guard tests**
+- [x] **Step 1: Add source architecture guard tests**
 
 Create `test/cli/agent-safety-contract.test.ts`:
 
@@ -1998,7 +1998,7 @@ describe('agent CLI safety source contract', () => {
 });
 ```
 
-- [ ] **Step 2: Add docs contract for the eight rules**
+- [x] **Step 2: Add docs contract for the eight rules**
 
 Append to `test/runtime/docs-contract.test.ts`:
 
@@ -2015,7 +2015,7 @@ Append to `test/runtime/docs-contract.test.ts`:
   });
 ```
 
-- [ ] **Step 3: Run safety tests to verify red**
+- [x] **Step 3: Run safety tests to verify red**
 
 Run:
 
@@ -2031,7 +2031,7 @@ FAIL
 
 Any failures should identify command files that still use raw entrypoint error handling or missing documentation.
 
-- [ ] **Step 4: Fix remaining raw error handlers and docs**
+- [x] **Step 4: Fix remaining raw error handlers and docs**
 
 For each failing CLI entrypoint file, replace:
 
@@ -2070,7 +2070,7 @@ Every `boss` command supports:
 Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`.
 ```
 
-- [ ] **Step 5: Run safety tests to verify green**
+- [x] **Step 5: Run safety tests to verify green**
 
 Run:
 
@@ -2084,7 +2084,7 @@ Expected:
 PASS
 ```
 
-- [ ] **Step 6: Commit safety guards**
+- [x] **Step 6: Commit safety guards**
 
 ```bash
 git add test/cli/agent-safety-contract.test.ts test/runtime/no-first-party-shell.test.ts test/runtime/docs-contract.test.ts README.md CONTRIBUTING.md packages/boss-cli/src

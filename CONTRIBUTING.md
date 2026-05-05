@@ -48,6 +48,19 @@ npm test
 - 不新增 `.sh` 作为实现面；需要执行外部项目命令时，在 TypeScript 中用 Node 内置模块封装。
 - 插件仍可通过 `plugin.json` 指向用户自己的可执行文件，但仓库内置能力不依赖 shell wrapper。
 
+### Agent-Friendly CLI Contract
+
+Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
+
+- `--json`: structured JSON output; non-TTY stdout defaults to JSON
+- `--describe`: JSON command schema
+- `--dry-run`: structured action plan for writes or risky operations
+- `--json-input=<json|->`: JSON input payload
+- `--fields=<a,b>` and `--limit=<n>`: bounded output
+- `--yes`: required for destructive non-interactive execution
+
+Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`. CLI paths must remain non-interactive in non-TTY contexts.
+
 ### Node.js Hook 脚本
 
 - Hook 脚本不得 crash — 错误必须 catch 并写入 stderr，然后返回安全的降级值

@@ -9,6 +9,7 @@ import {
   createCliContext,
   describeCommand,
   readJsonInput,
+  runMain,
   writeOutput
 } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/command-registry.js';
@@ -334,5 +335,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss project init', validateOptionValues: false });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

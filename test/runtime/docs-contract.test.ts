@@ -131,3 +131,26 @@ describe('thin skill CLI contract', () => {
     expect(bmadMethodology).not.toContain('scripts/hooks/run-with-flags.js');
   });
 });
+
+describe('agent-friendly CLI documentation contract', () => {
+  it('documents the agent-friendly CLI contract', () => {
+    for (const doc of [readme, contributing]) {
+      expect(doc).toContain('where applicable');
+      expect(doc).toContain('--json');
+      expect(doc).toContain('non-TTY stdout defaults to JSON');
+      expect(doc).toContain('--describe');
+      expect(doc).toContain('--dry-run');
+      expect(doc).toContain('structured action plan');
+      expect(doc).toContain('--json-input=<json|->');
+      expect(doc).toContain('--fields=<a,b>');
+      expect(doc).toContain('--limit=<n>');
+      expect(doc).toContain('--yes');
+      expect(doc).toContain('non-interactive');
+      expect(doc).toContain('Structured errors');
+      for (const field of ['code', 'message', 'input', 'retryable', 'suggestion']) {
+        expect(doc).toContain(field);
+      }
+    }
+    expect(contributing).toContain('structured JSON');
+  });
+});
