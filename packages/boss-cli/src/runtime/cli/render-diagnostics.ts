@@ -15,7 +15,7 @@ import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
 import { renderHtml } from '../report/render-html.js';
 import { buildSummaryModel } from '../report/summary-model.js';
-import { inspectEvents, inspectPipeline, inspectProgress } from './lib/inspection-runtime.js';
+import { inspectEvents, inspectPipeline, inspectProgress } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('render-diagnostics', 'boss runtime render-diagnostics FEATURE [options]');

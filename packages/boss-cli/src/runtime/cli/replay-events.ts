@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { replayEvents, replaySnapshot } from './lib/inspection-runtime.js';
+import { replayEvents, replaySnapshot } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('replay-events', 'boss runtime replay-events FEATURE [options]');

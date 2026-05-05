@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { inspectProgress } from './lib/inspection-runtime.js';
+import { inspectProgress } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('inspect-progress', 'boss runtime inspect-progress FEATURE [options]');

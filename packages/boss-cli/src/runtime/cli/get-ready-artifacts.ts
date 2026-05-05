@@ -15,7 +15,7 @@ import {
   getArtifactStatus,
   getReadyArtifacts,
   listArtifactStatuses
-} from './lib/pipeline-runtime.js';
+} from '../application/pipeline-runtime.js';
 
 function showHelp(): void {
   printRuntimeHelp('get-ready-artifacts', 'boss runtime get-ready-artifacts FEATURE [ARTIFACT] [options]');

@@ -10,7 +10,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { rebuildFeatureMemory } from './lib/memory-runtime.js';
+import { rebuildFeatureMemory } from '../application/memory-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('extract-memory', 'boss runtime extract-memory FEATURE [options]');

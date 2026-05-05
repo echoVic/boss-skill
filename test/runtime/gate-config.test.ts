@@ -7,7 +7,7 @@ import {
   initPipeline,
   evaluateGates,
   resolveGateConfig
-} from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -63,7 +63,7 @@ describe('configurable gate coverage threshold', () => {
 
   it('built-in gate1 receives the resolved coverage threshold', () => {
     const source = fs.readFileSync(
-      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'lib', 'pipeline-runtime.ts'),
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'application', 'pipeline-runtime.ts'),
       'utf8'
     );
     expect(source).toContain('coverageThreshold');

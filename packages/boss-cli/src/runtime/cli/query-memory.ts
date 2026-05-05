@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { readFeatureSummary } from './lib/memory-runtime.js';
+import { readFeatureSummary } from '../application/memory-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('query-memory', 'boss runtime query-memory FEATURE [options]');

@@ -11,7 +11,7 @@ import {
   writeOutput
 } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/command-registry.js';
-import { detectPipelinePacks } from '../runtime/cli/lib/pack-runtime.js';
+import { detectPipelinePacks } from '../runtime/application/pack-runtime.js';
 
 const packsDetectDescription = commandDescriptions['boss packs detect']!;
 

@@ -21,7 +21,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { updateStage } from './lib/pipeline-runtime.js';
+import { updateStage } from '../application/pipeline-runtime.js';
 
 interface UpdateStageInput {
   feature: string;

@@ -17,7 +17,7 @@ import {
   requireInputString,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { initPipeline } from './lib/pipeline-runtime.js';
+import { initPipeline } from '../application/pipeline-runtime.js';
 
 interface InitPipelineInput {
   feature: string;

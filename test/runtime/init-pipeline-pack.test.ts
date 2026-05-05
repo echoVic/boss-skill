@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
 import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
 
 describe('initPipeline pack application', () => {

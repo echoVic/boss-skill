@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { checkCanProceed, checkCanRetry, checkStage } from './lib/inspection-runtime.js';
+import { checkCanProceed, checkCanRetry, checkStage } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('check-stage', 'boss runtime check-stage FEATURE [stage] [options]');

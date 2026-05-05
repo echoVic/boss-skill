@@ -2,8 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import * as pipelineRuntime from './pipeline-runtime.js';
-import { projectState, type ExecutionState, type RuntimeEvent } from '../../projectors/materialize-state.js';
-import type { FeatureMemorySummary } from '../../memory/store.js';
+import { projectState, type ExecutionState, type RuntimeEvent } from '../projectors/materialize-state.js';
+import type { FeatureMemorySummary } from '../memory/store.js';
 
 export interface ActiveAgentSummary {
   stage: number;

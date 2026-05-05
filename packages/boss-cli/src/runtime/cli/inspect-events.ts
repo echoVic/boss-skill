@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { inspectEvents } from './lib/inspection-runtime.js';
+import { inspectEvents } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('inspect-events', 'boss runtime inspect-events FEATURE [options]');

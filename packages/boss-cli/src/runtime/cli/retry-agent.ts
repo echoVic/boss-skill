@@ -19,7 +19,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { retryAgent } from './lib/pipeline-runtime.js';
+import { retryAgent } from '../application/pipeline-runtime.js';
 
 interface RetryAgentInput {
   feature: string;

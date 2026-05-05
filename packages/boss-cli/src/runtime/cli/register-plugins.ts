@@ -20,7 +20,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { discoverPlugins, registerPlugins, validatePlugins } from './lib/plugin-runtime.js';
+import { discoverPlugins, registerPlugins, validatePlugins } from '../application/plugin-runtime.js';
 
 type RegisterPluginsAction = 'list' | 'validate' | 'register' | 'help';
 

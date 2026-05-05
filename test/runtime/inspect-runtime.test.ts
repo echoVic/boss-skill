@@ -8,9 +8,9 @@ import { emitProgress } from '../../packages/boss-cli/src/scripts/lib/progress-e
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../packages/boss-cli/src/runtime/cli/lib/memory-runtime.js';
-import { inspectPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/inspection-runtime.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
+import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection-runtime.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');

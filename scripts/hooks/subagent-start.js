@@ -1,7 +1,7 @@
 import { findActiveFeature, readExecJson, AGENT_STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
-import * as memoryRuntime from '../../packages/boss-cli/src/runtime/cli/lib/memory-runtime.js';
+import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+import * as memoryRuntime from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
 
 function buildMemoryContext(feature, agentType, stage, cwd) {
   try {

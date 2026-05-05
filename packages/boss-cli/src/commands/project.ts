@@ -13,7 +13,7 @@ import {
   writeOutput
 } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/command-registry.js';
-import { initPipeline } from '../runtime/cli/lib/pipeline-runtime.js';
+import { initPipeline } from '../runtime/application/pipeline-runtime.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

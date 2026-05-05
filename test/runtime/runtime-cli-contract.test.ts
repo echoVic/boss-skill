@@ -7,8 +7,8 @@ import path from 'node:path';
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../packages/boss-cli/src/runtime/cli/lib/memory-runtime.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');

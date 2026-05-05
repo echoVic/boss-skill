@@ -20,7 +20,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { updateAgent } from './lib/pipeline-runtime.js';
+import { updateAgent } from '../application/pipeline-runtime.js';
 
 interface UpdateAgentInput {
   feature: string;

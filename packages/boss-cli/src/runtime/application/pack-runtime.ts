@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { listPipelinePackManifestPaths } from '../../assets.js';
+import { listPipelinePackManifestPaths } from '../assets.js';
 
 export interface PipelinePackWhen {
   fileExists?: string[];

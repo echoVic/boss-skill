@@ -12,7 +12,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { inspectPipeline } from './lib/inspection-runtime.js';
+import { inspectPipeline } from '../application/inspection-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('inspect-pipeline', 'boss runtime inspect-pipeline FEATURE [options]');

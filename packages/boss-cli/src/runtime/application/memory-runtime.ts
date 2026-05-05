@@ -11,11 +11,11 @@ import {
   type FeatureMemorySummary,
   type GlobalMemorySummary,
   type PersistedMemoryRecord
-} from '../../memory/store.js';
-import { extractFeatureMemories } from '../../memory/extractor.js';
-import { buildAgentSections, buildStartupSummary } from '../../memory/summarizer.js';
-import type { ExecutionState, RuntimeEvent } from '../../projectors/materialize-state.js';
-import type { MemorySummaryEntry } from '../../memory/store.js';
+} from '../memory/store.js';
+import { extractFeatureMemories } from '../memory/extractor.js';
+import { buildAgentSections, buildStartupSummary } from '../memory/summarizer.js';
+import type { ExecutionState, RuntimeEvent } from '../projectors/materialize-state.js';
+import type { MemorySummaryEntry } from '../memory/store.js';
 
 function readJson<T>(filePath: string, fallback: T): T {
   if (!fs.existsSync(filePath)) {

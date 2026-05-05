@@ -18,7 +18,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { evaluateGates } from './lib/pipeline-runtime.js';
+import { evaluateGates } from '../application/pipeline-runtime.js';
 
 interface EvaluateGatesInput {
   feature: string;

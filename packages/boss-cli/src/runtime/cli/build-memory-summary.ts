@@ -10,7 +10,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { printRuntimeHelp } from './lib/agent-command-utils.js';
-import { buildFeatureSummary } from './lib/memory-runtime.js';
+import { buildFeatureSummary } from '../application/memory-runtime.js';
 
 function printHelp(): void {
   printRuntimeHelp('build-memory-summary', 'boss runtime build-memory-summary FEATURE [options]');

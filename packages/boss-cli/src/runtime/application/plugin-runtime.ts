@@ -3,17 +3,17 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { listPluginManifestPaths, resolveBuiltInAssetPath } from '../../assets.js';
-import { EVENT_TYPES } from '../../domain/event-types.js';
+import { listPluginManifestPaths, resolveBuiltInAssetPath } from '../assets.js';
+import { EVENT_TYPES } from '../domain/event-types.js';
 import {
   materializeState,
   type ExecutionState,
   type PluginSummary
-} from '../../projectors/materialize-state.js';
+} from '../projectors/materialize-state.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const PLUGIN_TYPES = new Set(['gate', 'agent', 'pipeline-pack', 'reporter']);
 const PLUGIN_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PLUGIN_VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]+)?$/;

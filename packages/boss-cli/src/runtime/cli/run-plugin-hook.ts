@@ -20,7 +20,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { runHook } from './lib/plugin-runtime.js';
+import { runHook } from '../application/plugin-runtime.js';
 
 interface RunPluginHookInput {
   hook: string;

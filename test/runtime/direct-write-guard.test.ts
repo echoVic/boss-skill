@@ -15,7 +15,7 @@ describe('phase-1 direct-write guard', () => {
     const criticalFiles = [
       'scripts/hooks/post-tool-write.js',
       'packages/boss-cli/src/runtime/cli/evaluate-gates.ts',
-      'packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.ts',
+      'packages/boss-cli/src/runtime/application/pipeline-runtime.ts',
       'packages/boss-cli/src/runtime/cli/register-plugins.ts',
       'packages/boss-cli/src/commands/project.ts'
     ];
@@ -39,7 +39,7 @@ describe('phase-1 direct-write guard', () => {
   it('keeps runtime-first writer paths free of shell wrapper orchestration', () => {
     const runtimeFirstFiles = [
       'scripts/hooks/post-tool-write.js',
-      'packages/boss-cli/src/runtime/cli/lib/pipeline-runtime.ts',
+      'packages/boss-cli/src/runtime/application/pipeline-runtime.ts',
       'scripts/hooks/subagent-start.js',
       'scripts/hooks/subagent-stop.js'
     ];

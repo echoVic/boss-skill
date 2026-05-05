@@ -20,7 +20,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { recordFeedback } from './lib/pipeline-runtime.js';
+import { recordFeedback } from '../application/pipeline-runtime.js';
 
 interface RecordFeedbackInput {
   feature: string;

@@ -18,7 +18,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './lib/agent-command-utils.js';
-import { recordArtifact } from './lib/pipeline-runtime.js';
+import { recordArtifact } from '../application/pipeline-runtime.js';
 
 interface RecordArtifactInput {
   feature: string;

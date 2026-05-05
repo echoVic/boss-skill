@@ -2,19 +2,19 @@ import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { resolveArtifactDagPath, resolveBuiltInAssetPath } from '../../assets.js';
-import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../../domain/event-types.js';
+import { resolveArtifactDagPath, resolveBuiltInAssetPath } from '../assets.js';
+import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../domain/event-types.js';
 import {
   materializeState,
   type ExecutionState,
   type GateState,
   type RuntimeEvent,
   type StageState
-} from '../../projectors/materialize-state.js';
+} from '../projectors/materialize-state.js';
 import { getPackStateParameters, resolvePipelinePack, type PipelinePackConfig, type PipelinePackStateParameters } from './pack-runtime.js';
 import { registerPlugins as registerPluginsRuntime } from './plugin-runtime.js';
 import { buildFeatureSummary, rebuildFeatureMemory, rebuildGlobalMemory } from './memory-runtime.js';
-import { emitProgress } from '../../../scripts/lib/progress-emitter.js';
+import { emitProgress } from '../../scripts/lib/progress-emitter.js';
 
 const DEFAULT_DAG_PATH = resolveBuiltInAssetPath('artifact-dag.json');
 const NPM_CMD = process.platform === 'win32' ? 'npm.cmd' : 'npm';

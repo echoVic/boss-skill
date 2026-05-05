@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { detectPipelinePacks } from '../../packages/boss-cli/src/runtime/cli/lib/pack-runtime.js';
+import { detectPipelinePacks } from '../../packages/boss-cli/src/runtime/application/pack-runtime.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
