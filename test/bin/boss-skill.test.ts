@@ -62,6 +62,7 @@ describe('boss-skill dist bin', () => {
       expect(result.status).toBe(0);
       expect(result.stdout + result.stderr).toContain('--json');
       expect(result.stdout + result.stderr).toContain('--describe');
+      expect(result.stdout + result.stderr).toContain('--json-input');
     }
   });
 
