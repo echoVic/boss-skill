@@ -1,9 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-import { resolveBuiltInAssetPath } from '../../assets.js';
+import { resolveArtifactDagPath, resolveBuiltInAssetPath } from '../../assets.js';
 import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../../domain/event-types.js';
 import {
   materializeState,
@@ -17,10 +16,7 @@ import { registerPlugins as registerPluginsRuntime } from './plugin-runtime.js';
 import { buildFeatureSummary, rebuildFeatureMemory, rebuildGlobalMemory } from './memory-runtime.js';
 import { emitProgress } from '../../../scripts/lib/progress-emitter.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
-const DEFAULT_DAG_PATH = path.join(REPO_ROOT, 'harness', 'artifact-dag.json');
+const DEFAULT_DAG_PATH = resolveBuiltInAssetPath('artifact-dag.json');
 const NPM_CMD = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const NPX_CMD = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
@@ -94,21 +90,18 @@ function resolveDagPath(cwd: string, feature: string, dagPath?: string): string 
     return path.isAbsolute(dagPath) ? dagPath : path.resolve(cwd, dagPath);
   }
 
-  let packName = 'default';
+  let packDagPath = '';
   try {
     const execution = readExecutionView(cwd, feature);
-    if (execution.parameters && execution.parameters.pipelinePack) {
-      packName = String(execution.parameters.pipelinePack);
+    const configuredDag = (execution.parameters?.packConfig as Record<string, unknown> | undefined)?.artifactDag;
+    if (typeof configuredDag === 'string' && configuredDag.length > 0) {
+      packDagPath = configuredDag;
     }
   } catch {
-    // Ignore if execution view is missing when resolving initial DAG.
+    packDagPath = '';
   }
 
-  const packDag = path.join(REPO_ROOT, 'harness', 'pipeline-packs', packName, 'artifact-dag.json');
-  if (fs.existsSync(packDag)) {
-    return packDag;
-  }
-  return DEFAULT_DAG_PATH;
+  return resolveArtifactDagPath({ cwd, packDagPath });
 }
 
 function loadDagForFeature(cwd: string, feature: string, dagPath?: string): { dag: ArtifactDag; dagPath: string } {

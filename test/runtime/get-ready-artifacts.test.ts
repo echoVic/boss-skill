@@ -35,6 +35,31 @@ describe('getReadyArtifacts', () => {
     expect(ready.map((item) => item.artifact)).toEqual(['prd.md']);
   });
 
+  it('uses .boss artifact DAG override before built-in DAG', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    const projectDagPath = path.join(tmpDir, '.boss', 'artifact-dag.json');
+    fs.mkdirSync(path.dirname(projectDagPath), { recursive: true });
+    fs.writeFileSync(
+      projectDagPath,
+      JSON.stringify({
+        version: '1.0.0',
+        artifacts: {
+          'custom.md': {
+            inputs: [],
+            agent: 'boss-pm',
+            stage: 1,
+            optional: false,
+            description: 'Custom project artifact'
+          }
+        }
+      }),
+      'utf8'
+    );
+
+    const ready = getReadyArtifacts('test-feat', { cwd: tmpDir });
+    expect(ready.map((item) => item.artifact)).toEqual(['custom.md']);
+  });
+
   it('returns ready artifacts in deterministic order', () => {
     initPipeline('test-feat', { cwd: tmpDir });
     recordArtifact('test-feat', 'prd.md', 1, { cwd: tmpDir });

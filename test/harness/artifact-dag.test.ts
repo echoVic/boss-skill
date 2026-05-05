@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const BOSS_BIN = path.join(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
-const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
+const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'assets', 'artifact-dag.json');
 
 function getExecFileError(error: unknown) {
   return error as Error & { status?: number; stdout?: string; stderr?: string };
