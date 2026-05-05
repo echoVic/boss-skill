@@ -114,6 +114,9 @@ describe('runtime CLI contract', () => {
     const help = runCli('get-ready-artifacts', ['--help']);
     expect(help.status).toBe(0);
     expect(help.stdout).toMatch(/用法: get-ready-artifacts\.js <feature> <artifact> \[options\]/);
+    expect(help.stdout).toContain(
+      'DAG 文件路径（默认使用 .boss/artifact-dag.json 或内置 packages/boss-cli/assets/artifact-dag.json）'
+    );
 
     const result = runCli('get-ready-artifacts', ['test-feat', '--ready', '--json']);
     expect(result.status).toBe(0);

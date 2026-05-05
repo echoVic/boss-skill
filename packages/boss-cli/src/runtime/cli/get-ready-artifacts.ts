@@ -22,7 +22,7 @@ function showHelp(): void {
 选项:
   --can-start       检查该产物的所有输入依赖是否已就绪
   --ready           列出所有当前可以开始的产物
-  --dag <path>      指定 DAG 文件路径（默认 harness/artifact-dag.json）
+  --dag <path>      指定 DAG 文件路径（默认使用 .boss/artifact-dag.json 或内置 packages/boss-cli/assets/artifact-dag.json）
   --json            JSON 格式输出
 
 示例:
