@@ -50,6 +50,21 @@ describe('boss-skill dist bin', () => {
     }
   });
 
+  it('exposes global agent contract flags in command help', () => {
+    const help = runCli(['packages/boss-cli/dist/bin/boss.js', '--help']);
+    expect(help.status).toBe(0);
+    expect(help.stdout).toContain('--json');
+    expect(help.stdout).toContain('--describe');
+    expect(help.stdout).toContain('--json-input');
+
+    for (const command of ['project', 'artifact', 'packs', 'hooks', 'runtime']) {
+      const result = runCli(['packages/boss-cli/dist/bin/boss.js', command, '--help']);
+      expect(result.status).toBe(0);
+      expect(result.stdout + result.stderr).toContain('--json');
+      expect(result.stdout + result.stderr).toContain('--describe');
+    }
+  });
+
   it('builds the dist entrypoint used by both bins', () => {
     expect(existsSync(distEntry)).toBe(true);
   });

@@ -231,6 +231,45 @@ describe('runtime CLI contract', () => {
     expect(payload.startupSummary[0]?.summary).toBe('Stage 3 is unstable');
   });
 
+  it('runtime commands expose describe metadata and structured non-tty errors', () => {
+    for (const command of [
+      'init-pipeline',
+      'update-stage',
+      'update-agent',
+      'record-artifact',
+      'get-ready-artifacts',
+      'evaluate-gates',
+      'check-stage',
+      'replay-events',
+      'inspect-progress',
+      'inspect-pipeline',
+      'inspect-events',
+      'inspect-plugins',
+      'render-diagnostics',
+      'extract-memory',
+      'query-memory',
+      'build-memory-summary',
+      'generate-summary',
+      'register-plugins',
+      'run-plugin-hook',
+      'record-feedback',
+      'retry-agent',
+      'retry-stage'
+    ]) {
+      const describe = runCli(command, ['--describe']);
+      expect(describe.status, `${command} --describe`).toBe(0);
+      const metadata = JSON.parse(describe.stdout) as { command: string; options: Array<{ name: string }> };
+      expect(metadata.command).toContain(command);
+      expect(metadata.options.map((option) => option.name)).toContain('json');
+    }
+
+    const result = runCli('update-stage', ['missing-feature', '1', 'running', '--bad-flag']);
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; retryable: boolean } };
+    expect(payload.error.code).toBe('unknown_option');
+    expect(payload.error.retryable).toBe(false);
+  });
+
   it('run-with-flags launches async ESM hook modules, preserves chunk order, and caps stdin at 1 MB', () => {
     const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-launcher-'));
     const hookPath = path.join(pluginRoot, 'echo-hook.js');
