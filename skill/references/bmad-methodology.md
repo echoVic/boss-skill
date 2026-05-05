@@ -375,7 +375,7 @@ Boss Mode 通过 Claude Code Hooks 机制在关键时点注入行为，实现流
 
 ### Hook 执行机制
 
-所有 Hook 通过 `scripts/hooks/run-with-flags.js` 中间层执行，路径使用 `${CLAUDE_PLUGIN_ROOT}` 前缀（支持插件模式）。
+所有 Hook 通过 `boss hooks run` 进入 Boss CLI hook dispatcher，由 CLI 负责解析插件根目录与 hook profile，并统一调度具体 Hook。
 
 ---
 

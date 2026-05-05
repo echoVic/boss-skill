@@ -12,6 +12,10 @@ const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8')
 const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
 const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'hooks.json'), 'utf8');
 const claudeSettings = fs.readFileSync(path.join(REPO_ROOT, '.claude', 'settings.json'), 'utf8');
+const bmadMethodology = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'bmad-methodology.md'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -123,5 +127,7 @@ describe('thin skill CLI contract', () => {
     expect(hooksConfig).not.toContain('scripts/lib/run-with-flags.js');
     expect(claudeSettings).toContain('boss hooks run');
     expect(claudeSettings).not.toContain('scripts/lib/run-with-flags.js');
+    expect(bmadMethodology).toContain('boss hooks run');
+    expect(bmadMethodology).not.toContain('scripts/hooks/run-with-flags.js');
   });
 });
