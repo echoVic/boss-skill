@@ -21,8 +21,8 @@ describe('memory runtime integration', () => {
   });
 
   async function loadModules() {
-    const memoryRuntime = await import('../../packages/boss-cli/src/runtime/application/memory-runtime.js');
-    const runtime = await import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+    const memoryRuntime = await import('../../packages/boss-cli/src/runtime/application/memory.js');
+    const runtime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
     return { memoryRuntime, runtime };
   }
 
@@ -60,7 +60,7 @@ describe('memory runtime integration', () => {
       };
     });
 
-    const runtime = await import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+    const runtime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
 
     runtime.initPipeline('test-feat', { cwd: tmpDir });
     expect(() => runtime.updateStage('test-feat', 1, 'running', { cwd: tmpDir })).not.toThrow();

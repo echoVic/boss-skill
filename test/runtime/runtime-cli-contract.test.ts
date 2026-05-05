@@ -7,8 +7,8 @@ import path from 'node:path';
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/memory.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -33,7 +33,7 @@ describe('runtime CLI contract', () => {
   });
 
   function distCli(name: string) {
-    return path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'runtime', 'cli', `${name}.js`);
+    return path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'commands', 'runtime', `${name}.js`);
   }
 
   function runCli(name: string, args: string[]) {
@@ -45,7 +45,7 @@ describe('runtime CLI contract', () => {
 
   it('get-ready-artifacts CLI does not depend on runtime internal exports', () => {
     const source = fs.readFileSync(
-      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'get-ready-artifacts.ts'),
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands', 'runtime', 'get-ready-artifacts.ts'),
       'utf8'
     );
 
@@ -53,7 +53,7 @@ describe('runtime CLI contract', () => {
   });
 
   it('dist init-pipeline artifact is rebuilt from the current source under review', () => {
-    const sourcePath = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'init-pipeline.ts');
+    const sourcePath = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands', 'runtime', 'init-pipeline.ts');
     const distPath = distCli('init-pipeline');
 
     const sourceMtime = fs.statSync(sourcePath).mtimeMs;

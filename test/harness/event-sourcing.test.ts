@@ -3,13 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { replayEvents } from '../../packages/boss-cli/src/runtime/application/inspection-runtime.js';
+import { replayEvents } from '../../packages/boss-cli/src/runtime/application/inspection.js';
 import {
   evaluateGates,
   recordArtifact,
   registerPlugins,
   updateStage
-} from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
 
 describe('event-sourcing', () => {

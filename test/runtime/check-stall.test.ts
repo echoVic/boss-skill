@@ -3,13 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline.js');
 
 describe('checkStall', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+    pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-stall-'));
     // Initialize a pipeline
     pipelineRuntime.initPipeline('test-feat', { cwd: tmpDir });

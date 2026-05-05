@@ -5,11 +5,11 @@ import path from 'node:path';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
-// Dynamic import of pipeline-runtime (ESM)
-let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+// Dynamic import of pipeline (ESM)
+let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline.js');
 
 beforeEach(async () => {
-  pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline-runtime.js');
+  pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
 });
 
 describe('tech stack caching', () => {

@@ -4,13 +4,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { emitProgress } from '../../packages/boss-cli/src/scripts/lib/progress-emitter.js';
+import { emitProgress } from '../../packages/boss-cli/src/infrastructure/process.js';
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
-import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection-runtime.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/memory.js';
+import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection.js';
+import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');

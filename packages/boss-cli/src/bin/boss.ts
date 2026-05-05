@@ -3,9 +3,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { installMain } from '../commands/install.js';
+import { installMain } from '../commands/install/index.js';
 import { createCliContext, describeCommand, runMain } from '../cli/contract.js';
-import { runtimeCommandNames } from '../cli/command-registry.js';
+import { runtimeCommandNames } from '../cli/registry.js';
 import {
   describeRegisteredCommand,
   removeFirstPositional,
@@ -16,9 +16,9 @@ import {
   runRuntimeCommand,
   throwUnknownCommand,
   writeDescription
-} from '../cli/group-router.js';
-import { showRootHelp } from '../cli/root-help.js';
-import { rootDescription } from '../cli/root-descriptions.js';
+} from '../cli/dispatcher.js';
+import { showRootHelp } from '../cli/help.js';
+import { rootDescription } from '../cli/registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

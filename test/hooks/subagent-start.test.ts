@@ -7,7 +7,7 @@ import { run } from '../../scripts/hooks/subagent-start.js';
 import {
   buildFeatureSummary,
   writeFeatureMemory
-} from '../../packages/boss-cli/src/runtime/application/memory-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/memory.js';
 
 function createTempBossDir(feature: string, execData?: Record<string, unknown>) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-test-'));

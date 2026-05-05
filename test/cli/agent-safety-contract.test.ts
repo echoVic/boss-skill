@@ -35,9 +35,13 @@ describe('agent CLI safety source contract', () => {
   it('routes command entrypoint errors through cli contract helpers', () => {
     const cliFiles = [
       path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'bin', 'boss.ts'),
-      ...walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands')),
-      ...walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli'))
-    ].filter((file) => file.endsWith('.ts') && !file.includes(`${path.sep}lib${path.sep}`));
+      ...walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands'))
+    ].filter(
+      (file) =>
+        file.endsWith('.ts') &&
+        !file.includes(`${path.sep}lib${path.sep}`) &&
+        path.basename(file) !== 'agent-command-utils.ts'
+    );
 
     for (const file of cliFiles) {
       const source = fs.readFileSync(file, 'utf8');

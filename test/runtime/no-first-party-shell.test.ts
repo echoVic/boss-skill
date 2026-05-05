@@ -31,16 +31,16 @@ describe('TypeScript CLI architecture', () => {
 
   it('routes project, artifact, and pack commands through TypeScript modules', () => {
     const bossSource = fs.readFileSync(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'bin', 'boss.ts'), 'utf8');
-    const groupRouterSource = fs.readFileSync(
-      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'cli', 'group-router.ts'),
+    const dispatcherSource = fs.readFileSync(
+      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'cli', 'dispatcher.ts'),
       'utf8'
     );
 
     expect(bossSource).not.toContain('runBashScript');
     expect(bossSource).not.toContain('.sh');
-    expect(groupRouterSource).toContain("import('../commands/project.js')");
-    expect(groupRouterSource).toContain("import('../commands/artifact.js')");
-    expect(groupRouterSource).toContain("import('../commands/packs.js')");
+    expect(dispatcherSource).toContain("import('../commands/project/index.js')");
+    expect(dispatcherSource).toContain("import('../commands/artifact/index.js')");
+    expect(dispatcherSource).toContain("import('../commands/packs/index.js')");
   });
 
   it('keeps harness as a runtime pattern instead of a root directory', () => {
@@ -71,22 +71,86 @@ describe('TypeScript CLI architecture', () => {
     }
   });
 
-  it('keeps runtime application services outside CLI adapter directories', () => {
-    const cliLibDir = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'cli', 'lib');
-    const cliLibFiles = fs.existsSync(cliLibDir)
-      ? fs.readdirSync(cliLibDir).filter((file) => file.endsWith('.ts')).sort()
-      : [];
+  it('matches the intended package source tree shape', () => {
+    const srcRoot = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src');
+    const expectedFiles = [
+      'bin/boss.ts',
+      'cli/contract.ts',
+      'cli/dispatcher.ts',
+      'cli/registry.ts',
+      'cli/help.ts',
+      'commands/project/index.ts',
+      'commands/artifact/index.ts',
+      'commands/packs/index.ts',
+      'commands/install/index.ts',
+      'commands/runtime/init-pipeline.ts',
+      'runtime/application/pipeline.ts',
+      'runtime/application/plugins.ts',
+      'runtime/application/memory.ts',
+      'runtime/application/inspection.ts',
+      'runtime/application/gates.ts',
+      'runtime/domain/event-types.ts',
+      'runtime/projectors/materialize-state.ts',
+      'runtime/report/render-markdown.ts',
+      'runtime/assets.ts',
+      'infrastructure/paths.ts',
+      'infrastructure/process.ts',
+      'infrastructure/fs.ts'
+    ];
 
-    expect(cliLibFiles).toEqual(['agent-command-utils.ts']);
+    for (const relativePath of expectedFiles) {
+      expect(fs.existsSync(path.join(srcRoot, relativePath)), relativePath).toBe(true);
+    }
 
-    for (const file of [
-      'inspection-runtime.ts',
-      'memory-runtime.ts',
-      'pack-runtime.ts',
-      'pipeline-runtime.ts',
-      'plugin-runtime.ts'
-    ]) {
-      expect(fs.existsSync(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'application', file))).toBe(true);
+    const forbiddenFiles = [
+      'cli/group-router.ts',
+      'cli/root-help.ts',
+      'cli/root-descriptions.ts',
+      'cli/root-command-registry.ts',
+      'cli/runtime-command-registry.ts',
+      'cli/runtime-loader.ts',
+      'commands/project.ts',
+      'commands/artifact.ts',
+      'commands/packs.ts',
+      'commands/install.ts',
+      'runtime/cli',
+      'runtime/application/pipeline-runtime.ts',
+      'runtime/application/plugin-runtime.ts',
+      'runtime/application/memory-runtime.ts',
+      'runtime/application/inspection-runtime.ts',
+      'runtime/application/pack-runtime.ts',
+      'scripts'
+    ];
+
+    for (const relativePath of forbiddenFiles) {
+      expect(fs.existsSync(path.join(srcRoot, relativePath)), relativePath).toBe(false);
+    }
+  });
+
+  it('build output does not keep stale pre-refactor entrypoints', () => {
+    const distRoot = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist');
+    const forbiddenPaths = [
+      'cli/group-router.js',
+      'cli/root-help.js',
+      'cli/command-registry.js',
+      'cli/root-command-registry.js',
+      'cli/runtime-command-registry.js',
+      'cli/runtime-loader.js',
+      'commands/project.js',
+      'commands/artifact.js',
+      'commands/packs.js',
+      'commands/install.js',
+      'runtime/cli',
+      'runtime/application/pipeline-runtime.js',
+      'runtime/application/plugin-runtime.js',
+      'runtime/application/memory-runtime.js',
+      'runtime/application/inspection-runtime.js',
+      'runtime/application/pack-runtime.js',
+      'scripts'
+    ];
+
+    for (const relativePath of forbiddenPaths) {
+      expect(fs.existsSync(path.join(distRoot, relativePath)), relativePath).toBe(false);
     }
   });
 
@@ -99,7 +163,7 @@ describe('TypeScript CLI architecture', () => {
     expect(bossSource).not.toContain('const runtimeCommands');
     expect(bossSource).not.toContain('const ROOT_USAGE');
 
-    for (const file of ['root-help.ts', 'group-router.ts', 'runtime-loader.ts']) {
+    for (const file of ['help.ts', 'dispatcher.ts', 'registry.ts']) {
       expect(fs.existsSync(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'cli', file))).toBe(true);
     }
   });

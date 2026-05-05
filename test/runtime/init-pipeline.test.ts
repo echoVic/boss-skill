@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 
-describe('pipeline-runtime exports', () => {
+describe('pipeline exports', () => {
   it('provides the expected phase-2 operations', () => {
     const expected = [
       'initPipeline',

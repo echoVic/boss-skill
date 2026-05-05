@@ -7,7 +7,7 @@ import {
   recordArtifact,
   getArtifactVersion,
   collectCompletedArtifactsVersioned
-} from '../../packages/boss-cli/src/runtime/application/pipeline-runtime.js';
+} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 
 describe('artifact version control', () => {
   let tmpDir: string;
