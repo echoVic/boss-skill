@@ -104,6 +104,18 @@ Copy this checklist and check off items as you complete them:
   - [ ] -1.3 提示用户先修改模板，再重新运行 `/boss ...`
   - [ ] -1.4 ⛔ 本次执行到此结束，不进入 DAG 执行循环
 
+- [ ] **Step 0a: Feature Slug 归一化** ⚠️ REQUIRED
+  - [ ] 0a.1 **判断输入是否是可执行任务**：用户输入必须表达一个要构建、修改、迁移、修复或交付的目标。
+    - ✅ 可执行任务：如“把现有原生 HTML 组件迁移成 shadcn 组件”
+    - ❌ 约束类输入：如“不要用原生的 html 组件，我们引入了 shadcn”
+  - [ ] 0a.2 若只是约束类输入、团队偏好、技术栈说明或补充上下文，暂停流水线，不要创建 `.boss/<feature>/`，询问用户要把该约束应用到哪个已有或新 feature。
+  - [ ] 0a.3 若用户显式提供了合法 slug（小写字母、数字、连字符；例如 `shadcn-component-migration`），将它作为 `<feature-name>`。
+  - [ ] 0a.4 若用户只提供自然语言需求，先将核心任务归一化为简短英文 kebab-case slug，再用于后续所有 runtime/script 调用。
+    - “做一个 Todo 应用” → `todo-app`
+    - “给现有项目加用户认证” → `user-auth`
+    - “把现有原生 HTML 组件迁移成 shadcn 组件” → `shadcn-component-migration`
+  - [ ] 0a.5 归一化后的 slug 必须符合 `scripts/init-project.sh` 的格式校验；不确定时用一句话向用户确认 slug。
+
 - [ ] **Step 0: 需求澄清** ⚠️ REQUIRED (除非 `--quick`)
   - [ ] 0.1 **判断需求完整度**：用户给的信息是否包含"做什么 + 给谁用 + 核心场景"？
     - ✅ 三者都有 → 跳到 0.4

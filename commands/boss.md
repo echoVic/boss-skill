@@ -11,8 +11,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 ## 执行步骤
 
 1. 读取 `skills/boss/SKILL.md`（如存在）或根目录的 `SKILL.md`，获取完整的 Boss 编排指令
-2. 按照 SKILL.md 中定义的四阶段工作流执行
-3. 用户传入的参数（如 `--skip-ui`、`--quick`、`--template` 等）直接透传给工作流
+2. 自然语言需求会先归一化为 feature slug，再传给 `scripts/init-project.sh <feature-name>`
+3. 约束类输入不会启动新流水线：如果用户只是补充技术栈、偏好或约束，先询问要应用到哪个已有或新 feature
+4. 按照 SKILL.md 中定义的四阶段工作流执行
+5. 用户传入的参数（如 `--skip-ui`、`--quick`、`--template` 等）直接透传给工作流
 
 ## 用法
 
@@ -26,10 +28,13 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 /boss 做一个 Todo 应用
 /boss 用户认证 --template
 /boss 给现有项目加用户认证 --skip-ui
+/boss 把现有原生 HTML 组件迁移成 shadcn 组件
 /boss 快速搭建 API 服务 --skip-deploy --quick
 /boss 继续上次中断的任务 --continue-from 3
 /boss 轻量模式 --roles core --hitl-level off
 ```
+
+自然语言示例会先推导出稳定的产物目录名，例如“做一个 Todo 应用”使用 `.boss/todo-app/`，“把现有原生 HTML 组件迁移成 shadcn 组件”使用 `.boss/shadcn-component-migration/`。
 
 ### 选项
 

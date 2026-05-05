@@ -8,6 +8,8 @@ const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'ut
 };
 const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
+const skill = fs.readFileSync(path.join(REPO_ROOT, 'SKILL.md'), 'utf8');
+const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'commands', 'boss.md'), 'utf8');
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'agents', 'shared', 'tech-detection.md'),
@@ -64,5 +66,15 @@ describe('package metadata', () => {
     expect(contributing).toContain('src/');
     expect(contributing).toContain('dist/');
     expect(contributing).toContain('Vitest');
+  });
+});
+
+describe('boss natural language command contract', () => {
+  it('documents feature slug derivation and constraint-only handling', () => {
+    expect(skill).toContain('Feature Slug 归一化');
+    expect(skill).toContain('约束类输入');
+    expect(skill).toContain('不要创建 `.boss/<feature>/`');
+    expect(bossCommand).toContain('自然语言需求会先归一化为 feature slug');
+    expect(bossCommand).toContain('约束类输入不会启动新流水线');
   });
 });

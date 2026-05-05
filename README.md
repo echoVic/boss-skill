@@ -98,10 +98,13 @@ npm update -g @blade-ai/boss-skill
 /boss 做一个 Todo 应用
 /boss 用户认证 --template
 /boss 给现有项目加用户认证 --skip-ui
+/boss 把现有原生 HTML 组件迁移成 shadcn 组件
 /boss 快速搭建 API 服务 --skip-deploy --quick
 /boss 继续上次中断的任务 --continue-from 3
 /boss 轻量模式 --roles core --hitl-level off
 ```
+
+Boss 支持自然语言需求：执行前会先推导一个英文 kebab-case 的 feature slug 作为产物目录名，例如“做一个 Todo 应用”会落到 `.boss/todo-app/`。如果用户只是补充技术约束或团队偏好，例如“不要用原生 html 组件，我们引入了 shadcn”，Boss 会暂停并询问这条约束要应用到哪个 feature，而不是新建目录。
 
 | 参数 | 说明 |
 |------|------|
