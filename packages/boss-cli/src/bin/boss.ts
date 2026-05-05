@@ -269,12 +269,10 @@ function runHookScript(argv: string[], context: ReturnType<typeof createCliConte
     return runNodeScript(scriptPath, argv);
   }
 
-  const stdin = context.stdinIsTTY ? undefined : fs.readFileSync(0);
   const result = spawnSync(process.execPath, [scriptPath, ...argv], {
     cwd: process.cwd(),
     env: process.env,
-    input: stdin,
-    stdio: ['pipe', 'pipe', 'pipe']
+    stdio: ['inherit', 'pipe', 'pipe']
   });
   if (result.error) {
     throw result.error;

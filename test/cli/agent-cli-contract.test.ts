@@ -153,6 +153,52 @@ describe('agent-friendly boss CLI contract', () => {
     expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(false);
   });
 
+  it('install and uninstall json execute quietly with structured payloads', () => {
+    const home = path.join(tmpDir, 'home');
+    fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
+
+    const install = spawnSync(process.execPath, [BOSS_BIN, 'install', '--json'], {
+      cwd: tmpDir,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(install.status).toBe(0);
+    expect(install.stdout).not.toContain('Detected');
+    const installPayload = JSON.parse(install.stdout) as {
+      actions: Array<{ type: string; agent: string; path: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+      status: string;
+    };
+    expect(installPayload.status).toBe('installed');
+    expect(installPayload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(installPayload.risk_tier).toBe('medium');
+    expect(installPayload.requires_approval).toBe(false);
+    expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(true);
+
+    const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes', '--json'], {
+      cwd: tmpDir,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(uninstall.status).toBe(0);
+    expect(uninstall.stdout).not.toContain('@blade-ai/boss-skill');
+    expect(uninstall.stdout).not.toContain('Uninstall complete');
+    const uninstallPayload = JSON.parse(uninstall.stdout) as {
+      actions: Array<{ type: string; agent: string; path: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+      status: string;
+    };
+    expect(uninstallPayload.status).toBe('uninstalled');
+    expect(uninstallPayload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(uninstallPayload.risk_tier).toBe('high');
+    expect(uninstallPayload.requires_approval).toBe(true);
+    expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(false);
+  });
+
   it('artifact prepare dry-run returns a structured write plan', () => {
     fs.mkdirSync(path.join(tmpDir, '.boss', 'demo'), { recursive: true });
     const result = runBoss(['artifact', 'prepare', 'demo', 'prd.md', '--dry-run', '--json'], tmpDir);
@@ -167,6 +213,26 @@ describe('agent-friendly boss CLI contract', () => {
     ]);
     expect(payload.risk_tier).toBe('medium');
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'demo', 'prd.md'))).toBe(false);
+  });
+
+  it('artifact prepare rejects feature traversal before building target paths', () => {
+    const outside = path.resolve(tmpDir, '..', 'sibling');
+    fs.rmSync(outside, { recursive: true, force: true });
+    fs.mkdirSync(outside, { recursive: true });
+
+    try {
+      const result = runBoss(['artifact', 'prepare', '../../sibling', 'prd.md', '--json'], tmpDir);
+
+      expect(result.status).toBe(1);
+      const payload = JSON.parse(result.stderr) as {
+        error: { code: string; input: Record<string, unknown> };
+      };
+      expect(payload.error.code).toBe('invalid_feature');
+      expect(payload.error.input).toEqual({ feature: '../../sibling' });
+      expect(fs.existsSync(path.join(outside, 'prd.md'))).toBe(false);
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   it('packs detect supports fields and limit', () => {

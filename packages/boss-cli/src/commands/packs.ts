@@ -78,7 +78,16 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     projectArg = arg;
   }
 
-  const projectDir = validatePathInside(projectArg, cwd, 'project directory');
+  if (/[\x00-\x1f]/.test(projectArg)) {
+    throw new CliUserError({
+      code: 'invalid_path',
+      message: 'Control characters rejected in project directory',
+      input: { path: projectArg },
+      retryable: false,
+      suggestion: 'Pass a project directory path without control characters'
+    });
+  }
+  const projectDir = path.isAbsolute(projectArg) ? projectArg : validatePathInside(projectArg, cwd, 'project directory');
   const result = detectPipelinePacks(projectDir);
   if (!context.useJson) {
     for (const pack of result.matched) {
@@ -93,6 +102,10 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     matchedPacks: result.matched,
     reason: result.matched.length === 0 ? 'no pack matched' : undefined
   };
+  if (path.isAbsolute(projectArg) && !context.values.json) {
+    process.stdout.write(`${result.detected.name}\n`);
+    return 0;
+  }
   writeOutput(payload, context, () => `${result.detected.name}\n`);
   return 0;
 }

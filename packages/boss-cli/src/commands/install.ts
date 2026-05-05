@@ -172,11 +172,11 @@ function copyDir(src: string, dest: string, exclude?: string[]): void {
   }
 }
 
-function copyInstall(agent: Agent, dryRun: boolean): void {
+function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
   const dest = agent.dest();
 
   if (dryRun) {
-    console.log(`  [dry-run] ${agent.name}: would install to ${dest}`);
+    if (!silent) console.log(`  [dry-run] ${agent.name}: would install to ${dest}`);
     return;
   }
 
@@ -198,15 +198,16 @@ function copyInstall(agent: Agent, dryRun: boolean): void {
     fs.writeFileSync(brainstormMd, injectBrainstormMetadata(content, agent.name));
   }
 
-  console.log(`  ✅ ${agent.name}: ${dest} (copied + metadata injected)`);
+  if (!silent) console.log(`  ✅ ${agent.name}: ${dest} (copied + metadata injected)`);
 }
 
-function pluginInstall(dryRun: boolean): void {
+function pluginInstall(dryRun: boolean, silent = false): void {
   if (dryRun) {
-    console.log(`  [dry-run] Claude Code: would register plugin at ${PKG_ROOT}`);
+    if (!silent) console.log(`  [dry-run] Claude Code: would register plugin at ${PKG_ROOT}`);
     return;
   }
 
+  if (silent) return;
   console.log(`  ✅ Claude Code: plugin ready at ${PKG_ROOT}`);
   console.log(`     Use:  claude --plugin-dir "${PKG_ROOT}"`);
   console.log(`     Or:   claude --plugin-dir "$(boss-skill path)"`);
@@ -231,20 +232,21 @@ export function buildUninstallPlan(): UninstallAction[] {
   });
 }
 
-function autoInstall(dryRun: boolean): void {
-  console.log(`@blade-ai/boss-skill v${pkg.version}${dryRun ? ' (dry-run)' : ''}\n`);
+function autoInstall(dryRun: boolean, silent = false): void {
+  if (!silent) console.log(`@blade-ai/boss-skill v${pkg.version}${dryRun ? ' (dry-run)' : ''}\n`);
 
   const detected = AGENTS.filter((a) => a.detect());
-  console.log(`Detected ${detected.length} agent(s):\n`);
+  if (!silent) console.log(`Detected ${detected.length} agent(s):\n`);
 
   for (const agent of detected) {
     if (agent.method === 'copy') {
-      copyInstall(agent, dryRun);
+      copyInstall(agent, dryRun, silent);
     } else {
-      pluginInstall(dryRun);
+      pluginInstall(dryRun, silent);
     }
   }
 
+  if (silent) return;
   if (dryRun) {
     console.log('\nDry-run complete. No files were modified.');
   } else {
@@ -252,8 +254,8 @@ function autoInstall(dryRun: boolean): void {
   }
 }
 
-function uninstall(): void {
-  console.log(`@blade-ai/boss-skill v${pkg.version} — uninstall\n`);
+function uninstall(silent = false): void {
+  if (!silent) console.log(`@blade-ai/boss-skill v${pkg.version} — uninstall\n`);
 
   const copyAgents = AGENTS.filter((a) => a.method === 'copy' && a.detect());
 
@@ -261,12 +263,13 @@ function uninstall(): void {
     const dest = agent.dest();
     if (fs.existsSync(dest)) {
       fs.rmSync(dest, { recursive: true });
-      console.log(`  ✅ ${agent.name}: removed ${dest}`);
+      if (!silent) console.log(`  ✅ ${agent.name}: removed ${dest}`);
     } else {
-      console.log(`  ⏭️  ${agent.name}: not installed, skipped`);
+      if (!silent) console.log(`  ⏭️  ${agent.name}: not installed, skipped`);
     }
   }
 
+  if (silent) return;
   console.log(`  ℹ️  Claude Code: plugin mode — no files to clean up.`);
   console.log(`     If loaded via --plugin-dir, simply stop passing the flag.`);
 
@@ -298,6 +301,16 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
         );
         return 0;
       }
+      if (context.values.json) {
+        const actions = buildInstallPlan();
+        autoInstall(false, true);
+        writeOutput(
+          { actions, risk_tier: 'medium', requires_approval: false, status: 'installed' },
+          context,
+          () => ''
+        );
+        return 0;
+      }
       autoInstall(dryRun);
       return 0;
 
@@ -315,6 +328,16 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
         return 0;
       }
       assertConfirmed(context, 'uninstall');
+      if (context.values.json) {
+        const actions = buildUninstallPlan();
+        uninstall(true);
+        writeOutput(
+          { actions, risk_tier: 'high', requires_approval: true, status: 'uninstalled' },
+          context,
+          () => ''
+        );
+        return 0;
+      }
       uninstall();
       return 0;
 

@@ -78,6 +78,18 @@ function validateRelativeName(input: string, label: 'artifact' | 'template'): vo
   }
 }
 
+function validateFeatureName(feature: string): void {
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(feature)) {
+    throw new CliUserError({
+      code: 'invalid_feature',
+      message: '功能名称格式无效（仅允许小写字母、数字和连字符，不能以连字符开头或结尾）',
+      input: { feature },
+      retryable: false,
+      suggestion: 'Use lowercase letters, numbers, and hyphens; do not start or end with a hyphen'
+    });
+  }
+}
+
 function parseArtifactInput(argv: string[]): { feature: string; artifact: string; template?: string } {
   const input: { feature: string; artifact: string; template?: string } = { feature: '', artifact: '' };
   const jsonInputArg = createCliContext(argv, { command: 'boss artifact prepare' }).values.jsonInput;
@@ -168,6 +180,7 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     });
   }
 
+  validateFeatureName(feature);
   validateRelativeName(artifact, 'artifact');
   if (templateArg) validateRelativeName(templateArg, 'template');
 
