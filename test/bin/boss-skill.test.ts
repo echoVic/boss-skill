@@ -50,6 +50,22 @@ describe('boss-skill dist bin', () => {
     }
   });
 
+  it('forwards help to runtime concrete commands', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'runtime', 'init-pipeline', '--help']);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout + result.stderr).toContain('用法: init-pipeline.js <feature>');
+    expect(result.stdout + result.stderr).not.toContain('Usage: boss runtime COMMAND');
+  });
+
+  it('forwards help to thin helper concrete commands', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', 'init', '--help']);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout + result.stderr).toContain('用法: boss project init <feature-name> [options]');
+    expect(result.stdout + result.stderr).not.toContain('Usage: boss project init <feature-name> [--template] [--force]');
+  });
+
   it('exposes global agent contract flags in command help', () => {
     const help = runCli(['packages/boss-cli/dist/bin/boss.js', '--help']);
     expect(help.status).toBe(0);

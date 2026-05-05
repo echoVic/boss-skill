@@ -214,7 +214,7 @@ function runNodeScript(scriptPath: string, args: string[]): number {
 async function runRuntimeCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss runtime' });
   const runtimeCommand = context.positionals[0];
-  if (!runtimeCommand || argv.includes('-h') || argv.includes('--help')) {
+  if (!runtimeCommand || runtimeCommand === '-h' || runtimeCommand === '--help') {
     showRuntimeHelp();
     return 0;
   }
@@ -231,7 +231,7 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
 async function runProjectCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss project' });
   const subcommand = context.positionals[0];
-  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(PROJECT_USAGE);
     return 0;
   }
@@ -247,7 +247,7 @@ async function runProjectCommand(argv: string[]): Promise<number> {
 async function runArtifactCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss artifact' });
   const subcommand = context.positionals[0];
-  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(ARTIFACT_USAGE);
     return 0;
   }
@@ -263,7 +263,7 @@ async function runArtifactCommand(argv: string[]): Promise<number> {
 async function runPacksCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss packs' });
   const subcommand = context.positionals[0];
-  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(PACKS_USAGE);
     return 0;
   }
@@ -279,7 +279,7 @@ async function runPacksCommand(argv: string[]): Promise<number> {
 function runHooksCommand(argv: string[]): number {
   const context = createCliContext(argv, { command: 'boss hooks' });
   const subcommand = context.positionals[0];
-  if (!subcommand || argv.includes('-h') || argv.includes('--help')) {
+  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(HOOKS_USAGE);
     return 0;
   }
