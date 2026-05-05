@@ -5,6 +5,9 @@ import path from 'node:path';
 
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
+const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
+const BUILT_IN_DAG_PATH = path.join(REPO_ROOT, 'packages', 'boss-cli', 'assets', 'artifact-dag.json');
+
 describe('boss-utils', () => {
   let bossUtils: typeof import('../../scripts/lib/boss-utils.js');
   let tmpDir: string | null = null;
@@ -133,8 +136,7 @@ describe('boss-utils', () => {
 
   describe('loadArtifactDag', () => {
     it('loads and parses DAG file', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
 
       expect(dag).toBeTruthy();
       expect(dag?.artifacts).toBeTruthy();
@@ -148,8 +150,7 @@ describe('boss-utils', () => {
 
   describe('getReadyArtifacts', () => {
     it('returns prd.md when no artifacts completed (design-brief optional)', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
           '1': { artifacts: [] },
@@ -167,8 +168,7 @@ describe('boss-utils', () => {
     });
 
     it('returns architecture.md and ui-spec.md after prd.md completed', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
           '1': { artifacts: ['prd.md'] },
@@ -187,8 +187,7 @@ describe('boss-utils', () => {
     });
 
     it('skips ui-spec.md when skipUI is true', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
           '1': { artifacts: ['prd.md'] },
@@ -206,8 +205,7 @@ describe('boss-utils', () => {
     });
 
     it('collects artifacts from stages beyond 4', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
           '1': { artifacts: ['prd.md'] },
@@ -229,8 +227,7 @@ describe('boss-utils', () => {
     });
 
     it('does not mark qa-report.md as ready when prd.md is missing', () => {
-      const dagPath = path.join(import.meta.dirname, '..', '..', 'harness', 'artifact-dag.json');
-      const dag = bossUtils.loadArtifactDag(dagPath);
+      const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
           '1': { artifacts: [] },
