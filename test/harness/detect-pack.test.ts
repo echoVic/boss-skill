@@ -41,6 +41,28 @@ describe('boss packs detect', () => {
     expect(run(tmpDir)).toBe('api-only');
   });
 
+  it('uses .boss pipeline pack overrides before built-in packs', () => {
+    fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}', 'utf8');
+    const packDir = path.join(tmpDir, '.boss', 'pipeline-packs', 'api-only');
+    fs.mkdirSync(packDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packDir, 'pipeline.json'),
+      JSON.stringify({
+        name: 'api-only',
+        version: '9.9.9',
+        type: 'pipeline-pack',
+        when: { fileExists: ['custom-api.marker'] },
+        priority: 99,
+        config: { stages: [1], agents: ['boss-pm'], gates: [] },
+        enabled: true
+      }),
+      'utf8'
+    );
+    fs.writeFileSync(path.join(tmpDir, 'custom-api.marker'), '', 'utf8');
+
+    expect(run(tmpDir)).toBe('api-only');
+  });
+
   it('does not detect api-only when src/app exists', () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}', 'utf8');
     fs.mkdirSync(path.join(tmpDir, 'src', 'app'), { recursive: true });

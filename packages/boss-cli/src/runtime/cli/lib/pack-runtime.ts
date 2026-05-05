@@ -1,11 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
-const PACKS_DIR = path.join(REPO_ROOT, 'harness', 'pipeline-packs');
+import { listPipelinePackManifestPaths } from '../../assets.js';
 
 export interface PipelinePackWhen {
   fileExists?: string[];
@@ -69,22 +64,15 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function listPackDefinitions(): PipelinePackDefinition[] {
-  if (!fs.existsSync(PACKS_DIR)) return [];
-  const entries = fs.readdirSync(PACKS_DIR, { withFileTypes: true });
+function listPackDefinitions(projectDir = process.cwd()): PipelinePackDefinition[] {
   const packs: PipelinePackDefinition[] = [];
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const packDir = path.join(PACKS_DIR, entry.name);
-    const pipelineJsonPath = path.join(packDir, 'pipeline.json');
-    if (!fs.existsSync(pipelineJsonPath)) continue;
-
-    const pipeline = readJson<Record<string, unknown>>(pipelineJsonPath);
+  for (const item of listPipelinePackManifestPaths({ cwd: projectDir })) {
+    const pipeline = readJson<Record<string, unknown>>(item.path);
     if (pipeline.enabled === false) continue;
 
     packs.push({
-      name: typeof pipeline.name === 'string' && pipeline.name.length > 0 ? pipeline.name : entry.name,
+      name: typeof pipeline.name === 'string' && pipeline.name.length > 0 ? pipeline.name : item.name,
       version: typeof pipeline.version === 'string' ? pipeline.version : '',
       type: typeof pipeline.type === 'string' ? pipeline.type : '',
       priority: Number.isFinite(Number(pipeline.priority)) ? Number(pipeline.priority) : 0,
@@ -149,7 +137,7 @@ export function resolvePipelinePack(projectDir = process.cwd()): PipelinePackDef
 }
 
 export function detectPipelinePacks(projectDir = process.cwd()): PipelinePackDetectionResult {
-  const packs = listPackDefinitions();
+  const packs = listPackDefinitions(projectDir);
   const defaultPack =
     packs.find((pack) => pack.name === 'default') ?? {
       name: 'default',
