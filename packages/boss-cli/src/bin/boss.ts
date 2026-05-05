@@ -13,7 +13,7 @@ import {
   runMain,
   writeOutput
 } from '../cli/contract.js';
-import { runtimeCommandNames } from '../cli/command-registry.js';
+import { commandDescriptions, runtimeCommandNames } from '../cli/command-registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -175,6 +175,25 @@ function describeRoot() {
   };
 }
 
+function describeGroup(description: typeof rootDescription, commands: readonly string[]) {
+  return {
+    ...describeCommand(description),
+    commands: [...commands]
+  };
+}
+
+function describeRegisteredCommand(command: string) {
+  const description = commandDescriptions[command];
+  if (!description) {
+    throw new Error(`Missing command description for ${command}`);
+  }
+  return describeCommand(description);
+}
+
+function writeDescription(data: unknown, context = createCliContext([], { command: 'boss' })): void {
+  writeOutput(data, context, () => `${JSON.stringify(data, null, 2)}\n`);
+}
+
 function showRuntimeHelp(): void {
   process.stdout.write(RUNTIME_USAGE);
 }
@@ -214,6 +233,17 @@ function runNodeScript(scriptPath: string, args: string[]): number {
 async function runRuntimeCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss runtime' });
   const runtimeCommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(
+      {
+        ...describeGroup(runtimeDescription, runtimeCommandNames),
+        runtime_commands: runtimeCommandNames
+      },
+      context
+    );
+    return 0;
+  }
+
   if (!runtimeCommand || runtimeCommand === '-h' || runtimeCommand === '--help') {
     showRuntimeHelp();
     return 0;
@@ -231,6 +261,11 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
 async function runProjectCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss project' });
   const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(projectDescription, ['init']), context);
+    return 0;
+  }
+
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(PROJECT_USAGE);
     return 0;
@@ -247,6 +282,11 @@ async function runProjectCommand(argv: string[]): Promise<number> {
 async function runArtifactCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss artifact' });
   const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(artifactDescription, ['prepare']), context);
+    return 0;
+  }
+
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(ARTIFACT_USAGE);
     return 0;
@@ -263,6 +303,11 @@ async function runArtifactCommand(argv: string[]): Promise<number> {
 async function runPacksCommand(argv: string[]): Promise<number> {
   const context = createCliContext(argv, { command: 'boss packs' });
   const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(packsDescription, ['detect']), context);
+    return 0;
+  }
+
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(PACKS_USAGE);
     return 0;
@@ -279,6 +324,11 @@ async function runPacksCommand(argv: string[]): Promise<number> {
 function runHooksCommand(argv: string[]): number {
   const context = createCliContext(argv, { command: 'boss hooks' });
   const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(hooksDescription, ['run']), context);
+    return 0;
+  }
+
   if (!subcommand || subcommand === '-h' || subcommand === '--help') {
     process.stdout.write(HOOKS_USAGE);
     return 0;
@@ -295,7 +345,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   const rootContext = createCliContext(argv, { command: 'boss' });
 
   if (rootContext.values.describe && rootContext.positionals.length === 0) {
-    writeOutput(describeRoot(), rootContext, () => `${JSON.stringify(describeRoot(), null, 2)}\n`);
+    writeDescription(describeRoot(), rootContext);
     return 0;
   }
 
@@ -317,6 +367,10 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     case 'install':
     case 'uninstall':
     case 'path':
+      if (rootContext.values.describe && rootContext.positionals.length === 1) {
+        writeDescription(describeRegisteredCommand(`boss ${cmd}`), createCliContext(commandArgv, { command: `boss ${cmd}` }));
+        return 0;
+      }
       return installMain(argv);
 
     case 'runtime':

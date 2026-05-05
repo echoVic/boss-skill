@@ -96,6 +96,39 @@ describe('boss-skill dist bin', () => {
     expect(payload.options.map((option) => option.name)).toContain('json');
   });
 
+  it('returns structured install metadata with --describe without running install', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'install', '--describe']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).not.toContain('Detected');
+    const payload = JSON.parse(result.stdout) as {
+      command: string;
+    };
+    expect(payload.command).toBe('boss install');
+  });
+
+  it('returns structured project group metadata with --describe', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', '--describe']);
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      command: string;
+      commands: string[];
+    };
+    expect(payload.command).toBe('boss project');
+    expect(payload.commands).toContain('init');
+  });
+
+  it('returns structured runtime group metadata with --describe', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'runtime', '--describe']);
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      command: string;
+      commands?: string[];
+      runtime_commands?: string[];
+    };
+    expect(payload.command).toBe('boss runtime');
+    expect(payload.commands ?? payload.runtime_commands).toContain('init-pipeline');
+  });
+
   it('returns structured errors for unknown root commands in non-tty mode', () => {
     const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'unknown-command']);
     expect(result.status).toBe(1);
