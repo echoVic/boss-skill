@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   assertConfirmed,
+  CliUserError,
   createCliContext,
   describeCommand,
   renderHelp,
@@ -365,9 +366,13 @@ export function installMain(argv: string[] = process.argv.slice(2)): number {
       return 0;
 
     default:
-      console.error(`Unknown command: ${cmd}\n`);
-      console.log(USAGE);
-      return 1;
+      throw new CliUserError({
+        code: 'unknown_command',
+        message: `Unknown command: ${cmd}`,
+        input: { command: cmd },
+        retryable: false,
+        suggestion: 'Run boss-skill --help to list available commands'
+      });
   }
 }
 

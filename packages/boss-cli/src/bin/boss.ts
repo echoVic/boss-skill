@@ -224,8 +224,13 @@ function runNodeScript(scriptPath: string, args: string[]): number {
   });
 
   if (result.error) {
-    console.error(result.error.message);
-    return 1;
+    throw new CliUserError({
+      code: 'script_spawn_failed',
+      message: result.error.message,
+      input: { script: scriptPath },
+      retryable: true,
+      suggestion: 'Verify Node can execute the requested hook script'
+    });
   }
 
   return result.status ?? 0;

@@ -2249,7 +2249,7 @@ git commit -m "docs: stabilize boss cli help and describe output"
 **Files:**
 - No source edits expected unless verification exposes a concrete bug.
 
-- [ ] **Step 1: Run build**
+- [x] **Step 1: Run build**
 
 Run:
 
@@ -2266,7 +2266,7 @@ Expected:
 
 Exit code must be 0.
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run:
 
@@ -2282,7 +2282,7 @@ Expected:
 
 Exit code must be 0.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run:
 
@@ -2299,7 +2299,7 @@ Tests       ... passed
 
 No failed tests.
 
-- [ ] **Step 4: Run CLI contract smoke commands**
+- [x] **Step 4: Run CLI contract smoke commands**
 
 Run:
 
@@ -2317,7 +2317,7 @@ Expected:
 
 The first three commands exit 0 and print parseable JSON on stdout. The fourth exits 1 and prints parseable JSON on stderr with `error.code` equal to `unknown_option`.
 
-- [ ] **Step 5: Run package dry run**
+- [x] **Step 5: Run package dry run**
 
 Run:
 
@@ -2342,7 +2342,7 @@ packages/boss-cli/assets/pipeline-packs/default/pipeline.json
 packages/boss-cli/assets/plugins/security-audit/plugin.json
 ```
 
-- [ ] **Step 6: Run source scans**
+- [x] **Step 6: Run source scans**
 
 Run:
 
@@ -2361,7 +2361,7 @@ no console.table, ora, chalk, ANSI escape, readline, or y/n prompt references re
 No matches in `packages/boss-cli/src`.
 ```
 
-- [ ] **Step 7: Commit verification fixes if needed**
+- [x] **Step 7: Commit verification fixes if needed**
 
 If verification required source, docs, or test fixes:
 
