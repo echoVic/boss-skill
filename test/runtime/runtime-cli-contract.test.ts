@@ -270,6 +270,32 @@ describe('runtime CLI contract', () => {
     expect(payload.error.retryable).toBe(false);
   });
 
+  it('read-only runtime commands default to json in non-tty mode and support fields/limit', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const events = runCli('inspect-events', ['test-feat', '--limit=1', '--fields=events']);
+    expect(events.status).toBe(0);
+    const eventsPayload = JSON.parse(events.stdout) as { events: unknown[] };
+    expect(Object.keys(eventsPayload)).toEqual(['events']);
+    expect(eventsPayload.events.length).toBeLessThanOrEqual(1);
+
+    const pipeline = runCli('inspect-pipeline', ['test-feat', '--fields=feature,status']);
+    expect(pipeline.status).toBe(0);
+    expect(JSON.parse(pipeline.stdout)).toEqual({
+      feature: 'test-feat',
+      status: 'initialized'
+    });
+  });
+
+  it('read-only runtime command errors are structured in non-tty mode', () => {
+    const result = runCli('inspect-pipeline', ['missing-feature']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input: Record<string, unknown> } };
+    expect(payload.error.code).toBe('feature_not_found');
+    expect(payload.error.input).toEqual({ feature: 'missing-feature' });
+  });
+
   it('run-with-flags launches async ESM hook modules, preserves chunk order, and caps stdin at 1 MB', () => {
     const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-launcher-'));
     const hookPath = path.join(pluginRoot, 'echo-hook.js');

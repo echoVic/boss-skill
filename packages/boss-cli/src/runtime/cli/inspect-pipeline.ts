@@ -2,6 +2,14 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { inspectPipeline } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
@@ -30,8 +38,14 @@ export function parseArgs(argv: string[]) {
   };
 
   for (const arg of argv) {
-    if (arg === '--json') {
+    if (arg === '--json' || arg === '--describe' || arg === '--dry-run') {
       parsed.json = true;
+      continue;
+    }
+    if (arg === '--fields' || arg === '--json-input') {
+      continue;
+    }
+    if (arg.startsWith('--fields=') || arg.startsWith('--json-input=')) {
       continue;
     }
     if (arg.startsWith('-')) {
@@ -50,46 +64,64 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
-function renderText(summary: ReturnType<typeof inspectPipeline>): void {
-  process.stdout.write(`feature: ${summary.feature}\n`);
-  process.stdout.write(`status: ${summary.status}\n`);
+function renderText(summary: ReturnType<typeof inspectPipeline>): string {
+  const lines: string[] = [];
+  lines.push(`feature: ${summary.feature}`);
+  lines.push(`status: ${summary.status}`);
   if (summary.currentStage) {
-    process.stdout.write(
+    lines.push(
       `currentStage: ${summary.currentStage.id} (${summary.currentStage.name}) ${summary.currentStage.status}\n`
     );
   }
-  process.stdout.write(`readyArtifacts: ${summary.readyArtifacts.join(', ') || 'none'}\n`);
-  process.stdout.write(
-    `activeAgents: ${summary.activeAgents.map((item) => `${item.agent}@${item.stage}`).join(', ') || 'none'}\n`
-  );
-  process.stdout.write(`pack: ${summary.pack.name}\n`);
-  process.stdout.write(`plugins: ${summary.plugins.active.map((plugin) => plugin.name).join(', ') || 'none'}\n`);
-  process.stdout.write(
-    `memoryStartup: ${((summary.memory && summary.memory.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}\n`
-  );
+  lines.push(`readyArtifacts: ${summary.readyArtifacts.join(', ') || 'none'}`);
+  lines.push(`activeAgents: ${summary.activeAgents.map((item) => `${item.agent}@${item.stage}`).join(', ') || 'none'}`);
+  lines.push(`pack: ${summary.pack.name}`);
+  lines.push(`plugins: ${summary.plugins.active.map((plugin) => plugin.name).join(', ') || 'none'}`);
+  lines.push(`memoryStartup: ${((summary.memory && summary.memory.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}`);
+  return `${lines.join('\n')}\n`;
+}
+
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime inspect-pipeline' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['inspect-pipeline']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['inspect-pipeline'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  const summary = inspectPipeline(parsed.feature, { cwd });
-  if (parsed.json) {
-    process.stdout.write(`${JSON.stringify(summary)}\n`);
-  } else {
-    renderText(summary);
+  try {
+    const summary = inspectPipeline(parsed.feature, { cwd });
+    writeOutput(summary, context, (data) => renderText(data as ReturnType<typeof inspectPipeline>));
+    return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
   }
-  return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime inspect-pipeline' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

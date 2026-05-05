@@ -2,6 +2,15 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  parseLimit,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { inspectProgress } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
@@ -26,7 +35,7 @@ export function parseArgs(argv: string[]) {
     return { help: true } as const;
   }
 
-  const parsed = { feature: '', json: false, limit: 20, type: '' };
+  const parsed = { feature: '', json: false, limit: undefined as string | undefined, type: '' };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
@@ -35,7 +44,7 @@ export function parseArgs(argv: string[]) {
       continue;
     }
     if (arg === '--limit') {
-      parsed.limit = Number(argv[index + 1]);
+      parsed.limit = argv[index + 1];
       index += 1;
       continue;
     }
@@ -45,6 +54,24 @@ export function parseArgs(argv: string[]) {
       continue;
     }
     if (arg.startsWith('-')) {
+      if (arg === '--describe' || arg === '--dry-run') {
+        continue;
+      }
+      if (arg === '--fields' || arg === '--json-input') {
+        if (argv[index + 1] && !argv[index + 1]!.startsWith('-')) index += 1;
+        continue;
+      }
+      if (arg.startsWith('--limit=')) {
+        parsed.limit = arg.slice('--limit='.length);
+        continue;
+      }
+      if (arg.startsWith('--type=')) {
+        parsed.type = arg.slice('--type='.length);
+        continue;
+      }
+      if (arg.startsWith('--fields=') || arg.startsWith('--json-input=')) {
+        continue;
+      }
       throw new Error(`未知选项: ${arg}`);
     }
     if (!parsed.feature) {
@@ -60,38 +87,55 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
-function renderText(payload: ReturnType<typeof inspectProgress>): void {
-  for (const event of payload.events) {
-    process.stdout.write(`${event.timestamp} ${event.type}\n`);
+function renderText(payload: ReturnType<typeof inspectProgress>): string {
+  return `${payload.events.map((event) => `${event.timestamp} ${event.type}`).join('\n')}${payload.events.length ? '\n' : ''}`;
+}
+
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
   }
+  return err;
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime inspect-progress' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['inspect-progress']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['inspect-progress'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  const payload = inspectProgress(parsed.feature, {
-    cwd,
-    limit: parsed.limit,
-    type: parsed.type
-  });
-
-  if (parsed.json) {
-    process.stdout.write(`${JSON.stringify(payload)}\n`);
-  } else {
-    renderText(payload);
+  try {
+    const payload = inspectProgress(parsed.feature, {
+      cwd,
+      limit: parseLimit(parsed.limit ?? '20'),
+      type: parsed.type
+    });
+    writeOutput(payload, context, (data) => renderText(data as ReturnType<typeof inspectProgress>));
+    return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
   }
-  return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime inspect-progress' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

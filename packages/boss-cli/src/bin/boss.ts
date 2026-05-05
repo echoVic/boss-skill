@@ -14,7 +14,7 @@ import {
   validatePathInside,
   writeOutput
 } from '../cli/contract.js';
-import { commandDescriptions, runtimeCommandNames } from '../cli/command-registry.js';
+import { commandDescriptions, runtimeCommandDescriptions, runtimeCommandNames } from '../cli/command-registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -308,13 +308,24 @@ async function runRuntimeCommand(argv: string[]): Promise<number> {
     return 0;
   }
 
+  const commandArgv = removeFirstPositional(argv, runtimeCommand);
+  const commandContext = createCliContext(commandArgv, { command: `boss runtime ${runtimeCommand}` });
+  if (commandContext.values.describe) {
+    const description = runtimeCommandDescriptions[runtimeCommand];
+    if (!description) {
+      throwUnknownCommand('boss runtime', runtimeCommand);
+    }
+    writeDescription(describeCommand(description), commandContext);
+    return 0;
+  }
+
   const load = runtimeCommands[runtimeCommand];
   if (!load) {
     throwUnknownCommand('boss runtime', runtimeCommand);
   }
 
   const mod = await load();
-  return mod.main(removeFirstPositional(argv, runtimeCommand), { cwd: process.cwd() });
+  return mod.main(commandArgv, { cwd: process.cwd() });
 }
 
 async function runProjectCommand(argv: string[]): Promise<number> {

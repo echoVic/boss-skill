@@ -2,6 +2,14 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { checkCanProceed, checkCanRetry, checkStage } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
@@ -55,6 +63,18 @@ export function parseArgs(argv: string[]) {
       parsed.json = true;
       continue;
     }
+    if (arg === '--describe' || arg === '--dry-run') {
+      continue;
+    }
+    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
+      if (argv[argv.indexOf(arg) + 1] && !argv[argv.indexOf(arg) + 1]!.startsWith('-')) {
+        continue;
+      }
+      continue;
+    }
+    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+      continue;
+    }
     if (arg === '--summary') {
       parsed.summary = true;
       continue;
@@ -79,83 +99,110 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
-function renderTextStage(stageId: string, payload: { name?: string; status?: string } | null): void {
+function renderTextStage(stageId: string, payload: { name?: string; status?: string } | null): string {
   if (!payload) {
-    process.stdout.write(`阶段 ${stageId}: unknown\n`);
-    return;
+    return `阶段 ${stageId}: unknown\n`;
   }
-  process.stdout.write(`阶段 ${stageId} (${payload.name || ''}): ${payload.status}\n`);
+  return `阶段 ${stageId} (${payload.name || ''}): ${payload.status}\n`;
 }
 
-function renderSummary(payload: { status: string; stages: Record<string, { status: string }> }): void {
-  process.stdout.write(`status: ${payload.status}\n`);
+function renderSummary(payload: { status: string; stages: Record<string, { status: string }> }): string {
+  const lines = [`status: ${payload.status}`];
   for (const [stageId, stage] of Object.entries(payload.stages || {})) {
-    process.stdout.write(`stage ${stageId}: ${stage.status}\n`);
+    lines.push(`stage ${stageId}: ${stage.status}`);
   }
+  return `${lines.join('\n')}\n`;
+}
+
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime check-stage' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['check-stage']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['check-stage'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  if (parsed.canProceed) {
+  try {
+    if (parsed.canProceed) {
     const result = checkCanProceed(parsed.feature, parsed.stage, { cwd });
     if (!result.ok) {
-      process.stderr.write(`${result.reason}\n`);
+      if (context.useJson) {
+        writeOutput({ ok: false, reason: result.reason }, context, () => '');
+      } else {
+        process.stderr.write(`${result.reason}\n`);
+      }
       return 1;
     }
-    process.stdout.write(`阶段 ${parsed.stage} 可以开始\n`);
+    writeOutput({ ok: true, reason: '' }, context, () => `阶段 ${parsed.stage} 可以开始\n`);
     return 0;
-  }
+    }
 
-  if (parsed.canRetry) {
+    if (parsed.canRetry) {
     const result = checkCanRetry(parsed.feature, parsed.stage, { cwd });
     if (!result.ok) {
-      process.stderr.write(`${result.reason}\n`);
+      if (context.useJson) {
+        writeOutput({ ok: false, reason: result.reason }, context, () => '');
+      } else {
+        process.stderr.write(`${result.reason}\n`);
+      }
       return 1;
     }
-    process.stdout.write(`阶段 ${parsed.stage} 可以重试\n`);
+    writeOutput({ ok: true, reason: '' }, context, () => `阶段 ${parsed.stage} 可以重试\n`);
     return 0;
-  }
-
-  const payload = checkStage(parsed.feature, parsed.stage, { cwd });
-  if (parsed.agents && parsed.stage) {
-    const agents =
-      payload && typeof payload === 'object' && 'agents' in payload && payload.agents
-        ? payload.agents
-        : {};
-    if (parsed.json) {
-      process.stdout.write(`${JSON.stringify(agents)}\n`);
-    } else {
-      for (const [agentName, agentState] of Object.entries(agents)) {
-        process.stdout.write(`${agentName}: ${(agentState as { status: string }).status}\n`);
-      }
     }
-    return 0;
-  }
 
-  if (parsed.json) {
-    process.stdout.write(`${JSON.stringify(payload)}\n`);
-    return 0;
-  }
+    const payload = checkStage(parsed.feature, parsed.stage, { cwd });
+    if (parsed.agents && parsed.stage) {
+      const agents =
+        payload && typeof payload === 'object' && 'agents' in payload && payload.agents
+          ? payload.agents
+          : {};
+      writeOutput(agents, context, () =>
+        Object.entries(agents)
+          .map(([agentName, agentState]) => `${agentName}: ${(agentState as { status: string }).status}`)
+          .join('\n') + '\n'
+      );
+      return 0;
+    }
 
-  if (parsed.summary || !parsed.stage) {
-    renderSummary(payload as { status: string; stages: Record<string, { status: string }> });
-    return 0;
-  }
+    if (parsed.summary || !parsed.stage) {
+      writeOutput(payload, context, (data) =>
+        renderSummary(data as { status: string; stages: Record<string, { status: string }> })
+      );
+      return 0;
+    }
 
-  renderTextStage(parsed.stage, payload as { name?: string; status?: string } | null);
-  return 0;
+    writeOutput(payload, context, (data) => renderTextStage(parsed.stage, data as { name?: string; status?: string } | null));
+    return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime check-stage' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

@@ -3,6 +3,14 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
+import {
   getArtifactStatus,
   getReadyArtifacts,
   listArtifactStatuses
@@ -35,7 +43,31 @@ function exitError(message: string): never {
   throw new Error(message);
 }
 
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime get-ready-artifacts' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['get-ready-artifacts']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['get-ready-artifacts'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   if (argv.length === 0 || argv.includes('-h') || argv.includes('--help')) {
     showHelp();
     return argv.length === 0 ? 1 : 0;
@@ -71,6 +103,16 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       jsonOutput = true;
       continue;
     }
+    if (arg === '--describe' || arg === '--dry-run') {
+      continue;
+    }
+    if (arg === '--fields' || arg === '--limit' || arg === '--json-input') {
+      if (argv[i + 1] && !argv[i + 1]!.startsWith('-')) i += 1;
+      continue;
+    }
+    if (arg.startsWith('--fields=') || arg.startsWith('--limit=') || arg.startsWith('--json-input=')) {
+      continue;
+    }
     if (arg.startsWith('-')) {
       exitError(`未知选项: ${arg}`);
     }
@@ -98,11 +140,11 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
         ignoreSkipped: true
       });
       if (status.status === 'completed') {
-        process.stdout.write(`${artifact} 已完成\n`);
+        writeOutput(status, context, () => `${artifact} 已完成\n`);
         return 0;
       }
       if (status.status === 'ready') {
-        process.stdout.write(`${artifact} 可以开始（所有依赖已就绪）\n`);
+        writeOutput(status, context, () => `${artifact} 可以开始（所有依赖已就绪）\n`);
         return 0;
       }
       if (status.status === 'blocked') {
@@ -116,49 +158,41 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     if (ready) {
       const readyList = getReadyArtifacts(feature, { cwd, dagPath });
       if (readyList.length === 0) {
-        process.stdout.write(jsonOutput ? '[]\n' : '没有就绪的产物\n');
+        writeOutput([], context, () => (jsonOutput ? '[]\n' : '没有就绪的产物\n'));
         return 0;
       }
-      if (jsonOutput) {
-        process.stdout.write(`${JSON.stringify(readyList.map((item) => item.artifact))}\n`);
+      const payload = readyList.map((item) => item.artifact);
+      if (context.useJson || jsonOutput) {
+        writeOutput(payload, context, () => `${JSON.stringify(payload)}\n`);
         return 0;
       }
-      process.stdout.write('就绪的产物：\n');
-      for (const item of readyList) {
-        process.stdout.write(`  ✅ ${item.artifact} (Agent: ${item.agent}, 阶段: ${item.stage})\n`);
-      }
+      writeOutput(payload, context, () =>
+        `就绪的产物：\n${readyList.map((item) => `  ✅ ${item.artifact} (Agent: ${item.agent}, 阶段: ${item.stage})`).join('\n')}\n`
+      );
       return 0;
     }
 
     if (artifact) {
       const status = getArtifactStatus(feature, artifact, { cwd, dagPath });
-      if (status.status === 'completed') {
-        process.stdout.write(`${artifact}: completed\n`);
-      } else if (status.status === 'skipped') {
-        process.stdout.write(`${artifact}: skipped\n`);
-      } else {
-        process.stdout.write(`${artifact}: pending\n`);
-      }
+      writeOutput(status, context, () => `${artifact}: ${status.status === 'skipped' ? 'skipped' : status.status === 'completed' ? 'completed' : 'pending'}\n`);
       return 0;
     }
 
     const statuses = listArtifactStatuses(feature, { cwd, dagPath });
-    for (const { artifact: name, status } of statuses) {
-      if (status === 'completed') {
-        process.stdout.write(`  ✅ ${name}\n`);
-      } else if (status === 'skipped') {
-        process.stdout.write(`  ⏭️  ${name} (skipped)\n`);
-      } else {
-        process.stdout.write(`  ⏳ ${name}\n`);
-      }
-    }
+    writeOutput(statuses, context, () =>
+      statuses
+        .map(({ artifact: name, status }) =>
+          status === 'completed' ? `  ✅ ${name}` : status === 'skipped' ? `  ⏭️  ${name} (skipped)` : `  ⏳ ${name}`
+        )
+        .join('\n') + '\n'
+    );
     return 0;
   } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    return 1;
+    throw toFeatureNotFoundError(err, feature);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime get-ready-artifacts' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

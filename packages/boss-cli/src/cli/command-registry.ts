@@ -98,3 +98,23 @@ export const runtimeCommandNames = [
   'retry-agent',
   'retry-stage'
 ] as const;
+
+export const runtimeCommandDescriptions: Record<string, CommandDescription> = Object.fromEntries(
+  runtimeCommandNames.map((name) => [
+    name,
+    {
+      command: `boss runtime ${name}`,
+      summary: `Run runtime command ${name}`,
+      parameters: [{ name: 'feature', type: 'string', required: false }],
+      options: [
+        { name: 'json', type: 'boolean', default: false },
+        { name: 'describe', type: 'boolean', default: false },
+        { name: 'fields', type: 'string' },
+        { name: 'limit', type: 'string', default: '100' },
+        { name: 'dry-run', type: 'boolean', default: false },
+        { name: 'json-input', type: 'string' }
+      ],
+      risk_tier: 'low'
+    }
+  ])
+) as Record<string, CommandDescription>;

@@ -2,6 +2,15 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  parseLimit,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { inspectEvents } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
@@ -28,7 +37,7 @@ export function parseArgs(argv: string[]) {
 
   const parsed = {
     feature: '',
-    limit: 20,
+    limit: undefined as string | undefined,
     type: '',
     json: false
   };
@@ -38,7 +47,7 @@ export function parseArgs(argv: string[]) {
     switch (arg) {
       case '--limit':
         if (!argv[i + 1]) throw new Error('--limit 需要指定值');
-        parsed.limit = Number(argv[i + 1]);
+        parsed.limit = argv[i + 1];
         i += 1;
         break;
       case '--type':
@@ -47,9 +56,26 @@ export function parseArgs(argv: string[]) {
         i += 1;
         break;
       case '--json':
+      case '--describe':
+      case '--dry-run':
         parsed.json = true;
         break;
+      case '--fields':
+      case '--json-input':
+        if (argv[i + 1] && !argv[i + 1]!.startsWith('-')) i += 1;
+        break;
       default:
+        if (arg.startsWith('--limit=')) {
+          parsed.limit = arg.slice('--limit='.length);
+          break;
+        }
+        if (arg.startsWith('--type=')) {
+          parsed.type = arg.slice('--type='.length);
+          break;
+        }
+        if (arg.startsWith('--fields=') || arg.startsWith('--json-input=')) {
+          break;
+        }
         if (arg.startsWith('-')) {
           throw new Error(`未知选项: ${arg}`);
         }
@@ -67,38 +93,59 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
-function renderText(payload: ReturnType<typeof inspectEvents>): void {
+function renderText(payload: ReturnType<typeof inspectEvents>): string {
+  const lines: string[] = [];
   for (const event of payload.events) {
-    process.stdout.write(`#${event.id} ${event.type} ${event.timestamp}\n`);
+    lines.push(`#${event.id} ${event.type} ${event.timestamp}`);
   }
+  return `${lines.join('\n')}${lines.length ? '\n' : ''}`;
+}
+
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime inspect-events' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['inspect-events']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['inspect-events'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  const payload = inspectEvents(parsed.feature, {
-    cwd,
-    limit: parsed.limit,
-    type: parsed.type
-  });
-
-  if (parsed.json) {
-    process.stdout.write(`${JSON.stringify(payload)}\n`);
-  } else {
-    renderText(payload);
+  try {
+    const payload = inspectEvents(parsed.feature, {
+      cwd,
+      limit: parseLimit(parsed.limit ?? '20'),
+      type: parsed.type
+    });
+    writeOutput(payload, context, (data) => renderText(data as ReturnType<typeof inspectEvents>));
+    return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
   }
-  return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime inspect-events' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

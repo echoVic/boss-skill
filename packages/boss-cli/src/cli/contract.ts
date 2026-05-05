@@ -266,6 +266,18 @@ export function errorPayload(err: unknown): { error: CliErrorData } {
   }
 
   const message = err instanceof Error ? err.message : String(err);
+  const unknownOptionMatch = message.match(/^(?:未知选项|Unknown option):\s*(.+)$/);
+  if (unknownOptionMatch) {
+    return {
+      error: {
+        code: 'unknown_option',
+        message,
+        input: { option: unknownOptionMatch[1] },
+        retryable: false,
+        suggestion: 'Run this command with --describe to verify supported options'
+      }
+    };
+  }
   return {
     error: {
       code: 'internal_error',

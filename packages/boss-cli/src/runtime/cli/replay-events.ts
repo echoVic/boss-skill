@@ -2,6 +2,15 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  CliUserError,
+  createCliContext,
+  describeCommand,
+  parseLimit,
+  runMain,
+  writeOutput
+} from '../../cli/contract.js';
+import { runtimeCommandDescriptions } from '../../cli/command-registry.js';
 import { replayEvents, replaySnapshot } from './lib/inspection-runtime.js';
 
 function printHelp(): void {
@@ -32,7 +41,7 @@ export function parseArgs(argv: string[]) {
     feature: '',
     at: '',
     type: '',
-    limit: 20,
+    limit: undefined as string | undefined,
     compact: false,
     json: false
   };
@@ -50,7 +59,7 @@ export function parseArgs(argv: string[]) {
       continue;
     }
     if (arg === '--limit') {
-      parsed.limit = Number(argv[index + 1] || 20);
+      parsed.limit = argv[index + 1] || '20';
       index += 1;
       continue;
     }
@@ -63,6 +72,28 @@ export function parseArgs(argv: string[]) {
       continue;
     }
     if (arg.startsWith('-')) {
+      if (arg === '--describe' || arg === '--dry-run') {
+        continue;
+      }
+      if (arg === '--fields' || arg === '--json-input') {
+        if (argv[index + 1] && !argv[index + 1]!.startsWith('-')) index += 1;
+        continue;
+      }
+      if (arg.startsWith('--limit=')) {
+        parsed.limit = arg.slice('--limit='.length);
+        continue;
+      }
+      if (arg.startsWith('--type=')) {
+        parsed.type = arg.slice('--type='.length);
+        continue;
+      }
+      if (arg.startsWith('--at=')) {
+        parsed.at = arg.slice('--at='.length);
+        continue;
+      }
+      if (arg.startsWith('--fields=') || arg.startsWith('--json-input=')) {
+        continue;
+      }
       throw new Error(`未知选项: ${arg}`);
     }
     if (!parsed.feature) {
@@ -78,56 +109,74 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
-function renderCompact(payload: { events?: Array<{ id: number; timestamp: string; type: string; data?: Record<string, unknown> }> }): void {
-  for (const event of payload.events || []) {
-    const stage = event.data && event.data.stage != null ? event.data.stage : '-';
-    const agent = event.data && event.data.agent ? event.data.agent : '-';
-    process.stdout.write(`#${event.id} [${event.timestamp}] ${event.type} stage=${stage} agent=${agent}\n`);
-  }
+function renderVerbose(payload: unknown): string {
+  return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
-function renderVerbose(payload: unknown): void {
-  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+function renderCompactText(payload: { events?: Array<{ id: number; timestamp: string; type: string; data?: Record<string, unknown> }> }): string {
+  return (payload.events || [])
+    .map((event) => {
+      const stage = event.data && event.data.stage != null ? event.data.stage : '-';
+      const agent = event.data && event.data.agent ? event.data.agent : '-';
+      return `#${event.id} [${event.timestamp}] ${event.type} stage=${stage} agent=${agent}`;
+    })
+    .join('\n') + ((payload.events || []).length ? '\n' : '');
+}
+
+function toFeatureNotFoundError(err: unknown, feature: string): unknown {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes('未找到执行文件') || message.includes('未找到事件文件')) {
+    return new CliUserError({
+      code: 'feature_not_found',
+      message,
+      input: { feature },
+      retryable: false,
+      suggestion: 'Run boss runtime init-pipeline <feature> first'
+    });
+  }
+  return err;
 }
 
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
+  const context = createCliContext(argv, { command: 'boss runtime replay-events' });
+  if (context.values.describe) {
+    writeOutput(
+      describeCommand(runtimeCommandDescriptions['replay-events']!),
+      context,
+      () => `${JSON.stringify(runtimeCommandDescriptions['replay-events'], null, 2)}\n`
+    );
+    return 0;
+  }
+
   const parsed = parseArgs(argv);
   if ('help' in parsed) {
     printHelp();
     return 0;
   }
 
-  if (parsed.at) {
-    const payload = replaySnapshot(parsed.feature, parsed.at, { cwd });
-    if (parsed.json) {
-      process.stdout.write(`${JSON.stringify(payload)}\n`);
-    } else {
-      renderVerbose(payload);
+  try {
+    if (parsed.at) {
+      const payload = replaySnapshot(parsed.feature, parsed.at, { cwd });
+      writeOutput(payload, context, renderVerbose);
+      return 0;
     }
+
+    const payload = replayEvents(parsed.feature, {
+      cwd,
+      limit: parseLimit(parsed.limit ?? '20'),
+      type: parsed.type
+    });
+
+    writeOutput(payload, context, (data) =>
+      parsed.compact ? renderCompactText(data as typeof payload) : renderVerbose(data)
+    );
     return 0;
+  } catch (err) {
+    throw toFeatureNotFoundError(err, parsed.feature);
   }
-
-  const payload = replayEvents(parsed.feature, {
-    cwd,
-    limit: parsed.limit,
-    type: parsed.type
-  });
-
-  if (parsed.json) {
-    process.stdout.write(`${JSON.stringify(payload)}\n`);
-  } else if (parsed.compact) {
-    renderCompact(payload);
-  } else {
-    renderVerbose(payload);
-  }
-  return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    process.exit(main(process.argv.slice(2), { cwd: process.cwd() }));
-  } catch (err) {
-    process.stderr.write(`${(err as Error).message}\n`);
-    process.exit(1);
-  }
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime replay-events' });
+  process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }
