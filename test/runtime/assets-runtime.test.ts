@@ -51,8 +51,9 @@ describe('runtime asset resolver', () => {
     );
 
     const paths = listPipelinePackManifestPaths({ cwd: tmpDir });
-    const apiOnly = paths.find((item) => item.name === 'api-only');
-    expect(apiOnly?.path).toBe(path.join(packDir, 'pipeline.json'));
+    const apiOnlyEntries = paths.filter((item) => item.name === 'api-only');
+    expect(apiOnlyEntries).toHaveLength(1);
+    expect(apiOnlyEntries[0]?.path).toBe(path.join(packDir, 'pipeline.json'));
   });
 
   it('merges project plugins over built-in plugins by name', () => {
@@ -66,7 +67,8 @@ describe('runtime asset resolver', () => {
     fs.writeFileSync(path.join(pluginDir, 'gate.js'), '#!/usr/bin/env node\nprocess.exit(0)\n', 'utf8');
 
     const paths = listPluginManifestPaths({ cwd: tmpDir });
-    const securityAudit = paths.find((item) => item.name === 'security-audit');
-    expect(securityAudit?.path).toBe(path.join(pluginDir, 'plugin.json'));
+    const securityAuditEntries = paths.filter((item) => item.name === 'security-audit');
+    expect(securityAuditEntries).toHaveLength(1);
+    expect(securityAuditEntries[0]?.path).toBe(path.join(pluginDir, 'plugin.json'));
   });
 });
