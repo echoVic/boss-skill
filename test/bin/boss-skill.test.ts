@@ -17,9 +17,11 @@ describe('boss-skill dist bin', () => {
     expect(pkg.bin['boss-skill']).toBe('packages/boss-cli/dist/bin/boss.js');
     expect(pkg.engines.node).toBe('>=20');
     expect(pkg.files).toContain('packages/boss-cli/dist/');
+    expect(pkg.files).toContain('packages/boss-cli/assets/');
     expect(pkg.files).toContain('skill/');
     expect(pkg.files).not.toContain('agents/');
     expect(pkg.files).not.toContain('commands/');
+    expect(pkg.files).not.toContain('harness/');
     expect(pkg.files).not.toContain('hooks/');
     expect(pkg.files).not.toContain('templates/');
     expect(pkg.files).not.toContain('SKILL.md');

@@ -38,4 +38,25 @@ describe('TypeScript CLI architecture', () => {
     expect(bossSource).toContain("import('../commands/artifact.js')");
     expect(bossSource).toContain("import('../commands/packs.js')");
   });
+
+  it('keeps harness as a runtime pattern instead of a root directory', () => {
+    expect(fs.existsSync(path.join(REPO_ROOT, 'harness'))).toBe(false);
+
+    const packageJson = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
+      files?: string[];
+    };
+    expect(packageJson.files).toContain('packages/boss-cli/assets/');
+    expect(packageJson.files).not.toContain('harness/');
+  });
+
+  it('does not hard-code root harness asset paths in runtime source', () => {
+    const runtimeFiles = walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime'))
+      .filter((file) => file.endsWith('.ts'));
+
+    for (const file of runtimeFiles) {
+      const source = fs.readFileSync(file, 'utf8');
+      expect(source, path.relative(REPO_ROOT, file)).not.toContain("REPO_ROOT, 'harness'");
+      expect(source, path.relative(REPO_ROOT, file)).not.toContain('"harness",');
+    }
+  });
 });
