@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PKG_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const SKILL_ROOT = path.join(PKG_ROOT, 'skill');
 const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')) as {
   version: string;
 };
@@ -157,8 +158,7 @@ function copyInstall(agent: Agent, dryRun: boolean): void {
     fs.rmSync(dest, { recursive: true });
   }
 
-  const exclude = ['.git', '.github', 'node_modules', '.npmrc', '.DS_Store', 'dist', '.claude'];
-  copyDir(PKG_ROOT, dest, exclude);
+  copyDir(SKILL_ROOT, dest);
 
   const skillMd = path.join(dest, 'SKILL.md');
   if (fs.existsSync(skillMd)) {

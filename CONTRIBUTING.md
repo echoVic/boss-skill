@@ -29,7 +29,7 @@ npm test
 
 | 目录 | 职责 |
 |------|------|
-| `agents/` | 9 个 Agent 的 Prompt 定义（Markdown） |
+| `skill/` | 安装到 Coding Agent 的薄 Skill bundle（`SKILL.md`、agents、commands、templates、hooks、子 skills） |
 | `packages/boss-cli/src/runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
 | `scripts/lib/` | 共享库（`common.sh` Shell 工具、`boss-utils.js` Node.js 工具） |
 | `scripts/hooks/` | 10 个 Claude Code Hook 脚本 |
@@ -37,7 +37,6 @@ npm test
 | `scripts/gates/` | 质量门禁脚本 |
 | `harness/` | 插件系统和 Pipeline Pack 配置 |
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
-| `templates/` | 产物模板 |
 | `test/` | 自动化测试 |
 | `packages/boss-cli/src/` | Boss CLI/runtime 的 TypeScript/ESM 源码 |
 | `packages/boss-cli/dist/` | 构建后的发布产物 |
@@ -146,7 +145,7 @@ describe('my-hook', () => {
 | 文件 | 字段 |
 |------|------|
 | `package.json` | `version` |
-| `SKILL.md` | frontmatter `version:` |
+| `skill/SKILL.md` | frontmatter `version:` |
 | `.claude-plugin/plugin.json` | `version` |
 | `.claude-plugin/marketplace.json` | 外层 `version` + `plugins[0].version` |
 

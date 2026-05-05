@@ -217,7 +217,7 @@ Boss 支持项目级模板覆盖：
 /boss 用户认证 --template    # 初始化 .boss/templates/
 ```
 
-模板查找优先级：`.boss/templates/` > 内置 `templates/`。
+模板查找优先级：`.boss/templates/` > 包内置 `skill/templates/`（安装后为 Skill 根目录下的 `templates/`）。
 
 ## 产物目录
 
@@ -263,7 +263,7 @@ npm test
 
 ### 发布
 
-使用统一发布脚本，自动同步所有文件的版本号（`package.json`、`SKILL.md`、`plugin.json`、`marketplace.json`）：
+使用统一发布脚本，自动同步所有文件的版本号（`package.json`、`skill/SKILL.md`、`plugin.json`、`marketplace.json`）：
 
 ```bash
 # 语义化升级
@@ -293,33 +293,19 @@ boss-skill/
 │   └── boss-cli/
 │       ├── src/                         # Boss CLI + runtime TypeScript 源码
 │       └── dist/                        # CLI 编译产物（npm bin）
-├── SKILL.md                          # 核心编排流程（通用 frontmatter，无平台 metadata）
-├── skills/
-│   └── brainstorming/
-│       └── SKILL.md                  # 需求澄清 Skill
-├── agents/                           # 9 个 Agent Prompt
-│   ├── boss-pm.md
-│   ├── boss-architect.md
-│   ├── boss-ui-designer.md
-│   ├── boss-tech-lead.md
-│   ├── boss-scrum-master.md
-│   ├── boss-frontend.md
-│   ├── boss-backend.md
-│   ├── boss-qa.md
-│   ├── boss-devops.md
-│   └── prompts/                      # 子代理 Prompt 模板
-├── commands/                         # 斜杠命令（/boss、/boss:upgrade）
-│   ├── boss.md
-│   └── boss-upgrade.md
-├── hooks/
-│   └── hooks.json                    # Claude Code Plugin hooks（使用 ${CLAUDE_PLUGIN_ROOT}）
+├── skill/                            # 安装到 agent 的薄 skill bundle
+│   ├── SKILL.md                      # 核心编排流程（通用 frontmatter，无平台 metadata）
+│   ├── agents/                       # 9 个 Agent Prompt + shared/prompts
+│   ├── commands/                     # 斜杠命令（/boss、/boss:upgrade）
+│   ├── hooks/                        # hook 配置（调用 boss hooks run）
+│   ├── references/                   # 按需加载的规范文档
+│   ├── templates/                    # 7 个产物模板
+│   └── skills/                       # 子 skill，如 brainstorming
 ├── harness/                          # 流水线编排与插件系统
 │   ├── plugin-schema.json
 │   ├── plugins/
 │   │   └── security-audit/
 │   └── pipeline-packs/               # 4 套流水线预设
-├── references/                       # 按需加载的规范文档
-├── templates/                        # 7 个产物模板
 ├── scripts/
 │   ├── release.js                    # 统一发布脚本
 │   ├── lib/                          # 共享库（run-with-flags、hook-flags、boss-utils）
@@ -335,7 +321,7 @@ boss-skill/
 
 ## 设计理念
 
-基于 BMAD（Breakthrough Method of Agile AI-Driven Development）方法论，详见 `references/bmad-methodology.md` 和 `DESIGN.md`。
+基于 BMAD（Breakthrough Method of Agile AI-Driven Development）方法论，详见 `skill/references/bmad-methodology.md` 和 `DESIGN.md`。
 
 ## 贡献
 

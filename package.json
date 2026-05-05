@@ -36,17 +36,11 @@
   "files": [
     "packages/boss-cli/dist/",
     "packages/boss-cli/src/runtime/schema/",
-    "agents/",
-    "commands/",
+    "skill/",
     "harness/",
-    "hooks/",
-    "references/",
     "scripts/",
-    "templates/",
-    "skills/",
     ".claude/",
     ".claude-plugin/",
-    "SKILL.md",
     "DESIGN.md"
   ],
   "workspaces": [

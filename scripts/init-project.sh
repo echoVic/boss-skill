@@ -34,7 +34,7 @@ FEATURE_NAME=""
 FORCE=false
 INIT_TEMPLATES=false
 SKIP_FEATURE_BOOTSTRAP=false
-DEFAULT_TEMPLATE_DIR="$REPO_ROOT/templates"
+DEFAULT_TEMPLATE_DIR="$REPO_ROOT/skill/templates"
 PROJECT_TEMPLATE_DIR=".boss/templates"
 
 init_templates() {

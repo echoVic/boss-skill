@@ -8,13 +8,13 @@ const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'ut
 };
 const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
-const skill = fs.readFileSync(path.join(REPO_ROOT, 'SKILL.md'), 'utf8');
-const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'commands', 'boss.md'), 'utf8');
-const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'hooks', 'hooks.json'), 'utf8');
+const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8');
+const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
+const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'hooks.json'), 'utf8');
 const claudeSettings = fs.readFileSync(path.join(REPO_ROOT, '.claude', 'settings.json'), 'utf8');
 
 const techDetection = fs.readFileSync(
-  path.join(REPO_ROOT, 'agents', 'shared', 'tech-detection.md'),
+  path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
   'utf8'
 );
 
@@ -54,7 +54,12 @@ describe('tech-detection.md contract', () => {
 describe('package metadata', () => {
   it('publishes the boss CLI workspace dist and keeps script assets during migration', () => {
     expect(pkg.files).toContain('packages/boss-cli/dist/');
+    expect(pkg.files).toContain('skill/');
     expect(pkg.files).toContain('scripts/');
+    expect(pkg.files).not.toContain('agents/');
+    expect(pkg.files).not.toContain('commands/');
+    expect(pkg.files).not.toContain('templates/');
+    expect(pkg.files).not.toContain('SKILL.md');
   });
 
   it('documents the src to dist layout', () => {
@@ -77,6 +82,8 @@ describe('boss natural language command contract', () => {
     expect(skill).toContain('不要创建 `.boss/<feature>/`');
     expect(bossCommand).toContain('自然语言需求会先归一化为 feature slug');
     expect(bossCommand).toContain('约束类输入不会启动新流水线');
+    expect(bossCommand).toContain('当前 Boss Skill 的 `SKILL.md`');
+    expect(bossCommand).not.toContain('skills/boss/SKILL.md');
   });
 });
 

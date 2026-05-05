@@ -54,7 +54,7 @@ const VERSION_FILES = [
     }
   },
   {
-    path: 'SKILL.md',
+    path: 'skill/SKILL.md',
     update(content, version) {
       return content.replace(/^version:\s*.+$/m, `version: ${version}`);
     }

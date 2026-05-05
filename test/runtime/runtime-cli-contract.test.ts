@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,21 +13,15 @@ import { initPipeline } from '../../packages/boss-cli/src/runtime/cli/lib/pipeli
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 const RUN_WITH_FLAGS = path.join(REPO_ROOT, 'scripts', 'lib', 'run-with-flags.js');
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-
-function buildCurrentDist() {
-  execFileSync(npmCmd, ['run', 'build'], {
-    cwd: REPO_ROOT,
-    encoding: 'utf8'
-  });
-}
 
 describe('runtime CLI contract', () => {
   let tmpDir: string;
   let originalCwd: string;
 
   beforeEach(() => {
-    buildCurrentDist();
+    if (!fs.existsSync(BOSS_BIN)) {
+      throw new Error('Missing built Boss CLI dist. Run `npm run build` before runtime CLI contract tests.');
+    }
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-runtime-cli-'));
     originalCwd = process.cwd();
     process.chdir(tmpDir);

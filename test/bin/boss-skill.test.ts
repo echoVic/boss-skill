@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { runCli } from '../helpers/run-cli.js';
 
@@ -15,6 +17,12 @@ describe('boss-skill dist bin', () => {
     expect(pkg.bin['boss-skill']).toBe('packages/boss-cli/dist/bin/boss.js');
     expect(pkg.engines.node).toBe('>=20');
     expect(pkg.files).toContain('packages/boss-cli/dist/');
+    expect(pkg.files).toContain('skill/');
+    expect(pkg.files).not.toContain('agents/');
+    expect(pkg.files).not.toContain('commands/');
+    expect(pkg.files).not.toContain('hooks/');
+    expect(pkg.files).not.toContain('templates/');
+    expect(pkg.files).not.toContain('SKILL.md');
   });
 
   it('prints help from the built dist entrypoint', () => {
@@ -42,6 +50,37 @@ describe('boss-skill dist bin', () => {
 
   it('builds the dist entrypoint used by both bins', () => {
     expect(existsSync(distEntry)).toBe(true);
+  });
+
+  it('copy-installs only the thin skill bundle for Codex', () => {
+    const home = mkdtempSync(resolve(tmpdir(), 'boss-skill-install-'));
+    mkdirSync(resolve(home, '.codex'), { recursive: true });
+
+    try {
+      const result = spawnSync(process.execPath, [distEntry, 'install'], {
+        cwd: root,
+        env: { ...process.env, HOME: home },
+        encoding: 'utf8'
+      });
+
+      expect(result.status, result.stderr).toBe(0);
+
+      const installed = resolve(home, '.codex', 'skills', 'boss');
+      expect(existsSync(resolve(installed, 'SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'agents', 'boss-pm.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'commands', 'boss.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'templates', 'prd.md.template'))).toBe(true);
+      expect(existsSync(resolve(installed, 'hooks', 'hooks.json'))).toBe(true);
+      expect(existsSync(resolve(installed, 'skills', 'brainstorming', 'SKILL.md'))).toBe(true);
+
+      expect(existsSync(resolve(installed, 'package.json'))).toBe(false);
+      expect(existsSync(resolve(installed, 'packages'))).toBe(false);
+      expect(existsSync(resolve(installed, 'scripts'))).toBe(false);
+      expect(existsSync(resolve(installed, 'test'))).toBe(false);
+      expect(existsSync(resolve(installed, '.claude-plugin'))).toBe(false);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
   });
 
   it('does not run main() when the source module is imported', async () => {

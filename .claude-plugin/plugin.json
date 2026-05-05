@@ -19,7 +19,7 @@
     "project-management"
   ],
   "skills": [
-    "./",
-    "./skills/"
+    "./skill/",
+    "./skill/skills/"
   ]
 }
