@@ -112,7 +112,7 @@ describe('inspection runtime CLIs', () => {
   });
 
   it('inspect-plugins returns plugin lifecycle slices from the execution view', () => {
-    const pluginDir = path.join(tmpDir, 'harness', 'plugins', 'local-reporter');
+    const pluginDir = path.join(tmpDir, '.boss', 'plugins', 'local-reporter');
     fs.mkdirSync(pluginDir, { recursive: true });
     fs.writeFileSync(path.join(pluginDir, 'report.sh'), '#!/bin/bash\nexit 0\n', 'utf8');
     fs.writeFileSync(path.join(pluginDir, 'post-gate.sh'), '#!/bin/bash\nexit 0\n', 'utf8');
