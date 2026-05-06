@@ -22,10 +22,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
-// ── 需要��步版本号的文件 ───────────────────────────────
+// ── 需要同步版本号的文件 ───────────────────────────────
 const VERSION_FILES = [
   {
     path: 'package.json',
+    kind: 'json',
+    update(content, version) {
+      const obj = JSON.parse(content);
+      obj.version = version;
+      return JSON.stringify(obj, null, 2) + '\n';
+    }
+  },
+  {
+    path: 'packages/boss-cli/package.json',
+    kind: 'json',
     update(content, version) {
       const obj = JSON.parse(content);
       obj.version = version;
@@ -34,6 +44,7 @@ const VERSION_FILES = [
   },
   {
     path: '.claude-plugin/plugin.json',
+    kind: 'json',
     update(content, version) {
       const obj = JSON.parse(content);
       obj.version = version;
@@ -42,6 +53,7 @@ const VERSION_FILES = [
   },
   {
     path: '.claude-plugin/marketplace.json',
+    kind: 'marketplace',
     update(content, version) {
       const obj = JSON.parse(content);
       obj.version = version;
@@ -55,6 +67,7 @@ const VERSION_FILES = [
   },
   {
     path: 'skill/SKILL.md',
+    kind: 'skill',
     update(content, version) {
       return content.replace(/^version:\s*.+$/m, `version: ${version}`);
     }
@@ -78,6 +91,42 @@ function writeFile(rel, content) {
 
 function getCurrentVersion() {
   return JSON.parse(readFile('package.json')).version;
+}
+
+function verifyVersionFile(file, version) {
+  const content = readFile(file.path);
+  if (file.kind === 'json') {
+    const obj = JSON.parse(content);
+    if (obj.version !== version) {
+      throw new Error(`${file.path} version=${obj.version ?? '<missing>'}`);
+    }
+    return;
+  }
+
+  if (file.kind === 'marketplace') {
+    const obj = JSON.parse(content);
+    if (obj.version !== version) {
+      throw new Error(`${file.path} version=${obj.version ?? '<missing>'}`);
+    }
+    if (Array.isArray(obj.plugins)) {
+      for (const plugin of obj.plugins) {
+        if (plugin.version !== version) {
+          throw new Error(`${file.path} plugin ${plugin.name ?? '<unknown>'} version=${plugin.version ?? '<missing>'}`);
+        }
+      }
+    }
+    return;
+  }
+
+  if (file.kind === 'skill') {
+    const match = content.match(/^version:\s*(.+)$/m);
+    if (!match || match[1].trim() !== version) {
+      throw new Error(`${file.path} frontmatter version=${match ? match[1].trim() : '<missing>'}`);
+    }
+    return;
+  }
+
+  throw new Error(`未知版本文件类型: ${file.kind}`);
 }
 
 function bumpVersion(current, type) {
@@ -129,8 +178,10 @@ function main() {
     process.exit(1);
   }
 
-  // 2. 跑测试
-  console.log('🧪 运行测试...');
+  // 2. 跑完整验证
+  console.log('🧪 运行完整验证...');
+  run('npm run build');
+  run('npm run typecheck');
   run('npm test');
 
   // 3. 同步所有版本号
@@ -150,28 +201,32 @@ function main() {
   if (!dryRun) {
     console.log('\n🔍 验证版本一致性...');
     for (const file of VERSION_FILES) {
-      const content = readFile(file.path);
-      if (!content.includes(next)) {
-        console.error(`❌ ${file.path} 未包含版本 ${next}`);
+      try {
+        verifyVersionFile(file, next);
+      } catch (err) {
+        console.error(`❌ ${file.path} 版本不一致: ${(err).message}`);
         process.exit(1);
       }
     }
     console.log('  ✅ 所有文件版本一致');
   }
 
+  // 5. 验证 npm 包内容。dist 不进 Git，但必须进入 npm tarball。
+  console.log('\n📦 验证 npm 包内容...');
+  run('npm pack --dry-run');
+
   if (dryRun) {
     console.log('\n🏁 dry-run 完成，未做任何修改。');
     return;
   }
 
-  // 5. Git commit + tag
+  // 6. Git commit + tag
   console.log('\n📝 提交版本更新...');
-  const files = VERSION_FILES.map(f => f.path).join(' ');
-  run(`git add ${files}`);
+  run(`git add ${VERSION_FILES.map(f => f.path).join(' ')}`);
   run(`git commit -m "chore: release v${next}"`);
   run(`git tag v${next}`);
 
-  // 6. 发布
+  // 7. 发布
   if (noPublish) {
     console.log('\n⏭️  跳过 npm publish (--no-publish)');
   } else {
@@ -179,7 +234,7 @@ function main() {
     run('npm publish');
   }
 
-  // 7. Push
+  // 8. Push
   console.log('\n📤 推送到远程...');
   run('git push');
   run('git push --tags');
