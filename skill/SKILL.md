@@ -34,6 +34,7 @@ user-invocable: true
 8. **插件可扩展** — 通过 Harness 插件协议注册额外的 gate、agent 或 pipeline 模板包
 9. **子代理标准协议** — 所有子代理必须使用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED` 五种状态报告（详见 `agents/prompts/subagent-protocol.md`）
 10. **模型分级** — 根据任务复杂度选择模型：轻量级（机械任务）/ 标准级（集成任务）/ 旗舰级（架构任务）
+11. **Wave 边界校验** — 子代理自报 `DONE` 不可信；每个 Wave 完成后必须按项目技术栈选择类型检查、测试套件、lint/格式检查等校验，并由 orchestrator 处理依赖清单、锁文件或构建配置的意外 diff
 
 ## 参数
 
@@ -142,7 +143,7 @@ Copy this checklist and check off items as you complete them:
     - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name> --json`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
-  - [ ] **D.6 标记产物完成**：调用 `boss runtime update-stage <feature> <N> completed --artifact <name>` 记录产物（当阶段内所有产物都完成时标记阶段 completed）
+  - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
   - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
   - [ ] **D.7a 🔄 反馈循环**：若 Agent 报告 `REVISION_NEEDED`（仅 Tech Lead / QA 可发起）：
     1. 调用 `boss runtime record-feedback <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
@@ -151,6 +152,13 @@ Copy this checklist and check off items as you complete them:
     4. 修订完成后，重新派发 Critic Agent 验证
     5. 若验证通过（DONE/DONE_WITH_CONCERNS），结束循环继续 DAG
   - [ ] **D.7b ⏱ 超时检测**：周期性调用 `checkStall(feature, { maxDurationMs })` 检测停滞 Agent。若 Agent 超过阈值（默认 30 分钟）无响应，标记 `AgentFailed`（reason: timeout）并进入 D.7 失败处理流程。
+  - [ ] **D.7c Wave 边界校验**：同一 Wave 的并行 Agent 全部返回 `DONE` / `DONE_WITH_CONCERNS` 后，orchestrator 必须按项目技术栈选择适用校验，不能只信子代理自报：
+    - 运行适用的类型检查、编译检查、测试套件、lint/格式检查；具体命令由项目技术栈和现有脚本决定。
+    - 检查依赖清单、锁文件、构建配置等关键工程文件的 diff 摘要；不限于 Node.js，其他生态使用等价文件。
+    - 若项目没有可运行的自动化校验，记录原因，并至少执行文件 diff 与产物一致性检查。
+    - 任一适用校验失败：暂停推进，将失败摘要交给对应 Agent 修复，修复后重跑 D.7c。
+    - 依赖清单、锁文件或构建配置出现意外 diff：强制让 orchestrator 看一眼，确认变动是否与本 Wave 任务、Agent 报告一致；不一致时回派修复，避免过时副本覆盖或误删依赖潜伏到 DevOps。
+    - 只有 D.7c 通过后，才允许进入 D.8、标记阶段 completed、或回到 D.1 派发下一批下游产物。
   - [ ] **D.8 确认节点**（仅在阶段边界且非 `--quick` 时）：
     - 阶段 1 完成后 → 确认规划结果 ⚠️ REQUIRED
     - 阶段 3 门禁后 → 可选确认

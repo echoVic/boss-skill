@@ -10,6 +10,10 @@ const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
 const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8');
 const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
+const subagentProtocol = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'agents', 'prompts', 'subagent-protocol.md'),
+  'utf8'
+);
 const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'hooks.json'), 'utf8');
 const claudeSettings = fs.readFileSync(path.join(REPO_ROOT, '.claude', 'settings.json'), 'utf8');
 const bmadMethodology = fs.readFileSync(
@@ -108,6 +112,21 @@ describe('boss natural language command contract', () => {
     expect(bossCommand).toContain('约束类输入不会启动新流水线');
     expect(bossCommand).toContain('当前 Boss Skill 的 `SKILL.md`');
     expect(bossCommand).not.toContain('skills/boss/SKILL.md');
+  });
+});
+
+describe('subagent orchestration safety contract', () => {
+  it('documents adaptable wave boundary verification before trusting subagent DONE states', () => {
+    for (const doc of [skill, subagentProtocol]) {
+      expect(doc).toContain('Wave 边界校验');
+      expect(doc).toContain('按项目技术栈选择');
+      expect(doc).toContain('类型检查');
+      expect(doc).toContain('测试套件');
+      expect(doc).toContain('依赖清单');
+      expect(doc).toContain('orchestrator');
+      expect(doc).toContain('意外 diff');
+      expect(doc).not.toContain('**必跑命令**');
+    }
   });
 });
 
