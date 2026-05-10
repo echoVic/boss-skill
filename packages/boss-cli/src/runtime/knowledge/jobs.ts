@@ -21,6 +21,8 @@ export interface KnowledgeJobPayload {
 }
 
 export type KnowledgeJobStatus = 'pending' | 'processing' | 'succeeded' | 'failed';
+const STALE_PROCESSING_MS = 5 * 60 * 1000;
+const MAX_ATTEMPTS = 3;
 
 export interface KnowledgeJob {
   id: string;
@@ -63,13 +65,18 @@ function cloneJob(job: KnowledgeJob): KnowledgeJob {
 }
 
 function jobUpdate(job: KnowledgeJob, status: KnowledgeJobStatus, error?: string): KnowledgeJob {
-  return {
+  const next: KnowledgeJob = {
     ...cloneJob(job),
     status,
     attempts: status === 'processing' ? job.attempts + 1 : job.attempts,
-    updatedAt: new Date().toISOString(),
-    ...(error ? { error } : {})
+    updatedAt: new Date().toISOString()
   };
+  if (error) {
+    next.error = error;
+  } else {
+    delete next.error;
+  }
+  return next;
 }
 
 function latestJobs(entries: KnowledgeJob[]): Map<string, KnowledgeJob> {
@@ -78,6 +85,24 @@ function latestJobs(entries: KnowledgeJob[]): Map<string, KnowledgeJob> {
     latest.set(entry.id, entry);
   }
   return latest;
+}
+
+function isStaleProcessing(job: KnowledgeJob, nowMs: number): boolean {
+  if (job.status !== 'processing') return false;
+  if (job.attempts >= MAX_ATTEMPTS) return false;
+  const updatedAt = Date.parse(job.updatedAt);
+  if (Number.isNaN(updatedAt)) return true;
+  return nowMs - updatedAt >= STALE_PROCESSING_MS;
+}
+
+function isRetryableFailure(job: KnowledgeJob): boolean {
+  return job.status === 'failed' && job.attempts < MAX_ATTEMPTS;
+}
+
+function selectEligibleJobs(entries: KnowledgeJob[], nowMs: number): KnowledgeJob[] {
+  return [...latestJobs(entries).values()].filter(
+    (job) => job.status === 'pending' || isStaleProcessing(job, nowMs) || isRetryableFailure(job)
+  );
 }
 
 function splitRecords(records: KnowledgeRecord[]): {
@@ -132,28 +157,39 @@ export async function processKnowledgeJobs(
   feature: string,
   {
     cwd = process.cwd(),
-    client = createDefaultKnowledgeClient()
+    client = createDefaultKnowledgeClient() ?? undefined
   }: { cwd?: string; client?: KnowledgeLlmClient } = {}
 ): Promise<ProcessKnowledgeJobsResult> {
   const filePath = knowledgeJobsPath(cwd, feature);
-  const pending = [...latestJobs(readKnowledgeJobs(feature, { cwd })).values()].filter(
-    (job) => job.status === 'pending'
-  );
   let processed = 0;
   let failed = 0;
+  const handledIds = new Set<string>();
 
-  for (const job of pending) {
+  if (!client) {
+    return { processed, failed };
+  }
+
+  while (true) {
+    const pending = selectEligibleJobs(readKnowledgeJobs(feature, { cwd }), Date.now()).filter(
+      (job) => !handledIds.has(job.id)
+    );
+    const job = pending[0];
+    if (!job) break;
+
+    handledIds.add(job.id);
+
     const processing = jobUpdate(job, 'processing');
     appendJsonLine(filePath, processing);
 
     try {
       const extracted = validateKnowledgeExtractionResult(await client.extract(job.payload, job));
       const { projectRecords, globalRecords } = splitRecords(extracted.records);
+      let mergedProjectRecords: KnowledgeRecord[] = [];
       if (projectRecords.length > 0) {
-        saveProjectKnowledge(feature, projectRecords, { cwd });
+        mergedProjectRecords = saveProjectKnowledge(feature, projectRecords, { cwd }).records;
       }
 
-      const promotedRecords = promoteStableRecords(projectRecords);
+      const promotedRecords = promoteStableRecords(mergedProjectRecords);
       const allGlobalRecords = [...globalRecords, ...promotedRecords];
       if (allGlobalRecords.length > 0) {
         saveGlobalKnowledge(allGlobalRecords, { cwd });

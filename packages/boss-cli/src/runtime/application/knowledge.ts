@@ -22,8 +22,8 @@ export function startKnowledgeWorker(
   }: { cwd?: string; spawn?: SpawnFn } = {}
 ): StartKnowledgeWorkerResult {
   try {
-    const binPath = fileURLToPath(new URL('../../bin/boss.js', import.meta.url));
-    const child = spawnFn(process.execPath, [binPath, 'runtime', 'process-knowledge-jobs', feature], {
+    const workerPath = fileURLToPath(new URL('../knowledge/worker.js', import.meta.url));
+    const child = spawnFn(process.execPath, [workerPath, feature], {
       cwd,
       detached: true,
       stdio: 'ignore'
