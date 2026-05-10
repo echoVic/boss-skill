@@ -141,6 +141,15 @@ describe('thin skill CLI contract', () => {
     expect(bossCommand).toContain('boss project init');
   });
 
+  it('documents runtime command boundaries that match the CLI surface', () => {
+    expect(skill).toContain('boss runtime register-plugins <feature>');
+    expect(skill).toContain('boss runtime query-memory <feature> --agent <agent-name>');
+    expect(skill).toContain('boss runtime record-artifact <feature> <artifact-name> <N>');
+    expect(skill).toContain('`project init` 已隐式执行');
+    expect(skill).not.toContain('boss runtime query-memory <feature> --agent <agent-name> --json');
+    expect(skill).not.toContain('update-stage <feature> <N> completed --artifact');
+  });
+
   it('routes hook config through the boss hooks dispatcher', () => {
     expect(hooksConfig).toContain('boss hooks run');
     expect(hooksConfig).not.toContain('scripts/lib/run-with-flags.js');

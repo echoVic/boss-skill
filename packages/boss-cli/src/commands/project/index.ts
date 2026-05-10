@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CliUserError,
-  assertConfirmed,
   createCliContext,
   describeCommand,
   readJsonInput,
@@ -268,11 +267,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 
   const targetDir = path.join(cwd, '.boss', feature);
   const relativeTarget = path.join('.boss', feature);
-  const projectTemplateDir = path.join(cwd, PROJECT_TEMPLATE_DIR);
-  const forceWouldOverwrite = force && (fs.existsSync(targetDir) || (initTemplates && fs.existsSync(projectTemplateDir)));
-  if (forceWouldOverwrite) {
-    assertConfirmed(context, 'project_init_overwrite');
-  }
 
   if (initTemplates) {
     copyTemplates(cwd, force);

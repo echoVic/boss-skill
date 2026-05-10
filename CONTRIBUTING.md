@@ -57,7 +57,7 @@ Agent-facing `boss` commands use these common options where applicable; run `--d
 - `--dry-run`: structured action plan for writes or risky operations
 - `--json-input=<json|->`: JSON input payload
 - `--fields=<a,b>` and `--limit=<n>`: bounded output
-- `--yes`: required for destructive non-interactive execution
+- `--yes`: required only for high-risk non-interactive commands that need an extra confirmation; for `project init --force`, `--force` is the overwrite confirmation
 
 Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`. CLI paths must remain non-interactive in non-TTY contexts.
 
@@ -204,7 +204,7 @@ docs: 更新 README 安装说明
 
 - 插件 Schema：`packages/boss-cli/assets/plugin-schema.json`
 - 内置插件示例：`packages/boss-cli/assets/plugins/security-audit/`
-- 插件注册入口：`boss runtime register-plugins`
+- 插件注册入口：`boss runtime register-plugins <feature>`
 
 插件目录结构：
 

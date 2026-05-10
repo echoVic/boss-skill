@@ -7,12 +7,13 @@ import {
   consumeCliContractOption,
   createCliContext,
   describeCommand,
+  parseLimit,
   runMain,
   writeOutput
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/registry.js';
-import { printRuntimeHelp } from './agent-command-utils.js';
-import { readFeatureSummary } from '../../runtime/application/memory.js';
+import { printRuntimeHelp, requireOptionValue } from './agent-command-utils.js';
+import { queryAgentSection, readFeatureSummary } from '../../runtime/application/memory.js';
 
 function printHelp(): void {
   printRuntimeHelp('query-memory', 'boss runtime query-memory FEATURE [options]');
@@ -26,13 +27,36 @@ export function parseArgs(argv: string[]) {
   const parsed = {
     feature: '',
     startup: false,
-    json: false
+    json: false,
+    agent: '',
+    stage: null as number | null
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
     if (arg === '--startup') {
       parsed.startup = true;
+      continue;
+    }
+    if (arg === '--agent') {
+      parsed.agent = requireOptionValue('--agent', argv[index + 1]);
+      index += 1;
+      continue;
+    }
+    if (arg === '--stage') {
+      const rawStage = requireOptionValue('--stage', argv[index + 1]);
+      const stage = Number(rawStage);
+      if (!Number.isInteger(stage) || stage < 0) {
+        throw new CliUserError({
+          code: 'invalid_stage',
+          message: `Invalid --stage value: ${rawStage}`,
+          input: { stage: rawStage },
+          retryable: false,
+          suggestion: 'Use a non-negative integer stage number'
+        });
+      }
+      parsed.stage = stage;
+      index += 1;
       continue;
     }
     const contractOptionEnd = consumeCliContractOption(argv, index);
@@ -93,15 +117,33 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     feature = parsed.feature;
 
     const summary = readFeatureSummary(parsed.feature, { cwd });
-    const payload = parsed.startup
-      ? { feature: parsed.feature, startupSummary: summary.startupSummary || [] }
-      : summary;
+    if (parsed.agent) {
+      const payload = {
+        feature: parsed.feature,
+        agent: parsed.agent,
+        stage: parsed.stage,
+        memories: queryAgentSection(parsed.feature, {
+          cwd,
+          agent: parsed.agent,
+          stage: parsed.stage ?? undefined,
+          limit: parseLimit(context.values.limit)
+        })
+      };
+      writeOutput(payload, context, () =>
+        payload.memories.map((item) => `- [${item.category}] ${item.summary}`).join('\n') + '\n'
+      );
+      return 0;
+    }
 
-    writeOutput(payload, context, () =>
-      parsed.startup
-        ? payload.startupSummary.map((item) => `- [${item.category}] ${item.summary}`).join('\n') + '\n'
-        : `${JSON.stringify(payload, null, 2)}\n`
-    );
+    if (parsed.startup) {
+      const payload = { feature: parsed.feature, startupSummary: summary.startupSummary || [] };
+      writeOutput(payload, context, () =>
+        payload.startupSummary.map((item) => `- [${item.category}] ${item.summary}`).join('\n') + '\n'
+      );
+      return 0;
+    }
+
+    writeOutput(summary, context, () => `${JSON.stringify(summary, null, 2)}\n`);
     return 0;
   } catch (err) {
     throw toFeatureNotFoundError(err, feature);

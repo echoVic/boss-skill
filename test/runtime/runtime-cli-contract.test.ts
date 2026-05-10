@@ -231,6 +231,55 @@ describe('runtime CLI contract', () => {
     expect(payload.startupSummary[0]?.summary).toBe('Stage 3 is unstable');
   });
 
+  it('query-memory supports agent-scoped summaries for subagent context injection', () => {
+    writeFeatureMemory(
+      'test-feat',
+      [
+        {
+          id: 'm1',
+          scope: 'feature',
+          kind: 'execution',
+          category: 'agent_failure_pattern',
+          stage: 3,
+          agent: 'boss-backend',
+          summary: 'Backend forgot to delete R2 objects',
+          source: { type: 'events' },
+          evidence: [{ type: 'event', ref: '2' }],
+          tags: ['boss-backend'],
+          confidence: 0.9,
+          createdAt: '2026-04-17T00:00:00Z',
+          lastSeenAt: '2026-04-17T00:00:00Z',
+          expiresAt: null,
+          decayScore: 10,
+          influence: 'preference'
+        }
+      ],
+      { cwd: tmpDir }
+    );
+    initPipeline('test-feat', { cwd: tmpDir });
+    buildFeatureSummary('test-feat', { cwd: tmpDir });
+
+    const result = runCli('query-memory', ['test-feat', '--agent', 'boss-backend', '--json']);
+    expect(result.status).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      agent: string;
+      memories: Array<{ summary: string }>;
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.agent).toBe('boss-backend');
+    expect(payload.memories.map((item) => item.summary)).toEqual(['Backend forgot to delete R2 objects']);
+  });
+
+  it('update-stage rejects artifact recording and points agents to record-artifact', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runCli('update-stage', ['test-feat', '1', 'completed', '--artifact', 'prd.md']);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('record-artifact');
+  });
+
   it('runtime commands expose describe metadata and structured non-tty errors', () => {
     for (const command of [
       'init-pipeline',
@@ -348,8 +397,9 @@ describe('runtime CLI contract', () => {
       options: Array<{ name: string }>;
     };
     expect(updateStageMetadata.options.map((option) => option.name)).toEqual(
-      expect.arrayContaining(['json', 'describe', 'fields', 'dry-run', 'json-input', 'reason', 'artifact'])
+      expect.arrayContaining(['json', 'describe', 'fields', 'dry-run', 'json-input', 'reason'])
     );
+    expect(updateStageMetadata.options.map((option) => option.name)).not.toContain('artifact');
   });
 
   it('runtime help mirrors describe metadata for representative command options', () => {
@@ -357,8 +407,8 @@ describe('runtime CLI contract', () => {
     expect(updateStageHelp.status).toBe(0);
     const updateStageText = updateStageHelp.stdout + updateStageHelp.stderr;
     expect(updateStageText).toContain('--reason <string>');
-    expect(updateStageText).toContain('--artifact <array>');
     expect(updateStageText).toContain('--gate-passed');
+    expect(updateStageText).not.toContain('--artifact');
     expect(updateStageText).not.toContain('--yes');
     expect(updateStageText).not.toContain('--limit');
 

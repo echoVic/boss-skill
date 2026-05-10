@@ -98,15 +98,23 @@ describe('agent-friendly boss CLI contract', () => {
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'agent-json-input'))).toBe(false);
   });
 
-  it('requires --yes for non-interactive destructive overwrite', () => {
+  it('treats project init --force as the explicit overwrite confirmation', () => {
     fs.mkdirSync(path.join(tmpDir, '.boss', 'danger-zone'), { recursive: true });
 
     const result = runBoss(['project', 'init', 'danger-zone', '--force', '--json'], tmpDir);
 
-    expect(result.status).toBe(1);
-    const payload = JSON.parse(result.stderr) as { error: { code: string; retryable: boolean } };
-    expect(payload.error.code).toBe('confirmation_required');
-    expect(payload.error.retryable).toBe(false);
+    expect(result.status).toBe(0);
+    const payload = parseJson(result.stdout) as { feature: string; created: boolean };
+    expect(payload.feature).toBe('danger-zone');
+    expect(payload.created).toBe(true);
+  });
+
+  it('documents project init --force without redundant --yes confirmation', () => {
+    const result = runBoss(['project', 'init', '--help'], tmpDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('--force');
+    expect(result.stdout).not.toContain('--yes');
   });
 
   it('limits and picks fields for list-like JSON output', () => {

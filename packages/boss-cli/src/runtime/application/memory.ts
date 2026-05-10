@@ -13,6 +13,7 @@ import {
   type PersistedMemoryRecord
 } from '../memory/store.js';
 import { extractFeatureMemories } from '../memory/extractor.js';
+import { queryAgentMemories } from '../memory/query.js';
 import { buildAgentSections, buildStartupSummary } from '../memory/summarizer.js';
 import type { ExecutionState, RuntimeEvent } from '../projectors/materialize-state.js';
 import type { MemorySummaryEntry } from '../memory/store.js';
@@ -189,11 +190,23 @@ export function queryAgentSection(
   } = {}
 ): MemorySummaryEntry[] {
   const summary = readFeatureSummary(feature, { cwd });
-  const section =
+  const summarySection =
     summary.agentSections && agent && summary.agentSections[agent]
       ? summary.agentSections[agent]
       : [];
+  if (summarySection.length > 0) {
+    return summarySection.slice(0, limit);
+  }
 
-  void stage;
-  return section.slice(0, limit);
+  const payload = readFeatureMemory(feature, { cwd });
+  const globalPayload = readGlobalMemory({ cwd });
+  return queryAgentMemories([...(payload.records ?? []), ...(globalPayload.records ?? [])], {
+    agent,
+    stage,
+    limit
+  }).map((record) => ({
+    category: record.category,
+    summary: record.summary,
+    scope: record.scope
+  }));
 }

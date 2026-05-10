@@ -123,10 +123,10 @@ Copy this checklist and check off items as you complete them:
     - ❌ 缺任何一项 → 进入 brainstorming
   - [ ] 0.2 **Brainstorming 需求澄清**：读取 `skills/brainstorming/SKILL.md` 的流程，以 Boss 的身份执行需求澄清（不需要启动子 Agent，你自己来问）。**已有项目先执行 SKILL.md 中的"项目环境感知"步骤**，再进入提问环节。一次一个问题，优先给选项，只问业务问题不问技术问题。
   - [ ] 0.3 **输出设计简报**：澄清完毕后，写入 `.boss/<feature>/design-brief.md`，向用户确认
-  - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架
+  - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架；`project init` 已隐式执行 pipeline 初始化，不要随后再调用 `boss runtime init-pipeline <feature>`
   - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
   - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `packages/boss-cli/assets/artifact-dag.json`（可由 `.boss/artifact-dag.json` 或 pipeline pack 自定义 DAG 覆盖），确定产物依赖图
-  - [ ] 0.5 🔌 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
+  - [ ] 0.5 🔌 调用 `boss runtime register-plugins <feature>` 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
   - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`boss runtime update-stage <feature> 1 running`，进入 DAG 执行循环 ↓
 
@@ -140,7 +140,7 @@ Copy this checklist and check off items as you complete them:
     - 对同一阶段的就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）
     - 不同阶段的就绪产物也可并行（DAG 保证依赖已满足）
     - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`
-    - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name> --json`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
+    - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name>`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
   - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
@@ -198,13 +198,13 @@ Copy this checklist and check off items as you complete them:
 
 | 编排动作 | Runtime CLI | Runtime API |
 |---------|-------------|-------------|
-| 初始化流水线 | `boss runtime init-pipeline` | `initPipeline(feature)` |
+| 初始化流水线（低阶；`project init` 未执行时使用） | `boss runtime init-pipeline` | `initPipeline(feature)` |
 | 查询 ready artifacts | `boss runtime get-ready-artifacts` | `getReadyArtifacts(feature, options)` |
 | 阶段状态变更 | `boss runtime update-stage` | `updateStage(feature, stage, status, options)` |
 | 记录产物 | `boss runtime record-artifact` | `recordArtifact(feature, artifact, stage)` |
 | Agent 状态变更 | `boss runtime update-agent` | `updateAgent(feature, stage, agent, status, options)` |
 | 门禁评估 | `boss runtime evaluate-gates` | `evaluateGates(feature, gate, options)` |
-| 插件注册 | `boss runtime register-plugins` | `registerPlugins(feature, options)` |
+| 插件注册 | `boss runtime register-plugins <feature>` | `registerPlugins(feature, options)` |
 | 插件 Hook 执行 | `boss runtime run-plugin-hook` | `runHook(hook, feature, options)` |
 | 阶段状态检查 | `boss runtime check-stage` | `checkStage(feature, stage, options)` |
 | 事件回放 | `boss runtime replay-events` | `replayEvents(feature, options)`, `replaySnapshot(feature, at, options)` |
@@ -219,6 +219,7 @@ Copy this checklist and check off items as you complete them:
 | `boss runtime retry-stage` | 阶段重试（检查上限 → retrying → running） |
 | `boss runtime retry-agent` | 单个 Agent 重试（不重跑整个阶段） |
 | `boss packs detect` | Pipeline Pack 自动检测（匹配项目文件） |
+| `boss runtime query-memory <feature> --agent <agent-name>` | 查询指定 Agent 的记忆摘要，用于派发前注入上下文 |
 | `boss runtime inspect-progress` | 实时进度监控（读取 progress.jsonl） |
 | `boss runtime record-feedback` | Agent 间反馈循环记录（REVISION_NEEDED） |
 | `boss runtime evaluate-gates <feature> gate0` | Gate 0：代码质量（编译 + Lint） |

@@ -31,7 +31,7 @@ interface RegisterPluginsInput {
 }
 
 function printHelp(): void {
-  printRuntimeHelp('register-plugins', 'boss runtime register-plugins [options]');
+  printRuntimeHelp('register-plugins', 'boss runtime register-plugins [FEATURE] [options]');
 }
 
 function parseFlatInput(argv: string[]): RegisterPluginsInput {
@@ -40,6 +40,7 @@ function parseFlatInput(argv: string[]): RegisterPluginsInput {
     type: '',
     feature: ''
   };
+  let explicitAction = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
@@ -50,9 +51,11 @@ function parseFlatInput(argv: string[]): RegisterPluginsInput {
         continue;
       case '--list':
         parsed.action = 'list';
+        explicitAction = true;
         continue;
       case '--validate':
         parsed.action = 'validate';
+        explicitAction = true;
         continue;
       case '--type':
         parsed.type = requireOptionValue('--type', argv[index + 1]);
@@ -60,6 +63,7 @@ function parseFlatInput(argv: string[]): RegisterPluginsInput {
         continue;
       case '--register':
         parsed.action = 'register';
+        explicitAction = true;
         parsed.feature = requireOptionValue('--register', argv[index + 1]);
         index += 1;
         continue;
@@ -70,7 +74,15 @@ function parseFlatInput(argv: string[]): RegisterPluginsInput {
       index = contractOptionEnd;
       continue;
     }
-    throw new Error(`未知选项: ${arg}`);
+    if (arg.startsWith('-')) {
+      throw new Error(`未知选项: ${arg}`);
+    }
+    if (!explicitAction && !parsed.feature) {
+      parsed.action = 'register';
+      parsed.feature = arg;
+      continue;
+    }
+    throw new Error(`多余的参数: ${arg}`);
   }
 
   return parsed;

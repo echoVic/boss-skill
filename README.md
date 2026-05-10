@@ -137,19 +137,19 @@ Agent-facing `boss` commands use these common options where applicable; run `--d
 - `--dry-run`: structured action plan for writes or risky operations
 - `--json-input=<json|->`: JSON input payload
 - `--fields=<a,b>` and `--limit=<n>`: bounded output
-- `--yes`: required for destructive non-interactive execution
+- `--yes`: required only for high-risk non-interactive commands that need an extra confirmation; for `project init --force`, `--force` is the overwrite confirmation
 
 Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`.
 
 | 编排动作 | Runtime CLI |
 |------|------|
-| 初始化流水线 | `boss runtime init-pipeline` |
+| 初始化流水线（低阶；`project init` 未执行时） | `boss runtime init-pipeline` |
 | 查询 ready artifacts | `boss runtime get-ready-artifacts` |
 | 记录产物完成 | `boss runtime record-artifact` |
 | 更新阶段状态 | `boss runtime update-stage` |
 | 更新 Agent 状态 | `boss runtime update-agent` |
 | 执行门禁 | `boss runtime evaluate-gates` |
-| 注册插件 | `boss runtime register-plugins` |
+| 注册插件 | `boss runtime register-plugins <feature>` |
 | 执行插件 Hook | `boss runtime run-plugin-hook` |
 | 检查阶段状态 | `boss runtime check-stage` |
 | 回放事件/快照 | `boss runtime replay-events` |

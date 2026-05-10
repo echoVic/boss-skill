@@ -403,4 +403,46 @@ describe('plugin runtime registration', () => {
     expect(payload.executionPath).toBe('.boss/test-feat/.meta/execution.json');
     expect(result.stdout).not.toMatch(/注册 .* 到 .*execution\.json/);
   });
+
+  it('register-plugins CLI accepts the feature as the canonical positional argument', () => {
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    fs.mkdirSync(metaDir, { recursive: true });
+    const initialState = {
+      schemaVersion: '0.2.0',
+      feature: 'test-feat',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      status: 'initialized',
+      parameters: {},
+      stages: {},
+      qualityGates: {},
+      metrics: { totalDuration: null, stageTimings: {}, gatePassRate: null, retryTotal: 0 },
+      plugins: [],
+      pluginLifecycle: { discovered: [], activated: [] },
+      humanInterventions: [],
+      revisionRequests: [],
+      feedbackLoops: { maxRounds: 2, currentRound: 0 }
+    };
+    fs.writeFileSync(path.join(metaDir, 'execution.json'), JSON.stringify(initialState, null, 2), 'utf8');
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2024-01-01T00:00:00Z',
+        data: { initialState }
+      })}\n`,
+      'utf8'
+    );
+
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'register-plugins', 'test-feat'], {
+      cwd: tmpDir,
+      encoding: 'utf8'
+    });
+
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as { feature: string; plugin_count: number };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.plugin_count).toBeGreaterThan(0);
+  });
 });

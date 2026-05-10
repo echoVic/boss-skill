@@ -267,7 +267,7 @@ Object.assign(runtimeDescriptions, {
   },
   'update-stage': {
     ...runtimeDescriptions['update-stage']!,
-    summary: 'Update stage status and optionally record artifacts or gate result',
+    summary: 'Update stage status and optionally record a gate result',
     parameters: [
       { name: 'feature', type: 'string' as const, required: true },
       { name: 'stage', type: 'number' as const, required: true },
@@ -276,7 +276,6 @@ Object.assign(runtimeDescriptions, {
     options: [
       ...runtimeMutationOptions,
       { name: 'reason', type: 'string' as const },
-      { name: 'artifact', type: 'array' as const },
       { name: 'gate', type: 'string' as const },
       { name: 'gate-passed', type: 'boolean' as const, default: false },
       { name: 'gate-failed', type: 'boolean' as const, default: false }
@@ -386,7 +385,12 @@ Object.assign(runtimeDescriptions, {
     ...runtimeDescriptions['query-memory']!,
     summary: 'Query feature memory summary',
     parameters: [{ name: 'feature', type: 'string' as const, required: true }],
-    options: [...runtimeFieldOptions, { name: 'startup', type: 'boolean' as const, default: false }]
+    options: [
+      ...runtimeListOptions,
+      { name: 'startup', type: 'boolean' as const, default: false },
+      { name: 'agent', type: 'string' as const },
+      { name: 'stage', type: 'number' as const }
+    ]
   },
   'build-memory-summary': {
     ...runtimeDescriptions['build-memory-summary']!,
@@ -401,7 +405,7 @@ Object.assign(runtimeDescriptions, {
   'register-plugins': {
     ...runtimeDescriptions['register-plugins']!,
     summary: 'List, validate, or register Boss plugins into the event-sourced read model',
-    parameters: [],
+    parameters: [{ name: 'feature', type: 'string' as const, required: false }],
     options: [
       ...runtimeMutationOptions,
       { name: 'list', type: 'boolean' as const, default: false },

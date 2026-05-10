@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  CliUserError,
   consumeCliContractOption,
   createCliContext,
   describeCommand,
@@ -28,7 +29,6 @@ interface UpdateStageInput {
   stage: string;
   status: string;
   reason?: string;
-  artifacts: string[];
   gate?: string;
   gatePassed?: boolean | null;
 }
@@ -56,7 +56,6 @@ function parseFlatInput(argv: string[]): UpdateStageInput {
   let stage = '';
   let status = '';
   let reason: string | undefined;
-  const artifacts: string[] = [];
   let gate: string | undefined;
   let gatePassed: boolean | null = null;
 
@@ -68,9 +67,13 @@ function parseFlatInput(argv: string[]): UpdateStageInput {
         index += 1;
         continue;
       case '--artifact':
-        artifacts.push(requireOptionValue('--artifact', argv[index + 1]));
-        index += 1;
-        continue;
+        throw new CliUserError({
+          code: 'unsupported_option',
+          message: 'update-stage 不再记录 artifact；请改用 boss runtime record-artifact <feature> <artifact> <stage>',
+          input: { option: '--artifact' },
+          retryable: false,
+          suggestion: 'Run boss runtime record-artifact <feature> <artifact> <stage> before completing the stage'
+        });
       case '--gate':
         gate = requireOptionValue('--gate', argv[index + 1]);
         index += 1;
@@ -108,7 +111,6 @@ function parseFlatInput(argv: string[]): UpdateStageInput {
     stage: requireInputString(stage, 'stage'),
     status: requireInputString(status, 'status'),
     reason,
-    artifacts,
     gate,
     gatePassed
   };
@@ -118,12 +120,20 @@ function resolveInput(argv: string[], context: CliContext): UpdateStageInput {
   const jsonInput = readJsonInput(context.values.jsonInput);
   if (jsonInput) {
     const input = jsonInput as Record<string, unknown>;
+    if ('artifacts' in input || 'artifact' in input) {
+      throw new CliUserError({
+        code: 'unsupported_field',
+        message: 'update-stage 不再记录 artifact；请改用 boss runtime record-artifact <feature> <artifact> <stage>',
+        input: { field: 'artifact' },
+        retryable: false,
+        suggestion: 'Run boss runtime record-artifact <feature> <artifact> <stage> before completing the stage'
+      });
+    }
     return {
       feature: requireInputString(input.feature, 'feature'),
       stage: requireInputString(input.stage, 'stage'),
       status: requireInputString(input.status, 'status'),
       reason: optionalInputString(input.reason),
-      artifacts: Array.isArray(input.artifacts) ? input.artifacts.map(String) : [],
       gate: optionalInputString(input.gate),
       gatePassed: typeof input.gatePassed === 'boolean' ? input.gatePassed : null
     };
@@ -137,7 +147,6 @@ function actionFor(input: UpdateStageInput) {
     feature: input.feature,
     stage: Number(input.stage),
     target_status: input.status,
-    artifacts: input.artifacts,
     gate: input.gate,
     gatePassed: input.gatePassed
   };
@@ -171,7 +180,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     updateStage(input.feature, input.stage, input.status, {
       cwd,
       reason: input.reason || '',
-      artifacts: input.artifacts,
       gate: input.gate || '',
       gatePassed: input.gatePassed ?? null
     });
