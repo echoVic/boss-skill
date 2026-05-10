@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { EVENT_TYPE_VALUES, type EventType } from '../domain/event-types.js';
 import type { ExecutionState, RuntimeEvent } from '../projectors/materialize-state.js';
 import { buildFeatureSummary, rebuildFeatureMemory, rebuildGlobalMemory } from './memory.js';
+import { refreshKnowledge } from './knowledge.js';
 import type { PipelinePackStateParameters } from './packs.js';
 
 export interface PipelineParameters extends Record<string, unknown>, PipelinePackStateParameters {
@@ -111,4 +112,5 @@ export function refreshMemory(feature: string, cwd: string): void {
     const message = (err as Error).message;
     process.stderr.write(`[boss-skill] memory refresh skipped: ${message}\n`);
   }
+  refreshKnowledge(feature, cwd);
 }
