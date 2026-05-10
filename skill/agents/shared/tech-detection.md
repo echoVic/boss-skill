@@ -149,6 +149,18 @@
 | `rush.json` | Rush |
 | `workspaces` in package.json | npm/yarn workspaces |
 
+### Step 9: 源码扫描隔离
+
+`.boss/` 是 Boss orchestration artifacts，不是业务源码。任何会自动扫描工作树的工具（构建器、CSS 工具、测试发现器、文档/内容索引器、代码生成器）都必须把 `.boss/` 排除在源码输入之外，避免文档里的代码示例或日志片段被当作真实代码处理。
+
+已知适配器：
+
+| 工具 | 风险 | 处理方式 |
+|------|------|----------|
+| Tailwind v4 | 自动 source detection 可能把 `.boss/*.md` 里的 utility-like 字面量当作 class 编译 | 在 Tailwind CSS 入口加入 `@source not "<relative-path-to-.boss>";` |
+
+注意：Markdown 里的 fenced code block + 语言标识是文档可读性要求，但不是构建隔离边界；源码扫描隔离必须由工具配置或入口文件明确表达。
+
 ---
 
 ## 输出格式
@@ -169,6 +181,7 @@
 | 构建工具 | [检测到的工具 或 "未检测到"] |
 | 部署环境 | [检测到的环境 或 "未检测到"] |
 | Monorepo | [检测到的工具 或 "否"] |
+| 源码扫描隔离 | [已排除 .boss/ / 需补充配置 / 不适用] |
 ```
 
 ---

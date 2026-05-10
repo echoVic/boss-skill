@@ -117,6 +117,23 @@ describe('agent-friendly boss CLI contract', () => {
     expect(result.stdout).not.toContain('--yes');
   });
 
+  it('excludes .boss artifacts from Tailwind v4 automatic source detection during project init', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { tailwindcss: '^4.1.0' } }, null, 2),
+      'utf8'
+    );
+    fs.mkdirSync(path.join(tmpDir, 'app'), { recursive: true });
+    const cssPath = path.join(tmpDir, 'app', 'globals.css');
+    fs.writeFileSync(cssPath, '@import "tailwindcss";\n', 'utf8');
+
+    const result = runBoss(['project', 'init', 'tailwind-v4-demo', '--json'], tmpDir);
+
+    expect(result.status).toBe(0);
+    const css = fs.readFileSync(cssPath, 'utf8');
+    expect(css).toContain('@source not "../.boss";');
+  });
+
   it('limits and picks fields for list-like JSON output', () => {
     const init = runBoss(['runtime', 'init-pipeline', 'events-feature'], tmpDir);
     expect(init.status).toBe(0);

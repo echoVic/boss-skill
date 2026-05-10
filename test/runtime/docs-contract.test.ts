@@ -57,6 +57,14 @@ describe('tech-detection.md contract', () => {
     expect(techDetection).toMatch(/部署环境.*[|｜]/m);
     expect(techDetection).toMatch(/Monorepo.*[|｜]/m);
   });
+
+  it('documents source scanner isolation for .boss artifacts', () => {
+    expect(techDetection).toContain('源码扫描隔离');
+    expect(techDetection).toContain('.boss/');
+    expect(techDetection).toContain('Tailwind v4');
+    expect(techDetection).toContain('@source not');
+    expect(techDetection).toContain('不是业务源码');
+  });
 });
 
 describe('package metadata', () => {

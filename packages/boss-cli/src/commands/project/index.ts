@@ -138,6 +138,105 @@ function copyTemplates(cwd: string, force: boolean): void {
   );
 }
 
+function readProjectPackageJson(cwd: string): Record<string, unknown> | null {
+  const packageJsonPath = path.join(cwd, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function projectDependencyVersion(pkg: Record<string, unknown>, name: string): string {
+  const dependencyGroups = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+  for (const groupName of dependencyGroups) {
+    const group = pkg[groupName];
+    if (group && typeof group === 'object' && !Array.isArray(group)) {
+      const version = (group as Record<string, unknown>)[name];
+      if (typeof version === 'string') return version;
+    }
+  }
+  return '';
+}
+
+function isTailwindV4Version(version: string): boolean {
+  const match = version.match(/\d+/);
+  return match ? Number(match[0]) >= 4 : false;
+}
+
+function cssUsesTailwind(content: string): boolean {
+  return /@import\s+["']tailwindcss["']/.test(content) || /@tailwind\s+(base|components|utilities)/.test(content);
+}
+
+function isTailwindV4Project(cwd: string, cssFiles: string[]): boolean {
+  const pkg = readProjectPackageJson(cwd);
+  if (pkg && isTailwindV4Version(projectDependencyVersion(pkg, 'tailwindcss'))) return true;
+  return cssFiles.some((file) => /@import\s+["']tailwindcss["']/.test(fs.readFileSync(file, 'utf8')));
+}
+
+function findTailwindCssFiles(cwd: string): string[] {
+  const candidates = [
+    'app/globals.css',
+    'src/app/globals.css',
+    'styles/globals.css',
+    'src/styles/globals.css',
+    'src/index.css',
+    'src/main.css',
+    'app.css',
+    'src/app.css'
+  ].map((name) => path.join(cwd, name));
+
+  const found = candidates.filter((file) => fs.existsSync(file) && cssUsesTailwind(fs.readFileSync(file, 'utf8')));
+  if (found.length > 0) return found;
+
+  const ignoredDirs = new Set(['.boss', '.git', 'node_modules', 'dist', 'build', 'coverage']);
+  const results: string[] = [];
+  function walk(dir: string): void {
+    if (results.length >= 5) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (results.length >= 5) return;
+      if (entry.isDirectory()) {
+        if (!ignoredDirs.has(entry.name)) walk(path.join(dir, entry.name));
+        continue;
+      }
+      if (!entry.name.endsWith('.css')) continue;
+      const file = path.join(dir, entry.name);
+      if (cssUsesTailwind(fs.readFileSync(file, 'utf8'))) results.push(file);
+    }
+  }
+  walk(cwd);
+  return results;
+}
+
+function posixRelative(fromDir: string, toPath: string): string {
+  const relativePath = path.relative(fromDir, toPath).split(path.sep).join('/');
+  return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+}
+
+function ensureBossArtifactsExcludedFromSourceScanners(cwd: string): string[] {
+  const cssFiles = findTailwindCssFiles(cwd);
+  if (cssFiles.length === 0 || !isTailwindV4Project(cwd, cssFiles)) return [];
+
+  const updated: string[] = [];
+  const bossDir = path.join(cwd, '.boss');
+  for (const cssFile of cssFiles) {
+    const content = fs.readFileSync(cssFile, 'utf8');
+    if (/@source\s+not\s+["'][^"']*\.boss\/?["']/.test(content)) continue;
+
+    const bossSourcePath = posixRelative(path.dirname(cssFile), bossDir);
+    const addition = [
+      '',
+      '/* Boss orchestration artifacts are not application source. */',
+      `@source not "${bossSourcePath}";`,
+      ''
+    ].join('\n');
+    fs.writeFileSync(cssFile, `${content.replace(/\s*$/, '\n')}${addition}`, 'utf8');
+    updated.push(path.relative(cwd, cssFile));
+  }
+  return updated;
+}
+
 interface ProjectInitInput {
   feature: string;
   template: boolean;
@@ -296,11 +395,13 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       writePlaceholder(targetDir, feature, date, item);
     }
     initPipeline(feature, { cwd });
+    const sourceIsolationPaths = ensureBossArtifactsExcludedFromSourceScanners(cwd);
     writeOutput(
       {
         feature,
         path: relativeTarget,
         templatesPath: initTemplates ? PROJECT_TEMPLATE_DIR : undefined,
+        sourceIsolationPaths,
         created: true,
         skipped: false
       },
@@ -308,11 +409,13 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       () => `Boss Mode 项目目录初始化完成: ${relativeTarget}\n`
     );
   } else {
+    const sourceIsolationPaths = ensureBossArtifactsExcludedFromSourceScanners(cwd);
     writeOutput(
       {
         feature,
         path: relativeTarget,
         templatesPath: initTemplates ? PROJECT_TEMPLATE_DIR : undefined,
+        sourceIsolationPaths,
         created: false,
         skipped: true
       },
