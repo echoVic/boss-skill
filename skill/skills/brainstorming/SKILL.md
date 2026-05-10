@@ -12,7 +12,7 @@ description: |
   Output: .boss/<feature>/design-brief.md 需求设计简报
 version: 3.2.0
 license: MIT
-user-invocable: true
+user-invocable: false
 ---
 
 # Brainstorming — 需求澄清

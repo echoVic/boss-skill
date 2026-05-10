@@ -78,18 +78,6 @@ const METADATA: Record<string, string> = {
         - bash`,
 };
 
-const BRAINSTORM_METADATA: Record<string, string> = {
-  OpenClaw: `metadata:
-  openclaw:
-    emoji: "🧠"`,
-  Codex: `metadata:
-  codex:
-    emoji: "🧠"`,
-  Antigravity: `metadata:
-  antigravity:
-    emoji: "🧠"`,
-};
-
 const AGENTS: Agent[] = [
   {
     name: 'OpenClaw',
@@ -149,12 +137,6 @@ function injectMetadata(content: string, agentName: string): string {
   return content.replace(/^(---\n[\s\S]*?)(^---)/m, `$1${meta}\n$2`);
 }
 
-function injectBrainstormMetadata(content: string, agentName: string): string {
-  const meta = BRAINSTORM_METADATA[agentName];
-  if (!meta) return content;
-  return content.replace(/^(---\n[\s\S]*?)(^---)/m, `$1${meta}\n$2`);
-}
-
 function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
   const dest = agent.dest();
 
@@ -173,12 +155,6 @@ function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
   if (fs.existsSync(skillMd)) {
     const content = fs.readFileSync(skillMd, 'utf8');
     fs.writeFileSync(skillMd, injectMetadata(content, agent.name));
-  }
-
-  const brainstormMd = path.join(dest, 'skills', 'brainstorming', 'SKILL.md');
-  if (fs.existsSync(brainstormMd)) {
-    const content = fs.readFileSync(brainstormMd, 'utf8');
-    fs.writeFileSync(brainstormMd, injectBrainstormMetadata(content, agent.name));
   }
 
   if (!silent) console.log(`  ✅ ${agent.name}: ${dest} (copied + metadata injected)`);
