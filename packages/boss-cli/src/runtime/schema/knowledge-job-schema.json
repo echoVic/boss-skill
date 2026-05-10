@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boss-skill.local/schema/knowledge-job-schema.json",
+  "title": "Boss Knowledge Job",
+  "type": "object",
+  "required": [
+    "id",
+    "feature",
+    "scope",
+    "status",
+    "payload",
+    "attempts",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "feature": { "type": "string" },
+    "scope": { "type": "string", "enum": ["project", "global"] },
+    "status": { "type": "string", "enum": ["pending", "processing", "succeeded", "failed"] },
+    "payload": {
+      "type": "object",
+      "required": ["sources"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string" },
+              "ref": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          }
+        },
+        "summary": {}
+      },
+      "additionalProperties": true
+    },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "error": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

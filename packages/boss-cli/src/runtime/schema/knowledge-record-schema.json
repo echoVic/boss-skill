@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boss-skill.local/schema/knowledge-record-schema.json",
+  "title": "Boss Knowledge Record",
+  "type": "object",
+  "required": [
+    "id",
+    "scope",
+    "kind",
+    "category",
+    "subject",
+    "summary",
+    "source",
+    "evidence",
+    "confidence",
+    "createdAt",
+    "lastSeenAt",
+    "expiresAt",
+    "decayScore"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "scope": { "type": "string", "enum": ["project", "global"] },
+    "kind": { "type": "string", "enum": ["preference", "fact", "decision", "lesson"] },
+    "category": { "type": "string" },
+    "subject": { "type": "string" },
+    "summary": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string" },
+        "ref": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "ref"],
+        "properties": {
+          "type": { "type": "string" },
+          "ref": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "createdAt": { "type": "string" },
+    "lastSeenAt": { "type": "string" },
+    "expiresAt": { "type": ["string", "null"] },
+    "decayScore": { "type": "number", "minimum": 0 }
+  },
+  "additionalProperties": true
+}

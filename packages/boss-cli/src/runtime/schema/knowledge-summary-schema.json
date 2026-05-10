@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boss-skill.local/schema/knowledge-summary-schema.json",
+  "title": "Boss Knowledge Summary",
+  "type": "object",
+  "required": ["generatedAt", "startupSummary", "agentSections"],
+  "properties": {
+    "feature": { "type": "string" },
+    "generatedAt": { "type": ["string", "null"] },
+    "startupSummary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "summary"],
+        "properties": {
+          "category": { "type": "string" },
+          "summary": { "type": "string" },
+          "scope": { "type": "string", "enum": ["project", "global"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "agentSections": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["category", "summary"],
+          "properties": {
+            "category": { "type": "string" },
+            "summary": { "type": "string" },
+            "scope": { "type": "string", "enum": ["project", "global"] }
+          },
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}
