@@ -2,7 +2,16 @@
 
 本文档包含所有 Boss Agent 的通用规则。各 Agent Prompt 文件通过引用本文档来继承这些规则，避免重复定义。
 
+> Context 预算规则：编排器应先读取 `agents/shared/protocol-manifest.md`，将稳定规则放入 prefix 缓存，并按需加载本文件全文。不要默认让每个 subagent 重复读取所有共享协议。
+
 ---
+
+## 协议 manifest 与按需加载
+
+- **协议 manifest**：`agents/shared/protocol-manifest.md` 是共享协议索引，列出公共 prefix、模块触发条件和渐进式披露流程。
+- **prefix 缓存**：同一轮流水线中，语言规则、模板优先级、状态块、摘要优先和技术栈缓存规则应作为短前缀复用。
+- **按需加载**：只有当 Agent 需要完整模板规则、技术适配规则或状态处理细节时，才展开对应协议全文。
+- **禁止默认全量注入**：不要把 `agent-protocol.md`、`tech-detection.md` 和角色 prompt 全文无条件重复塞给每个 subagent。
 
 ## 语言规则
 

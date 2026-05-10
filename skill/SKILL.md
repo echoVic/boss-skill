@@ -37,6 +37,7 @@ user-invocable: true
 11. **Wave 边界校验** — 子代理自报 `DONE` 不可信；每个 Wave 完成后必须按项目技术栈选择类型检查、测试套件、lint/格式检查等校验，并由 orchestrator 处理依赖清单、锁文件或构建配置的意外 diff
 12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一 Wave
 13. **风险等级感知确认** — 确认节点不只按阶段固定触发；code 阶段若命中高 Blast Radius 的强制确认 trigger，必须先向用户确认再派发实现 Agent
+14. **协议 manifest / prefix 缓存** — 子代理共享协议通过 `agents/shared/protocol-manifest.md` 做短前缀复用和按需加载，避免每个 subagent 重复读取长协议全文
 
 ## 参数
 
@@ -138,10 +139,13 @@ Copy this checklist and check off items as you complete them:
   - [ ] **D.2 阶段状态管理**：对就绪产物所属的阶段，若阶段状态为 `pending`，调用 `boss runtime update-stage <feature> <N> running` 标记阶段开始
   - [ ] **D.3 准备产物骨架**：对每个就绪产物调用 `boss artifact prepare <feature-name> <artifact-name>`
   - [ ] **D.4 并行派发 Agent**：
-    - Load `references/artifact-guide.md` 获取产物保存规范
+    - Load `agents/shared/protocol-manifest.md`，建立本轮公共协议 prefix 缓存；运行环境支持 prompt prefix/context cache/session memory 时复用该前缀，不支持时只注入 manifest 摘要和必要引用。
+    - Load `references/artifact-guide.md` 获取产物保存规范；若已在本轮 prefix 缓存中，复用摘要。
     - 对同一阶段的就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）
     - 不同阶段的就绪产物也可并行（DAG 保证依赖已满足）
-    - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`
+    - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + 协议 manifest 的公共 prefix；不要默认重复注入 `agent-protocol.md` 与 `tech-detection.md` 全文。
+    - 按需加载共享协议：模板/状态格式不清楚时再展开 `agents/shared/agent-protocol.md`；`.meta/tech-stack.json` 缺失、过期或项目结构变化时才展开 `agents/shared/tech-detection.md`；状态机、反馈循环、Wave 校验或风险确认处理时再展开 `agents/prompts/subagent-protocol.md`。
+    - 使用渐进式披露：若子代理返回 `NEEDS_CONTEXT` 或指出缺少某协议细节，orchestrator 再补充对应全文并重派；不要预先把所有协议全文塞给所有子代理。
     - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name>`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
   - [ ] **D.4a 任务写集冲突检测**（仅 code 产物派发前）：

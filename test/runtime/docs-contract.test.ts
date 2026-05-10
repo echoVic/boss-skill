@@ -16,6 +16,14 @@ const subagentProtocol = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'prompts', 'subagent-protocol.md'),
   'utf8'
 );
+const sharedAgentProtocol = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'agent-protocol.md'),
+  'utf8'
+);
+const protocolManifest = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'protocol-manifest.md'),
+  'utf8'
+);
 const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'hooks.json'), 'utf8');
 const claudeSettings = fs.readFileSync(path.join(REPO_ROOT, '.claude', 'settings.json'), 'utf8');
 const bmadMethodology = fs.readFileSync(
@@ -178,6 +186,26 @@ describe('subagent orchestration safety contract', () => {
     expect(skill).toContain('核心模块');
     expect(skill).toContain('不得派发 code Agent');
     expect(skill).not.toContain('阶段 3 门禁后 → 可选确认');
+  });
+
+  it('documents protocol manifest, prefix cache, and on-demand protocol loading', () => {
+    expect(protocolManifest).toContain('协议 manifest');
+    expect(protocolManifest).toContain('prefix 缓存');
+    expect(protocolManifest).toContain('按需加载');
+    expect(protocolManifest).toContain('渐进式披露');
+    expect(protocolManifest).toContain('agent-protocol.md');
+    expect(protocolManifest).toContain('tech-detection.md');
+
+    expect(sharedAgentProtocol).toContain('协议 manifest');
+    expect(sharedAgentProtocol).toContain('prefix 缓存');
+    expect(sharedAgentProtocol).toContain('按需加载');
+
+    expect(skill).toContain('协议 manifest');
+    expect(skill).toContain('prefix 缓存');
+    expect(skill).toContain('按需加载');
+    expect(skill).toContain('渐进式披露');
+    expect(skill).toContain('agents/shared/protocol-manifest.md');
+    expect(skill).not.toContain('每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`');
   });
 });
 
