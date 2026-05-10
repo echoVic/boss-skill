@@ -76,6 +76,14 @@ const METADATA: Record<string, string> = {
       bins:
         - node
         - bash`,
+
+  Hermes: `metadata:
+  hermes:
+    emoji: "👔"
+    requires:
+      bins:
+        - node
+        - bash`,
 };
 
 const AGENTS: Agent[] = [
@@ -98,6 +106,12 @@ const AGENTS: Agent[] = [
     method: 'copy',
   },
   {
+    name: 'Hermes',
+    detect: () => fs.existsSync(path.join(HOME, '.hermes')),
+    dest: () => path.join(HOME, '.hermes', 'skills', 'boss'),
+    method: 'copy',
+  },
+  {
     name: 'Claude Code',
     detect: () => true,
     dest: () => PKG_ROOT,
@@ -108,7 +122,7 @@ const AGENTS: Agent[] = [
 const USAGE = `
 @blade-ai/boss-skill v${pkg.version}
 BMAD Harness Engineer — pluggable pipeline skill for coding agents.
-Compatible with Claude Code, OpenClaw, Codex & Antigravity.
+Compatible with Claude Code, OpenClaw, Codex, Antigravity & Hermes.
 
 Usage:
   boss-skill                Auto-detect all agents and install
@@ -123,6 +137,7 @@ Auto-detect logic (checks all, installs to every detected agent):
   ~/.openclaw/                →  ~/.openclaw/skills/boss/     (copy + inject metadata)
   ~/.codex/                   →  ~/.codex/skills/boss/        (copy + inject metadata)
   ~/.gemini/antigravity/      →  ~/.gemini/.../skills/boss/   (copy + inject metadata)
+  ~/.hermes/                  →  ~/.hermes/skills/boss/       (copy + inject metadata)
   Claude Code                 →  plugin mode (--plugin-dir)
 `;
 

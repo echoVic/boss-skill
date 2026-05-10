@@ -159,6 +159,7 @@ describe('agent-friendly boss CLI contract', () => {
   it('install dry-run returns structured actions and writes nothing', () => {
     const home = path.join(tmpDir, 'home');
     fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
+    fs.mkdirSync(path.join(home, '.hermes'), { recursive: true });
 
     const result = spawnSync(process.execPath, [BOSS_BIN, 'install', '--dry-run', '--json'], {
       cwd: tmpDir,
@@ -173,14 +174,17 @@ describe('agent-friendly boss CLI contract', () => {
       requires_approval: boolean;
     };
     expect(payload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(payload.actions.some((action) => action.agent === 'Hermes')).toBe(true);
     expect(payload.risk_tier).toBe('medium');
     expect(payload.requires_approval).toBe(false);
     expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(false);
+    expect(fs.existsSync(path.join(home, '.hermes', 'skills', 'boss'))).toBe(false);
   });
 
   it('install and uninstall json execute quietly with structured payloads', () => {
     const home = path.join(tmpDir, 'home');
     fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
+    fs.mkdirSync(path.join(home, '.hermes'), { recursive: true });
 
     const install = spawnSync(process.execPath, [BOSS_BIN, 'install'], {
       cwd: tmpDir,
@@ -198,9 +202,11 @@ describe('agent-friendly boss CLI contract', () => {
     };
     expect(installPayload.status).toBe('installed');
     expect(installPayload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(installPayload.actions.some((action) => action.agent === 'Hermes')).toBe(true);
     expect(installPayload.risk_tier).toBe('medium');
     expect(installPayload.requires_approval).toBe(false);
     expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(true);
+    expect(fs.existsSync(path.join(home, '.hermes', 'skills', 'boss'))).toBe(true);
 
     const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes'], {
       cwd: tmpDir,
@@ -219,9 +225,11 @@ describe('agent-friendly boss CLI contract', () => {
     };
     expect(uninstallPayload.status).toBe('uninstalled');
     expect(uninstallPayload.actions.some((action) => action.agent === 'Codex')).toBe(true);
+    expect(uninstallPayload.actions.some((action) => action.agent === 'Hermes')).toBe(true);
     expect(uninstallPayload.risk_tier).toBe('high');
     expect(uninstallPayload.requires_approval).toBe(true);
     expect(fs.existsSync(path.join(home, '.codex', 'skills', 'boss'))).toBe(false);
+    expect(fs.existsSync(path.join(home, '.hermes', 'skills', 'boss'))).toBe(false);
   });
 
   it('artifact prepare dry-run returns a structured write plan', () => {

@@ -5,7 +5,7 @@
 
 ![boss-skill 宣传图](boss-skill-promo.png)
 
-BMAD Harness Engineer — 全自动研发流水线编排 Skill，兼容 Claude Code、OpenClaw、Codex、Antigravity。
+BMAD Harness Engineer — 全自动研发流水线编排 Skill，兼容 Claude Code、OpenClaw、Codex、Antigravity、Hermes。
 
 从需求到部署的完整研发流水线，编排 9 个专业 Agent 自动完成完整研发周期。
 
@@ -19,11 +19,12 @@ boss-skill
 CLI 自动检测已安装的 Coding Agent，一条命令全部搞定：
 
 ```
-Detected 4 agent(s):
+Detected 5 agent(s):
 
   ✅ OpenClaw: ~/.openclaw/skills/boss       (copied + metadata injected)
   ✅ Codex: ~/.codex/skills/boss             (copied + metadata injected)
   ✅ Antigravity: ~/.gemini/.../skills/boss   (copied + metadata injected)
+  ✅ Hermes: ~/.hermes/skills/boss           (copied + metadata injected)
   ✅ Claude Code: plugin ready at /path/to/boss-skill
      Use:  claude --plugin-dir "$(boss-skill path)"
 ```
@@ -33,6 +34,7 @@ Detected 4 agent(s):
 | **OpenClaw** | `~/.openclaw/` 存在 | 复制到 `~/.openclaw/skills/boss/` + 注入 `metadata.openclaw` |
 | **Codex** | `~/.codex/` 存在 | 复制到 `~/.codex/skills/boss/` + 注入 `metadata.codex` |
 | **Antigravity** | `~/.gemini/antigravity/` 存在 | 复制到 `~/.gemini/antigravity/skills/boss/` + 注入 `metadata.antigravity` |
+| **Hermes** | `~/.hermes/` 存在 | 复制到 `~/.hermes/skills/boss/` + 注入 `metadata.hermes` |
 | **Claude Code** | 始终 | Plugin 模式 — `claude --plugin-dir "$(boss-skill path)"` |
 
 ### Claude Code 使用

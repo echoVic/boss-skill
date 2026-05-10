@@ -155,6 +155,7 @@ describe('boss-skill dist bin', () => {
   it('copy-installs only the thin skill bundle for Codex', () => {
     const home = mkdtempSync(resolve(tmpdir(), 'boss-skill-install-'));
     mkdirSync(resolve(home, '.codex'), { recursive: true });
+    mkdirSync(resolve(home, '.hermes'), { recursive: true });
 
     try {
       const result = spawnSync(process.execPath, [distEntry, 'install'], {
@@ -178,6 +179,10 @@ describe('boss-skill dist bin', () => {
       expect(existsSync(resolve(installed, 'scripts'))).toBe(false);
       expect(existsSync(resolve(installed, 'test'))).toBe(false);
       expect(existsSync(resolve(installed, '.claude-plugin'))).toBe(false);
+
+      const hermesInstalled = resolve(home, '.hermes', 'skills', 'boss');
+      expect(existsSync(resolve(hermesInstalled, 'SKILL.md'))).toBe(true);
+      expect(readFileSync(resolve(hermesInstalled, 'SKILL.md'), 'utf8')).toContain('hermes:');
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
