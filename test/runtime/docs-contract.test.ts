@@ -10,6 +10,8 @@ const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
 const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8');
 const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
+const tasksTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'tasks.md.template'), 'utf8');
+const scrumMaster = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-scrum-master.md'), 'utf8');
 const subagentProtocol = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'prompts', 'subagent-protocol.md'),
   'utf8'
@@ -135,6 +137,26 @@ describe('subagent orchestration safety contract', () => {
       expect(doc).toContain('意外 diff');
       expect(doc).not.toContain('**必跑命令**');
     }
+  });
+
+  it('documents task write-set conflict detection before parallel code dispatch', () => {
+    expect(tasksTemplate).toContain('文件输出列表');
+    expect(tasksTemplate).toContain('写集风险');
+    expect(tasksTemplate).toContain('并行安全组');
+    expect(tasksTemplate).toContain('同组任务不得写同一个文件');
+
+    expect(scrumMaster).toContain('写集');
+    expect(scrumMaster).toContain('共享文件');
+    expect(scrumMaster).toContain('并行安全组');
+    expect(scrumMaster).toContain('不得并行');
+
+    expect(skill).toContain('任务写集冲突检测');
+    expect(skill).toContain('从 `tasks.md` 解析');
+    expect(skill).toContain('写集重叠');
+    expect(skill).toContain('同一 Wave');
+    expect(skill).toContain('不得并行');
+    expect(skill).toContain('共享文件');
+    expect(skill).toContain('指定 owner');
   });
 });
 

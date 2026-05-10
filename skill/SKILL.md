@@ -35,6 +35,7 @@ user-invocable: true
 9. **子代理标准协议** — 所有子代理必须使用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED` 五种状态报告（详见 `agents/prompts/subagent-protocol.md`）
 10. **模型分级** — 根据任务复杂度选择模型：轻量级（机械任务）/ 标准级（集成任务）/ 旗舰级（架构任务）
 11. **Wave 边界校验** — 子代理自报 `DONE` 不可信；每个 Wave 完成后必须按项目技术栈选择类型检查、测试套件、lint/格式检查等校验，并由 orchestrator 处理依赖清单、锁文件或构建配置的意外 diff
+12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一 Wave
 
 ## 参数
 
@@ -142,6 +143,12 @@ Copy this checklist and check off items as you complete them:
     - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`
     - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name>`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
     - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
+  - [ ] **D.4a 任务写集冲突检测**（仅 code 产物派发前）：
+    - 从 `tasks.md` 解析每个 Task 的「文件输出列表 / 写集」表，提取计划创建、修改、删除的文件路径、写集风险和 owner。
+    - 构建任务冲突图：任意两个任务写同一文件、同一中央索引、同一依赖清单、锁文件、全局配置、`i18n.ts`、`store.ts` 等共享文件时，视为写集重叠。
+    - 根据显式依赖边和冲突图生成并行安全组；同一 Wave 内任务写集必须互斥，写集重叠的任务不得并行。
+    - 对共享文件必须指定 owner；非 owner 任务只能读取或等待 owner 完成后的后续 Wave 集成，不得同时落盘。
+    - 若任务缺少文件输出列表、路径仍为 `待确认`、或共享文件 owner 不明确，暂停并回派 Scrum Master 修订 `tasks.md`，不要靠 orchestrator 手写 prompt 画地盘。
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
   - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
   - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
