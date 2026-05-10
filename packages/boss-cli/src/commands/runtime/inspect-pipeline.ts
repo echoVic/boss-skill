@@ -66,6 +66,7 @@ function renderText(summary: ReturnType<typeof inspectPipeline>): string {
   lines.push(`pack: ${summary.pack.name}`);
   lines.push(`plugins: ${summary.plugins.active.map((plugin) => plugin.name).join(', ') || 'none'}`);
   lines.push(`memoryStartup: ${((summary.memory && summary.memory.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}`);
+  lines.push(`knowledgeStartup: ${((summary.knowledge && summary.knowledge.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}`);
   return `${lines.join('\n')}\n`;
 }
 
