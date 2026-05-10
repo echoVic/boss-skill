@@ -36,6 +36,7 @@ user-invocable: true
 10. **模型分级** — 根据任务复杂度选择模型：轻量级（机械任务）/ 标准级（集成任务）/ 旗舰级（架构任务）
 11. **Wave 边界校验** — 子代理自报 `DONE` 不可信；每个 Wave 完成后必须按项目技术栈选择类型检查、测试套件、lint/格式检查等校验，并由 orchestrator 处理依赖清单、锁文件或构建配置的意外 diff
 12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一 Wave
+13. **风险等级感知确认** — 确认节点不只按阶段固定触发；code 阶段若命中高 Blast Radius 的强制确认 trigger，必须先向用户确认再派发实现 Agent
 
 ## 参数
 
@@ -43,10 +44,10 @@ user-invocable: true
 |------|------|
 | `--skip-ui` | 跳过 UI 设计阶段（纯 API/CLI 项目） |
 | `--skip-deploy` | 跳过部署阶段（只开发不部署） |
-| `--quick` | 跳过所有确认节点，全自动执行 |
+| `--quick` | 跳过常规确认节点；高 Blast Radius 变更仍按强制确认 trigger 处理 |
 | `--template` | 初始化项目级模板目录（`.boss/templates/`）并暂停流水线，供用户先修改模板 |
 | `--continue-from <artifact-name>` | 从指定产物继续，标记该产物及其上游为已完成（如 `--continue-from prd.md`） |
-| `--hitl-level <level>` | 人机协作级别：`auto`（仅关键节点，默认）/ `interactive`（所有决策）/ `off`（等同 --quick） |
+| `--hitl-level <level>` | 人机协作级别：`auto`（关键节点 + 风险触发，默认）/ `interactive`（所有决策）/ `off`（跳过常规确认，高风险仍需显式授权） |
 | `--roles <preset>` | 角色预设：`full`（全部 9 个，默认）/ `core`（PM、Architect、Dev、QA） |
 
 ## 角色预设
@@ -149,6 +150,12 @@ Copy this checklist and check off items as you complete them:
     - 根据显式依赖边和冲突图生成并行安全组；同一 Wave 内任务写集必须互斥，写集重叠的任务不得并行。
     - 对共享文件必须指定 owner；非 owner 任务只能读取或等待 owner 完成后的后续 Wave 集成，不得同时落盘。
     - 若任务缺少文件输出列表、路径仍为 `待确认`、或共享文件 owner 不明确，暂停并回派 Scrum Master 修订 `tasks.md`，不要靠 orchestrator 手写 prompt 画地盘。
+  - [ ] **D.4b 风险等级感知确认**（仅 code 产物派发前）：
+    - 从 `tasks.md` 摘要读取 `Blast Radius` 与 `风险确认触发项`；若缺失，暂停并回派 Scrum Master 补齐，不得派发 code Agent。
+    - 命中任一强制确认 trigger 时，在 `auto` / `interactive` 模式下必须向用户展示即将写入的文件数量、核心模块、依赖变更、安装命令和不可逆操作，并等待确认后才能继续。
+    - 强制确认 trigger 包括：计划写入文件数达到项目阈值（默认 ≥ 10 个；项目可在 `tech-review.md` 中降低阈值）、修改 `package.json`/锁文件/构建或部署配置、需要运行依赖安装命令、修改认证/支付/数据模型/迁移/权限/全局状态等核心模块、删除文件或执行不可逆操作。
+    - `--quick` / `--hitl-level off` 只跳过常规确认；若命中强制确认 trigger，必须在继续前输出风险摘要并取得用户明确同意，除非用户在本轮请求中已经明确授权这些高风险动作。
+    - 未命中触发项时，记录“风险确认：未触发”并继续 D.5。
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
   - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
   - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
@@ -166,9 +173,10 @@ Copy this checklist and check off items as you complete them:
     - 任一适用校验失败：暂停推进，将失败摘要交给对应 Agent 修复，修复后重跑 D.7c。
     - 依赖清单、锁文件或构建配置出现意外 diff：强制让 orchestrator 看一眼，确认变动是否与本 Wave 任务、Agent 报告一致；不一致时回派修复，避免过时副本覆盖或误删依赖潜伏到 DevOps。
     - 只有 D.7c 通过后，才允许进入 D.8、标记阶段 completed、或回到 D.1 派发下一批下游产物。
-  - [ ] **D.8 确认节点**（仅在阶段边界且非 `--quick` 时）：
+  - [ ] **D.8 确认节点**：
     - 阶段 1 完成后 → 确认规划结果 ⚠️ REQUIRED
-    - 阶段 3 门禁后 → 可选确认
+    - code 阶段派发前 → 按 D.4b 的 Blast Radius 规则决定是否强制确认
+    - 阶段 3 门禁后 → 若 D.4b 已触发或 QA/门禁报告高风险疑虑，则再次确认；否则可跳过
   - [ ] **D.9 🚦 门禁**（阶段 3 产物完成后）：
     - 读取 DAG 中 `type: "gate"` 的条目，对 `inputs` 已满足的 gate 依次调用 `boss runtime evaluate-gates <feature> <gate-name>`
     - gate0：代码质量检查（编译 + Lint + 安全扫描）
@@ -377,7 +385,7 @@ hooks 定义在两处：
 
 **缺任何一个** → 启动 brainstorming 需求澄清（读取 `skills/brainstorming/SKILL.md` 流程，你自己来问，不用启动子 Agent）。
 
-**`--quick` 模式** → 跳过澄清和所有确认节点，用用户原话直接开跑。
+**`--quick` 模式** → 跳过澄清和常规确认节点；若 code 阶段命中高 Blast Radius 强制确认 trigger，仍需显式授权后再派发实现 Agent。
 
 **用户典型输入和处理方式**：
 

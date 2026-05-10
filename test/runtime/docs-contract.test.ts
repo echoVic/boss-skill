@@ -158,6 +158,27 @@ describe('subagent orchestration safety contract', () => {
     expect(skill).toContain('共享文件');
     expect(skill).toContain('指定 owner');
   });
+
+  it('documents risk-aware mandatory confirmation before high blast-radius code changes', () => {
+    expect(tasksTemplate).toContain('Blast Radius');
+    expect(tasksTemplate).toContain('风险确认触发项');
+    expect(tasksTemplate).toContain('依赖安装命令');
+
+    expect(scrumMaster).toContain('Blast Radius');
+    expect(scrumMaster).toContain('风险确认触发项');
+    expect(scrumMaster).toContain('package.json');
+    expect(scrumMaster).toContain('install');
+
+    expect(skill).toContain('风险等级感知确认');
+    expect(skill).toContain('强制确认 trigger');
+    expect(skill).toContain('Blast Radius');
+    expect(skill).toContain('≥');
+    expect(skill).toContain('package.json');
+    expect(skill).toContain('依赖安装命令');
+    expect(skill).toContain('核心模块');
+    expect(skill).toContain('不得派发 code Agent');
+    expect(skill).not.toContain('阶段 3 门禁后 → 可选确认');
+  });
 });
 
 describe('thin skill CLI contract', () => {

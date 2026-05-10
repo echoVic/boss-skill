@@ -42,8 +42,8 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 |------|------|
 | `--skip-ui` | 跳过 UI 设计阶段（纯 API/CLI 项目） |
 | `--skip-deploy` | 跳过部署阶段（只开发不部署） |
-| `--quick` | 跳过所有确认节点，全自动执行 |
+| `--quick` | 跳过常规确认节点；高 Blast Radius 变更仍按 SKILL.md 的强制确认 trigger 处理 |
 | `--template` | 初始化项目级模板目录并暂停流水线 |
 | `--continue-from <1-4>` | 从指定阶段继续 |
-| `--hitl-level <level>` | 人机协作级别：`auto` / `interactive` / `off` |
+| `--hitl-level <level>` | 人机协作级别：`auto`（关键节点 + 风险触发）/ `interactive` / `off` |
 | `--roles <preset>` | 角色预设：`full`（默认）/ `core` |
