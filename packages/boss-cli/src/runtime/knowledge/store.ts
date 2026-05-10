@@ -156,6 +156,28 @@ function earlierTimestamp(left: string, right: string): string {
   return rightTime <= leftTime ? right : left;
 }
 
+function compareTimestamp(left: string, right: string): number {
+  const leftTime = Date.parse(left);
+  const rightTime = Date.parse(right);
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+    return left.localeCompare(right);
+  }
+  return leftTime - rightTime;
+}
+
+function shouldAdoptRepresentative(current: KnowledgeRecord, next: KnowledgeRecord): boolean {
+  const lastSeenComparison = compareTimestamp(next.lastSeenAt, current.lastSeenAt);
+  if (lastSeenComparison !== 0) {
+    return lastSeenComparison > 0;
+  }
+
+  if ((next.confidence ?? 0) !== (current.confidence ?? 0)) {
+    return (next.confidence ?? 0) > (current.confidence ?? 0);
+  }
+
+  return (next.decayScore ?? 0) > (current.decayScore ?? 0);
+}
+
 export function mergeKnowledgeRecords(
   existing: KnowledgeRecord[],
   incoming: KnowledgeRecord[]
@@ -172,9 +194,9 @@ export function mergeKnowledgeRecords(
     }
 
     const current = merged.get(key) as KnowledgeRecord;
+    const representative = shouldAdoptRepresentative(current, next) ? next : current;
     merged.set(key, {
-      ...current,
-      summary: next.summary,
+      ...representative,
       confidence: Math.max(current.confidence ?? 0, next.confidence ?? 0),
       createdAt: earlierTimestamp(current.createdAt, next.createdAt),
       lastSeenAt: laterTimestamp(current.lastSeenAt, next.lastSeenAt),
