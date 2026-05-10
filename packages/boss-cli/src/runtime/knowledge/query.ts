@@ -23,6 +23,14 @@ export interface KnowledgeSummaryEntry {
   scope?: 'project' | 'global';
 }
 
+const MS_PER_DAY = 86_400_000;
+const RECENCY_WINDOW_DAYS = 30;
+const PROJECT_SCOPE_BONUS = 10_000;
+const AGENT_MATCH_BONUS = 1_000;
+const STAGE_MATCH_BONUS = 100;
+const DECAY_SCORE_WEIGHT = 10;
+const CONFIDENCE_WEIGHT = 10;
+
 function nowMs(now: KnowledgeQueryOptions['now']): number {
   if (now instanceof Date) {
     return now.getTime();
@@ -51,20 +59,20 @@ function recencyScore(record: KnowledgeQueryRecord, now: number): number {
   if (lastSeenAt === null) {
     return 0;
   }
-  const ageDays = Math.max(0, (now - lastSeenAt) / 86_400_000);
-  return Math.max(0, 30 - ageDays);
+  const ageDays = Math.max(0, (now - lastSeenAt) / MS_PER_DAY);
+  return Math.max(0, RECENCY_WINDOW_DAYS - ageDays);
 }
 
 function score(record: KnowledgeQueryRecord, target: Pick<KnowledgeQueryOptions, 'agent' | 'stage'>, now: number): number {
-  let value = record.scope === 'project' ? 10_000 : 0;
+  let value = record.scope === 'project' ? PROJECT_SCOPE_BONUS : 0;
   if (record.agent && record.agent === target.agent) {
-    value += 1_000;
+    value += AGENT_MATCH_BONUS;
   }
   if (record.stage != null && target.stage != null && record.stage === target.stage) {
-    value += 100;
+    value += STAGE_MATCH_BONUS;
   }
-  value += (record.decayScore ?? 0) * 10;
-  value += (record.confidence ?? 0) * 10;
+  value += (record.decayScore ?? 0) * DECAY_SCORE_WEIGHT;
+  value += (record.confidence ?? 0) * CONFIDENCE_WEIGHT;
   value += recencyScore(record, now);
   return value;
 }

@@ -22,6 +22,8 @@ export interface KnowledgeRecord {
   summary: string;
   source: KnowledgeSource;
   evidence: KnowledgeEvidence[];
+  agent?: string | null;
+  stage?: number | null;
   confidence: number;
   createdAt: string;
   lastSeenAt: string;
@@ -95,7 +97,8 @@ function normalizeKeyPart(value: string): string {
 }
 
 function recordKey(record: KnowledgeRecord): string {
-  return [record.scope, record.kind, record.category, record.subject]
+  const stageKey = record.stage == null ? '' : String(record.stage);
+  return [record.scope, record.kind, record.category, record.subject, record.agent ?? '', stageKey]
     .map((part) => normalizeKeyPart(part))
     .join(':');
 }

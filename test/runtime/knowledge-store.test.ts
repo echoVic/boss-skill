@@ -71,6 +71,49 @@ describe('knowledge store runtime', () => {
     expect(merged[0]?.evidence).toHaveLength(2);
   });
 
+  it('keeps agent-specific knowledge records distinct during merges', () => {
+    const sharedRecord = {
+      id: 'k1',
+      scope: 'project' as const,
+      kind: 'decision' as const,
+      category: 'workflow_decision',
+      subject: 'runtime',
+      summary: 'Use background extraction',
+      source: { type: 'dialogue', ref: 'turn-12' },
+      evidence: [{ type: 'dialogue', ref: 'turn-12' }],
+      confidence: 0.9,
+      createdAt: '2026-05-10T00:00:00Z',
+      lastSeenAt: '2026-05-10T00:00:00Z',
+      expiresAt: null,
+      decayScore: 8
+    };
+
+    const merged = mergeKnowledgeRecords(
+      [
+        {
+          ...sharedRecord,
+          agent: 'boss-backend',
+          stage: 3
+        }
+      ],
+      [
+        {
+          ...sharedRecord,
+          id: 'k2',
+          agent: 'boss-qa',
+          stage: 4,
+          summary: 'Use background extraction for QA too',
+          evidence: [{ type: 'dialogue', ref: 'turn-13' }],
+          createdAt: '2026-05-10T00:01:00Z',
+          lastSeenAt: '2026-05-10T00:01:00Z'
+        }
+      ]
+    );
+
+    expect(merged).toHaveLength(2);
+    expect(merged.map((record) => record.agent)).toEqual(['boss-backend', 'boss-qa']);
+  });
+
   it('keeps the existing representative record when an older duplicate arrives', () => {
     const current = {
       id: 'k1',

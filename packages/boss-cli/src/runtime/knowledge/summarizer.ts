@@ -6,6 +6,7 @@ export interface AgentSummaryTarget {
 }
 
 export interface KnowledgeSummary {
+  feature: string;
   generatedAt: string | null;
   startupSummary: KnowledgeSummaryEntry[];
   agentSections: Record<string, KnowledgeSummaryEntry[]>;
@@ -44,11 +45,13 @@ export function buildAgentSections(
 }
 
 export function buildKnowledgeSummary(
+  feature: string,
   records: KnowledgeQueryRecord[],
   agents: AgentSummaryTarget[] = [],
   { now }: Pick<KnowledgeQueryOptions, 'now'> = {}
 ): KnowledgeSummary {
   return {
+    feature,
     generatedAt: new Date().toISOString(),
     startupSummary: buildStartupSummary(records, { now }),
     agentSections: buildAgentSections(records, agents, { now })

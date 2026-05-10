@@ -9,6 +9,7 @@ import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application
 import { queryKnowledgeRecords, type KnowledgeQueryRecord } from '../../packages/boss-cli/src/runtime/knowledge/query.js';
 import {
   buildAgentSections,
+  buildKnowledgeSummary,
   buildStartupSummary
 } from '../../packages/boss-cli/src/runtime/knowledge/summarizer.js';
 import { saveProjectKnowledgeSummary } from '../../packages/boss-cli/src/runtime/knowledge/store.js';
@@ -123,6 +124,25 @@ describe('knowledge query runtime', () => {
     ]);
   });
 
+  it('treats records expiring exactly now as expired', () => {
+    const records = [
+      record({
+        summary: 'Expires on the boundary',
+        expiresAt: '2026-05-10T00:00:00Z',
+        decayScore: 100
+      }),
+      record({
+        summary: 'Still active after the boundary',
+        expiresAt: '2026-05-10T00:00:01Z',
+        decayScore: 1
+      })
+    ];
+
+    expect(
+      queryKnowledgeRecords(records, { limit: 3, now: '2026-05-10T00:00:00Z' }).map((item) => item.summary)
+    ).toEqual(['Still active after the boundary']);
+  });
+
   it('builds startup summaries and agent sections in the memory summary shape', () => {
     const records = [
       record({
@@ -170,6 +190,27 @@ describe('knowledge query runtime', () => {
         }
       ]
     });
+  });
+
+  it('builds a project-shaped knowledge summary including feature metadata', () => {
+    const summary = buildKnowledgeSummary(
+      'test-feat',
+      [
+        record({
+          summary: 'Feature metadata should be preserved',
+          agent: 'boss-backend',
+          stage: 3
+        })
+      ],
+      [{ name: 'boss-backend', stage: 3 }],
+      { now: '2026-05-10T00:00:00Z' }
+    );
+
+    expect(summary.feature).toBe('test-feat');
+    expect(summary.startupSummary[0]?.summary).toBe('Feature metadata should be preserved');
+    expect(summary.agentSections['boss-backend']?.[0]?.summary).toBe(
+      'Feature metadata should be preserved'
+    );
   });
 
   it('exposes knowledge summaries through inspection and text output', () => {

@@ -28,6 +28,7 @@ function buildPrompt(input: KnowledgeJob['payload'], job?: KnowledgeJob): string
     'Extract durable knowledge as strict JSON with the shape { "records": [...] }.',
     'Only include records that are factual, preference, decision, or lesson level durable knowledge.',
     'Every record must include id, scope, kind, category, subject, summary, source, evidence, confidence, createdAt, lastSeenAt, expiresAt, decayScore.',
+    'Include agent and stage when the source clearly ties the knowledge to a specific agent or pipeline stage.',
     'Confidence must be between 0 and 1. decayScore must be non-negative.',
     'Prefer concise summaries and evidence that points back to the supplied sources.',
     `Job feature: ${job?.feature ?? 'unknown'}.`,

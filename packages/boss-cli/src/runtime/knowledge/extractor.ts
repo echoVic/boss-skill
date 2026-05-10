@@ -42,6 +42,8 @@ export function validateKnowledgeRecord(value: unknown, index = 0): KnowledgeRec
   if (!isString(value.summary)) failures.push('summary');
   if (!isObject(value.source) || !isString(value.source.type)) failures.push('source');
   if (!Array.isArray(value.evidence) || !value.evidence.every(validateEvidence)) failures.push('evidence');
+  if (!(value.agent == null || isString(value.agent))) failures.push('agent');
+  if (!(value.stage == null || isNumber(value.stage))) failures.push('stage');
   if (!validateConfidence(value.confidence)) failures.push('confidence');
   if (!isString(value.createdAt)) failures.push('createdAt');
   if (!isString(value.lastSeenAt)) failures.push('lastSeenAt');
