@@ -10,7 +10,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/registry.js';
 import { printRuntimeHelp } from './agent-command-utils.js';
-import { rebuildFeatureMemory } from '../../runtime/application/memory.js';
+import { buildFeatureSummary, rebuildFeatureMemory } from '../../runtime/application/memory.js';
 
 function printHelp(): void {
   printRuntimeHelp('extract-memory', 'boss runtime extract-memory FEATURE [options]');
@@ -53,7 +53,17 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
   }
 
   const payload = rebuildFeatureMemory(feature, { cwd });
-  writeOutput({ feature, count: payload.records.length }, context, () => `${JSON.stringify({ feature, count: payload.records.length }, null, 2)}\n`);
+  const summary = buildFeatureSummary(feature, { cwd });
+  const output = {
+    feature,
+    count: payload.records.length,
+    records: payload.records,
+    summaryPreview: {
+      startupSummary: summary.startupSummary,
+      agentSections: summary.agentSections
+    }
+  };
+  writeOutput(output, context, () => `${JSON.stringify(output, null, 2)}\n`);
   return 0;
 }
 

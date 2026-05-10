@@ -1,0 +1,47 @@
+{
+  "name": "web-app",
+  "version": "1.0.0",
+  "type": "pipeline-pack",
+  "description": "Web 应用 Pipeline：包含 UI、前端实现、后端/API 集成、QA 与部署",
+  "author": "Boss Harness Team",
+  "license": "MIT",
+  "when": {
+    "fileExists": ["package.json"],
+    "packageJsonHas": ["react"]
+  },
+  "priority": 5,
+  "config": {
+    "stages": [1, 2, 3, 4],
+    "roles": "full",
+    "agents": [
+      "boss-pm",
+      "boss-architect",
+      "boss-ui-designer",
+      "boss-tech-lead",
+      "boss-scrum-master",
+      "boss-frontend",
+      "boss-backend",
+      "boss-qa",
+      "boss-devops"
+    ],
+    "gates": ["gate0", "gate1", "gate2"],
+    "agentStages": {
+      "boss-pm": 1,
+      "boss-architect": 1,
+      "boss-ui-designer": 1,
+      "boss-tech-lead": 2,
+      "boss-scrum-master": 2,
+      "boss-frontend": 3,
+      "boss-backend": 3,
+      "boss-qa": 3,
+      "boss-devops": 4
+    },
+    "skipUI": false,
+    "skipFrontend": false,
+    "techStack": {
+      "platform": "web",
+      "frontend": "react"
+    }
+  },
+  "enabled": true
+}

@@ -8,7 +8,11 @@ import {
   buildFeatureSummary,
   writeFeatureMemory
 } from '../../packages/boss-cli/src/runtime/application/memory.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import {
+  initPipeline,
+  updateAgent,
+  updateStage
+} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -498,6 +502,42 @@ describe('runtime CLI contract', () => {
       }
     ]);
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'memory-summary.json'))).toBe(false);
+  });
+
+  it('extract-memory json returns inspectable records and injection preview', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    updateStage('test-feat', 3, 'running', { cwd: tmpDir });
+    updateAgent('test-feat', 3, 'boss-backend', 'failed', { cwd: tmpDir, reason: 'timeout' });
+
+    const result = runCli('extract-memory', ['test-feat', '--json']);
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      count: number;
+      records: Array<{ category: string; summary: string; evidence: unknown[] }>;
+      summaryPreview: {
+        startupSummary: Array<{ category: string; summary: string }>;
+        agentSections: Record<string, Array<{ category: string; summary: string }>>;
+      };
+    };
+
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.count).toBeGreaterThan(0);
+    expect(payload.records).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'agent_failure_pattern',
+          summary: expect.stringContaining('boss-backend failed'),
+          evidence: expect.any(Array)
+        })
+      ])
+    );
+    expect(payload.summaryPreview.startupSummary.length).toBeGreaterThan(0);
+    expect(payload.summaryPreview.agentSections['boss-backend']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'agent_failure_pattern' })
+      ])
+    );
   });
 
   it('mutating runtime commands support dry-run plans and json input', () => {

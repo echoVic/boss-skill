@@ -127,7 +127,7 @@ Copy this checklist and check off items as you complete them:
   - [ ] 0.2 **Brainstorming 需求澄清**：读取 `skills/brainstorming/SKILL.md` 的流程，以 Boss 的身份执行需求澄清（不需要启动子 Agent，你自己来问）。**已有项目先执行 SKILL.md 中的"项目环境感知"步骤**，再进入提问环节。一次一个问题，优先给选项，只问业务问题不问技术问题。
   - [ ] 0.3 **输出设计简报**：澄清完毕后，写入 `.boss/<feature>/design-brief.md`，向用户确认
   - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架；`project init` 已隐式执行 pipeline 初始化，不要随后再调用 `boss runtime init-pipeline <feature>`
-  - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir>` 自动检测最佳 pipeline pack。若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
+  - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir> --json` 自动检测最佳 pipeline pack。读取 `detectedPack.evidence` 和 `matchedPacks`，确认命中依据不是黑盒；若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
   - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `packages/boss-cli/assets/artifact-dag.json`（可由 `.boss/artifact-dag.json` 或 pipeline pack 自定义 DAG 覆盖），确定产物依赖图
   - [ ] 0.5 🔌 调用 `boss runtime register-plugins <feature>` 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
@@ -189,7 +189,7 @@ Copy this checklist and check off items as you complete them:
     - 扫描 `.boss/plugins/` 中 type=gate 的插件，依次执行
     - 门禁失败时修复后重新执行门禁
   - [ ] **D.10 回到 D.1**：重新查询就绪产物，直到 DAG 中所有非跳过产物都已完成
-  - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `boss runtime extract-memory <feature>` 提取本次流水线的关键决策和经验，写入全局记忆库供后续 feature 参考。
+  - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `boss runtime extract-memory <feature> --json` 提取本次流水线的关键决策和经验；orchestrator 必须查看返回的 `records` 与 `summaryPreview`，确认下次同类 feature 会注入什么，再写入/更新记忆库供后续参考。
 
 - [ ] **收尾**
   - [ ] F.1 📊 调用 `boss runtime generate-summary <feature>` 生成最终流水线报告

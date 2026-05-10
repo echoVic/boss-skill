@@ -8,6 +8,12 @@ export interface PipelinePackWhen {
   packageJsonHas?: string[];
 }
 
+export interface PipelinePackEvidence {
+  type: 'fileExists' | 'noFileExists' | 'packageJsonHas';
+  value: string;
+  matched: boolean;
+}
+
 export interface PipelinePackConfig extends Record<string, unknown> {
   stages?: number[];
   gates?: string[];
@@ -29,6 +35,7 @@ export interface PipelinePackDefinition {
   priority: number;
   when: PipelinePackWhen | null;
   config: PipelinePackConfig;
+  evidence?: PipelinePackEvidence[];
 }
 
 export interface PipelinePackStateParameters {
@@ -101,35 +108,46 @@ function getPackageDeps(projectDir: string): { dependencies: Record<string, unkn
   }
 }
 
-function evaluateWhen(projectDir: string, when: PipelinePackWhen | null): boolean {
-  if (!when || typeof when !== 'object') return false;
+function evaluateWhen(projectDir: string, when: PipelinePackWhen | null): { matched: boolean; evidence: PipelinePackEvidence[] } {
+  if (!when || typeof when !== 'object') return { matched: false, evidence: [] };
 
-  if (
-    Array.isArray(when.fileExists) &&
-    when.fileExists.some((relPath) => !fs.existsSync(path.join(projectDir, relPath)))
-  ) {
-    return false;
+  const evidence: PipelinePackEvidence[] = [];
+
+  if (Array.isArray(when.fileExists)) {
+    for (const relPath of when.fileExists) {
+      evidence.push({
+        type: 'fileExists',
+        value: relPath,
+        matched: fs.existsSync(path.join(projectDir, relPath))
+      });
+    }
   }
 
-  if (
-    Array.isArray(when.noFileExists) &&
-    when.noFileExists.some((relPath) => fs.existsSync(path.join(projectDir, relPath)))
-  ) {
-    return false;
+  if (Array.isArray(when.noFileExists)) {
+    for (const relPath of when.noFileExists) {
+      evidence.push({
+        type: 'noFileExists',
+        value: relPath,
+        matched: !fs.existsSync(path.join(projectDir, relPath))
+      });
+    }
   }
 
   if (Array.isArray(when.packageJsonHas) && when.packageJsonHas.length > 0) {
     const deps = getPackageDeps(projectDir);
-    if (
-      when.packageJsonHas.some(
-        (dep) => !(dep in deps.dependencies) && !(dep in deps.devDependencies)
-      )
-    ) {
-      return false;
+    for (const dep of when.packageJsonHas) {
+      evidence.push({
+        type: 'packageJsonHas',
+        value: dep,
+        matched: dep in deps.dependencies || dep in deps.devDependencies
+      });
     }
   }
 
-  return true;
+  return {
+    matched: evidence.length > 0 && evidence.every((item) => item.matched),
+    evidence
+  };
 }
 
 export function resolvePipelinePack(projectDir = process.cwd()): PipelinePackDefinition {
@@ -148,8 +166,14 @@ export function detectPipelinePacks(projectDir = process.cwd()): PipelinePackDet
       config: {}
     };
 
-  const matched = packs
-    .filter((pack) => pack.when && evaluateWhen(projectDir, pack.when))
+  const evaluated = packs.map((pack) => ({
+    pack,
+    evaluation: evaluateWhen(projectDir, pack.when)
+  }));
+
+  const matched = evaluated
+    .filter(({ evaluation }) => evaluation.matched)
+    .map(({ pack, evaluation }) => ({ ...pack, evidence: evaluation.evidence }))
     .sort((left, right) => right.priority - left.priority);
 
   const selected = matched[0] ?? defaultPack;
@@ -159,6 +183,7 @@ export function detectPipelinePacks(projectDir = process.cwd()): PipelinePackDet
     type: selected.type,
     priority: selected.priority,
     when: selected.when,
+    evidence: clone(selected.evidence ?? []),
     config: clone(selected.config ?? {})
   };
   return {
@@ -169,6 +194,7 @@ export function detectPipelinePacks(projectDir = process.cwd()): PipelinePackDet
       type: pack.type,
       priority: pack.priority,
       when: pack.when,
+      evidence: clone(pack.evidence ?? []),
       config: clone(pack.config ?? {})
     }))
   };

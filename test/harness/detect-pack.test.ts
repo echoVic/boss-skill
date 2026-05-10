@@ -43,6 +43,58 @@ describe('boss packs detect', () => {
     expect(run(tmpDir).detected).toBe('api-only');
   });
 
+  it('detects web-app for React/Vite projects and reports match evidence', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify({
+        name: 'web-app',
+        dependencies: { react: '^19.0.0' },
+        devDependencies: { vite: '^7.0.0' }
+      }),
+      'utf8'
+    );
+    fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'vite.config.ts'), 'export default {};\n', 'utf8');
+
+    const result = detectPipelinePacks(tmpDir);
+    expect(result.detected.name).toBe('web-app');
+    expect(result.detected.config.skipUI).toBe(false);
+    expect(result.matched[0]).toEqual(
+      expect.objectContaining({
+        name: 'web-app',
+        evidence: expect.arrayContaining([
+          expect.objectContaining({ type: 'fileExists', value: 'package.json', matched: true }),
+          expect.objectContaining({ type: 'packageJsonHas', value: 'react', matched: true })
+        ])
+      })
+    );
+  });
+
+  it('packs detect CLI exposes detected pack evidence for orchestrators', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'web-app', dependencies: { react: '^19.0.0' } }),
+      'utf8'
+    );
+
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'packs', 'detect', '--json', tmpDir], {
+      encoding: 'utf8',
+      cwd: REPO_ROOT
+    });
+    expect(result.status, result.stderr).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      detected: string;
+      detectedPack: { evidence: Array<{ type: string; value: string; matched: boolean }> };
+    };
+
+    expect(payload.detected).toBe('web-app');
+    expect(payload.detectedPack.evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'packageJsonHas', value: 'react', matched: true })
+      ])
+    );
+  });
+
   it('uses .boss pipeline pack overrides before built-in packs', () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}', 'utf8');
     const packDir = path.join(tmpDir, '.boss', 'pipeline-packs', 'api-only');
