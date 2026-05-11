@@ -77,12 +77,23 @@ function resolveInput(argv: string[], context: CliContext): RecordArtifactInput 
   return parseFlatInput(argv);
 }
 
-function actionFor(input: RecordArtifactInput) {
+function parseStageNumber(stage: string): number {
+  const stageNumber = Number(stage);
+  if (!Number.isInteger(stageNumber)) {
+    throw new Error('stage 必须是整数');
+  }
+  if (stageNumber < 1 || stageNumber > 4) {
+    throw new Error('stage 必须是 1-4');
+  }
+  return stageNumber;
+}
+
+function actionFor(input: RecordArtifactInput, stageNumber: number) {
   return {
     type: 'record_artifact',
     feature: input.feature,
     artifact: input.artifact,
-    stage: Number(input.stage)
+    stage: stageNumber
   };
 }
 
@@ -106,9 +117,23 @@ function validateMarkdownArtifactName(artifact: string): void {
   }
 }
 
+function isInsideDirectory(child: string, parent: string): boolean {
+  const relative = path.relative(parent, child);
+  return relative === '' || Boolean(relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function resolveFeatureDir(cwd: string, feature: string): string {
+  const bossDir = path.resolve(cwd, '.boss');
+  const featureDir = path.resolve(bossDir, feature);
+  if (featureDir === bossDir || !isInsideDirectory(featureDir, bossDir)) {
+    throw new Error(`无效 feature 路径: ${feature}`);
+  }
+  return featureDir;
+}
+
 function markdownPathFor(input: RecordArtifactInput, cwd: string): string {
   validateMarkdownArtifactName(input.artifact);
-  const featureDir = path.resolve(cwd, '.boss', input.feature);
+  const featureDir = resolveFeatureDir(cwd, input.feature);
   const markdownPath = path.resolve(featureDir, input.artifact);
   if (path.dirname(markdownPath) !== featureDir) {
     throw new Error(`无效 Markdown 产物: ${input.artifact}`);
@@ -116,14 +141,15 @@ function markdownPathFor(input: RecordArtifactInput, cwd: string): string {
   return markdownPath;
 }
 
-function actionsFor(input: RecordArtifactInput) {
+function actionsFor(input: RecordArtifactInput, cwd: string, stageNumber: number) {
   if (!isMarkdownArtifact(input.artifact)) {
-    return [actionFor(input)];
+    return [actionFor(input, stageNumber)];
   }
   validateMarkdownArtifactName(input.artifact);
+  resolveFeatureDir(cwd, input.feature);
   const htmlArtifact = htmlArtifactFor(input.artifact);
   return [
-    actionFor(input),
+    actionFor(input, stageNumber),
     {
       type: 'write_file',
       path: path.posix.join('.boss', input.feature, htmlArtifact),
@@ -133,7 +159,7 @@ function actionsFor(input: RecordArtifactInput) {
       type: 'record_artifact',
       feature: input.feature,
       artifact: htmlArtifact,
-      stage: Number(input.stage)
+      stage: stageNumber
     }
   ];
 }
@@ -155,8 +181,9 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
   }
 
   const input = resolveInput(argv, context);
+  const stageNumber = parseStageNumber(input.stage);
   if (context.values.dryRun) {
-    writeActionPlan(actionsFor(input), context, 'medium');
+    writeActionPlan(actionsFor(input, cwd, stageNumber), context, 'medium');
     return 0;
   }
 
@@ -183,12 +210,12 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
         markdown
       });
       htmlPath = path.posix.join('.boss', input.feature, htmlArtifact);
-      execution = recordArtifacts(input.feature, [input.artifact, htmlArtifact], Number(input.stage), { cwd });
+      execution = recordArtifacts(input.feature, [input.artifact, htmlArtifact], stageNumber, { cwd });
     } else {
-      execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
+      execution = recordArtifact(input.feature, input.artifact, stageNumber, { cwd });
     }
 
-    const stageKey = String(input.stage);
+    const stageKey = String(stageNumber);
     const artifacts =
       execution.stages && execution.stages[stageKey] ? execution.stages[stageKey]!.artifacts : [];
     const previewCommand =
@@ -198,7 +225,7 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     const payload = {
       feature: input.feature,
       artifact: input.artifact,
-      stage: Number(input.stage),
+      stage: stageNumber,
       artifacts,
       previewCommand,
       ...(htmlArtifact ? { htmlArtifact, htmlPath } : {})

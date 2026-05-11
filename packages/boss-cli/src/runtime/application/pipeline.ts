@@ -412,6 +412,11 @@ function backupArtifactVersion(cwd: string, feature: string, artifactName: strin
   fs.copyFileSync(artifactPath, path.join(versionsDir, `${artifactName}.v${version}`));
 }
 
+function readNextEventId(eventsFile: string): number {
+  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
+  return raw ? raw.split('\n').length + 1 : 1;
+}
+
 export function recordArtifact(
   feature: string,
   artifact: string,
@@ -451,24 +456,29 @@ export function recordArtifacts(
     throw new Error(`未找到事件文件: ${path.relative(cwd, eventsFile)}`);
   }
 
-  const now = new Date().toISOString();
-  for (const artifact of artifacts) {
-    const currentVersion = getArtifactVersion(feature, artifact, { cwd });
-    const newVersion = currentVersion + 1;
-    if (currentVersion >= 1) {
-      backupArtifactVersion(cwd, feature, artifact, currentVersion);
+  const versions = artifacts.map((artifact) => ({
+    artifact,
+    currentVersion: getArtifactVersion(feature, artifact, { cwd })
+  }));
+  for (const version of versions) {
+    if (version.currentVersion >= 1) {
+      backupArtifactVersion(cwd, feature, version.artifact, version.currentVersion);
     }
-
-    appendEvent(eventsFile, {
-      type: EVENT_TYPES.ARTIFACT_RECORDED,
-      timestamp: now,
-      data: {
-        artifact,
-        stage: stageNumber,
-        version: newVersion
-      }
-    });
   }
+
+  const now = new Date().toISOString();
+  const nextId = readNextEventId(eventsFile);
+  const events = versions.map((version, index) => ({
+    id: nextId + index,
+    type: EVENT_TYPES.ARTIFACT_RECORDED,
+    timestamp: now,
+    data: {
+      artifact: version.artifact,
+      stage: stageNumber,
+      version: version.currentVersion + 1
+    }
+  }));
+  fs.appendFileSync(eventsFile, `${events.map((event) => JSON.stringify(event)).join('\n')}\n`, 'utf8');
 
   const { state } = materializeState(feature, cwd);
   refreshMemory(feature, cwd);

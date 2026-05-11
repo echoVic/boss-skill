@@ -31,6 +31,21 @@ describe('recordArtifact', () => {
     expect(JSON.parse(events.at(-1) ?? '{}').type).toBe('ArtifactRecorded');
   });
 
+  it('recordArtifacts does not append partial events when an artifact backup fails', () => {
+    const eventsPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'events.jsonl');
+    const featureDir = path.join(tmpDir, '.boss', 'test-feat');
+    fs.writeFileSync(path.join(featureDir, 'prd.html'), '<!doctype html>\n', 'utf8');
+    runtime.recordArtifact('test-feat', 'prd.html', 1, { cwd: tmpDir });
+    const eventsBefore = fs.readFileSync(eventsPath, 'utf8');
+    fs.mkdirSync(path.join(featureDir, '.versions', 'prd.html.v1'), { recursive: true });
+
+    expect(() => {
+      runtime.recordArtifacts('test-feat', ['prd.md', 'prd.html'], 1, { cwd: tmpDir });
+    }).toThrow();
+
+    expect(fs.readFileSync(eventsPath, 'utf8')).toBe(eventsBefore);
+  });
+
   it('rejects non-integer stages', () => {
     expect(() => {
       runtime.recordArtifact('test-feat', 'prd.md', 1.5, { cwd: tmpDir });

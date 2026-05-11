@@ -322,6 +322,34 @@ describe('runtime report generation', () => {
     expect(updatedExecution.stages['1'].artifacts).not.toContain('../prd.html');
   });
 
+  it('record-artifact rejects markdown feature paths outside boss dir before reading', () => {
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    const executionPath = path.join(metaDir, 'execution.json');
+    const execution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2026-04-12T00:00:00.000Z',
+        data: { initialState: execution }
+      })}\n`,
+      'utf8'
+    );
+    fs.mkdirSync(path.join(tmpDir, 'escape', 'prd.md'), { recursive: true });
+
+    const result = runRuntimeCommand('record-artifact', ['../escape', 'prd.md', '1']);
+
+    expect(result.status).not.toBe(0);
+    expect(`${result.stderr}\n${result.stdout}`).toMatch(/feature|特性|路径/);
+    const updatedExecution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    expect(updatedExecution.stages['1'].artifacts).toEqual(execution.stages['1'].artifacts);
+  });
+
   it('generate-summary runtime CLI emits markdown via stdout', () => {
     const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 
@@ -439,6 +467,17 @@ describe('runtime report generation', () => {
         stage: 1
       }
     ]);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'prd.html'))).toBe(false);
+
+    const invalidStageResult = runRuntimeCommand('record-artifact', [
+      'test-feat',
+      'prd.md',
+      'x',
+      '--dry-run',
+      '--json'
+    ]);
+    expect(invalidStageResult.status).not.toBe(0);
+    expect(`${invalidStageResult.stderr}\n${invalidStageResult.stdout}`).toMatch(/stage 必须是整数/);
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'prd.html'))).toBe(false);
 
     const recordJsonResult = runRuntimeCommand('record-artifact', [
