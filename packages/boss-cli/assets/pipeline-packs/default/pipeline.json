@@ -9,6 +9,7 @@
     "stages": [1, 2, 3, 4],
     "roles": "full",
     "designPreview": true,
+    "skipUI": false,
     "agents": [
       "boss-pm",
       "boss-architect",
