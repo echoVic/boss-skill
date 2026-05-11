@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { createCliContext } from '../../packages/boss-cli/src/cli/contract.js';
+import { shouldKeepPreviewAlive } from '../../packages/boss-cli/src/commands/design/preview.js';
 import { runCli } from '../helpers/run-cli.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
@@ -110,5 +112,22 @@ describe('boss design preview CLI', () => {
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
+  });
+
+  it('keeps interactive text previews alive after starting the server', () => {
+    const interactiveContext = createCliContext([], {
+      command: 'boss design preview',
+      stdinIsTTY: true,
+      stdoutIsTTY: true
+    });
+    const jsonContext = createCliContext(['--json'], {
+      command: 'boss design preview',
+      stdinIsTTY: true,
+      stdoutIsTTY: true
+    });
+
+    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: false })).toBe(true);
+    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: true })).toBe(false);
+    expect(shouldKeepPreviewAlive(jsonContext, { noOpen: false })).toBe(false);
   });
 });

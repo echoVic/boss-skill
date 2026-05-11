@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CliUserError,
+  type CliContext,
   consumeCliContractOption,
   createCliContext,
   describeCommand,
@@ -19,7 +20,10 @@ import {
   validateUiDesignArtifact,
   type UiDesignArtifact
 } from '../../runtime/design/schema.js';
-import { startUiDesignPreviewServer } from '../../runtime/design/server.js';
+import {
+  startUiDesignPreviewServer,
+  type UiDesignPreviewServer
+} from '../../runtime/design/server.js';
 
 const designPreviewDescription = commandDescriptions['boss design preview']!;
 
@@ -193,6 +197,33 @@ function renderTextPayload(data: unknown): string {
   return `Preview ${status}: ${payload.artifact}\nURL: ${payload.url}\nBrowser: ${opened}\n${errors}`;
 }
 
+export function shouldKeepPreviewAlive(
+  context: Pick<CliContext, 'useJson'>,
+  input: Pick<PreviewInput, 'noOpen'>
+): boolean {
+  return !context.useJson && !input.noOpen;
+}
+
+async function closeAndExit(preview: UiDesignPreviewServer, code: number): Promise<never> {
+  try {
+    await preview.close();
+    process.exit(code);
+  } catch {
+    process.exit(1);
+  }
+}
+
+async function keepPreviewAlive(preview: UiDesignPreviewServer): Promise<never> {
+  const stop = () => {
+    void closeAndExit(preview, 0);
+  };
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+  return new Promise<never>(() => {
+    // Keep the CLI process alive so the preview server remains reachable.
+  });
+}
+
 export async function main(
   argv: string[] = process.argv.slice(2),
   { cwd = process.cwd() }: { cwd?: string } = {}
@@ -233,6 +264,11 @@ export async function main(
 
   if (context.useJson || input.noOpen) {
     await preview.close();
+    return validation.ok ? 0 : 1;
+  }
+
+  if (shouldKeepPreviewAlive(context, input)) {
+    await keepPreviewAlive(preview);
   }
 
   return validation.ok ? 0 : 1;
