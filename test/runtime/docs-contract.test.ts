@@ -30,6 +30,14 @@ const bmadMethodology = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'references', 'bmad-methodology.md'),
   'utf8'
 );
+const uiDesigner = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-ui-designer.md'), 'utf8');
+const frontend = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-frontend.md'), 'utf8');
+const techLead = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-tech-lead.md'), 'utf8');
+const artifactGuide = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'references', 'artifact-guide.md'), 'utf8');
+const uiDesignTemplate = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'templates', 'ui-design.json.template'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -236,6 +244,24 @@ describe('thin skill CLI contract', () => {
     expect(claudeSettings).not.toContain('scripts/lib/run-with-flags.js');
     expect(bmadMethodology).toContain('boss hooks run');
     expect(bmadMethodology).not.toContain('scripts/hooks/run-with-flags.js');
+  });
+});
+
+describe('ui-design artifact contract', () => {
+  it('documents ui-design.json across UI, frontend, and review agents', () => {
+    expect(uiDesigner).toContain('ui-design.json');
+    expect(uiDesigner).toContain('boss design preview <feature>');
+    expect(frontend).toContain('ui-design.json');
+    expect(frontend).toContain('ui-design.json > ui-spec.md');
+    expect(techLead).toContain('ui-design.json');
+    expect(techLead).toContain('ui-spec.md');
+  });
+
+  it('documents ui-design.json in artifact guides and templates', () => {
+    expect(skill).toContain('ui-design.json');
+    expect(artifactGuide).toContain('ui-design.json');
+    expect(bmadMethodology).toContain('ui-design.json');
+    expect(uiDesignTemplate).toContain('"artifact": "ui-design"');
   });
 });
 

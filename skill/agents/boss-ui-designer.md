@@ -54,6 +54,12 @@ model: inherit
    - 定义可复用的组件库
    - 确保设计的可扩展性
 
+4. **机器可渲染设计产物**
+   - 必须输出 `.boss/<feature>/ui-design.json`
+   - JSON 必须符合 `artifact: "ui-design"`、`mode: "wireframe" | "hifi"`、`pages`、`components`、`prototype`、`implementationHints`
+   - Markdown 解释设计，JSON 约束实现；两者冲突时必须先修正冲突再交付
+   - 产出后在交互式环境运行或提示：`boss design preview <feature>`
+
 ## 工作流程
 
 ```
@@ -149,6 +155,10 @@ Skill(
 ## 输出格式
 
 # UI/UX 设计规范文档
+
+## 输出检查清单
+
+- [ ] `.boss/<feature>/ui-design.json` 已写入，并能被 `boss design preview <feature>` 渲染
 
 ## 1. 设计概述
 

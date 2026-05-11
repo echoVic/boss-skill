@@ -95,7 +95,8 @@ pending → skipped（被 --skip-* 或 --continue-from 跳过）
 
 ```
 design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
-                       └→ ui-spec.md(opt) ┘
+                       ├→ ui-spec.md(opt) ┘
+                       └→ ui-design.json(opt) ┘
 ```
 
 Copy this checklist and check off items as you complete them:
@@ -241,6 +242,7 @@ Copy this checklist and check off items as you complete them:
 | `boss runtime query-memory <feature> --agent <agent-name>` | 查询指定 Agent 的记忆摘要，用于派发前注入上下文 |
 | `boss runtime inspect-progress` | 实时进度监控（读取 progress.jsonl） |
 | `boss runtime record-feedback` | Agent 间反馈循环记录（REVISION_NEEDED） |
+| `boss design preview <feature>` | 预览 `.boss/<feature>/ui-design.json` 可渲染设计产物 |
 | `boss runtime evaluate-gates <feature> gate0` | Gate 0：代码质量（编译 + Lint） |
 | `boss runtime evaluate-gates <feature> gate1` | Gate 1：测试门禁（覆盖率 + 通过率 + E2E） |
 | `boss runtime evaluate-gates <feature> gate2` | Gate 2：性能门禁（Lighthouse + API P99） |
@@ -365,6 +367,7 @@ hooks 定义在两处：
 ├── prd.md              # 阶段 1
 ├── architecture.md     # 阶段 1
 ├── ui-spec.md          # 阶段 1（可选）
+├── ui-design.json      # 阶段 1（可选，可渲染 UI 设计）
 ├── tech-review.md      # 阶段 2
 ├── tasks.md            # 阶段 2
 ├── qa-report.md        # 阶段 3

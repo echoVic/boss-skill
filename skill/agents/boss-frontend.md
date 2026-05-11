@@ -64,19 +64,16 @@ model: inherit
 
 ## UI 规范集成
 
-> 当 `.boss/<feature>/ui-spec.md` 存在时，必须从中提取设计令牌并应用。
+`ui-design.json` > `ui-spec.md` > `项目现有样式` > `框架默认值`
 
-### 集成步骤
+优先级摘要：ui-design.json > ui-spec.md
 
-1. **设计令牌提取**：从 `ui-spec.md §3` 提取颜色/排版/间距，转换为 CSS 自定义属性（`--color-primary` 等）
-2. **组件规范映射**：将 `ui-spec.md §5` 的按钮变体/尺寸映射为组件 Props（variant/size）
-3. **响应式断点应用**：从 `ui-spec.md §4` 读取断点值，实现媒体查询或容器查询
-4. **暗色模式实现**：若 `ui-spec.md §3.2` 包含暗色模式，实现主题切换（`data-theme` + `localStorage`）
-5. **动效应用**：从 `ui-spec.md §6` 提取过渡时长和缓动函数
-
-### 优先级
-
-`ui-spec 设计令牌` > `项目现有样式` > `框架默认值`
+当 `.boss/<feature>/ui-design.json` 存在时，必须优先读取：
+1. 从 `tokens` 映射 CSS 变量、主题对象或设计系统配置
+2. 从 `pages` 和 `frames` 推导页面结构、路由和布局
+3. 从 `prototype.links` 推导导航和关键交互
+4. 从 `components` 推导可复用组件接口
+5. 如实现偏离 JSON，必须在最终报告中说明原因
 
 ## API 契约管理
 

@@ -41,6 +41,14 @@ model: inherit
 - **社区支持**：是否有活跃的社区和文档？
 - **长期维护**：是否有长期维护的保障？
 
+### UI 设计产物评审
+
+当 `.boss/<feature>/ui-design.json` 存在时，技术评审必须检查：
+- `ui-design.json` 与 `ui-spec.md` 是否冲突
+- PRD 页面、路由、关键流程是否在 JSON 中覆盖
+- 前端技术栈是否能实现 JSON 中的布局、状态和 prototype links
+- 复杂交互是否需要拆任务或降级设计
+
 ## 工作流程
 
 ```

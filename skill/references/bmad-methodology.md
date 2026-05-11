@@ -37,17 +37,9 @@ BMAD 将软件开发流程分解为 9 个专业化角色，每个角色由专门
 产物之间的依赖关系由 `packages/boss-cli/assets/artifact-dag.json` 定义为有向无环图（DAG），并可通过 `.boss/artifact-dag.json` 做项目级覆盖，而非简单线性流：
 
 ```
-design-brief (Stage 0, 可选)
-    ↓
-┌───────────────────────────────────┐
-│  prd.md ← architecture.md ← ui-spec.md  │  Stage 1（可并行）
-└───────────────────────────────────┘
-    ↓
-tech-review.md → tasks.md                    Stage 2（串行）
-    ↓
-code ← qa-report.md                          Stage 3（code 完成后 QA）
-    ↓
-deploy-report.md                              Stage 4
+design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
+                       ├→ ui-spec.md(opt) ┘
+                       └→ ui-design.json(opt) ┘
 ```
 
 **DAG 规则**：
@@ -79,7 +71,7 @@ deploy-report.md                              Stage 4
 **参与 Agent**：
 - PM Agent → 创建 `prd.md`
 - Architect Agent → 设计 `architecture.md`（包含 API 契约定义）
-- UI Designer Agent → 创建 `ui-spec.md`（可选，`skipUI` 时跳过）
+- UI Designer Agent → 创建 `ui-spec.md` 和 `ui-design.json`（可选，`skipUI` 时跳过）
 
 **并行执行**：三个 Agent 可以并行工作
 
@@ -212,7 +204,7 @@ Agent:    pending → running → completed | failed
 ### DAG 规则
 
 1. **就绪判断**：产物的所有 `inputs` 状态为 `done` 时，该产物进入 `ready`
-2. **可选依赖**：标记为 `optional: true` 的产物（如 `design-brief`、`ui-spec.md`）跳过时不阻塞下游
+2. **可选依赖**：标记为 `optional: true` 的产物（如 `design-brief`、`ui-spec.md`、`ui-design.json`）跳过时不阻塞下游
 3. **并行检测**：同一 stage 内无互相依赖的产物可并行执行
 4. **模板绑定**：每个产物关联 `templates/` 下的模板文件
 
@@ -223,6 +215,7 @@ Agent:    pending → running → completed | failed
 | `boss runtime get-ready-artifacts` | 检查产物是否 ready |
 | `boss runtime check-stage` | 检查阶段状态 |
 | `boss runtime record-artifact` | 记录 ArtifactRecorded 事件 |
+| `boss design preview <feature>` | 预览 `.boss/<feature>/ui-design.json` 可渲染设计产物 |
 
 ---
 
@@ -389,6 +382,7 @@ Boss Mode 通过 Claude Code Hooks 机制在关键时点注入行为，实现流
 │   ├── prd.md              # 产品需求文档
 │   ├── architecture.md     # 系统架构文档（含 API 契约）
 │   ├── ui-spec.md          # UI/UX 规范（可选）
+│   ├── ui-design.json      # 可渲染 UI 设计（可选）
 │   ├── tech-review.md      # 技术评审报告
 │   ├── tasks.md            # 开发任务
 │   ├── qa-report.md        # QA 测试报告
@@ -409,6 +403,7 @@ Boss Mode 通过 Claude Code Hooks 机制在关键时点注入行为，实现流
 | `templates/prd.md.template` | 产品需求文档 |
 | `templates/architecture.md.template` | 架构设计文档 |
 | `templates/ui-spec.md.template` | UI/UX 规范 |
+| `templates/ui-design.json.template` | 可渲染 UI 设计 |
 | `templates/tech-review.md.template` | 技术评审报告 |
 | `templates/tasks.md.template` | 任务拆解 |
 | `templates/qa-report.md.template` | QA 测试报告 |

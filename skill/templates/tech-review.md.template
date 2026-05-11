@@ -28,6 +28,7 @@ dependencies: [prd, architecture]
   - PRD：`.boss/{{FEATURE}}/prd.md`
   - 架构：`.boss/{{FEATURE}}/architecture.md`
   - UI 规范：`.boss/{{FEATURE}}/ui-spec.md`
+  - UI 设计 JSON：`.boss/{{FEATURE}}/ui-design.json`
 
 ## 2. 评审结论
 

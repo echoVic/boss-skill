@@ -26,10 +26,19 @@
 | 阶段 1 | `prd.md` | `templates/prd.md.template` |
 | 阶段 1 | `architecture.md` | `templates/architecture.md.template` |
 | 阶段 1 | `ui-spec.md`（如有界面） | `templates/ui-spec.md.template` |
+| 阶段 1 | `ui-design.json`（如有界面） | `templates/ui-design.json.template` |
 | 阶段 2 | `tech-review.md` | `templates/tech-review.md.template` |
 | 阶段 2 | `tasks.md` | `templates/tasks.md.template` |
 | 阶段 3 | `qa-report.md` | `templates/qa-report.md.template` |
 | 阶段 4 | `deploy-report.md` | `templates/deploy-report.md.template` |
+
+默认产物流：
+
+```text
+design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
+                       ├→ ui-spec.md(opt) ┘
+                       └→ ui-design.json(opt) ┘
+```
 
 ## 保存格式
 
@@ -38,6 +47,8 @@ boss artifact prepare <feature-name> prd.md
 Write(".boss/<feature>/prd.md", ...)
 boss artifact prepare <feature-name> architecture.md
 Write(".boss/<feature>/architecture.md", ...)
+boss artifact prepare <feature-name> ui-design.json
+Write(".boss/<feature>/ui-design.json", ...)
 ```
 
 ## 检查清单
