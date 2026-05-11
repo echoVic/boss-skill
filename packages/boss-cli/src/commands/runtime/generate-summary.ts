@@ -13,6 +13,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/registry.js';
 import { printRuntimeHelp } from './agent-command-utils.js';
+import { writeArtifactHtmlCompanion } from '../../runtime/report/render-artifact-html.js';
 import { renderJson } from '../../runtime/report/render-json.js';
 import { renderMarkdown } from '../../runtime/report/render-markdown.js';
 import { buildSummaryModel } from '../../runtime/report/summary-model.js';
@@ -100,13 +101,18 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     parsed.feature,
     parsed.json ? 'summary-report.json' : 'summary-report.md'
   );
+  const relativeHtmlOutputPath = path.posix.join('.boss', parsed.feature, 'summary-report.html');
   const outputPath = path.join(cwd, '.boss', parsed.feature, parsed.json ? 'summary-report.json' : 'summary-report.md');
 
   try {
     if (context.values.dryRun && !parsed.stdout) {
+      const actions = [{ type: 'write_file', path: relativeOutputPath, format }];
+      if (!parsed.json) {
+        actions.push({ type: 'write_file', path: relativeHtmlOutputPath, format: 'html' });
+      }
       writeOutput(
         {
-          actions: [{ type: 'write_file', path: relativeOutputPath, format }],
+          actions,
           risk_tier: 'medium',
           requires_approval: false
         },
@@ -125,8 +131,21 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     }
 
     fs.writeFileSync(outputPath, rendered, 'utf8');
+    if (!parsed.json) {
+      writeArtifactHtmlCompanion({
+        cwd,
+        feature: parsed.feature,
+        sourceArtifact: 'summary-report.md',
+        markdown: rendered
+      });
+    }
     writeOutput(
-      { feature: parsed.feature, outputPath: relativeOutputPath, format },
+      {
+        feature: parsed.feature,
+        outputPath: relativeOutputPath,
+        ...(parsed.json ? {} : { htmlOutputPath: relativeHtmlOutputPath }),
+        format
+      },
       context,
       () => `报告已生成: ${outputPath}\n`
     );

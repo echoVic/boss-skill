@@ -360,6 +360,7 @@ describe('runtime report generation', () => {
     expect(result.stdout).toMatch(/api-only/);
     expect(result.stdout).toMatch(/Gate 2 \(性能\)/);
     expect(result.stdout).toMatch(/插件失败次数/);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.html'))).toBe(false);
   });
 
   it('render-diagnostics runtime CLI emits an html diagnostics page', () => {
@@ -380,16 +381,21 @@ describe('runtime report generation', () => {
     const mdPayload = JSON.parse(mdResult.stdout) as {
       feature: string;
       outputPath: string;
+      htmlOutputPath: string;
       format: string;
     };
     expect(mdPayload).toEqual({
       feature: 'test-feat',
       outputPath: '.boss/test-feat/summary-report.md',
+      htmlOutputPath: '.boss/test-feat/summary-report.html',
       format: 'markdown'
     });
     const markdownPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md');
     expect(fs.existsSync(markdownPath)).toBe(true);
     expect(fs.readFileSync(markdownPath, 'utf8')).toMatch(/# 流水线执行报告/);
+    const htmlPath = path.join(tmpDir, '.boss', 'test-feat', 'summary-report.html');
+    expect(fs.existsSync(htmlPath)).toBe(true);
+    expect(fs.readFileSync(htmlPath, 'utf8')).toContain('流水线执行报告 - test-feat');
 
     const jsonResult = runRuntimeCommand('generate-summary', ['test-feat', '--json']);
     expect(jsonResult.status).toBe(0);
@@ -415,6 +421,33 @@ describe('runtime report generation', () => {
   });
 
   it('report writer runtime CLIs support structured dry-run without writing files', () => {
+    const summaryMarkdownDryRun = runRuntimeCommand('generate-summary', ['test-feat', '--dry-run']);
+    expect(summaryMarkdownDryRun.status).toBe(0);
+    expect(summaryMarkdownDryRun.stderr).toBe('');
+    const summaryMarkdownPayload = JSON.parse(summaryMarkdownDryRun.stdout) as {
+      actions: Array<{ type: string; path: string; format: string }>;
+      risk_tier: string;
+      requires_approval: boolean;
+    };
+    expect(summaryMarkdownPayload).toEqual({
+      actions: [
+        {
+          type: 'write_file',
+          path: '.boss/test-feat/summary-report.md',
+          format: 'markdown'
+        },
+        {
+          type: 'write_file',
+          path: '.boss/test-feat/summary-report.html',
+          format: 'html'
+        }
+      ],
+      risk_tier: 'medium',
+      requires_approval: false
+    });
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md'))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.html'))).toBe(false);
+
     const summaryResult = runRuntimeCommand('generate-summary', ['test-feat', '--dry-run', '--json']);
     expect(summaryResult.status).toBe(0);
     expect(summaryResult.stderr).toBe('');
