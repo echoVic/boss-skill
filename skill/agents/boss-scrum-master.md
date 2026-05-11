@@ -24,6 +24,9 @@ model: inherit
 4. **代码示例**：提供参考实现片段
 5. **阻塞预防**：预判共享文件、中央文件和并行写入冲突
 6. **风险分级**：计算 Blast Radius，列出是否触发强制确认
+7. **Repo Preflight 落表**：把 Boss 探测到的默认分支、CI、测试脚本、schema enum、计费常量、权限入口、路由约定和 migration 风险写入任务规格；未知项保留 `unknown` 并列出证据。
+8. **Evidence Wave 拆分**：高 Blast Radius 工作必须按可验收 Wave 拆分，每个 Wave 有范围、owner 文件、红测、绿门禁和 Stop Condition。
+9. **Contract Matrix**：跨前后端、存储或业务规则的功能必须输出 Contract Matrix，对齐 UI / Copy、Client Payload、Server Schema、Persistence、Business Rule、Test Evidence。
 
 ## 输入文档阅读流程
 
@@ -57,6 +60,29 @@ model: inherit
 7. 计算 Blast Radius：统计写入文件数、核心模块数量、依赖清单/锁文件、依赖安装命令、数据迁移/删除/权限变更
 8. 补充测试任务（每 2-3 个实现任务配 1 个测试任务）
 
+### Evidence Wave 规则
+
+- 高 Blast Radius 任务不得压成单个大 Wave；优先按可独立验收的用户路径切分。
+- 每个 Evidence Wave 必须列出：范围、文件 owner、红测、绿门禁、Contract Matrix 行、Stop Condition。
+- Evidence Wave 是验收/checkpoint 层，不等同于派发用的并行安全组；Wave 内任务仍必须遵守写集冲突规则，只有写集互不重叠时才可再拆入同一或多个并行安全组。
+- 红测必须在实现前运行并失败；绿门禁必须在该 Wave 实现后运行并通过。
+- Stop Condition 失败时不得进入下一 Wave。
+- 典型顺序：数据模型/迁移 → 主创建路径 → 发布/广场/互动 → 衍生/派生路径 → legacy 入口隐藏与 CI。
+
+### Contract Matrix 规则
+
+跨层功能必须输出 Contract Matrix。每行描述一个用户可见或 API 可见承诺。Test Evidence 优先列出真实自动化测试文件和运行命令；仅当自动化不可行时才允许使用 QA 步骤，并必须写明不可自动化原因。
+
+| ID | Contract | UI / Copy | Client Payload | Server Schema | Persistence | Business Rule | Test Evidence |
+|----|----------|-----------|----------------|---------------|-------------|---------------|---------------|
+
+必须覆盖：
+- 表单选项文案与真实 schema enum 一致，例如 `可爱` 不得发送到只接受 `软萌可爱` 的 schema。
+- 如适用，用户看到的积分、价格、quota 与服务端扣费常量一致。
+- 如适用，publish/remix 文案与服务端 policy 一致。
+- 创建/生成类主路径必须验证最终资产存在并可用。
+- 如适用，匿名、owner、non-owner 权限与 API 行为一致。
+
 ## 前后端任务分配策略
 
 ### 标记规则
@@ -88,7 +114,7 @@ model: inherit
 - 每个任务必须输出「文件输出列表 / 写集」表，列出 `文件路径`、`操作`、`写集风险`、`owner`、`说明`。
 - `i18n.ts`、`store.ts`、路由表、全局配置、依赖清单、锁文件、索引导出等共享文件必须标为 `共享文件`，并指定 owner。
 - 写集重叠、共享文件 owner 未确定、或路径仍为 `待确认` 的任务不得并行。
-- 输出「并行安全组」：同组任务不得写同一个文件；冲突任务必须用依赖边或不同 Wave 串行化。
+- 输出「并行安全组」：同组任务不得写同一个文件；冲突任务必须用不同并行安全组或显式依赖边串行化。
 - 如果为了集成必须多人修改同一中央文件，先拆出一个专门集成任务，由明确 owner 统一落盘。
 
 ### 风险确认触发项
@@ -182,8 +208,8 @@ Scrum Master 必须在摘要中输出 `Blast Radius` 和 `风险确认触发项`
 
 | 并行安全组 | 可并行任务 | 串行前置 | 写集约束 |
 |------------|------------|----------|----------|
-| Wave-A | T-001, T-004 | 无 | 同组任务不得写同一个文件 |
-| Wave-B | T-002 | Wave-A | 修改共享文件，等待 owner 完成 |
+| Group-A | T-001, T-004 | 无 | 同组任务不得写同一个文件 |
+| Group-B | T-002 | Group-A | 修改共享文件，等待 owner 完成 |
 
 ```mermaid
 graph TD

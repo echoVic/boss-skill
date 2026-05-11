@@ -77,3 +77,11 @@ npx playwright test 或 npx cypress run
 | Go | `go test ./...` | `go test -tags=integration ./...` | `go test -coverprofile=coverage.out ./...` |
 | Rust | `cargo test` | `cargo test --test integration` | `cargo tarpaulin` |
 | Java | `mvn test` / `gradle test` | `mvn verify` | `mvn jacoco:report` |
+
+## 关键路径证据规则
+
+- 关键路径测试必须覆盖真实用户行为或真实 API/schema 行为；Mock 可以支持隔离验证，但不能作为唯一证据。
+- UI submit payload 必须通过真实 server schema、共享 schema 或 API integration test 校验；只断言 fetch-called 不计入关键路径通过证据。
+- schema enum、pricing/credits、权限、publish/remix policy、generated asset existence 需要跨层测试或 QA replay 证据；项目不适用时必须明确标记不适用。
+- red-to-green 证据必须记录实现前失败的命令/原因，以及实现后同一命令通过的结果。
+- 如第三方服务必须 Mock，仍需验证系统自身的 payload、state transition、persistence、error handling。

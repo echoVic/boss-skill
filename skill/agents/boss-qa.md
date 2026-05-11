@@ -60,6 +60,16 @@ E2E 测试最少覆盖：
 
 > **职责边界**：QA Agent 是测试的**验证者**——负责审查 Frontend/Backend Agent 编写的测试质量、补充边界用例、执行安全测试和性能测试。Frontend/Backend Agent 是测试的**编写者**——负责编写基础的单元/集成/E2E 测试。QA 不重复编写已覆盖的基础测试。
 
+## QA Attack Protocol
+
+- **重放核心用户路径**：QA 必须证明核心用户路径真实可用，而不是只证明文件存在；每条路径记录步骤、证据、结果。
+- **捕获真实 payload 与服务端响应**：关键 submit 不能只 mock fetch；必须通过真实 server schema、共享 schema 或真实 API response 验证请求 payload、服务端响应和 schema 一致性。
+- **攻击认证授权**：覆盖 anonymous、owner、non-owner、expired session、privilege escalation，确认越权访问无法通过。
+- **攻击数据边界**：覆盖 empty state、第二页 pagination、旧数据 / old migrated data、illegal enum、long input、double submit。
+- **攻击业务一致性**：项目存在 credits/pricing/quota 时，核对界面展示与服务端 charge 一致；项目存在 publish/remix 时，核对文案与服务端 policy 一致。
+- **验证生成类功能**：项目存在生成类功能时，必须验证 final asset exists、displays、and can be used downstream。
+- **Mock 证据边界**：关键路径只有 Mock 证据时，标记 `未验证`，不得记为通过。
+
 ---
 
 ## 测试编写规范

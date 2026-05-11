@@ -35,9 +35,11 @@ user-invocable: true
 9. **子代理标准协议** — 所有子代理必须使用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED` 五种状态报告（详见 `agents/prompts/subagent-protocol.md`）
 10. **模型分级** — 根据任务复杂度选择模型：轻量级（机械任务）/ 标准级（集成任务）/ 旗舰级（架构任务）
 11. **Wave 边界校验** — 子代理自报 `DONE` 不可信；每个 Wave 完成后必须按项目技术栈选择类型检查、测试套件、lint/格式检查等校验，并由 orchestrator 处理依赖清单、锁文件或构建配置的意外 diff
-12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一 Wave
+12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一并行安全组
 13. **风险等级感知确认** — 确认节点不只按阶段固定触发；code 阶段若命中高 Blast Radius 的强制确认 trigger，必须先向用户确认再派发实现 Agent
 14. **协议 manifest / prefix 缓存** — 子代理共享协议通过 `agents/shared/protocol-manifest.md` 做短前缀复用和按需加载，避免每个 subagent 重复读取长协议全文
+15. **Repo Preflight 不可猜测** — code 阶段规划前必须探测默认分支、CI、测试脚本、schema enum、计费常量、权限入口、路由约定和 migration 风险；未知事实必须写 `unknown` 并列出已检查命令/文件，不得猜测。
+16. **证据优先交付** — 每个 code 产物至少必须有一个可验收 Evidence Wave；高 Blast Radius 功能必须拆成多个更小 Evidence Wave。每个 Wave 有红测、绿门禁、Contract Matrix 和 Stop Condition；缺任一项不得派发 code Agent。
 
 ## 参数
 
@@ -130,6 +132,15 @@ Copy this checklist and check off items as you complete them:
   - [ ] 0.4 若不是 `--continue-from` 且 `.boss/<feature>/` 不存在，调用 `boss project init <feature-name>` 创建占位产物骨架；`project init` 已隐式执行 pipeline 初始化，不要随后再调用 `boss runtime init-pipeline <feature>`
   - [ ] 0.4a 🎯 **Pipeline Pack 自动检测**：调用 `boss packs detect <project-dir> --json` 自动检测最佳 pipeline pack。读取 `detectedPack.evidence` 和 `matchedPacks`，确认命中依据不是黑盒；若检测到匹配的 pack（非 default），使用该 pack 的 config 覆盖默认配置（agents、gates、skipUI 等）。用户通过 `--roles` 显式指定时覆盖自动检测结果。
   - [ ] 0.4b 📐 **加载 Artifact DAG**：读取 `packages/boss-cli/assets/artifact-dag.json`（可由 `.boss/artifact-dag.json` 或 pipeline pack 自定义 DAG 覆盖），确定产物依赖图
+  - [ ] 0.4c 🔎 **Repo Preflight**：在 code 阶段规划前探测项目事实；在 `tasks.md` 存在前将摘要注入 Tech Lead、Scrum Master、Frontend、Backend、QA 上下文，Scrum Master 必须把摘要写入 `.boss/<feature>/tasks.md`。
+    - [ ] Git：默认分支、当前分支、是否存在未提交变更。
+    - [ ] CI：`.github/workflows/`、`.gitlab-ci.yml`、`.circleci/config.yml`、`vercel.json`、`netlify.toml` 等配置，以及 CI 实际执行的 lint/test/build 命令。
+    - [ ] 包管理与脚本：package manager、install 命令、test/build/lint/typecheck 脚本，确认 `npm test` 或等价命令是否包含 integration/E2E。
+    - [ ] 测试工具：单元、集成、E2E、浏览器自动化工具。
+    - [ ] 契约来源：真实 schema enum、OpenAPI/JSON Schema、Zod/Yup/Pydantic、Prisma/Drizzle、共享类型、API 路由。
+    - [ ] 业务常量：计费、积分、quota、权限策略、publish/remix policy。
+    - [ ] 路由与迁移：框架路由约定（如 Next async params）、destructive migrations、silent pagination/row limits、irreversible backfills。
+    - [ ] 对无法确认的事实写 `unknown`，并列出已检查命令或文件；不得猜测或用模板默认值代替。
   - [ ] 0.5 🔌 调用 `boss runtime register-plugins <feature>` 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段
   - [ ] 0.6 将 `design-brief.md`（如有）作为上下文传递给后续 Agent
   - [ ] 0.7 **Step 0 → DAG 过渡**：确认 Step 0 产物已就绪（design-brief 已写入、execution.json 已初始化、DAG 已加载），标记阶段 1 开始：`boss runtime update-stage <feature> 1 running`，进入 DAG 执行循环 ↓
@@ -142,17 +153,17 @@ Copy this checklist and check off items as you complete them:
   - [ ] **D.4 并行派发 Agent**：
     - Load `agents/shared/protocol-manifest.md`，建立本轮公共协议 prefix 缓存；运行环境支持 prompt prefix/context cache/session memory 时复用该前缀，不支持时只注入 manifest 摘要和必要引用。
     - Load `references/artifact-guide.md` 获取产物保存规范；若已在本轮 prefix 缓存中，复用摘要。
-    - 对同一阶段的就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）
-    - 不同阶段的就绪产物也可并行（DAG 保证依赖已满足）
+    - 对同一阶段的非 `code` 就绪产物，**并行**调用对应 Agent（如 architecture.md + ui-spec.md 可并行）；`code` 产物必须先通过本节 code 预条件、D.4a 写集冲突检测和 D.4b 风险确认。
+    - 不同阶段的非 `code` 就绪产物也可并行（DAG 保证依赖已满足）；`code` 产物不得提前绕过 D.4a/D.4b 派发。
     - 每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + 协议 manifest 的公共 prefix；不要默认重复注入 `agent-protocol.md` 与 `tech-detection.md` 全文。
     - 按需加载共享协议：模板/状态格式不清楚时再展开 `agents/shared/agent-protocol.md`；`.meta/tech-stack.json` 缺失、过期或项目结构变化时才展开 `agents/shared/tech-detection.md`；状态机、反馈循环、Wave 校验或风险确认处理时再展开 `agents/prompts/subagent-protocol.md`。
     - 使用渐进式披露：若子代理返回 `NEEDS_CONTEXT` 或指出缺少某协议细节，orchestrator 再补充对应全文并重派；不要预先把所有协议全文塞给所有子代理。
     - 🧠 **注入 Memory 上下文**：调用 `boss runtime query-memory <feature> --agent <agent-name>`，将返回的相关记忆摘要追加到 Agent 上下文。若无结果则跳过。
-    - 若产物为 `code`，根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目并行），同时 Load `references/testing-standards.md`
+    - 若产物为 `code`，必须先确认 `tasks.md` 含 Repo Preflight 摘要、至少一个 Evidence Wave 表、Contract Matrix（跨层功能适用）、每个 Wave 的红测/绿门禁/Stop Condition；高 Blast Radius 必须拆成多个更小 Evidence Wave。缺失任一项时，暂停并回派 Scrum Master 修订；不得派发 code Agent。
   - [ ] **D.4a 任务写集冲突检测**（仅 code 产物派发前）：
     - 从 `tasks.md` 解析每个 Task 的「文件输出列表 / 写集」表，提取计划创建、修改、删除的文件路径、写集风险和 owner。
     - 构建任务冲突图：任意两个任务写同一文件、同一中央索引、同一依赖清单、锁文件、全局配置、`i18n.ts`、`store.ts` 等共享文件时，视为写集重叠。
-    - 根据显式依赖边和冲突图生成并行安全组；同一 Wave 内任务写集必须互斥，写集重叠的任务不得并行。
+    - 根据显式依赖边和冲突图生成并行安全组；同一并行安全组内任务写集必须互斥，写集重叠的任务不得并行。Evidence Wave 是验收检查点，不等同于并行派发批次；同一 Evidence Wave 内可包含多个按依赖顺序执行的并行安全组。
     - 对共享文件必须指定 owner；非 owner 任务只能读取或等待 owner 完成后的后续 Wave 集成，不得同时落盘。
     - 若任务缺少文件输出列表、路径仍为 `待确认`、或共享文件 owner 不明确，暂停并回派 Scrum Master 修订 `tasks.md`，不要靠 orchestrator 手写 prompt 画地盘。
   - [ ] **D.4b 风险等级感知确认**（仅 code 产物派发前）：
@@ -160,7 +171,10 @@ Copy this checklist and check off items as you complete them:
     - 命中任一强制确认 trigger 时，在 `auto` / `interactive` 模式下必须向用户展示即将写入的文件数量、核心模块、依赖变更、安装命令和不可逆操作，并等待确认后才能继续。
     - 强制确认 trigger 包括：计划写入文件数达到项目阈值（默认 ≥ 10 个；项目可在 `tech-review.md` 中降低阈值）、修改 `package.json`/锁文件/构建或部署配置、需要运行依赖安装命令、修改认证/支付/数据模型/迁移/权限/全局状态等核心模块、删除文件或执行不可逆操作。
     - `--quick` / `--hitl-level off` 只跳过常规确认；若命中强制确认 trigger，必须在继续前输出风险摘要并取得用户明确同意，除非用户在本轮请求中已经明确授权这些高风险动作。
-    - 未命中触发项时，记录“风险确认：未触发”并继续 D.5。
+    - 未命中触发项时，记录“风险确认：未触发”并继续 D.4c。
+  - [ ] **D.4c code Agent 派发**（仅 D.4 code 预条件、D.4a、D.4b 全部通过后）：
+    - 根据任务类型调用 `boss-frontend` / `boss-backend`（全栈项目可并行），同时 Load `references/testing-standards.md`。
+    - 任一 code 预条件、写集冲突检测或风险确认未通过时，暂停并回派对应上游 Agent；不得派发 code Agent。
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
   - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；Markdown 产物记录时会自动生成并记录同名 HTML companion；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
   - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告

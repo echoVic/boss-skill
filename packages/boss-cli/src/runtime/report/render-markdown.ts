@@ -1,5 +1,7 @@
 import type { SummaryModel } from './summary-model.js';
 
+type SummaryGate = SummaryModel['qualityGates'][string];
+
 function statusIcon(status: string): string {
   switch (status) {
     case 'completed':
@@ -32,6 +34,35 @@ function gateLabel(name: string): string {
   }
 }
 
+function gateChecks(gate: SummaryGate): unknown[] {
+  return Array.isArray(gate.checks) ? gate.checks : [];
+}
+
+function gatePassedText(gate: SummaryGate): string {
+  return gate.passed == null ? '—' : String(gate.passed);
+}
+
+function failedCheckCount(checks: unknown[]): number {
+  return checks.filter(
+    (check): check is { passed: false } =>
+      typeof check === 'object' && check !== null && 'passed' in check && check.passed === false
+  ).length;
+}
+
+function gateTableRow(name: string, gate: SummaryGate, includeFailedChecks = false): string {
+  const checks = gateChecks(gate);
+  const baseColumns = [
+    gateLabel(name),
+    `${statusIcon(gate.status)} ${gate.status}`,
+    gatePassedText(gate),
+    String(checks.length)
+  ];
+  const columns = includeFailedChecks
+    ? [...baseColumns, String(failedCheckCount(checks)), gate.executedAt || '—']
+    : [...baseColumns, gate.executedAt || '—'];
+  return `| ${columns.join(' | ')} |`;
+}
+
 export function renderMarkdown(model: SummaryModel): string {
   const completedStages = model.stages.filter(
     (stage) => stage.status === 'completed' || stage.status === 'skipped'
@@ -54,11 +85,51 @@ export function renderMarkdown(model: SummaryModel): string {
     '',
     '---',
     '',
+    '## 证据链',
+    '',
+    '### 核心用户路径',
+    '',
+    '- 详见 `qa-report.md`：核心路径必须包含真实浏览器、真实 API、真实 schema 的证据。',
+    '- Mock 可辅助定位，但关键路径不能只凭 Mock 通过；缺少真实路径证据时必须标记为未验证。',
+    '',
+    '### Gate 命令与检查项',
+    '',
+    '- 当前运行时摘要展示 gate 检查结果与执行时间；精确命令请在可用时查阅 gate output 或 `qa-report.md`。',
+    '',
+    '| 门禁 | 状态 | 通过 | 检查项 | 失败项 | 执行时间 |',
+    '|------|------|------|--------|--------|----------|'
+  ];
+
+  for (const [name, gate] of Object.entries(model.qualityGates || {})) {
+    lines.push(gateTableRow(name, gate, true));
+  }
+
+  lines.push(
+    '',
+    '### 红测转绿证据',
+    '',
+    '- 详见 `tasks.md`：Evidence Wave 计划、红测命令、绿门禁和 Stop Condition。',
+    '- 详见 `qa-report.md`：red-to-green 证据、复跑结果和未覆盖路径说明。',
+    '',
+    '### Contract Matrix 状态',
+    '',
+    '- 详见 `tasks.md`：Contract Matrix 对齐 UI / Copy、Client Payload、Server Schema、Persistence、Business Rule 与 Test Evidence。',
+    '- 详见 `qa-report.md`：Contract Matrix 验证结果、真实 payload、服务端响应和 schema 证据。',
+    '',
+    '### 已知失败与遗留风险',
+    '',
+    `- Gate 通过率：${model.metrics.gatePassRate ?? 'N/A'}%`,
+    `- Agent 失败数：${model.metrics.agentFailureCount ?? 0}`,
+    `- 插件失败数：${model.metrics.pluginFailureCount ?? 0}`,
+    '- 详见 `qa-report.md`：残留风险、未验证核心路径与后续处理建议。',
+    '',
+    '---',
+    '',
     '## 阶段详情',
     '',
     '| 阶段 | 名称 | 状态 | 耗时 | 重试 | 产物数 |',
     '|------|------|------|------|------|--------|'
-  ];
+  );
 
   for (const stage of model.stages) {
     lines.push(
@@ -74,9 +145,7 @@ export function renderMarkdown(model: SummaryModel): string {
     '|------|------|------|----------|----------|'
   );
   for (const [name, gate] of Object.entries(model.qualityGates || {})) {
-    lines.push(
-      `| ${gateLabel(name)} | ${statusIcon(gate.status)} ${gate.status} | ${gate.passed == null ? '—' : gate.passed} | ${Array.isArray(gate.checks) ? gate.checks.length : 0} | ${gate.executedAt || '—'} |`
-    );
+    lines.push(gateTableRow(name, gate));
   }
 
   lines.push('', '## 产物清单', '');

@@ -13,6 +13,12 @@ const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8')
 const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
 const tasksTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'tasks.md.template'), 'utf8');
 const scrumMaster = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-scrum-master.md'), 'utf8');
+const qaTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'qa-report.md.template'), 'utf8');
+const qaAgent = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-qa.md'), 'utf8');
+const testingStandards = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'testing-standards.md'),
+  'utf8'
+);
 const subagentProtocol = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'prompts', 'subagent-protocol.md'),
   'utf8'
@@ -174,7 +180,7 @@ describe('subagent orchestration safety contract', () => {
     expect(skill).toContain('任务写集冲突检测');
     expect(skill).toContain('从 `tasks.md` 解析');
     expect(skill).toContain('写集重叠');
-    expect(skill).toContain('同一 Wave');
+    expect(skill).toContain('同一并行安全组');
     expect(skill).toContain('不得并行');
     expect(skill).toContain('共享文件');
     expect(skill).toContain('指定 owner');
@@ -219,6 +225,76 @@ describe('subagent orchestration safety contract', () => {
     expect(skill).toContain('渐进式披露');
     expect(skill).toContain('agents/shared/protocol-manifest.md');
     expect(skill).not.toContain('每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`');
+  });
+});
+
+describe('boss evidence gates contract', () => {
+  it('documents repo preflight before code-stage planning and dispatch', () => {
+    for (const doc of [skill, tasksTemplate]) {
+      expect(doc).toContain('Repo Preflight');
+      expect(doc).toContain('默认分支');
+      expect(doc).toContain('CI');
+      expect(doc).toContain('测试脚本');
+      expect(doc).toContain('schema enum');
+      expect(doc).toContain('计费');
+      expect(doc).toContain('migration');
+      expect(doc).toContain('unknown');
+    }
+
+    expect(skill).toContain('不得派发 code Agent');
+    expect(skill).toContain('不得猜测');
+  });
+
+  it('requires evidence-driven waves with red tests and green gates', () => {
+    for (const doc of [scrumMaster, tasksTemplate]) {
+      expect(doc).toContain('Evidence Wave');
+      expect(doc).toContain('红测');
+      expect(doc).toContain('绿门禁');
+      expect(doc).toContain('Stop Condition');
+      expect(doc).toContain('下一 Wave');
+    }
+  });
+
+  it('keeps code dispatch, risk confirmation, and evidence wave terminology distinct', () => {
+    expect(skill).toContain('继续 D.4c');
+    expect(skill).not.toMatch(/风险确认：未触发[\s\S]*继续 D\.5/);
+    expect(skill).toContain('同一并行安全组');
+    expect(skill).toContain('Evidence Wave');
+    expect(skill).toContain('并行安全组');
+  });
+
+  it('requires cross-layer contract matrices for UI payload schema and business-rule consistency', () => {
+    for (const doc of [scrumMaster, tasksTemplate]) {
+      expect(doc).toContain('Contract Matrix');
+      expect(doc).toContain('UI / Copy');
+      expect(doc).toContain('Client Payload');
+      expect(doc).toContain('Server Schema');
+      expect(doc).toContain('Business Rule');
+      expect(doc).toContain('Test Evidence');
+      expect(doc).toContain('积分');
+      expect(doc).toContain('remix');
+    }
+  });
+
+  it('requires QA to replay real core paths and mark mocked critical paths unverified', () => {
+    for (const doc of [qaAgent, qaTemplate]) {
+      expect(doc).toContain('核心用户路径');
+      expect(doc).toContain('真实 payload');
+      expect(doc).toContain('服务端响应');
+      expect(doc).toContain('schema');
+      expect(doc).toContain('越权');
+      expect(doc).toContain('第二页');
+      expect(doc).toContain('旧数据');
+      expect(doc).toContain('未验证');
+    }
+  });
+
+  it('forbids mocked critical-path tests as the sole proof for core flows', () => {
+    expect(testingStandards).toContain('关键路径');
+    expect(testingStandards).toContain('Mock');
+    expect(testingStandards).toContain('唯一证据');
+    expect(testingStandards).toContain('真实 server schema');
+    expect(testingStandards).toContain('red-to-green');
   });
 });
 
