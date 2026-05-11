@@ -162,7 +162,7 @@ Copy this checklist and check off items as you complete them:
     - `--quick` / `--hitl-level off` 只跳过常规确认；若命中强制确认 trigger，必须在继续前输出风险摘要并取得用户明确同意，除非用户在本轮请求中已经明确授权这些高风险动作。
     - 未命中触发项时，记录“风险确认：未触发”并继续 D.5。
   - [ ] **D.5 保存产物**：Agent 完成后将产物保存到 `.boss/<feature>/`
-  - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
+  - [ ] **D.6 标记产物完成**：调用 `boss runtime record-artifact <feature> <artifact-name> <N>` 记录产物完成；Markdown 产物记录时会自动生成并记录同名 HTML companion；若阶段内所有产物都完成，先进入 D.7c Wave 边界校验，校验通过后才调用 `boss runtime update-stage <feature> <N> completed` 标记阶段 completed
   - [ ] **D.7 ❌ 失败处理**：若 Agent 失败，先调用 `boss runtime check-stage <feature> <N> --agents` 检查哪些 Agent 已完成，仅对失败的 Agent 调用 `boss runtime retry-agent <feature> <N> <agent-name>` 重试；若 agent 重试上限已达，才用 `boss runtime retry-stage <feature> <N>` 重试整个阶段；若阶段重试上限也达，暂停并报告
   - [ ] **D.7a 🔄 反馈循环**：若 Agent 报告 `REVISION_NEEDED`（仅 Tech Lead / QA 可发起）：
     1. 调用 `boss runtime record-feedback <feature> --from <critic-agent> --to <target-agent> --artifact <name> --reason "<原因>"` 记录反馈请求
@@ -193,7 +193,7 @@ Copy this checklist and check off items as you complete them:
   - [ ] **D.11 🧠 记忆提取**：DAG 所有产物完成后，调用 `boss runtime extract-memory <feature> --json` 提取本次流水线的关键决策和经验；orchestrator 必须查看返回的 `records` 与 `summaryPreview`，确认下次同类 feature 会注入什么，再写入/更新记忆库供后续参考。
 
 - [ ] **收尾**
-  - [ ] F.1 📊 调用 `boss runtime generate-summary <feature>` 生成最终流水线报告
+  - [ ] F.1 📊 调用 `boss runtime generate-summary <feature>` 生成最终 Markdown 流水线报告及 HTML companion
   - [ ] F.2 输出最终结果（文档位置 + 测试摘要 + 门禁结果 + 访问 URL + 流水线耗时）
 
 ---
@@ -364,15 +364,15 @@ hooks 定义在两处：
 .boss/templates/         # 项目级模板（可选，优先于内置 templates/）
 .boss/<feature-name>/
 ├── design-brief.md     # Step 0（brainstorming 产出，可选）
-├── prd.md              # 阶段 1
-├── architecture.md     # 阶段 1
-├── ui-spec.md          # 阶段 1（可选）
+├── prd.md / prd.html                  # 阶段 1
+├── architecture.md / architecture.html # 阶段 1
+├── ui-spec.md / ui-spec.html          # 阶段 1（可选）
 ├── ui-design.json      # 阶段 1（可选，可渲染 UI 设计）
-├── tech-review.md      # 阶段 2
-├── tasks.md            # 阶段 2
-├── qa-report.md        # 阶段 3
-├── deploy-report.md    # 阶段 4
-├── summary-report.md   # 流水线报告（由 Harness 自动生成）
+├── tech-review.md / tech-review.html  # 阶段 2
+├── tasks.md / tasks.html              # 阶段 2
+├── qa-report.md / qa-report.html      # 阶段 3
+├── deploy-report.md / deploy-report.html # 阶段 4
+├── summary-report.md / summary-report.html # 流水线报告（由 Harness 自动生成）
 └── .meta/
     └── execution.json  # Harness 执行追踪（状态机 + 门禁 + 指标）
 ```

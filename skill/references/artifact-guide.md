@@ -21,18 +21,24 @@
 
 **每个 Markdown 产物必须在正文最开头包含 `## 摘要` section**，用 3-5 条简短结论概括核心内容。下游 Agent 读取上游 Markdown 产物时，优先读取 `## 摘要`，仅在需要细节时读取完整内容，以节省 Token。
 
+Markdown 产物是权威内容源。保存并记录 Markdown 产物后，Boss runtime 会自动生成同名 HTML companion（例如 `prd.md` → `prd.html`）。Agent 不需要、也不应该手写整页 HTML；HTML 页面由 `artifact.html.template` 和 runtime renderer 统一生成。
+
+HTML 模板查找优先级：
+1. 项目级模板：`.boss/templates/artifact.html.template`
+2. Skill 内置模板：`templates/artifact.html.template`
+
 机器可读 JSON 产物（如 `ui-design.json`）必须保持合法 JSON，不要求 `## 摘要`，也不得为了摘要在 JSON 前后追加 Markdown。
 
 | 阶段 | 必须保存的产物 | 模板 |
 |------|----------------|------|
-| 阶段 1 | `prd.md` | `templates/prd.md.template` |
-| 阶段 1 | `architecture.md` | `templates/architecture.md.template` |
-| 阶段 1 | `ui-spec.md`（如有界面） | `templates/ui-spec.md.template` |
+| 阶段 1 | `prd.md`（自动生成 `prd.html`） | `templates/prd.md.template` |
+| 阶段 1 | `architecture.md`（自动生成 `architecture.html`） | `templates/architecture.md.template` |
+| 阶段 1 | `ui-spec.md`（如有界面，自动生成 `ui-spec.html`） | `templates/ui-spec.md.template` |
 | 阶段 1 | `ui-design.json`（如有界面） | `templates/ui-design.json.template` |
-| 阶段 2 | `tech-review.md` | `templates/tech-review.md.template` |
-| 阶段 2 | `tasks.md` | `templates/tasks.md.template` |
-| 阶段 3 | `qa-report.md` | `templates/qa-report.md.template` |
-| 阶段 4 | `deploy-report.md` | `templates/deploy-report.md.template` |
+| 阶段 2 | `tech-review.md`（自动生成 `tech-review.html`） | `templates/tech-review.md.template` |
+| 阶段 2 | `tasks.md`（自动生成 `tasks.html`） | `templates/tasks.md.template` |
+| 阶段 3 | `qa-report.md`（自动生成 `qa-report.html`） | `templates/qa-report.md.template` |
+| 阶段 4 | `deploy-report.md`（自动生成 `deploy-report.html`） | `templates/deploy-report.md.template` |
 
 默认产物流：
 
