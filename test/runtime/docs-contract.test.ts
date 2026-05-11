@@ -38,6 +38,10 @@ const uiDesignTemplate = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'templates', 'ui-design.json.template'),
   'utf8'
 );
+const techReviewTemplate = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'templates', 'tech-review.md.template'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -260,8 +264,16 @@ describe('ui-design artifact contract', () => {
   it('documents ui-design.json in artifact guides and templates', () => {
     expect(skill).toContain('ui-design.json');
     expect(artifactGuide).toContain('ui-design.json');
+    expect(artifactGuide).toContain('boss design preview <feature>');
     expect(bmadMethodology).toContain('ui-design.json');
     expect(uiDesignTemplate).toContain('"artifact": "ui-design"');
+  });
+
+  it('documents tech review UI dependencies in metadata and body', () => {
+    expect(techReviewTemplate).toMatch(/dependencies:\s*\[[^\]]*ui-spec[^\]]*\]/);
+    expect(techReviewTemplate).toMatch(/dependencies:\s*\[[^\]]*ui-design[^\]]*\]/);
+    expect(techReviewTemplate).toContain('UI 规范：`.boss/{{FEATURE}}/ui-spec.md`');
+    expect(techReviewTemplate).toContain('UI 设计 JSON：`.boss/{{FEATURE}}/ui-design.json`');
   });
 });
 

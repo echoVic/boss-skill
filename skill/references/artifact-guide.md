@@ -49,6 +49,7 @@ boss artifact prepare <feature-name> architecture.md
 Write(".boss/<feature>/architecture.md", ...)
 boss artifact prepare <feature-name> ui-design.json
 Write(".boss/<feature>/ui-design.json", ...)
+boss design preview <feature>
 ```
 
 ## 检查清单
@@ -61,3 +62,4 @@ Write(".boss/<feature>/ui-design.json", ...)
 - [ ] 是否优先读取了 `.boss/templates/` 中的项目级模板？
 - [ ] 是否基于对应的 template 生成？
 - [ ] 是否只准备了当前阶段需要的产物，而不是一次性渲染全部模板？
+- [ ] 如写入 `ui-design.json`，是否运行或提示了 `boss design preview <feature>`？

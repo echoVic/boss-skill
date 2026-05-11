@@ -1,7 +1,7 @@
 ---
 type: tech-review
 outputFor: [scrum-master, frontend, backend]
-dependencies: [prd, architecture]
+dependencies: [prd, architecture, ui-spec, ui-design]
 ---
 
 # 技术方案评审报告
