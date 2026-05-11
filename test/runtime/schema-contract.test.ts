@@ -195,4 +195,25 @@ describe('runtime schema contract', () => {
     expect(schema.properties.toc.items.properties.level.minimum).toBe(1);
     expect(schema.properties.toc.items.properties.level.maximum).toBe(6);
   });
+
+  it('artifact html template includes required render placeholders', () => {
+    const template = fs.readFileSync(
+      path.join(REPO_ROOT, 'skill/templates/artifact.html.template'),
+      'utf8'
+    );
+
+    for (const token of [
+      '{{FEATURE}}',
+      '{{TITLE}}',
+      '{{SOURCE_ARTIFACT}}',
+      '{{GENERATED_AT}}',
+      '{{SUMMARY_HTML}}',
+      '{{TOC_HTML}}',
+      '{{BODY_HTML}}'
+    ]) {
+      expect(template).toContain(token);
+    }
+    expect(template).toMatch(/<!doctype html>/i);
+    expect(template).toContain('<html lang="zh-CN">');
+  });
 });
