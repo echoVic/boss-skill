@@ -109,6 +109,15 @@ describe('agent-friendly boss CLI contract', () => {
     expect(payload.created).toBe(true);
   });
 
+  it('copies the artifact html template during project init with --template', () => {
+    const result = runBoss(['project', 'init', 'template-demo', '--template', '--json'], tmpDir);
+
+    expect(result.status).toBe(0);
+    const artifactTemplate = path.join(tmpDir, '.boss', 'templates', 'artifact.html.template');
+    expect(fs.existsSync(artifactTemplate)).toBe(true);
+    expect(fs.readFileSync(artifactTemplate, 'utf8')).toContain('{{BODY_HTML}}');
+  });
+
   it('documents project init --force without redundant --yes confirmation', () => {
     const result = runBoss(['project', 'init', '--help'], tmpDir);
 
