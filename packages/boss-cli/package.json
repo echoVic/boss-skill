@@ -1,6 +1,6 @@
 {
   "name": "@blade-ai/boss-cli",
-  "version": "3.8.4",
+  "version": "3.8.5",
   "private": true,
   "type": "module",
   "bin": {
