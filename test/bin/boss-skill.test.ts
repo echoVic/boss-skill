@@ -4,6 +4,8 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { runCli } from '../helpers/run-cli.js';
+import { main as runProjectInit } from '../../packages/boss-cli/src/commands/project/index.js';
+import { validateUiDesignArtifact } from '../../packages/boss-cli/src/runtime/design/schema.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
@@ -64,6 +66,25 @@ describe('boss-skill dist bin', () => {
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain('用法: boss project init <feature-name> [options]');
     expect(result.stdout + result.stderr).not.toContain('Usage: boss project init <feature-name> [--template] [--force]');
+  });
+
+  it('project init writes a valid ui-design.json stub', () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'boss-project-init-'));
+    const writeSpy = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+
+    try {
+      const status = runProjectInit(['valid-ui-design', '--json'], { cwd: workspace });
+      expect(status).toBe(0);
+
+      const uiDesign = JSON.parse(readFileSync(resolve(workspace, '.boss', 'valid-ui-design', 'ui-design.json'), 'utf8'));
+      const validation = validateUiDesignArtifact(uiDesign);
+      expect(validation).toEqual({ ok: true, errors: [] });
+    } finally {
+      writeSpy.mockRestore();
+      rmSync(workspace, { recursive: true, force: true });
+    }
   });
 
   it('exposes global agent contract flags in command help', () => {

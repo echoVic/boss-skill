@@ -83,9 +83,26 @@ function writePlaceholder(targetDir: string, feature: string, date: string, item
         feature,
         updatedAt: `${date}T00:00:00Z`,
         tokens: { colors: {}, typography: {}, spacing: {}, radius: {} },
-        pages: [],
+        pages: [
+          {
+            id: 'main',
+            name: feature,
+            route: '/',
+            viewport: { width: 1440, height: 960 },
+            frames: [
+              {
+                id: 'main-page',
+                type: 'page',
+                name: feature,
+                layout: 'vertical',
+                children: []
+              }
+            ],
+            states: []
+          }
+        ],
         components: [],
-        prototype: { startPageId: '', links: [] },
+        prototype: { startPageId: 'main', links: [] },
         implementationHints: {
           preferredFramework: '',
           requiredComponents: [],
