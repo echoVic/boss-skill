@@ -172,4 +172,26 @@ describe('runtime schema contract', () => {
       'implementationHints'
     ]);
   });
+
+  it('artifact html schema constrains the runtime render model', () => {
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/artifact-html-schema.json');
+
+    expect(schema.properties.artifact.const).toBe('artifact-html');
+    expect(schema.additionalProperties).toBe(false);
+    expect(schema.required.slice().sort()).toEqual([
+      'artifact',
+      'bodyHtml',
+      'feature',
+      'generatedAt',
+      'schemaVersion',
+      'sourceArtifact',
+      'summaryItems',
+      'title',
+      'toc'
+    ]);
+    expect(schema.properties.sourceArtifact.pattern).toBe('\\\\.md$');
+    expect(schema.properties.toc.items.additionalProperties).toBe(false);
+    expect(schema.properties.toc.items.properties.level.minimum).toBe(1);
+    expect(schema.properties.toc.items.properties.level.maximum).toBe(6);
+  });
 });
