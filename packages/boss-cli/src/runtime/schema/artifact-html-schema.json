@@ -18,7 +18,7 @@
     "schemaVersion": { "type": "string", "minLength": 1 },
     "artifact": { "const": "artifact-html" },
     "feature": { "type": "string", "minLength": 1 },
-    "sourceArtifact": { "type": "string", "pattern": "\\\\.md$" },
+    "sourceArtifact": { "type": "string", "pattern": "\\.md$" },
     "title": { "type": "string", "minLength": 1 },
     "generatedAt": { "type": "string", "minLength": 1 },
     "summaryItems": {

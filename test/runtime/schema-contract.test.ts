@@ -189,7 +189,8 @@ describe('runtime schema contract', () => {
       'title',
       'toc'
     ]);
-    expect(schema.properties.sourceArtifact.pattern).toBe('\\\\.md$');
+    expect(new RegExp(schema.properties.sourceArtifact.pattern).test('prd.md')).toBe(true);
+    expect(new RegExp(schema.properties.sourceArtifact.pattern).test('prd.html')).toBe(false);
     expect(schema.properties.toc.items.additionalProperties).toBe(false);
     expect(schema.properties.toc.items.properties.level.minimum).toBe(1);
     expect(schema.properties.toc.items.properties.level.maximum).toBe(6);
