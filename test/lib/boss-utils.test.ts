@@ -33,6 +33,10 @@ describe('boss-utils', () => {
       expect(bossUtils.STAGE_MAP['architecture.md']).toBe(1);
     });
 
+    it('maps ui-design.json to stage 1', () => {
+      expect(bossUtils.STAGE_MAP['ui-design.json']).toBe(1);
+    });
+
     it('maps tasks.md to stage 2', () => {
       expect(bossUtils.STAGE_MAP['tasks.md']).toBe(2);
     });
@@ -167,7 +171,7 @@ describe('boss-utils', () => {
       expect(names).not.toContain('architecture.md');
     });
 
-    it('returns architecture.md and ui-spec.md after prd.md completed', () => {
+    it('returns architecture.md, ui-spec.md, and ui-design.json after prd.md completed', () => {
       const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
@@ -183,10 +187,11 @@ describe('boss-utils', () => {
 
       expect(names).toContain('architecture.md');
       expect(names).toContain('ui-spec.md');
+      expect(names).toContain('ui-design.json');
       expect(names).not.toContain('prd.md');
     });
 
-    it('skips ui-spec.md when skipUI is true', () => {
+    it('skips UI artifacts when skipUI is true', () => {
       const dag = bossUtils.loadArtifactDag(BUILT_IN_DAG_PATH);
       const execData = {
         stages: {
@@ -201,6 +206,7 @@ describe('boss-utils', () => {
       const names = ready.map((item) => item.artifact);
 
       expect(names).not.toContain('ui-spec.md');
+      expect(names).not.toContain('ui-design.json');
       expect(names).toContain('architecture.md');
     });
 

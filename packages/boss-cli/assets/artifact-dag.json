@@ -30,8 +30,15 @@
       "optional": true,
       "description": "UI/UX 设计规范"
     },
+    "ui-design.json": {
+      "inputs": ["prd.md"],
+      "agent": "boss-ui-designer",
+      "stage": 1,
+      "optional": true,
+      "description": "可渲染 UI 原型与机器约束 JSON"
+    },
     "tech-review.md": {
-      "inputs": ["architecture.md", "ui-spec.md"],
+      "inputs": ["architecture.md", "ui-spec.md", "ui-design.json"],
       "agent": "boss-tech-lead",
       "stage": 2,
       "optional": false,

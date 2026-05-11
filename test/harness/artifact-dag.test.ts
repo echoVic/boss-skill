@@ -94,6 +94,21 @@ describe('artifact-dag', () => {
     expect(dag.artifacts['qa-report.md']?.inputs).toContain('prd.md');
   });
 
+  it('DAG defines ui-design.json as a first-class UI artifact', () => {
+    const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
+      artifacts: Record<string, { inputs?: string[]; agent?: string; stage?: number; optional?: boolean; description?: string }>;
+    };
+
+    expect(dag.artifacts['ui-design.json']).toEqual({
+      inputs: ['prd.md'],
+      agent: 'boss-ui-designer',
+      stage: 1,
+      optional: true,
+      description: '可渲染 UI 原型与机器约束 JSON'
+    });
+    expect(dag.artifacts['tech-review.md']?.inputs).toContain('ui-design.json');
+  });
+
   it('detects no circular dependencies in default DAG', () => {
     const dag = JSON.parse(fs.readFileSync(DAG_PATH, 'utf8')) as {
       artifacts: Record<string, { inputs?: string[] }>;
@@ -129,7 +144,7 @@ describe('artifact-dag', () => {
     expect(ready).toContain('prd.md');
   });
 
-  it('--ready returns architecture.md and ui-spec.md after prd.md done', () => {
+  it('--ready returns architecture.md, ui-spec.md, and ui-design.json after prd.md done', () => {
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
     const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
       stages: { '1': { artifacts: string[] } };
@@ -140,6 +155,7 @@ describe('artifact-dag', () => {
     const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
     expect(ready).toContain('architecture.md');
     expect(ready).toContain('ui-spec.md');
+    expect(ready).toContain('ui-design.json');
     expect(ready).not.toContain('prd.md');
   });
 
@@ -163,7 +179,7 @@ describe('artifact-dag', () => {
     expect(status.status).toBe('ready');
   });
 
-  it('skips ui-spec.md when skipUI is true', () => {
+  it('skips ui-design.json when skipUI is true', () => {
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
     const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
       parameters: { skipUI: boolean };
@@ -175,6 +191,7 @@ describe('artifact-dag', () => {
 
     const ready = JSON.parse(runCli(['test-feat', '--ready', '--dag', DAG_PATH, '--json'])) as string[];
     expect(ready).not.toContain('ui-spec.md');
+    expect(ready).not.toContain('ui-design.json');
     expect(ready).toContain('architecture.md');
   });
 

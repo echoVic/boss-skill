@@ -37,6 +37,7 @@
       "boss-devops": 4
     },
     "skipUI": false,
+    "designPreview": true,
     "skipFrontend": false,
     "techStack": {
       "platform": "web",

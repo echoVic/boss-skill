@@ -114,7 +114,7 @@ function isArtifactSkipped(
   context: { execution: PipelineExecutionState }
 ): boolean {
   const params = context.execution.parameters || ({} as PipelineParameters);
-  if (artifact === 'ui-spec.md' && params.skipUI === true) return true;
+  if ((artifact === 'ui-spec.md' || artifact === 'ui-design.json') && params.skipUI === true) return true;
   if (artifact === 'deploy-report.md' && params.skipDeploy === true) return true;
   if ((artifact === 'tech-review.md' || artifact === 'tasks.md') && params.skipReview === true) return true;
   return false;

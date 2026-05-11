@@ -5,6 +5,7 @@ const STAGE_MAP = {
   'prd.md': 1,
   'architecture.md': 1,
   'ui-spec.md': 1,
+  'ui-design.json': 1,
   'tech-review.md': 2,
   'tasks.md': 2,
   'qa-report.md': 3,
@@ -121,7 +122,7 @@ function getReadyArtifacts(dag, execData, params) {
     const def = dag.artifacts[name];
     if (!def) return false;
     if (def.optional) return true;
-    if (name === 'ui-spec.md' && skipUI) return true;
+    if ((name === 'ui-spec.md' || name === 'ui-design.json') && skipUI) return true;
     if (name === 'deploy-report.md' && skipDeploy) return true;
     if (name === 'design-brief') return true; // always optional
     return false;
@@ -130,7 +131,7 @@ function getReadyArtifacts(dag, execData, params) {
   const ready = [];
   for (const [name, def] of Object.entries(dag.artifacts)) {
     if (completedArtifacts.has(name)) continue;
-    if (name === 'ui-spec.md' && skipUI) continue;
+    if ((name === 'ui-spec.md' || name === 'ui-design.json') && skipUI) continue;
     if (name === 'deploy-report.md' && skipDeploy) continue;
     if (!def.agent) continue; // manual inputs
 

@@ -8,6 +8,7 @@
   "config": {
     "stages": [1, 2, 3, 4],
     "roles": "full",
+    "designPreview": true,
     "agents": [
       "boss-pm",
       "boss-architect",

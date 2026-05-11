@@ -24,6 +24,7 @@ const PLACEHOLDERS: Array<{ file: string; title: string; infoTitle: string; agen
   { file: 'prd.md', title: '产品需求文档 (PRD)', infoTitle: '文档信息', agent: 'PM Agent' },
   { file: 'architecture.md', title: '系统架构文档', infoTitle: '文档信息', agent: 'Architect Agent' },
   { file: 'ui-spec.md', title: 'UI/UX 规范文档', infoTitle: '文档信息', agent: 'UI Designer Agent' },
+  { file: 'ui-design.json', title: 'UI Design JSON', infoTitle: 'Artifact Info', agent: 'UI Designer Agent' },
   { file: 'tech-review.md', title: '技术评审报告', infoTitle: '文档信息', agent: 'Tech Lead Agent' },
   { file: 'tasks.md', title: '开发任务规格文档', infoTitle: '文档信息', agent: 'Scrum Master Agent' },
   { file: 'qa-report.md', title: 'QA 测试报告', infoTitle: '报告信息', agent: 'QA Agent' },
@@ -72,6 +73,30 @@ function today(): string {
 }
 
 function writePlaceholder(targetDir: string, feature: string, date: string, item: (typeof PLACEHOLDERS)[number]): void {
+  if (item.file.endsWith('.json')) {
+    fs.writeFileSync(
+      path.join(targetDir, item.file),
+      `${JSON.stringify({
+        schemaVersion: '1.0.0',
+        artifact: 'ui-design',
+        mode: 'wireframe',
+        feature,
+        updatedAt: `${date}T00:00:00Z`,
+        tokens: { colors: {}, typography: {}, spacing: {}, radius: {} },
+        pages: [],
+        components: [],
+        prototype: { startPageId: '', links: [] },
+        implementationHints: {
+          preferredFramework: '',
+          requiredComponents: [],
+          accessibilityNotes: []
+        }
+      }, null, 2)}\n`,
+      'utf8'
+    );
+    return;
+  }
+
   const content = [
     `# ${item.title}`,
     '',

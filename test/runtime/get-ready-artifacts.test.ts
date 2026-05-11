@@ -64,7 +64,7 @@ describe('getReadyArtifacts', () => {
     initPipeline('test-feat', { cwd: tmpDir });
     recordArtifact('test-feat', 'prd.md', 1, { cwd: tmpDir });
     const ready = getReadyArtifacts('test-feat', { cwd: tmpDir });
-    expect(ready.map((item) => item.artifact)).toEqual(['architecture.md', 'ui-spec.md']);
+    expect(ready.map((item) => item.artifact)).toEqual(['architecture.md', 'ui-design.json', 'ui-spec.md']);
   });
 
   it('exposes artifact status through the public runtime API', () => {
