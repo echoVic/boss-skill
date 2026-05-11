@@ -79,6 +79,22 @@ describe('getReadyArtifacts', () => {
     expect(ready.status).toBe('ready');
   });
 
+  it('blocks tech-review.md on UI artifacts when UI is enabled', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    recordArtifact('test-feat', 'prd.md', 1, { cwd: tmpDir });
+    recordArtifact('test-feat', 'architecture.md', 1, { cwd: tmpDir });
+
+    const blocked = getArtifactStatus('test-feat', 'tech-review.md', { cwd: tmpDir });
+    expect(blocked.status).toBe('blocked');
+    expect(blocked.missing).toEqual(['ui-spec.md', 'ui-design.json']);
+
+    recordArtifact('test-feat', 'ui-spec.md', 1, { cwd: tmpDir });
+    recordArtifact('test-feat', 'ui-design.json', 1, { cwd: tmpDir });
+
+    const ready = getArtifactStatus('test-feat', 'tech-review.md', { cwd: tmpDir });
+    expect(ready.status).toBe('ready');
+  });
+
   it('skips tech-review.md and tasks.md when skipReview is true', () => {
     initPipeline('test-feat', { cwd: tmpDir });
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');

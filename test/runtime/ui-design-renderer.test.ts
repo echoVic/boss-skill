@@ -125,8 +125,8 @@ describe('ui design renderer', () => {
 
     expect(html).not.toContain('javascript:alert(1)');
     expect(html).toContain('UI Design JSON validation failed');
-    expect(html).toContain('page.viewport.width must be a number');
-    expect(html).toContain('page.viewport.height must be a number');
+    expect(html).toContain('page.viewport.width must be a positive number');
+    expect(html).toContain('page.viewport.height must be a positive number');
   });
 });
 

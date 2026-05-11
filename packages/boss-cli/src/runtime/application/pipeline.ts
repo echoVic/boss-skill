@@ -133,6 +133,8 @@ function isInputSatisfied(
   if (isArtifactDone(input, context)) return true;
   if (isArtifactSkipped(input, context)) return true;
   const def = context.dag.artifacts ? context.dag.artifacts[input] : null;
+  const isUiArtifact = input === 'ui-spec.md' || input === 'ui-design.json';
+  if (isUiArtifact) return false;
   if (def && def.optional === true) return true;
   return false;
 }

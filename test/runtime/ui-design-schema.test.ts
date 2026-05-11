@@ -106,15 +106,45 @@ describe('ui design artifact validation', () => {
     });
 
     expect(result.ok).toBe(false);
+    expect(result.errors).toContain('schemaVersion is required');
     expect(result.errors).toContain('feature is required');
     expect(result.errors).toContain('tokens must define colors, typography, spacing, and radius objects');
     expect(result.errors).toContain('components must be an array');
     expect(result.errors).toContain('prototype.startPageId is required');
     expect(result.errors).toContain('page.name is required');
     expect(result.errors).toContain('page.route is required');
-    expect(result.errors).toContain('page.viewport.width must be a number');
-    expect(result.errors).toContain('page.viewport.height must be a number');
+    expect(result.errors).toContain('page.viewport.width must be a positive number');
+    expect(result.errors).toContain('page.viewport.height must be a positive number');
     expect(result.errors).toContain('page.states must be an array');
+  });
+
+  it('rejects artifacts that violate shipped schema requirements', () => {
+    const result = validateUiDesignArtifact({
+      ...minimalDesign(),
+      schemaVersion: '',
+      pages: [
+        {
+          id: 'checkout',
+          name: 'Checkout',
+          route: '/checkout',
+          viewport: { width: 0, height: -1 },
+          frames: [
+            { id: 'checkout-main', type: 'page', name: 'Checkout Main', layout: 'vertical', children: [] }
+          ],
+          states: []
+        }
+      ],
+      prototype: {
+        startPageId: 'checkout',
+        links: [{ targetPageId: 'checkout' } as never]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain('schemaVersion is required');
+    expect(result.errors).toContain('page.viewport.width must be a positive number');
+    expect(result.errors).toContain('page.viewport.height must be a positive number');
+    expect(result.errors).toContain('prototype.links[0].sourceId is required');
   });
 
   it('returns validation errors instead of throwing for malformed page frames', () => {

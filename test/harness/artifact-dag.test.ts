@@ -179,6 +179,27 @@ describe('artifact-dag', () => {
     expect(status.status).toBe('ready');
   });
 
+  it('--can-start blocks tech-review.md until UI artifacts are complete when UI is enabled', () => {
+    const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
+    const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    data.stages['1'].artifacts = ['prd.md', 'architecture.md'];
+    fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
+
+    expect(() => {
+      runCli(['test-feat', 'tech-review.md', '--can-start', '--dag', DAG_PATH]);
+    }).toThrow(/ui-spec\.md/);
+
+    data.stages['1'].artifacts = ['prd.md', 'architecture.md', 'ui-spec.md', 'ui-design.json'];
+    fs.writeFileSync(execPath, JSON.stringify(data, null, 2), 'utf8');
+
+    const status = JSON.parse(runCli(['test-feat', 'tech-review.md', '--can-start', '--dag', DAG_PATH])) as {
+      status: string;
+    };
+    expect(status.status).toBe('ready');
+  });
+
   it('skips ui-design.json when skipUI is true', () => {
     const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
     const data = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {

@@ -74,6 +74,10 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function isPositiveNumber(value: unknown): value is number {
+  return isNumber(value) && value > 0;
+}
+
 function hasDesignTokens(value: unknown): boolean {
   if (!isObject(value)) return false;
   return (
@@ -121,6 +125,7 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
   if (!isObject(value)) return { ok: false, errors: ['artifact must be an object'] };
 
   const artifact = value as Partial<UiDesignArtifact>;
+  if (!isString(artifact.schemaVersion)) errors.push('schemaVersion is required');
   if (artifact.artifact !== 'ui-design') errors.push('artifact must be ui-design');
   if (artifact.mode !== 'wireframe' && artifact.mode !== 'hifi') {
     errors.push('mode must be wireframe or hifi');
@@ -175,11 +180,11 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
     if (!isString(page.name)) errors.push('page.name is required');
     if (typeof page.route !== 'string') errors.push('page.route is required');
     const viewport = page.viewport;
-    if (!isObject(viewport) || !isNumber(viewport.width)) {
-      errors.push('page.viewport.width must be a number');
+    if (!isObject(viewport) || !isPositiveNumber(viewport.width)) {
+      errors.push('page.viewport.width must be a positive number');
     }
-    if (!isObject(viewport) || !isNumber(viewport.height)) {
-      errors.push('page.viewport.height must be a number');
+    if (!isObject(viewport) || !isPositiveNumber(viewport.height)) {
+      errors.push('page.viewport.height must be a positive number');
     }
     if (!Array.isArray(page.states)) errors.push('page.states must be an array');
     if (typeof page.id === 'string') {
@@ -209,6 +214,9 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
     errors.push('prototype.startPageId must reference an existing page id');
   }
   for (const [index, link] of prototypeLinks.entries()) {
+    if (!isObject(link) || !isString(link.sourceId)) {
+      errors.push(`prototype.links[${index}].sourceId is required`);
+    }
     if (!isObject(link) || typeof link.targetPageId !== 'string' || !pageIds.has(link.targetPageId)) {
       errors.push(`prototype.links[${index}].targetPageId must reference an existing page id`);
     }

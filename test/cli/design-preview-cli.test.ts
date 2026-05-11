@@ -175,7 +175,7 @@ describe('boss design preview CLI', () => {
       expect(result.stderr).toBe('');
       const payload = JSON.parse(result.stdout) as { valid: boolean; errors: string[] };
       expect(payload.valid).toBe(false);
-      expect(payload.errors).toContain('page.viewport.width must be a number');
+      expect(payload.errors).toContain('page.viewport.width must be a positive number');
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

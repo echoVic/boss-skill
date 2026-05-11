@@ -227,9 +227,11 @@ describe('boss-utils', () => {
 
       // architecture.md is in stage 5's artifacts, so it should be considered completed
       expect(names).not.toContain('architecture.md');
-      // its downstream (tech-review.md) should now be ready since architecture.md is done
-      // and ui-spec.md is optional
-      expect(names).toContain('tech-review.md');
+      // UI artifacts are optional only when skipUI is enabled; with UI enabled,
+      // tech-review.md still waits for the UI spec and design JSON.
+      expect(names).not.toContain('tech-review.md');
+      expect(names).toContain('ui-spec.md');
+      expect(names).toContain('ui-design.json');
     });
 
     it('does not mark qa-report.md as ready when prd.md is missing', () => {

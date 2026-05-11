@@ -121,8 +121,9 @@ function getReadyArtifacts(dag, execData, params) {
     if (completedArtifacts.has(name)) return true;
     const def = dag.artifacts[name];
     if (!def) return false;
-    if (def.optional) return true;
     if ((name === 'ui-spec.md' || name === 'ui-design.json') && skipUI) return true;
+    if (name === 'ui-spec.md' || name === 'ui-design.json') return false;
+    if (def.optional) return true;
     if (name === 'deploy-report.md' && skipDeploy) return true;
     if (name === 'design-brief') return true; // always optional
     return false;
