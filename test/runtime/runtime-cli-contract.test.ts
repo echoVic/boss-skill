@@ -92,6 +92,9 @@ describe('runtime CLI contract', () => {
 
   it('record-artifact CLI exposes help text and stable JSON fields', () => {
     initPipeline('test-feat', { cwd: tmpDir });
+    const featureDir = path.join(tmpDir, '.boss', 'test-feat');
+    fs.mkdirSync(featureDir, { recursive: true });
+    fs.writeFileSync(path.join(featureDir, 'prd.md'), '# PRD\n\n## 摘要\n- ok\n', 'utf8');
 
     const help = runCli('record-artifact', ['--help']);
     expect(help.status).toBe(0);
@@ -109,7 +112,8 @@ describe('runtime CLI contract', () => {
     expect(payload.feature).toBe('test-feat');
     expect(payload.artifact).toBe('prd.md');
     expect(payload.stage).toBe(1);
-    expect(payload.artifacts).toEqual(['prd.md']);
+    expect(payload.artifacts).toContain('prd.md');
+    expect(payload.artifacts).toContain('prd.html');
   });
 
   it('record-artifact exposes no-open for UI design auto preview control', () => {
