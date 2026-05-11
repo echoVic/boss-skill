@@ -8,6 +8,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'ut
 };
 const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
+const design = fs.readFileSync(path.join(REPO_ROOT, 'DESIGN.md'), 'utf8');
 const skill = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'SKILL.md'), 'utf8');
 const bossCommand = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'commands', 'boss.md'), 'utf8');
 const tasksTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'tasks.md.template'), 'utf8');
@@ -254,9 +255,15 @@ describe('thin skill CLI contract', () => {
 describe('ui-design artifact contract', () => {
   it('documents ui-design.json across UI, frontend, and review agents', () => {
     expect(uiDesigner).toContain('ui-design.json');
+    expect(uiDesigner).toContain('.boss/<feature>/ui-spec.md');
+    expect(uiDesigner).toContain('.boss/<feature>/ui-design.json');
+    expect(uiDesigner).toContain('Markdown 解释设计，JSON 约束实现；两者冲突时必须先修正冲突再交付');
     expect(uiDesigner).toContain('boss design preview <feature>');
     expect(frontend).toContain('ui-design.json');
     expect(frontend).toContain('ui-design.json > ui-spec.md');
+    for (const term of ['tokens', 'pages', 'frames', 'prototype.links', 'components', '最终报告中说明原因']) {
+      expect(frontend).toContain(term);
+    }
     expect(techLead).toContain('ui-design.json');
     expect(techLead).toContain('ui-spec.md');
   });
@@ -265,7 +272,12 @@ describe('ui-design artifact contract', () => {
     expect(skill).toContain('ui-design.json');
     expect(artifactGuide).toContain('ui-design.json');
     expect(artifactGuide).toContain('boss design preview <feature>');
+    expect(artifactGuide).toContain('JSON');
+    expect(artifactGuide).toContain('不要求 `## 摘要`');
+    expect(artifactGuide).toContain('boss artifact prepare <feature-name> ui-spec.md');
+    expect(artifactGuide).toContain('Write(".boss/<feature>/ui-spec.md", ...)');
     expect(bmadMethodology).toContain('ui-design.json');
+    expect(bmadMethodology).toContain('`ui-spec.md` + `ui-design.json`');
     expect(uiDesignTemplate).toContain('"artifact": "ui-design"');
   });
 
@@ -274,6 +286,13 @@ describe('ui-design artifact contract', () => {
     expect(techReviewTemplate).toMatch(/dependencies:\s*\[[^\]]*ui-design[^\]]*\]/);
     expect(techReviewTemplate).toContain('UI 规范：`.boss/{{FEATURE}}/ui-spec.md`');
     expect(techReviewTemplate).toContain('UI 设计 JSON：`.boss/{{FEATURE}}/ui-design.json`');
+  });
+
+  it('documents ui-design.json in active top-level docs', () => {
+    for (const doc of [readme, design]) {
+      expect(doc).toContain('ui-design.json');
+      expect(doc).toContain('boss design preview <feature>');
+    }
   });
 });
 

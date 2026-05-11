@@ -94,7 +94,7 @@ pending → skipped（被 --skip-* 或 --continue-from 跳过）
 ### 默认 DAG
 
 ```
-design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
+design-brief → prd.md ─┬→ architecture.md → tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
                        ├→ ui-spec.md(opt) ┘
                        └→ ui-design.json(opt) ┘
 ```

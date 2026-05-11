@@ -63,11 +63,11 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 | Agent | 角色定位 | 核心能力 | 输入 | 输出 |
 |-------|----------|----------|------|------|
 | PM | 20 年产品经验，受乔布斯/张小龙认可 | 需求穿透、4 层需求挖掘 | 用户原始需求 | prd.md |
-| UI Designer | Apple 20 年设计师 | 像素级设计、前端友好规范 | prd.md | ui-spec.md |
+| UI Designer | Apple 20 年设计师 | 像素级设计、前端友好规范 | prd.md | ui-spec.md + ui-design.json |
 | Architect | 系统架构师 | 架构设计、技术选型 | prd.md | architecture.md |
 | Tech Lead | 技术负责人 | 技术评审、风险评估 | prd.md + architecture.md | tech-review.md |
 | Scrum Master | 敏捷教练 | 任务拆解、工作量估算 | prd.md + tech-review.md | tasks.md |
-| Frontend | 前端专家 | UI 实现、状态管理 | tasks.md + ui-spec.md | 前端代码 |
+| Frontend | 前端专家 | UI 实现、状态管理 | tasks.md + ui-design.json + ui-spec.md | 前端代码 |
 | Backend | 后端专家 | API 开发、数据库 | tasks.md + architecture.md | 后端代码 |
 | QA | 测试工程师 | 测试执行、质量验证 | 代码 + prd.md | qa-report.md |
 | DevOps | 运维工程师 | 构建部署、健康检查 | 代码 | deploy-report.md |
@@ -89,7 +89,7 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 │        [Architect]  [UI Designer]                            │
 │              │           │                                   │
 │              ▼           ▼                                   │
-│       architecture.md  ui-spec.md                            │
+│       architecture.md  ui-spec.md + ui-design.json           │
 └─────────────────────────────────────────────────────────────┘
                     │
                     ▼
@@ -146,7 +146,7 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 
 2. Architect + UI Designer（并行执行）
    ├── Architect → architecture.md
-   └── UI Designer → ui-spec.md
+   └── UI Designer → ui-spec.md + ui-design.json
 ```
 
 **关键点**：
@@ -333,6 +333,7 @@ skills/boss/
 │   ├── prd.md              # 产品需求文档（含用户故事）
 │   ├── architecture.md     # 系统架构文档
 │   ├── ui-spec.md          # UI/UX 规范
+│   ├── ui-design.json      # 可渲染 UI 设计
 │   ├── tech-review.md      # 技术评审报告
 │   ├── tasks.md            # 开发任务
 │   ├── qa-report.md        # QA 测试报告
@@ -439,7 +440,7 @@ boss project init <feature-name> --template
 - 用户可以直接修改项目中的模板副本，无需改动 Skill 仓库默认模板
 - 下游 Agent 必须优先读取项目级模板
 - `boss project init` 只负责初始化轻量占位文件；正式落文前再通过 `boss artifact prepare` 按模板优先级逐个准备当前产物骨架
-- 无论模板如何自定义，都应保留 `## 摘要` section 作为下游摘要优先读取入口
+- Markdown 模板无论如何自定义，都应保留 `## 摘要` section 作为下游摘要优先读取入口；机器可读 JSON 产物（如 `ui-design.json`）必须保持合法 JSON，不添加 Markdown 摘要
 
 ---
 
@@ -480,7 +481,8 @@ boss project init <feature-name> --template
 - 无障碍设计
 
 **输出**：
-- UI 规范文档
+- `ui-spec.md` UI 规范文档
+- `ui-design.json` 机器可渲染设计契约，可用 `boss design preview <feature>` 预览
 - 设计系统定义
 - 组件规格说明
 - 交互规范

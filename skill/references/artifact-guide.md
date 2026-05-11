@@ -19,7 +19,9 @@
 
 如果项目级模板存在，**必须优先使用**，以便用户按项目规范自定义文档结构。
 
-**每个产物必须在正文最开头包含 `## 摘要` section**，用 3-5 条简短结论概括核心内容。下游 Agent 读取上游产物时，优先读取 `## 摘要`，仅在需要细节时读取完整内容，以节省 Token。
+**每个 Markdown 产物必须在正文最开头包含 `## 摘要` section**，用 3-5 条简短结论概括核心内容。下游 Agent 读取上游 Markdown 产物时，优先读取 `## 摘要`，仅在需要细节时读取完整内容，以节省 Token。
+
+机器可读 JSON 产物（如 `ui-design.json`）必须保持合法 JSON，不要求 `## 摘要`，也不得为了摘要在 JSON 前后追加 Markdown。
 
 | 阶段 | 必须保存的产物 | 模板 |
 |------|----------------|------|
@@ -35,7 +37,7 @@
 默认产物流：
 
 ```text
-design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
+design-brief → prd.md ─┬→ architecture.md → tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
                        ├→ ui-spec.md(opt) ┘
                        └→ ui-design.json(opt) ┘
 ```
@@ -47,6 +49,8 @@ boss artifact prepare <feature-name> prd.md
 Write(".boss/<feature>/prd.md", ...)
 boss artifact prepare <feature-name> architecture.md
 Write(".boss/<feature>/architecture.md", ...)
+boss artifact prepare <feature-name> ui-spec.md
+Write(".boss/<feature>/ui-spec.md", ...)
 boss artifact prepare <feature-name> ui-design.json
 Write(".boss/<feature>/ui-design.json", ...)
 boss design preview <feature>

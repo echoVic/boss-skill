@@ -77,10 +77,10 @@ model: inherit
    └── 定义交互和动效
 
 3. 输出阶段
-   ├── 整理设计规范文档
-   ├── 详细标注每个元素
-   ├── 说明交互逻辑
-   └── 确保前端能轻松实现
+   ├── 写入 `.boss/<feature>/ui-spec.md`：解释设计 rationale、视觉规范、组件状态和交互说明
+   ├── 写入 `.boss/<feature>/ui-design.json`：作为前端实现必须遵守的机器契约
+   ├── 交付前解决 Markdown 说明与 JSON 约束之间的冲突
+   └── 运行或明确提示 `boss design preview <feature>`
 ```
 
 ## 设计检查清单
@@ -158,7 +158,9 @@ Skill(
 
 ## 输出检查清单
 
+- [ ] `.boss/<feature>/ui-spec.md` 已写入，用于说明设计 rationale、规范和交互细节
 - [ ] `.boss/<feature>/ui-design.json` 已写入，并能被 `boss design preview <feature>` 渲染
+- [ ] Markdown 解释设计，JSON 约束实现；两者冲突时必须先修正冲突再交付
 
 ## 1. 设计概述
 

@@ -73,7 +73,7 @@ npm update -g @blade-ai/boss-skill
 
 ### 四阶段流水线
 
-- **阶段 1 — 规划**：PM 需求穿透 → Architect 架构设计 → UI Designer 设计规范（并行）
+- **阶段 1 — 规划**：PM 需求穿透 → Architect 架构设计 → UI Designer 输出 `ui-spec.md` + `ui-design.json`（并行）
 - **阶段 2 — 评审**：Tech Lead 技术评审 → Scrum Master 任务拆解
 - **阶段 3 — 开发**：Frontend + Backend 并行开发 → QA 测试 → 质量门禁
 - **阶段 4 — 部署**：DevOps 构建部署 → 最终报告
@@ -86,7 +86,7 @@ npm update -g @blade-ai/boss-skill
 |-------|------|
 | PM | 需求穿透 — 显性、隐性、潜在、惊喜需求 |
 | Architect | 架构设计、技术选型、API 设计 |
-| UI Designer | UI/UX 设计规范 |
+| UI Designer | UI/UX 设计规范 + 可渲染设计 JSON |
 | Tech Lead | 技术评审、风险评估 |
 | Scrum Master | 任务分解、测试用例定义 |
 | Frontend | UI 组件、状态管理、前端测试 |
@@ -244,6 +244,7 @@ Boss 支持项目级模板覆盖：
 ├── prd.md              # 阶段 1: 产品需求
 ├── architecture.md     # 阶段 1: 系统架构
 ├── ui-spec.md          # 阶段 1: UI 规范（可选）
+├── ui-design.json      # 阶段 1: 可渲染 UI 设计（可选）
 ├── tech-review.md      # 阶段 2: 技术评审
 ├── tasks.md            # 阶段 2: 开发任务
 ├── qa-report.md        # 阶段 3: QA 报告
@@ -252,6 +253,8 @@ Boss 支持项目级模板覆盖：
 └── .meta/
     └── execution.json  # 执行追踪（状态机 + 门禁 + 指标）
 ```
+
+可在交互式环境运行 `boss design preview <feature>` 预览 `.boss/<feature>/ui-design.json`。
 
 ## 开发
 

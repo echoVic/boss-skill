@@ -24,7 +24,7 @@ BMAD 将软件开发流程分解为 9 个专业化角色，每个角色由专门
 |------|-----------|------|----------|
 | 产品经理 (PM) | `boss-pm.md` | 需求分析、PRD 编写 | `prd.md` |
 | 系统架构师 | `boss-architect.md` | 技术架构、选型决策、API 契约 | `architecture.md` |
-| UI/UX 设计师 | `boss-ui-designer.md` | 界面设计、用户体验 | `ui-spec.md`（可选） |
+| UI/UX 设计师 | `boss-ui-designer.md` | 界面设计、用户体验 | `ui-spec.md` + `ui-design.json`（可选） |
 | 技术负责人 | `boss-tech-lead.md` | 技术评审、风险评估 | `tech-review.md` |
 | Scrum Master | `boss-scrum-master.md` | 任务拆解、开发规划 | `tasks.md` |
 | 前端开发 | `boss-frontend.md` | 前端代码实现 | 源代码 |
@@ -37,7 +37,7 @@ BMAD 将软件开发流程分解为 9 个专业化角色，每个角色由专门
 产物之间的依赖关系由 `packages/boss-cli/assets/artifact-dag.json` 定义为有向无环图（DAG），并可通过 `.boss/artifact-dag.json` 做项目级覆盖，而非简单线性流：
 
 ```
-design-brief → prd.md → architecture.md ─┬→ tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
+design-brief → prd.md ─┬→ architecture.md → tech-review.md → tasks.md → [code] → qa-report.md → deploy-report.md
                        ├→ ui-spec.md(opt) ┘
                        └→ ui-design.json(opt) ┘
 ```
