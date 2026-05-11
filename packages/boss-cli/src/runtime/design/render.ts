@@ -5,6 +5,9 @@ import type {
   UiDesignValidationResult
 } from './schema.js';
 
+const DEFAULT_VIEWPORT_WIDTH = 1440;
+const DEFAULT_VIEWPORT_HEIGHT = 960;
+
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -16,6 +19,10 @@ function escapeHtml(value: unknown): string {
 
 function escapeAttribute(value: unknown): string {
   return escapeHtml(value);
+}
+
+function coerceViewportDimension(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : fallback;
 }
 
 function buildPrototypeTargets(design: UiDesignArtifact): Map<string, string> {
@@ -56,6 +63,8 @@ function renderPageNav(pages: UiDesignPage[], activePageId: string): string {
 function renderPage(page: UiDesignPage, prototypeTargets: Map<string, string>, isActive: boolean): string {
   const activeClass = isActive ? ' is-active' : '';
   const frameHtml = page.frames.map((frame) => renderFrame(frame, prototypeTargets)).join('');
+  const viewportWidth = coerceViewportDimension(page.viewport.width, DEFAULT_VIEWPORT_WIDTH);
+  const viewportHeight = coerceViewportDimension(page.viewport.height, DEFAULT_VIEWPORT_HEIGHT);
 
   return `
     <article class="page-canvas${activeClass}" data-page="${escapeAttribute(page.id)}" aria-label="${escapeAttribute(page.name)}">
@@ -64,9 +73,9 @@ function renderPage(page: UiDesignPage, prototypeTargets: Map<string, string>, i
           <p>${escapeHtml(page.route)}</p>
           <h2>${escapeHtml(page.name)}</h2>
         </div>
-        <span>${escapeHtml(page.viewport.width)} x ${escapeHtml(page.viewport.height)}</span>
+        <span>${viewportWidth} x ${viewportHeight}</span>
       </header>
-      <main class="viewport-shell" style="--viewport-width:${escapeAttribute(page.viewport.width)};--viewport-height:${escapeAttribute(page.viewport.height)}">
+      <main class="viewport-shell" style="--viewport-width:${viewportWidth}px;--viewport-height:${viewportHeight}px">
         ${frameHtml || '<p class="empty-state">No frames defined for this page.</p>'}
       </main>
     </article>
@@ -141,7 +150,10 @@ export function renderUiDesignHtml(design: UiDesignArtifact, validation: UiDesig
     .viewport-controls { display: flex; gap: 8px; }
     .viewport-control { text-align: center; min-width: 82px; }
     .canvas-scroll { overflow: auto; padding: 28px; }
-    .page-canvas { display: none; max-width: min(100%, 1120px); margin: 0 auto; }
+    .canvas-scroll.viewport-desktop .page-canvas { max-width: min(100%, 1120px); }
+    .canvas-scroll.viewport-tablet .page-canvas { max-width: min(100%, 820px); }
+    .canvas-scroll.viewport-mobile .page-canvas { max-width: min(100%, 390px); }
+    .page-canvas { display: none; margin: 0 auto; transition: max-width 120ms ease; }
     .page-canvas.is-active { display: block; }
     .canvas-header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 14px; }
     .canvas-header h2 { margin: 0; font-size: 22px; }
@@ -191,7 +203,7 @@ export function renderUiDesignHtml(design: UiDesignArtifact, validation: UiDesig
           <button class="viewport-control" type="button" data-viewport="mobile">Mobile</button>
         </div>
       </header>
-      <div class="canvas-scroll">${pages}</div>
+      <div class="canvas-scroll viewport-desktop" data-current-viewport="desktop">${pages}</div>
     </section>
     <aside class="inspector">
       <h2>Inspector</h2>
@@ -209,6 +221,46 @@ export function renderUiDesignHtml(design: UiDesignArtifact, validation: UiDesig
       </section>
     </aside>
   </div>
+  <script>
+    function switchPage(pageId) {
+      document.querySelectorAll('.page-tab').forEach(function (tab) {
+        tab.classList.toggle('is-active', tab.dataset.pageId === pageId);
+      });
+      document.querySelectorAll('.page-canvas').forEach(function (page) {
+        page.classList.toggle('is-active', page.dataset.page === pageId);
+      });
+    }
+
+    function switchViewport(viewport) {
+      var canvas = document.querySelector('.canvas-scroll');
+      if (!canvas) return;
+      canvas.classList.remove('viewport-desktop', 'viewport-tablet', 'viewport-mobile');
+      canvas.classList.add('viewport-' + viewport);
+      canvas.dataset.currentViewport = viewport;
+      document.querySelectorAll('.viewport-control').forEach(function (control) {
+        control.classList.toggle('is-active', control.dataset.viewport === viewport);
+      });
+    }
+
+    document.querySelectorAll('.page-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        if (tab.dataset.pageId) switchPage(tab.dataset.pageId);
+      });
+    });
+
+    document.querySelectorAll('[data-target-page]').forEach(function (frame) {
+      frame.addEventListener('click', function (event) {
+        event.stopPropagation();
+        if (frame.dataset.targetPage) switchPage(frame.dataset.targetPage);
+      });
+    });
+
+    document.querySelectorAll('.viewport-control').forEach(function (control) {
+      control.addEventListener('click', function () {
+        if (control.dataset.viewport) switchViewport(control.dataset.viewport);
+      });
+    });
+  </script>
 </body>
 </html>`;
 }

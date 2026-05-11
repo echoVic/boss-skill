@@ -9,7 +9,8 @@ export interface UiDesignPreviewServer {
 
 export async function startUiDesignPreviewServer(html: string, port = 0): Promise<UiDesignPreviewServer> {
   const server = createServer((request, response) => {
-    if (request.url === '/healthz') {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    if (url.pathname === '/healthz') {
       response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
       response.end(JSON.stringify({ ok: true }));
       return;
@@ -29,16 +30,20 @@ export async function startUiDesignPreviewServer(html: string, port = 0): Promis
 
   const address = server.address() as AddressInfo;
   const url = `http://localhost:${address.port}`;
+  let closed = false;
 
   return {
     server,
     url,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
+    close: () => {
+      if (closed) return Promise.resolve();
+      closed = true;
+      return new Promise<void>((resolve, reject) => {
         server.close((error) => {
           if (error) reject(error);
           else resolve();
         });
-      })
+      });
+    }
   };
 }
