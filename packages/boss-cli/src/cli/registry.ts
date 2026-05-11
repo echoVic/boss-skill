@@ -62,6 +62,12 @@ export const runtimeDescription: CommandDescription = {
   summary: 'Run Boss runtime commands'
 };
 
+export const designDescription: CommandDescription = {
+  ...rootDescription,
+  command: 'boss design',
+  summary: 'Preview Boss UI design artifacts'
+};
+
 export const projectDescription: CommandDescription = {
   ...rootDescription,
   command: 'boss project',
@@ -86,7 +92,20 @@ export const hooksDescription: CommandDescription = {
   summary: 'Run Boss hooks'
 };
 
+export const designPreviewOptions = [
+  ...runtimeBaseOptions,
+  { name: 'no-open', type: 'boolean' as const, default: false },
+  { name: 'port', type: 'string' as const, default: '0' }
+];
+
 export const commandDescriptions: Record<string, CommandDescription> = {
+  'boss design preview': {
+    command: 'boss design preview',
+    summary: 'Preview .boss/<feature>/ui-design.json in a local browser',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: designPreviewOptions,
+    risk_tier: 'low'
+  },
   'boss project init': {
     command: 'boss project init',
     summary: 'Initialize a Boss feature workspace',

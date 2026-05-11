@@ -10,6 +10,7 @@ import {
   describeRegisteredCommand,
   removeFirstPositional,
   runArtifactCommand,
+  runDesignCommand,
   runHooksCommand,
   runPacksCommand,
   runProjectCommand,
@@ -41,6 +42,7 @@ function describeRoot() {
       'uninstall',
       'path',
       'runtime COMMAND',
+      'design preview',
       'project init',
       'artifact prepare',
       'packs detect',
@@ -84,6 +86,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case 'runtime':
       return runRuntimeCommand(commandArgv);
+
+    case 'design':
+      return runDesignCommand(commandArgv);
 
     case 'project':
       return runProjectCommand(commandArgv);

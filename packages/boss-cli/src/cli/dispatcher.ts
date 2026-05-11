@@ -11,6 +11,7 @@ import {
 import { commandDescriptions, runtimeCommandDescriptions, runtimeCommandNames } from './registry.js';
 import {
   artifactDescription,
+  designDescription,
   hooksDescription,
   packsDescription,
   projectDescription,
@@ -18,6 +19,7 @@ import {
 } from './registry.js';
 import {
   ARTIFACT_USAGE,
+  DESIGN_USAGE,
   HOOKS_USAGE,
   PACKS_USAGE,
   PROJECT_USAGE,
@@ -210,6 +212,34 @@ export async function runRuntimeCommand(argv: string[]): Promise<number> {
   }
 
   const mod = await load();
+  return mod.main(commandArgv, { cwd: process.cwd() });
+}
+
+export async function runDesignCommand(argv: string[]): Promise<number> {
+  const context = createCliContext(argv, { command: 'boss design' });
+  const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(designDescription, ['preview']), context);
+    return 0;
+  }
+
+  if (!subcommand || subcommand === '-h' || subcommand === '--help') {
+    process.stdout.write(DESIGN_USAGE);
+    return 0;
+  }
+
+  if (subcommand !== 'preview') {
+    throwUnknownCommand('boss design', subcommand);
+  }
+
+  const commandArgv = removeFirstPositional(argv, subcommand);
+  const commandContext = createCliContext(commandArgv, { command: 'boss design preview' });
+  if (commandContext.values.describe) {
+    writeDescription(describeRegisteredCommand('boss design preview'), commandContext);
+    return 0;
+  }
+
+  const mod: CommandModule = await import('../commands/design/preview.js');
   return mod.main(commandArgv, { cwd: process.cwd() });
 }
 

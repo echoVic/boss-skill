@@ -42,6 +42,14 @@ describe('boss-skill dist bin', () => {
     expect(result.stdout + result.stderr).toContain('boss runtime');
   });
 
+  it('exposes design help through the boss dispatcher', () => {
+    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'design', '--help']);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout + result.stderr).toContain('boss design');
+    expect(result.stdout + result.stderr).toContain('preview');
+  });
+
   it('exposes thin skill helper commands through the boss dispatcher', () => {
     for (const command of ['project', 'artifact', 'packs', 'hooks']) {
       const result = runCli(['packages/boss-cli/dist/bin/boss.js', command, '--help']);

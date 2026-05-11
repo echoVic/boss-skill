@@ -2,6 +2,7 @@ import { runtimeCommandNames } from './registry.js';
 import { renderHelp } from './contract.js';
 import {
   artifactDescription,
+  designDescription,
   hooksDescription,
   packsDescription,
   projectDescription,
@@ -16,6 +17,7 @@ export const ROOT_USAGE = [
   '  uninstall',
   '  path',
   '  runtime COMMAND',
+  '  design preview',
   '  project init',
   '  artifact prepare',
   '  packs detect',
@@ -30,6 +32,13 @@ export const RUNTIME_USAGE = [
   renderHelp(runtimeDescription, 'boss runtime COMMAND [args...]'),
   'Commands:',
   ...runtimeCommandNames.map((name) => `  ${name}`),
+  ''
+].join('\n');
+
+export const DESIGN_USAGE = [
+  renderHelp(designDescription, 'boss design preview <feature> [--no-open] [--port <port>]'),
+  'Commands:',
+  '  preview',
   ''
 ].join('\n');
 
