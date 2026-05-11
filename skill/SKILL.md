@@ -363,7 +363,7 @@ hooks 定义在两处：
 ```
 .boss/templates/         # 项目级模板（可选，优先于内置 templates/）
 .boss/<feature-name>/
-├── design-brief.md     # Step 0（brainstorming 产出，可选）
+├── design-brief.md / design-brief.html # Step 0（brainstorming 产出，可选）
 ├── prd.md / prd.html                  # 阶段 1
 ├── architecture.md / architecture.html # 阶段 1
 ├── ui-spec.md / ui-spec.html          # 阶段 1（可选）
