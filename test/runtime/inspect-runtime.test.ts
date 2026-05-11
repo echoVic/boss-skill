@@ -41,12 +41,21 @@ describe('inspection runtime CLIs', () => {
     expect(result.status, `${label} should exit 0\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`).toBe(0);
   }
 
+  function writeMarkdownArtifact(feature: string, artifact: string): void {
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', feature, artifact),
+      `# ${artifact}\n\n## 摘要\n- ok\n`,
+      'utf8'
+    );
+  }
+
   it('inspect-pipeline reports current stage, ready artifacts, active agents, pack, plugins, and metrics', () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"api-only-app"}\n', 'utf8');
 
     expectSuccess(runRuntimeCommand('init-pipeline', ['test-feat']), 'init-pipeline');
     expectSuccess(runRuntimeCommand('register-plugins', ['--register', 'test-feat']), 'register-plugins');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'running']), 'update-stage');
+    writeMarkdownArtifact('test-feat', 'prd.md');
     expectSuccess(runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']), 'record-artifact');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'completed']), 'update-stage-complete');
     expectSuccess(runRuntimeCommand('update-agent', ['test-feat', '2', 'boss-tech-lead', 'running']), 'update-agent');
@@ -85,6 +94,7 @@ describe('inspection runtime CLIs', () => {
   it('inspect-events returns recent events in reverse chronological order with filtering', () => {
     expectSuccess(runRuntimeCommand('init-pipeline', ['test-feat']), 'init-pipeline');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'running']), 'update-stage');
+    writeMarkdownArtifact('test-feat', 'prd.md');
     expectSuccess(runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']), 'record-artifact');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'completed']), 'update-stage-complete');
 
@@ -107,8 +117,8 @@ describe('inspection runtime CLIs', () => {
     ]);
     expectSuccess(inspectFiltered, 'inspect-events filtered');
     const filteredPayload = JSON.parse(inspectFiltered.stdout) as { events: Array<{ type: string }> };
-    expect(filteredPayload.events).toHaveLength(1);
-    expect(filteredPayload.events[0].type).toBe('ArtifactRecorded');
+    expect(filteredPayload.events).toHaveLength(2);
+    expect(filteredPayload.events.every((event) => event.type === 'ArtifactRecorded')).toBe(true);
   });
 
   it('inspect-plugins returns plugin lifecycle slices from the execution view', () => {

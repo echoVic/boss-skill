@@ -33,9 +33,18 @@ describe('runtime check-stage and replay-events CLIs', () => {
     expect(result.status, `${label} should exit 0\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`).toBe(0);
   }
 
+  function writeMarkdownArtifact(feature: string, artifact: string): void {
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', feature, artifact),
+      `# ${artifact}\n\n## 摘要\n- ok\n`,
+      'utf8'
+    );
+  }
+
   it('check-stage returns execution summary and stage JSON through runtime', () => {
     expectSuccess(runRuntimeCommand('init-pipeline', ['test-feat']), 'init-pipeline');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'running']), 'stage-running');
+    writeMarkdownArtifact('test-feat', 'prd.md');
     expectSuccess(runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']), 'record-artifact');
 
     const summary = runRuntimeCommand('check-stage', ['test-feat', '--json']);
@@ -54,12 +63,13 @@ describe('runtime check-stage and replay-events CLIs', () => {
       artifacts: string[];
     };
     expect(stagePayload.status).toBe('running');
-    expect(stagePayload.artifacts).toEqual(['prd.md']);
+    expect(stagePayload.artifacts).toEqual(['prd.md', 'prd.html']);
   });
 
   it('replay-events returns recent events and snapshot-at-event through runtime', () => {
     expectSuccess(runRuntimeCommand('init-pipeline', ['test-feat']), 'init-pipeline');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'running']), 'stage-running');
+    writeMarkdownArtifact('test-feat', 'prd.md');
     expectSuccess(runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']), 'record-artifact');
     expectSuccess(runRuntimeCommand('update-stage', ['test-feat', '1', 'completed']), 'stage-completed');
 
