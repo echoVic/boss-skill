@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { runCli } from '../helpers/run-cli.js';
@@ -79,9 +78,8 @@ describe('boss-skill dist bin', () => {
     const workspace = mkdtempSync(resolve(tmpdir(), 'boss-project-init-'));
 
     try {
-      const result = spawnSync(process.execPath, [distEntry, 'project', 'init', 'valid-ui-design', '--json'], {
-        cwd: workspace,
-        encoding: 'utf8'
+      const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', 'init', 'valid-ui-design', '--json'], {
+        cwd: workspace
       });
       expect(result.status, result.stderr).toBe(0);
 
@@ -185,10 +183,9 @@ describe('boss-skill dist bin', () => {
     mkdirSync(resolve(home, '.hermes'), { recursive: true });
 
     try {
-      const result = spawnSync(process.execPath, [distEntry, 'install'], {
+      const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'install'], {
         cwd: root,
         env: { ...process.env, HOME: home },
-        encoding: 'utf8'
       });
 
       expect(result.status, result.stderr).toBe(0);

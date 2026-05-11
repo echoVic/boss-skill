@@ -1,5 +1,5 @@
-import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
@@ -10,12 +10,9 @@ import {
   previewSignalExitCode,
   shouldKeepPreviewAlive
 } from '../../packages/boss-cli/src/commands/design/preview.js';
-import { runCli } from '../helpers/run-cli.js';
+import { ensureBuilt, runCli } from '../helpers/run-cli.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
-const distEntry = resolve(root, 'packages/boss-cli/dist/bin/boss.js');
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-let distBuilt = false;
 
 function minimalUiDesign(feature: string) {
   return {
@@ -48,32 +45,51 @@ function minimalUiDesign(feature: string) {
 }
 
 function runPreview(args: string[], cwd: string) {
-  ensureBuilt();
-  return spawnSync(process.execPath, [distEntry, ...args], {
-    cwd,
-    encoding: 'utf8'
+  return runCli(['packages/boss-cli/dist/bin/boss.js', ...args], { cwd });
+}
+
+async function waitForExit(child: ReturnType<typeof spawn>): Promise<{ code: number | null; signal: NodeJS.Signals | null }> {
+  return new Promise((resolveExit) => {
+    child.once('exit', (code, signal) => resolveExit({ code, signal }));
   });
 }
 
-function ensureBuilt(): void {
-  if (distBuilt && existsSync(distEntry)) return;
-  const sourceFiles = [
-    'packages/boss-cli/src/bin/boss.ts',
-    'packages/boss-cli/src/commands/design/preview.ts',
-    'packages/boss-cli/src/runtime/design/schema.ts'
-  ].map((file) => resolve(root, file));
-  if (
-    existsSync(distEntry) &&
-    sourceFiles.every((file) => statSync(distEntry).mtimeMs >= statSync(file).mtimeMs)
-  ) {
-    distBuilt = true;
-    return;
-  }
-  execFileSync(npmCmd, ['run', 'build'], {
-    cwd: root,
-    encoding: 'utf8'
+async function waitForPreviewUrl(child: ReturnType<typeof spawn>): Promise<string> {
+  let output = '';
+  return new Promise((resolveUrl, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error(`Timed out waiting for preview URL. Output: ${output}`));
+    }, 5000);
+
+    child.stdout?.on('data', (chunk: Buffer) => {
+      output += chunk.toString('utf8');
+      const match = output.match(/http:\/\/localhost:\d+/);
+      if (match) {
+        clearTimeout(timeout);
+        resolveUrl(match[0]!);
+      }
+    });
+    child.once('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once('exit', (code, signal) => {
+      clearTimeout(timeout);
+      reject(new Error(`Preview exited before URL. code=${code} signal=${signal} output=${output}`));
+    });
   });
-  distBuilt = true;
+}
+
+function spawnPreview(args: string[], cwd: string) {
+  ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+  return spawn(process.execPath, [resolve(root, 'packages/boss-cli/dist/bin/boss.js'), ...args], {
+    cwd,
+    env: {
+      ...process.env,
+      BOSS_DESIGN_PREVIEW_FORCE_INTERACTIVE: '1'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
 }
 
 describe('boss design preview CLI', () => {
@@ -181,8 +197,6 @@ describe('boss design preview CLI', () => {
   });
 
   it('keeps interactive text previews alive after starting the server', () => {
-    // Full lifecycle coverage would require a PTY so the child process sees TTY stdin/stdout.
-    // This lower-level check covers the no-hang decision without platform-specific terminal tooling.
     const interactiveContext = createCliContext([], {
       command: 'boss design preview',
       stdinIsTTY: true,
@@ -209,5 +223,70 @@ describe('boss design preview CLI', () => {
   it('uses validation-derived exit codes when signal cleanup closes a live preview', () => {
     expect(previewSignalExitCode(true)).toBe(0);
     expect(previewSignalExitCode(false)).toBe(1);
+  });
+
+  it('keeps a forced-interactive preview process alive until SIGTERM', async () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'boss-design-preview-live-'));
+    const feature = 'live-preview';
+    let child: ReturnType<typeof spawn> | undefined;
+
+    try {
+      mkdirSync(resolve(workspace, '.boss', feature), { recursive: true });
+      writeFileSync(
+        resolve(workspace, '.boss', feature, 'ui-design.json'),
+        `${JSON.stringify(minimalUiDesign(feature), null, 2)}\n`,
+        'utf8'
+      );
+
+      child = spawnPreview(['design', 'preview', feature, '--port', '0'], workspace);
+      const exitPromise = waitForExit(child);
+      const url = await waitForPreviewUrl(child);
+
+      const health = await fetch(`${url}/healthz`);
+      expect(health.status).toBe(200);
+      expect(await health.json()).toEqual({ ok: true });
+
+      child.kill('SIGTERM');
+      const exit = await exitPromise;
+      expect(exit).toEqual({ code: 0, signal: null });
+    } finally {
+      if (child && child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGTERM');
+        await waitForExit(child);
+      }
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('exits with validation failure status when an invalid live preview is terminated', async () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'boss-design-preview-live-invalid-'));
+    const feature = 'invalid-live-preview';
+    let child: ReturnType<typeof spawn> | undefined;
+
+    try {
+      mkdirSync(resolve(workspace, '.boss', feature), { recursive: true });
+      writeFileSync(
+        resolve(workspace, '.boss', feature, 'ui-design.json'),
+        `${JSON.stringify({ artifact: 'ui-design', mode: 'wireframe', pages: [{ id: 'p', frames: [] }] })}\n`,
+        'utf8'
+      );
+
+      child = spawnPreview(['design', 'preview', feature, '--port', '0'], workspace);
+      const exitPromise = waitForExit(child);
+      const url = await waitForPreviewUrl(child);
+
+      const health = await fetch(`${url}/healthz`);
+      expect(health.status).toBe(200);
+
+      child.kill('SIGTERM');
+      const exit = await exitPromise;
+      expect(exit).toEqual({ code: 1, signal: null });
+    } finally {
+      if (child && child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGTERM');
+        await waitForExit(child);
+      }
+      rmSync(workspace, { recursive: true, force: true });
+    }
   });
 });

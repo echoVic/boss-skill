@@ -45,6 +45,7 @@ interface PreviewPayload {
 
 interface PreviewEnvironment {
   CI?: string;
+  BOSS_DESIGN_PREVIEW_FORCE_INTERACTIVE?: string;
 }
 
 function showHelp(): void {
@@ -222,12 +223,17 @@ export function shouldOpenPreviewBrowser(
   return !input.noOpen && context.stdinIsTTY && context.stdoutIsTTY && !env.CI;
 }
 
+function forceInteractivePreview(env: PreviewEnvironment = process.env): boolean {
+  // Internal test-only override: exercises the live preview lifecycle without requiring a PTY.
+  return env.BOSS_DESIGN_PREVIEW_FORCE_INTERACTIVE === '1';
+}
+
 export function shouldKeepPreviewAlive(
   context: Pick<CliContext, 'useJson' | 'stdinIsTTY' | 'stdoutIsTTY'>,
   input: Pick<PreviewInput, 'noOpen'>,
   env: PreviewEnvironment = process.env
 ): boolean {
-  return !context.useJson && shouldOpenPreviewBrowser(context, input, env);
+  return !context.useJson && (forceInteractivePreview(env) || shouldOpenPreviewBrowser(context, input, env));
 }
 
 export function previewSignalExitCode(valid: boolean): 0 | 1 {
@@ -258,7 +264,15 @@ export async function main(
   argv: string[] = process.argv.slice(2),
   { cwd = process.cwd() }: { cwd?: string } = {}
 ): Promise<number> {
-  const context = createCliContext(argv, { command: 'boss design preview' });
+  const parsedContext = createCliContext(argv, { command: 'boss design preview' });
+  const context = forceInteractivePreview()
+    ? {
+        ...parsedContext,
+        stdinIsTTY: true,
+        stdoutIsTTY: true,
+        useJson: parsedContext.values.json
+      }
+    : parsedContext;
   if (context.values.describe) {
     writeOutput(describeCommand(designPreviewDescription), context, (data) => `${JSON.stringify(data, null, 2)}\n`);
     return 0;
@@ -275,7 +289,8 @@ export async function main(
   const html = renderUiDesignHtml(design as UiDesignArtifact, validation);
   const preview = await startUiDesignPreviewServer(html, input.port);
 
-  const shouldOpen = shouldOpenPreviewBrowser(context, input);
+  const forcedInteractive = forceInteractivePreview();
+  const shouldOpen = !forcedInteractive && shouldOpenPreviewBrowser(context, input);
   const opened = shouldOpen ? openUrl(preview.url) : false;
   const mode = typeof (design as Partial<UiDesignArtifact>).mode === 'string'
     ? (design as Partial<UiDesignArtifact>).mode
