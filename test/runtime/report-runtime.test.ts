@@ -176,6 +176,51 @@ describe('runtime report generation', () => {
     expect(payload.qualityGates.gate2.passed).toBe(false);
   });
 
+  it('record-artifact writes and records html companions for markdown artifacts', () => {
+    const prdPath = path.join(tmpDir, '.boss', 'test-feat', 'prd.md');
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    const execution = JSON.parse(fs.readFileSync(path.join(metaDir, 'execution.json'), 'utf8')) as unknown;
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2026-04-12T00:00:00.000Z',
+        data: { initialState: execution }
+      })}\n`,
+      'utf8'
+    );
+    fs.writeFileSync(
+      prdPath,
+      ['# 产品需求文档', '', '## 摘要', '- 安全展示 `<script>x</script>`', '', '| 字段 | 说明 |', '|------|------|', '| id | 标识 |'].join('\n'),
+      'utf8'
+    );
+
+    const result = runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    const payload = JSON.parse(result.stdout) as {
+      artifact: string;
+      artifacts: string[];
+      htmlArtifact?: string;
+      htmlPath?: string;
+    };
+    expect(payload.artifact).toBe('prd.md');
+    expect(payload.htmlArtifact).toBe('prd.html');
+    expect(payload.htmlPath).toBe('.boss/test-feat/prd.html');
+    expect(payload.artifacts).toContain('prd.md');
+    expect(payload.artifacts).toContain('prd.html');
+
+    const htmlPath = path.join(tmpDir, '.boss', 'test-feat', 'prd.html');
+    expect(fs.existsSync(htmlPath)).toBe(true);
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    expect(html).toMatch(/<!doctype html>/i);
+    expect(html).toContain('产品需求文档 - test-feat');
+    expect(html).toContain('&lt;script&gt;x&lt;/script&gt;');
+    expect(html).toContain('<table>');
+  });
+
   it('generate-summary runtime CLI emits markdown via stdout', () => {
     const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 
