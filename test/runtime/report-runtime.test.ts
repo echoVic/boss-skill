@@ -221,6 +221,40 @@ describe('runtime report generation', () => {
     expect(html).toContain('<table>');
   });
 
+  it('record-artifact fails missing markdown artifacts without recording stale artifacts', () => {
+    const prdPath = path.join(tmpDir, '.boss', 'test-feat', 'prd.md');
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    const executionPath = path.join(metaDir, 'execution.json');
+    const execution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    execution.stages['1'].artifacts = execution.stages['1'].artifacts.filter(
+      (artifact) => artifact !== 'prd.md' && artifact !== 'prd.html'
+    );
+    fs.writeFileSync(executionPath, JSON.stringify(execution, null, 2), 'utf8');
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2026-04-12T00:00:00.000Z',
+        data: { initialState: execution }
+      })}\n`,
+      'utf8'
+    );
+    fs.rmSync(prdPath, { force: true });
+
+    const result = runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']);
+
+    expect(result.status).not.toBe(0);
+    expect(`${result.stderr}\n${result.stdout}`).toMatch(/未找到 Markdown 产物/);
+    const updatedExecution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.md');
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.html');
+  });
+
   it('generate-summary runtime CLI emits markdown via stdout', () => {
     const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 

@@ -109,16 +109,21 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
   }
 
   try {
-    let execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
     let htmlArtifact: string | undefined;
     let htmlPath: string | undefined;
+    let markdown: string | undefined;
 
     if (input.artifact.endsWith('.md')) {
       const markdownPath = path.join(cwd, '.boss', input.feature, input.artifact);
       if (!fs.existsSync(markdownPath)) {
         throw new Error(`未找到 Markdown 产物: ${path.relative(cwd, markdownPath)}`);
       }
-      const markdown = fs.readFileSync(markdownPath, 'utf8');
+      markdown = fs.readFileSync(markdownPath, 'utf8');
+    }
+
+    let execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
+
+    if (markdown !== undefined) {
       htmlArtifact = writeArtifactHtmlCompanion({
         cwd,
         feature: input.feature,
