@@ -112,6 +112,30 @@ describe('runtime CLI contract', () => {
     expect(payload.artifacts).toEqual(['prd.md']);
   });
 
+  it('record-artifact exposes no-open for UI design auto preview control', () => {
+    const result = runCli('record-artifact', ['--describe']);
+    expect(result.status).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      command: string;
+      options: Array<{ name: string }>;
+    };
+    expect(payload.command).toBe('boss runtime record-artifact');
+    expect(payload.options.map((option) => option.name)).toContain('no-open');
+  });
+
+  it('record-artifact surfaces a non-blocking UI design preview command', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runCli('record-artifact', ['test-feat', 'ui-design.json', '1', '--no-open']);
+    expect(result.status).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      previewCommand?: string;
+    };
+    expect(payload.previewCommand).toBe('boss design preview test-feat --no-open');
+  });
+
   it('get-ready-artifacts CLI exposes help text and stable ready-artifact JSON', () => {
     initPipeline('test-feat', { cwd: tmpDir });
 

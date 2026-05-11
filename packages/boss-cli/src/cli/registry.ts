@@ -261,6 +261,15 @@ for (const name of [
   };
 }
 
+runtimeDescriptions['record-artifact'] = {
+  ...runtimeDescriptions['record-artifact']!,
+  options: [
+    ...runtimeMutationOptions,
+    { name: 'no-open', type: 'boolean' as const, default: false }
+  ],
+  risk_tier: 'medium'
+};
+
 runtimeDescriptions['evaluate-gates'] = {
   ...runtimeDescriptions['evaluate-gates']!,
   options: [

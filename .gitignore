@@ -28,4 +28,7 @@ packages/*/dist/
 
 # Boss generated artifacts
 .boss/
+
+# Superpowers local browser companion artifacts
+.superpowers/
 /dist

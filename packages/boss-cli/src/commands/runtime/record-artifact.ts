@@ -24,6 +24,7 @@ interface RecordArtifactInput {
   feature: string;
   artifact: string;
   stage: string;
+  noOpen: boolean;
 }
 
 function showHelp(): void {
@@ -34,11 +35,16 @@ function parseFlatInput(argv: string[]): RecordArtifactInput {
   let feature = '';
   let artifact = '';
   let stage = '';
+  let noOpen = false;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
     const contractOptionEnd = consumeCliContractOption(argv, index);
     if (contractOptionEnd !== null) {
       index = contractOptionEnd;
+      continue;
+    }
+    if (arg === '--no-open') {
+      noOpen = true;
       continue;
     }
     if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
@@ -50,7 +56,8 @@ function parseFlatInput(argv: string[]): RecordArtifactInput {
   return {
     feature: requireInputString(feature, 'feature'),
     artifact: requireInputString(artifact, 'artifact'),
-    stage: requireInputString(stage, 'stage')
+    stage: requireInputString(stage, 'stage'),
+    noOpen
   };
 }
 
@@ -61,7 +68,8 @@ function resolveInput(argv: string[], context: CliContext): RecordArtifactInput 
     return {
       feature: requireInputString(input.feature, 'feature'),
       artifact: requireInputString(input.artifact, 'artifact'),
-      stage: requireInputString(input.stage, 'stage')
+      stage: requireInputString(input.stage, 'stage'),
+      noOpen: input.noOpen === true || input['no-open'] === true
     };
   }
   return parseFlatInput(argv);
@@ -103,15 +111,21 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     const stageKey = String(input.stage);
     const artifacts =
       execution.stages && execution.stages[stageKey] ? execution.stages[stageKey]!.artifacts : [];
+    const previewCommand =
+      input.artifact === 'ui-design.json'
+        ? `boss design preview ${input.feature}${input.noOpen ? ' --no-open' : ''}`
+        : undefined;
+    const payload = {
+      feature: input.feature,
+      artifact: input.artifact,
+      stage: Number(input.stage),
+      artifacts,
+      previewCommand
+    };
     writeOutput(
-      {
-        feature: input.feature,
-        artifact: input.artifact,
-        stage: Number(input.stage),
-        artifacts
-      },
+      payload,
       context,
-      () => `${JSON.stringify({ feature: input.feature, artifact: input.artifact, stage: Number(input.stage), artifacts }, null, 2)}\n`
+      () => `${JSON.stringify(payload, null, 2)}\n${previewCommand ? `Preview: ${previewCommand}\n` : ''}`
     );
     return 0;
   } catch (err) {
