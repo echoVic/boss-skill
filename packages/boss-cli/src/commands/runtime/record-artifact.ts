@@ -20,7 +20,7 @@ import {
   writeActionPlan
 } from './agent-command-utils.js';
 import { recordArtifact, recordArtifacts } from '../../runtime/application/pipeline.js';
-import { writeArtifactHtmlCompanion } from '../../runtime/report/render-artifact-html.js';
+import { renderArtifactHtml } from '../../runtime/report/render-artifact-html.js';
 
 interface RecordArtifactInput {
   feature: string;
@@ -141,6 +141,18 @@ function markdownPathFor(input: RecordArtifactInput, cwd: string): string {
   return markdownPath;
 }
 
+function writeHtmlWithRollback(outputPath: string, html: string): () => void {
+  const previous = fs.existsSync(outputPath) ? fs.readFileSync(outputPath) : null;
+  fs.writeFileSync(outputPath, html, 'utf8');
+  return () => {
+    if (previous) {
+      fs.writeFileSync(outputPath, previous);
+      return;
+    }
+    fs.rmSync(outputPath, { force: true });
+  };
+}
+
 function actionsFor(input: RecordArtifactInput, cwd: string, stageNumber: number) {
   if (!isMarkdownArtifact(input.artifact)) {
     return [actionFor(input, stageNumber)];
@@ -191,6 +203,8 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     let htmlArtifact: string | undefined;
     let htmlPath: string | undefined;
     let markdown: string | undefined;
+    let html: string | undefined;
+    let htmlOutputPath: string | undefined;
 
     if (isMarkdownArtifact(input.artifact)) {
       const markdownPath = markdownPathFor(input, cwd);
@@ -198,19 +212,24 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
         throw new Error(`未找到 Markdown 产物: ${path.relative(cwd, markdownPath)}`);
       }
       markdown = fs.readFileSync(markdownPath, 'utf8');
-    }
-
-    let execution;
-
-    if (markdown !== undefined) {
-      htmlArtifact = writeArtifactHtmlCompanion({
+      htmlArtifact = htmlArtifactFor(input.artifact);
+      htmlPath = path.posix.join('.boss', input.feature, htmlArtifact);
+      htmlOutputPath = path.join(resolveFeatureDir(cwd, input.feature), htmlArtifact);
+      html = renderArtifactHtml({
         cwd,
         feature: input.feature,
         sourceArtifact: input.artifact,
         markdown
       });
-      htmlPath = path.posix.join('.boss', input.feature, htmlArtifact);
-      execution = recordArtifacts(input.feature, [input.artifact, htmlArtifact], stageNumber, { cwd });
+    }
+
+    let execution;
+
+    if (markdown !== undefined && htmlArtifact && html !== undefined && htmlOutputPath) {
+      execution = recordArtifacts(input.feature, [input.artifact, htmlArtifact], stageNumber, {
+        cwd,
+        beforeAppend: () => writeHtmlWithRollback(htmlOutputPath, html)
+      });
     } else {
       execution = recordArtifact(input.feature, input.artifact, stageNumber, { cwd });
     }

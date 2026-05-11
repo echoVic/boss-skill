@@ -46,6 +46,28 @@ describe('recordArtifact', () => {
     expect(fs.readFileSync(eventsPath, 'utf8')).toBe(eventsBefore);
   });
 
+  it('recordArtifacts does not run beforeAppend side effects when artifact backup fails', () => {
+    const featureDir = path.join(tmpDir, '.boss', 'test-feat');
+    const htmlPath = path.join(tmpDir, '.boss', 'test-feat', 'prd.html');
+    fs.writeFileSync(htmlPath, 'old html\n', 'utf8');
+    runtime.recordArtifact('test-feat', 'prd.html', 1, { cwd: tmpDir });
+    fs.mkdirSync(path.join(featureDir, '.versions', 'prd.html.v1'), { recursive: true });
+    let beforeAppendRan = false;
+
+    expect(() => {
+      runtime.recordArtifacts('test-feat', ['prd.md', 'prd.html'], 1, {
+        cwd: tmpDir,
+        beforeAppend: () => {
+          beforeAppendRan = true;
+          fs.writeFileSync(htmlPath, 'new html\n', 'utf8');
+        }
+      });
+    }).toThrow();
+
+    expect(beforeAppendRan).toBe(false);
+    expect(fs.readFileSync(htmlPath, 'utf8')).toBe('old html\n');
+  });
+
   it('rejects non-integer stages', () => {
     expect(() => {
       runtime.recordArtifact('test-feat', 'prd.md', 1.5, { cwd: tmpDir });

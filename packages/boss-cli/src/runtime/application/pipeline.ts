@@ -432,7 +432,13 @@ export function recordArtifacts(
   feature: string,
   artifacts: string[],
   stage: number | string,
-  { cwd = process.cwd() }: { cwd?: string } = {}
+  {
+    cwd = process.cwd(),
+    beforeAppend
+  }: {
+    cwd?: string;
+    beforeAppend?: () => void | (() => void);
+  } = {}
 ): PipelineExecutionState {
   ensureFeatureName(feature);
   if (artifacts.length === 0) throw new Error('缺少 artifact 参数');
@@ -478,7 +484,15 @@ export function recordArtifacts(
       version: version.currentVersion + 1
     }
   }));
-  fs.appendFileSync(eventsFile, `${events.map((event) => JSON.stringify(event)).join('\n')}\n`, 'utf8');
+  const rollback = beforeAppend?.();
+  try {
+    fs.appendFileSync(eventsFile, `${events.map((event) => JSON.stringify(event)).join('\n')}\n`, 'utf8');
+  } catch (err) {
+    if (typeof rollback === 'function') {
+      rollback();
+    }
+    throw err;
+  }
 
   const { state } = materializeState(feature, cwd);
   refreshMemory(feature, cwd);

@@ -289,6 +289,19 @@ describe('runtime report generation', () => {
     expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.html');
   });
 
+  it('record-artifact does not leave an unrecorded html companion when runtime recording fails', () => {
+    const featureDir = path.join(tmpDir, '.boss', 'test-feat');
+    const prdPath = path.join(featureDir, 'prd.md');
+    const eventsPath = path.join(featureDir, '.meta', 'events.jsonl');
+    fs.writeFileSync(prdPath, '# PRD\n\n## 摘要\n- ok\n', 'utf8');
+    fs.rmSync(eventsPath, { force: true });
+
+    const result = runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']);
+
+    expect(result.status).not.toBe(0);
+    expect(fs.existsSync(path.join(featureDir, 'prd.html'))).toBe(false);
+  });
+
   it('record-artifact rejects path-like markdown artifacts without recording stale artifacts', () => {
     const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
     const executionPath = path.join(metaDir, 'execution.json');
