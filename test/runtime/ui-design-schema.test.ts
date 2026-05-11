@@ -98,6 +98,25 @@ describe('ui design artifact validation', () => {
     expect(result.errors).toContain('pages must contain at least one page');
   });
 
+  it('rejects incomplete artifacts before the renderer reads required fields', () => {
+    const result = validateUiDesignArtifact({
+      artifact: 'ui-design',
+      mode: 'wireframe',
+      pages: [{ id: 'p', frames: [] }]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain('feature is required');
+    expect(result.errors).toContain('tokens must define colors, typography, spacing, and radius objects');
+    expect(result.errors).toContain('components must be an array');
+    expect(result.errors).toContain('prototype.startPageId is required');
+    expect(result.errors).toContain('page.name is required');
+    expect(result.errors).toContain('page.route is required');
+    expect(result.errors).toContain('page.viewport.width must be a number');
+    expect(result.errors).toContain('page.viewport.height must be a number');
+    expect(result.errors).toContain('page.states must be an array');
+  });
+
   it('returns validation errors instead of throwing for malformed page frames', () => {
     const result = validateUiDesignArtifact({
       ...minimalDesign(),

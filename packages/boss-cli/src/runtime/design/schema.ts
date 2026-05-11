@@ -66,6 +66,24 @@ function hasKeys(value: Record<string, unknown>): boolean {
   return Object.keys(value).length > 0;
 }
 
+function isString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function hasDesignTokens(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  return (
+    isObject(value.colors) &&
+    isObject(value.typography) &&
+    isObject(value.spacing) &&
+    isObject(value.radius)
+  );
+}
+
 function collectFrameIds(frames: unknown, ids: string[], errors: string[]): void {
   if (!Array.isArray(frames)) {
     errors.push('page.frames must be an array');
@@ -80,6 +98,15 @@ function collectFrameIds(frames: unknown, ids: string[], errors: string[]): void
 
     if (typeof frame.id !== 'string' || frame.id.length === 0) errors.push('frame id is required');
     if (typeof frame.id === 'string') ids.push(frame.id);
+    if (!isString(frame.type)) errors.push('frame.type is required');
+    if (
+      frame.layout !== 'vertical' &&
+      frame.layout !== 'horizontal' &&
+      frame.layout !== 'grid' &&
+      frame.layout !== 'absolute'
+    ) {
+      errors.push('frame.layout must be vertical, horizontal, grid, or absolute');
+    }
 
     if (!Array.isArray(frame.children)) {
       errors.push('frame.children must be an array');
@@ -98,6 +125,11 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
   if (artifact.mode !== 'wireframe' && artifact.mode !== 'hifi') {
     errors.push('mode must be wireframe or hifi');
   }
+  if (!isString(artifact.feature)) errors.push('feature is required');
+  if (!isString(artifact.updatedAt)) errors.push('updatedAt is required');
+  if (!hasDesignTokens(artifact.tokens)) {
+    errors.push('tokens must define colors, typography, spacing, and radius objects');
+  }
   if (!Array.isArray(artifact.pages) || artifact.pages.length === 0) {
     errors.push('pages must contain at least one page');
   }
@@ -106,17 +138,50 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
   const components = Array.isArray(artifact.components) ? artifact.components : [];
   const prototypeLinks = Array.isArray(artifact.prototype?.links) ? artifact.prototype.links : [];
 
-  if (artifact.components !== undefined && !Array.isArray(artifact.components)) {
+  if (!Array.isArray(artifact.components)) {
     errors.push('components must be an array');
   }
-  if (artifact.prototype?.links !== undefined && !Array.isArray(artifact.prototype.links)) {
+  if (!isObject(artifact.prototype)) {
+    errors.push('prototype must be an object');
+    errors.push('prototype.startPageId is required');
+  } else {
+    if (!isString(artifact.prototype.startPageId)) errors.push('prototype.startPageId is required');
+  }
+  if (!Array.isArray(artifact.prototype?.links)) {
     errors.push('prototype.links must be an array');
+  }
+  if (!isObject(artifact.implementationHints)) {
+    errors.push('implementationHints must be an object');
+  } else {
+    if (typeof artifact.implementationHints.preferredFramework !== 'string') {
+      errors.push('implementationHints.preferredFramework must be a string');
+    }
+    if (!Array.isArray(artifact.implementationHints.requiredComponents)) {
+      errors.push('implementationHints.requiredComponents must be an array');
+    }
+    if (!Array.isArray(artifact.implementationHints.accessibilityNotes)) {
+      errors.push('implementationHints.accessibilityNotes must be an array');
+    }
   }
 
   const pageIds = new Set<string>();
   const allIds: string[] = [];
   for (const page of pages) {
-    if (!isObject(page)) continue;
+    if (!isObject(page)) {
+      errors.push('page must be an object');
+      continue;
+    }
+    if (!isString(page.id)) errors.push('page.id is required');
+    if (!isString(page.name)) errors.push('page.name is required');
+    if (typeof page.route !== 'string') errors.push('page.route is required');
+    const viewport = page.viewport;
+    if (!isObject(viewport) || !isNumber(viewport.width)) {
+      errors.push('page.viewport.width must be a number');
+    }
+    if (!isObject(viewport) || !isNumber(viewport.height)) {
+      errors.push('page.viewport.height must be a number');
+    }
+    if (!Array.isArray(page.states)) errors.push('page.states must be an array');
     if (typeof page.id === 'string') {
       pageIds.add(page.id);
       allIds.push(page.id);
@@ -124,7 +189,14 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
     collectFrameIds(page.frames, allIds, errors);
   }
   for (const component of components) {
-    if (isObject(component) && typeof component.id === 'string') allIds.push(component.id);
+    if (!isObject(component)) {
+      errors.push('component must be an object');
+      continue;
+    }
+    if (!isString(component.id)) errors.push('component.id is required');
+    if (!isString(component.name)) errors.push('component.name is required');
+    if (!isString(component.type)) errors.push('component.type is required');
+    if (typeof component.id === 'string') allIds.push(component.id);
   }
 
   const seen = new Set<string>();

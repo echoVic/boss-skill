@@ -43,6 +43,10 @@ interface PreviewPayload {
   errors: string[];
 }
 
+interface PreviewEnvironment {
+  CI?: string;
+}
+
 function showHelp(): void {
   process.stdout.write(
     [
@@ -74,6 +78,18 @@ function parsePort(port: string): number {
   const parsed = Number(port);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) invalidPort(port);
   return parsed;
+}
+
+function validateFeatureName(feature: string): void {
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(feature)) {
+    throw new CliUserError({
+      code: 'invalid_feature',
+      message: 'Invalid feature name',
+      input: { feature },
+      retryable: false,
+      suggestion: 'Use lowercase letters, numbers, and hyphens; do not use path separators or dot segments'
+    });
+  }
 }
 
 function parsePreviewInput(argv: string[]): PreviewInput {
@@ -153,6 +169,7 @@ function parsePreviewInput(argv: string[]): PreviewInput {
       suggestion: 'Pass the feature that contains .boss/<feature>/ui-design.json'
     });
   }
+  validateFeatureName(input.feature);
 
   return input;
 }
@@ -197,14 +214,27 @@ function renderTextPayload(data: unknown): string {
   return `Preview ${status}: ${payload.artifact}\nURL: ${payload.url}\nBrowser: ${opened}\n${errors}`;
 }
 
-export function shouldKeepPreviewAlive(
-  context: Pick<CliContext, 'useJson'>,
-  input: Pick<PreviewInput, 'noOpen'>
+export function shouldOpenPreviewBrowser(
+  context: Pick<CliContext, 'stdinIsTTY' | 'stdoutIsTTY'>,
+  input: Pick<PreviewInput, 'noOpen'>,
+  env: PreviewEnvironment = process.env
 ): boolean {
-  return !context.useJson && !input.noOpen;
+  return !input.noOpen && context.stdinIsTTY && context.stdoutIsTTY && !env.CI;
 }
 
-async function closeAndExit(preview: UiDesignPreviewServer, code: number): Promise<never> {
+export function shouldKeepPreviewAlive(
+  context: Pick<CliContext, 'useJson' | 'stdinIsTTY' | 'stdoutIsTTY'>,
+  input: Pick<PreviewInput, 'noOpen'>,
+  env: PreviewEnvironment = process.env
+): boolean {
+  return !context.useJson && shouldOpenPreviewBrowser(context, input, env);
+}
+
+export function previewSignalExitCode(valid: boolean): 0 | 1 {
+  return valid ? 0 : 1;
+}
+
+async function closeAndExit(preview: UiDesignPreviewServer, code: 0 | 1): Promise<never> {
   try {
     await preview.close();
     process.exit(code);
@@ -213,9 +243,9 @@ async function closeAndExit(preview: UiDesignPreviewServer, code: number): Promi
   }
 }
 
-async function keepPreviewAlive(preview: UiDesignPreviewServer): Promise<never> {
+async function keepPreviewAlive(preview: UiDesignPreviewServer, exitCode: 0 | 1): Promise<never> {
   const stop = () => {
-    void closeAndExit(preview, 0);
+    void closeAndExit(preview, exitCode);
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
@@ -245,7 +275,7 @@ export async function main(
   const html = renderUiDesignHtml(design as UiDesignArtifact, validation);
   const preview = await startUiDesignPreviewServer(html, input.port);
 
-  const shouldOpen = !input.noOpen && context.stdinIsTTY && context.stdoutIsTTY && !process.env.CI;
+  const shouldOpen = shouldOpenPreviewBrowser(context, input);
   const opened = shouldOpen ? openUrl(preview.url) : false;
   const mode = typeof (design as Partial<UiDesignArtifact>).mode === 'string'
     ? (design as Partial<UiDesignArtifact>).mode
@@ -268,7 +298,7 @@ export async function main(
   }
 
   if (shouldKeepPreviewAlive(context, input)) {
-    await keepPreviewAlive(preview);
+    await keepPreviewAlive(preview, previewSignalExitCode(validation.ok));
   }
 
   return validation.ok ? 0 : 1;

@@ -114,7 +114,7 @@ describe('ui design renderer', () => {
     expect(html).toContain('viewport-mobile');
   });
 
-  it('coerces malformed viewport dimensions before interpolating style values', () => {
+  it('renders validation errors for malformed viewport dimensions before interpolating style values', () => {
     const malformed = structuredClone(design) as unknown as UiDesignArtifact;
     (malformed.pages[0]!.viewport as unknown) = {
       width: '1440; background: url(javascript:alert(1))',
@@ -124,9 +124,9 @@ describe('ui design renderer', () => {
     const html = renderUiDesignHtml(malformed, validateUiDesignArtifact(malformed));
 
     expect(html).not.toContain('javascript:alert(1)');
-    expect(html).toContain('--viewport-width:1440px');
-    expect(html).toContain('--viewport-height:960px');
-    expect(html).toContain('1440 x 960');
+    expect(html).toContain('UI Design JSON validation failed');
+    expect(html).toContain('page.viewport.width must be a number');
+    expect(html).toContain('page.viewport.height must be a number');
   });
 });
 

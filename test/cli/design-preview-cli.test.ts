@@ -1,16 +1,21 @@
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { createCliContext } from '../../packages/boss-cli/src/cli/contract.js';
-import { shouldKeepPreviewAlive } from '../../packages/boss-cli/src/commands/design/preview.js';
+import {
+  previewSignalExitCode,
+  shouldKeepPreviewAlive
+} from '../../packages/boss-cli/src/commands/design/preview.js';
 import { runCli } from '../helpers/run-cli.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const distEntry = resolve(root, 'packages/boss-cli/dist/bin/boss.js');
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+let distBuilt = false;
 
 function minimalUiDesign(feature: string) {
   return {
@@ -43,10 +48,32 @@ function minimalUiDesign(feature: string) {
 }
 
 function runPreview(args: string[], cwd: string) {
+  ensureBuilt();
   return spawnSync(process.execPath, [distEntry, ...args], {
     cwd,
     encoding: 'utf8'
   });
+}
+
+function ensureBuilt(): void {
+  if (distBuilt && existsSync(distEntry)) return;
+  const sourceFiles = [
+    'packages/boss-cli/src/bin/boss.ts',
+    'packages/boss-cli/src/commands/design/preview.ts',
+    'packages/boss-cli/src/runtime/design/schema.ts'
+  ].map((file) => resolve(root, file));
+  if (
+    existsSync(distEntry) &&
+    sourceFiles.every((file) => statSync(distEntry).mtimeMs >= statSync(file).mtimeMs)
+  ) {
+    distBuilt = true;
+    return;
+  }
+  execFileSync(npmCmd, ['run', 'build'], {
+    cwd: root,
+    encoding: 'utf8'
+  });
+  distBuilt = true;
 }
 
 describe('boss design preview CLI', () => {
@@ -114,7 +141,48 @@ describe('boss design preview CLI', () => {
     }
   });
 
+  it('returns validation output instead of internal errors for incomplete artifacts', () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'boss-design-preview-invalid-'));
+    const feature = 'incomplete-design';
+
+    try {
+      mkdirSync(resolve(workspace, '.boss', feature), { recursive: true });
+      writeFileSync(
+        resolve(workspace, '.boss', feature, 'ui-design.json'),
+        `${JSON.stringify({ artifact: 'ui-design', mode: 'wireframe', pages: [{ id: 'p', frames: [] }] })}\n`,
+        'utf8'
+      );
+
+      const result = runPreview(['design', 'preview', feature, '--json', '--no-open'], workspace);
+
+      expect(result.status, result.stderr).toBe(1);
+      expect(result.stderr).toBe('');
+      const payload = JSON.parse(result.stdout) as { valid: boolean; errors: string[] };
+      expect(payload.valid).toBe(false);
+      expect(payload.errors).toContain('page.viewport.width must be a number');
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects feature path traversal before resolving the artifact path', () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'boss-design-preview-traversal-'));
+
+    try {
+      const result = runPreview(['design', 'preview', '../escaped', '--json', '--no-open'], workspace);
+
+      expect(result.status).toBe(1);
+      const payload = JSON.parse(result.stderr) as { error: { code: string; input?: Record<string, unknown> } };
+      expect(payload.error.code).toBe('invalid_feature');
+      expect(payload.error.input).toEqual({ feature: '../escaped' });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   it('keeps interactive text previews alive after starting the server', () => {
+    // Full lifecycle coverage would require a PTY so the child process sees TTY stdin/stdout.
+    // This lower-level check covers the no-hang decision without platform-specific terminal tooling.
     const interactiveContext = createCliContext([], {
       command: 'boss design preview',
       stdinIsTTY: true,
@@ -125,9 +193,21 @@ describe('boss design preview CLI', () => {
       stdinIsTTY: true,
       stdoutIsTTY: true
     });
+    const nonInteractiveContext = createCliContext([], {
+      command: 'boss design preview',
+      stdinIsTTY: false,
+      stdoutIsTTY: true
+    });
 
-    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: false })).toBe(true);
-    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: true })).toBe(false);
-    expect(shouldKeepPreviewAlive(jsonContext, { noOpen: false })).toBe(false);
+    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: false }, {})).toBe(true);
+    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: true }, {})).toBe(false);
+    expect(shouldKeepPreviewAlive(jsonContext, { noOpen: false }, {})).toBe(false);
+    expect(shouldKeepPreviewAlive(nonInteractiveContext, { noOpen: false }, {})).toBe(false);
+    expect(shouldKeepPreviewAlive(interactiveContext, { noOpen: false }, { CI: 'true' })).toBe(false);
+  });
+
+  it('uses validation-derived exit codes when signal cleanup closes a live preview', () => {
+    expect(previewSignalExitCode(true)).toBe(0);
+    expect(previewSignalExitCode(false)).toBe(1);
   });
 });
