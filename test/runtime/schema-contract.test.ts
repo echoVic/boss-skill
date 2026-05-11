@@ -153,4 +153,23 @@ describe('runtime schema contract', () => {
     expect(summarySchema.properties.startupSummary.type).toBe('array');
     expect(summarySchema.properties.agentSections.type).toBe('object');
   });
+
+  it('ui design schema requires the renderable design artifact shape', () => {
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/ui-design-schema.json');
+
+    expect(schema.properties.artifact.const).toBe('ui-design');
+    expect(schema.properties.mode.enum).toEqual(['wireframe', 'hifi']);
+    expect(schema.required).toEqual([
+      'schemaVersion',
+      'artifact',
+      'mode',
+      'feature',
+      'updatedAt',
+      'tokens',
+      'pages',
+      'components',
+      'prototype',
+      'implementationHints'
+    ]);
+  });
 });
