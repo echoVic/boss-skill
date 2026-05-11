@@ -66,11 +66,26 @@ function hasKeys(value: Record<string, unknown>): boolean {
   return Object.keys(value).length > 0;
 }
 
-function collectFrameIds(frames: UiDesignFrame[], ids: string[], errors: string[]): void {
+function collectFrameIds(frames: unknown, ids: string[], errors: string[]): void {
+  if (!Array.isArray(frames)) {
+    errors.push('page.frames must be an array');
+    return;
+  }
+
   for (const frame of frames) {
-    if (!frame.id) errors.push('frame id is required');
-    ids.push(frame.id);
-    collectFrameIds(Array.isArray(frame.children) ? frame.children : [], ids, errors);
+    if (!isObject(frame)) {
+      errors.push('frame id is required');
+      continue;
+    }
+
+    if (typeof frame.id !== 'string' || frame.id.length === 0) errors.push('frame id is required');
+    if (typeof frame.id === 'string') ids.push(frame.id);
+
+    if (!Array.isArray(frame.children)) {
+      errors.push('frame.children must be an array');
+      continue;
+    }
+    collectFrameIds(frame.children, ids, errors);
   }
 }
 
@@ -87,15 +102,29 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
     errors.push('pages must contain at least one page');
   }
 
+  const pages = Array.isArray(artifact.pages) ? artifact.pages : [];
+  const components = Array.isArray(artifact.components) ? artifact.components : [];
+  const prototypeLinks = Array.isArray(artifact.prototype?.links) ? artifact.prototype.links : [];
+
+  if (artifact.components !== undefined && !Array.isArray(artifact.components)) {
+    errors.push('components must be an array');
+  }
+  if (artifact.prototype?.links !== undefined && !Array.isArray(artifact.prototype.links)) {
+    errors.push('prototype.links must be an array');
+  }
+
   const pageIds = new Set<string>();
   const allIds: string[] = [];
-  for (const page of artifact.pages ?? []) {
-    pageIds.add(page.id);
-    allIds.push(page.id);
-    collectFrameIds(Array.isArray(page.frames) ? page.frames : [], allIds, errors);
+  for (const page of pages) {
+    if (!isObject(page)) continue;
+    if (typeof page.id === 'string') {
+      pageIds.add(page.id);
+      allIds.push(page.id);
+    }
+    collectFrameIds(page.frames, allIds, errors);
   }
-  for (const component of artifact.components ?? []) {
-    allIds.push(component.id);
+  for (const component of components) {
+    if (isObject(component) && typeof component.id === 'string') allIds.push(component.id);
   }
 
   const seen = new Set<string>();
@@ -107,8 +136,8 @@ export function validateUiDesignArtifact(value: unknown): UiDesignValidationResu
   if (artifact.prototype?.startPageId && !pageIds.has(artifact.prototype.startPageId)) {
     errors.push('prototype.startPageId must reference an existing page id');
   }
-  for (const [index, link] of (artifact.prototype?.links ?? []).entries()) {
-    if (!pageIds.has(link.targetPageId)) {
+  for (const [index, link] of prototypeLinks.entries()) {
+    if (!isObject(link) || typeof link.targetPageId !== 'string' || !pageIds.has(link.targetPageId)) {
       errors.push(`prototype.links[${index}].targetPageId must reference an existing page id`);
     }
   }

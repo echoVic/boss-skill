@@ -83,4 +83,64 @@ describe('ui design artifact validation', () => {
     expect(result.errors).toContain('hifi mode requires non-empty tokens.spacing');
     expect(result.errors).toContain('hifi mode requires non-empty tokens.radius');
   });
+
+  it('returns validation errors instead of throwing for malformed collections', () => {
+    const result = validateUiDesignArtifact({
+      artifact: 'ui-design',
+      mode: 'wireframe',
+      pages: 'bad',
+      components: 'bad',
+      prototype: { startPageId: 'x', links: 'bad' },
+      tokens: { colors: {}, typography: {}, spacing: {}, radius: {} }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain('pages must contain at least one page');
+  });
+
+  it('returns validation errors instead of throwing for malformed page frames', () => {
+    const result = validateUiDesignArtifact({
+      ...minimalDesign(),
+      pages: [
+        {
+          id: 'checkout',
+          name: 'Checkout',
+          route: '/checkout',
+          viewport: { width: 1440, height: 960 },
+          frames: 'bad',
+          states: []
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it('returns validation errors instead of throwing for malformed frame children', () => {
+    const result = validateUiDesignArtifact({
+      ...minimalDesign(),
+      pages: [
+        {
+          id: 'checkout',
+          name: 'Checkout',
+          route: '/checkout',
+          viewport: { width: 1440, height: 960 },
+          frames: [
+            {
+              id: 'checkout-main',
+              type: 'page',
+              name: 'Checkout Main',
+              layout: 'vertical',
+              children: 'bad'
+            }
+          ],
+          states: []
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
 });
