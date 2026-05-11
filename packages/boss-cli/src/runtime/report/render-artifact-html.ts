@@ -45,10 +45,28 @@ function escapeAttribute(value: unknown): string {
 }
 
 function inlineMarkdown(text: string): string {
-  const escaped = escapeHtml(text);
-  return escaped
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  const parts: string[] = [];
+  let cursor = 0;
+
+  for (const match of text.matchAll(/`([^`]+)`/g)) {
+    const index = match.index ?? 0;
+    const code = match[1] ?? '';
+    if (index > cursor) {
+      parts.push(renderInlineText(text.slice(cursor, index)));
+    }
+    parts.push(`<code>${escapeHtml(code)}</code>`);
+    cursor = index + match[0].length;
+  }
+
+  if (cursor < text.length) {
+    parts.push(renderInlineText(text.slice(cursor)));
+  }
+
+  return parts.join('');
+}
+
+function renderInlineText(text: string): string {
+  return escapeHtml(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
 
 function slugifyHeading(text: string): string {
@@ -340,6 +358,24 @@ function readTemplate(cwd: string): string {
   return fs.readFileSync(templatePath, 'utf8');
 }
 
+function isInsideDirectory(child: string, parent: string): boolean {
+  const relative = path.relative(parent, child);
+  return relative === '' || Boolean(relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function validateSourceArtifactName(sourceArtifact: string): void {
+  if (
+    !sourceArtifact ||
+    sourceArtifact.includes('/') ||
+    sourceArtifact.includes('\\') ||
+    sourceArtifact.includes('..') ||
+    path.basename(sourceArtifact) !== sourceArtifact ||
+    !sourceArtifact.endsWith('.md')
+  ) {
+    throw new Error('sourceArtifact must be a basename ending with .md');
+  }
+}
+
 function renderSummaryHtml(items: string[]): string {
   if (items.length === 0) {
     return '<p>暂无摘要。</p>';
@@ -363,9 +399,7 @@ export function buildArtifactHtmlModel(input: ArtifactHtmlInput): ArtifactHtmlMo
   if (!input.feature) {
     throw new Error('缺少 feature 参数');
   }
-  if (!input.sourceArtifact.endsWith('.md')) {
-    throw new Error('sourceArtifact must end with .md');
-  }
+  validateSourceArtifactName(input.sourceArtifact);
 
   const headings: ArtifactHtmlTocItem[] = [];
   const title = input.markdown.match(/^#\s+(.+)$/m)?.[1]?.trim() || input.sourceArtifact.replace(/\.md$/, '');
@@ -409,9 +443,17 @@ export function renderArtifactHtml(input: ArtifactHtmlInput): string {
 
 export function writeArtifactHtmlCompanion(input: ArtifactHtmlInput & { featureDir?: string }): string {
   const cwd = input.cwd ?? process.cwd();
-  const featureDir = input.featureDir ?? path.join(cwd, '.boss', input.feature);
+  const bossDir = path.resolve(cwd, '.boss');
+  const featureDir = input.featureDir ? path.resolve(input.featureDir) : path.resolve(bossDir, input.feature);
+  if (!input.featureDir && !isInsideDirectory(featureDir, bossDir)) {
+    throw new Error('featureDir must stay inside cwd/.boss');
+  }
+  validateSourceArtifactName(input.sourceArtifact);
   const htmlArtifact = input.sourceArtifact.replace(/\.md$/, '.html');
-  const outputPath = path.join(featureDir, htmlArtifact);
+  const outputPath = path.resolve(featureDir, htmlArtifact);
+  if (path.dirname(outputPath) !== featureDir) {
+    throw new Error('artifact output path must stay directly inside featureDir');
+  }
   fs.mkdirSync(featureDir, { recursive: true });
   fs.writeFileSync(outputPath, renderArtifactHtml(input), 'utf8');
   return htmlArtifact;

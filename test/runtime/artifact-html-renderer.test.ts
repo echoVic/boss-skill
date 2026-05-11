@@ -5,7 +5,8 @@ import path from 'node:path';
 
 import {
   buildArtifactHtmlModel,
-  renderArtifactHtml
+  renderArtifactHtml,
+  writeArtifactHtmlCompanion
 } from '../../packages/boss-cli/src/runtime/report/render-artifact-html.js';
 
 describe('artifact html renderer', () => {
@@ -89,5 +90,82 @@ describe('artifact html renderer', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+  });
+
+  it('writes html companions directly under the feature directory', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-artifact-html-'));
+    try {
+      const artifact = writeArtifactHtmlCompanion({
+        cwd: tmpDir,
+        feature: 'checkout-flow',
+        sourceArtifact: 'prd.md',
+        markdown,
+        generatedAt: '2026-05-11T10:00:00.000Z'
+      });
+
+      expect(artifact).toBe('prd.html');
+      expect(fs.existsSync(path.join(tmpDir, '.boss', 'checkout-flow', 'prd.html'))).toBe(true);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects path-like source artifacts without writing outside the feature directory', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-artifact-html-'));
+    try {
+      expect(() =>
+        writeArtifactHtmlCompanion({
+          cwd: tmpDir,
+          feature: 'checkout-flow',
+          sourceArtifact: '../outside.md',
+          markdown,
+          generatedAt: '2026-05-11T10:00:00.000Z'
+        })
+      ).toThrow(/sourceArtifact/);
+      expect(fs.existsSync(path.join(tmpDir, '.boss', 'outside.html'))).toBe(false);
+      expect(fs.existsSync(path.join(tmpDir, 'outside.html'))).toBe(false);
+
+      expect(() =>
+        buildArtifactHtmlModel({
+          feature: 'checkout-flow',
+          sourceArtifact: 'docs/prd.md',
+          markdown,
+          generatedAt: '2026-05-11T10:00:00.000Z'
+        })
+      ).toThrow(/sourceArtifact/);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects default feature directories that escape cwd boss storage', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-artifact-html-'));
+    try {
+      expect(() =>
+        writeArtifactHtmlCompanion({
+          cwd: tmpDir,
+          feature: '../escape',
+          sourceArtifact: 'prd.md',
+          markdown,
+          generatedAt: '2026-05-11T10:00:00.000Z'
+        })
+      ).toThrow(/featureDir|feature/);
+      expect(fs.existsSync(path.join(tmpDir, 'escape', 'prd.html'))).toBe(false);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps bold markdown from rendering inside inline code spans', () => {
+    const model = buildArtifactHtmlModel({
+      feature: 'checkout-flow',
+      sourceArtifact: 'prd.md',
+      markdown: '代码 `**literal** <b>x</b>` and **bold**',
+      generatedAt: '2026-05-11T10:00:00.000Z'
+    });
+
+    expect(model.bodyHtml).toContain('<code>**literal** &lt;b&gt;x&lt;/b&gt;</code>');
+    expect(model.bodyHtml).toContain('<strong>bold</strong>');
+    expect(model.bodyHtml).not.toContain('<code><strong>');
   });
 });
