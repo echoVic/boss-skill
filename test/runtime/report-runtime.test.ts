@@ -350,6 +350,42 @@ describe('runtime report generation', () => {
     expect(updatedExecution.stages['1'].artifacts).toEqual(execution.stages['1'].artifacts);
   });
 
+  it('generate-summary rejects feature paths outside boss dir without writing reports', () => {
+    const escapedFeatureDir = path.join(tmpDir, 'escape');
+    const escapedMetaDir = path.join(escapedFeatureDir, '.meta');
+    fs.mkdirSync(escapedMetaDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'),
+      path.join(escapedMetaDir, 'execution.json')
+    );
+
+    const jsonResult = runRuntimeCommand('generate-summary', ['../escape', '--json']);
+    expect(jsonResult.status).not.toBe(0);
+    expect(`${jsonResult.stderr}\n${jsonResult.stdout}`).toMatch(/feature|特性|路径/);
+
+    const markdownResult = runRuntimeCommand('generate-summary', ['../escape']);
+    expect(markdownResult.status).not.toBe(0);
+    expect(`${markdownResult.stderr}\n${markdownResult.stdout}`).toMatch(/feature|特性|路径/);
+
+    const jsonDryRunResult = runRuntimeCommand('generate-summary', ['../escape', '--dry-run', '--json']);
+    expect(jsonDryRunResult.status).not.toBe(0);
+    expect(`${jsonDryRunResult.stderr}\n${jsonDryRunResult.stdout}`).toMatch(/feature|特性|路径/);
+
+    expect(fs.existsSync(path.join(escapedFeatureDir, 'summary-report.json'))).toBe(false);
+    expect(fs.existsSync(path.join(escapedFeatureDir, 'summary-report.md'))).toBe(false);
+    expect(fs.existsSync(path.join(escapedFeatureDir, 'summary-report.html'))).toBe(false);
+  });
+
+  it('generate-summary does not leave markdown behind when html rendering fails', () => {
+    fs.mkdirSync(path.join(tmpDir, '.boss', 'templates', 'artifact.html.template'), { recursive: true });
+
+    const result = runRuntimeCommand('generate-summary', ['test-feat']);
+
+    expect(result.status).not.toBe(0);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.md'))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.html'))).toBe(false);
+  });
+
   it('generate-summary runtime CLI emits markdown via stdout', () => {
     const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 

@@ -13,7 +13,7 @@ import {
 } from '../../cli/contract.js';
 import { runtimeCommandDescriptions } from '../../cli/registry.js';
 import { printRuntimeHelp } from './agent-command-utils.js';
-import { writeArtifactHtmlCompanion } from '../../runtime/report/render-artifact-html.js';
+import { renderArtifactHtml } from '../../runtime/report/render-artifact-html.js';
 import { renderJson } from '../../runtime/report/render-json.js';
 import { renderMarkdown } from '../../runtime/report/render-markdown.js';
 import { buildSummaryModel } from '../../runtime/report/summary-model.js';
@@ -78,6 +78,23 @@ function toFeatureNotFoundError(err: unknown, feature: string): unknown {
   return err;
 }
 
+function isInsideDirectory(child: string, parent: string): boolean {
+  const relative = path.relative(parent, child);
+  return relative === '' || Boolean(relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function resolveFeatureDir(cwd: string, feature: string): { featureDir: string; safeFeature: string } {
+  const bossDir = path.resolve(cwd, '.boss');
+  const featureDir = path.resolve(bossDir, feature);
+  if (featureDir === bossDir || !isInsideDirectory(featureDir, bossDir)) {
+    throw new Error(`无效 feature 路径: ${feature}`);
+  }
+  return {
+    featureDir,
+    safeFeature: path.relative(bossDir, featureDir).split(path.sep).join('/')
+  };
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
   const context = createCliContext(argv, { command: 'boss runtime generate-summary' });
   if (context.values.describe) {
@@ -95,16 +112,15 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     return 0;
   }
 
-  const format = parsed.json ? 'json' : 'markdown';
-  const relativeOutputPath = path.posix.join(
-    '.boss',
-    parsed.feature,
-    parsed.json ? 'summary-report.json' : 'summary-report.md'
-  );
-  const relativeHtmlOutputPath = path.posix.join('.boss', parsed.feature, 'summary-report.html');
-  const outputPath = path.join(cwd, '.boss', parsed.feature, parsed.json ? 'summary-report.json' : 'summary-report.md');
-
   try {
+    const { featureDir, safeFeature } = resolveFeatureDir(cwd, parsed.feature);
+    const format = parsed.json ? 'json' : 'markdown';
+    const outputArtifact = parsed.json ? 'summary-report.json' : 'summary-report.md';
+    const relativeOutputPath = `.boss/${safeFeature}/${outputArtifact}`;
+    const relativeHtmlOutputPath = `.boss/${safeFeature}/summary-report.html`;
+    const outputPath = path.join(featureDir, outputArtifact);
+    const htmlOutputPath = path.join(featureDir, 'summary-report.html');
+
     if (context.values.dryRun && !parsed.stdout) {
       const actions = [{ type: 'write_file', path: relativeOutputPath, format }];
       if (!parsed.json) {
@@ -122,7 +138,7 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       return 0;
     }
 
-    const model = buildSummaryModel(parsed.feature, { cwd });
+    const model = buildSummaryModel(safeFeature, { cwd });
     const rendered = parsed.json ? renderJson(model) : renderMarkdown(model);
 
     if (parsed.stdout) {
@@ -130,18 +146,21 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       return 0;
     }
 
-    fs.writeFileSync(outputPath, rendered, 'utf8');
     if (!parsed.json) {
-      writeArtifactHtmlCompanion({
+      const html = renderArtifactHtml({
         cwd,
-        feature: parsed.feature,
+        feature: safeFeature,
         sourceArtifact: 'summary-report.md',
         markdown: rendered
       });
+      fs.writeFileSync(outputPath, rendered, 'utf8');
+      fs.writeFileSync(htmlOutputPath, html, 'utf8');
+    } else {
+      fs.writeFileSync(outputPath, rendered, 'utf8');
     }
     writeOutput(
       {
-        feature: parsed.feature,
+        feature: safeFeature,
         outputPath: relativeOutputPath,
         ...(parsed.json ? {} : { htmlOutputPath: relativeHtmlOutputPath }),
         format
