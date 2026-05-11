@@ -19,7 +19,7 @@ import {
   toFeatureNotFoundError,
   writeActionPlan
 } from './agent-command-utils.js';
-import { recordArtifact } from '../../runtime/application/pipeline.js';
+import { recordArtifact, recordArtifacts } from '../../runtime/application/pipeline.js';
 import { writeArtifactHtmlCompanion } from '../../runtime/report/render-artifact-html.js';
 
 interface RecordArtifactInput {
@@ -86,6 +86,58 @@ function actionFor(input: RecordArtifactInput) {
   };
 }
 
+function isMarkdownArtifact(artifact: string): boolean {
+  return artifact.endsWith('.md');
+}
+
+function htmlArtifactFor(markdownArtifact: string): string {
+  return markdownArtifact.replace(/\.md$/, '.html');
+}
+
+function validateMarkdownArtifactName(artifact: string): void {
+  if (
+    !isMarkdownArtifact(artifact) ||
+    artifact !== path.basename(artifact) ||
+    artifact.includes('/') ||
+    artifact.includes('\\') ||
+    artifact.includes('..')
+  ) {
+    throw new Error(`无效 Markdown 产物: ${artifact}`);
+  }
+}
+
+function markdownPathFor(input: RecordArtifactInput, cwd: string): string {
+  validateMarkdownArtifactName(input.artifact);
+  const featureDir = path.resolve(cwd, '.boss', input.feature);
+  const markdownPath = path.resolve(featureDir, input.artifact);
+  if (path.dirname(markdownPath) !== featureDir) {
+    throw new Error(`无效 Markdown 产物: ${input.artifact}`);
+  }
+  return markdownPath;
+}
+
+function actionsFor(input: RecordArtifactInput) {
+  if (!isMarkdownArtifact(input.artifact)) {
+    return [actionFor(input)];
+  }
+  validateMarkdownArtifactName(input.artifact);
+  const htmlArtifact = htmlArtifactFor(input.artifact);
+  return [
+    actionFor(input),
+    {
+      type: 'write_file',
+      path: path.posix.join('.boss', input.feature, htmlArtifact),
+      format: 'html'
+    },
+    {
+      type: 'record_artifact',
+      feature: input.feature,
+      artifact: htmlArtifact,
+      stage: Number(input.stage)
+    }
+  ];
+}
+
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
   const context = createCliContext(argv, { command: 'boss runtime record-artifact' });
   if (context.values.describe) {
@@ -104,7 +156,7 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 
   const input = resolveInput(argv, context);
   if (context.values.dryRun) {
-    writeActionPlan([actionFor(input)], context, 'medium');
+    writeActionPlan(actionsFor(input), context, 'medium');
     return 0;
   }
 
@@ -113,15 +165,15 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
     let htmlPath: string | undefined;
     let markdown: string | undefined;
 
-    if (input.artifact.endsWith('.md')) {
-      const markdownPath = path.join(cwd, '.boss', input.feature, input.artifact);
+    if (isMarkdownArtifact(input.artifact)) {
+      const markdownPath = markdownPathFor(input, cwd);
       if (!fs.existsSync(markdownPath)) {
         throw new Error(`未找到 Markdown 产物: ${path.relative(cwd, markdownPath)}`);
       }
       markdown = fs.readFileSync(markdownPath, 'utf8');
     }
 
-    let execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
+    let execution;
 
     if (markdown !== undefined) {
       htmlArtifact = writeArtifactHtmlCompanion({
@@ -131,7 +183,9 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
         markdown
       });
       htmlPath = path.posix.join('.boss', input.feature, htmlArtifact);
-      execution = recordArtifact(input.feature, htmlArtifact, Number(input.stage), { cwd });
+      execution = recordArtifacts(input.feature, [input.artifact, htmlArtifact], Number(input.stage), { cwd });
+    } else {
+      execution = recordArtifact(input.feature, input.artifact, Number(input.stage), { cwd });
     }
 
     const stageKey = String(input.stage);

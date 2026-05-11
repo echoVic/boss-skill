@@ -420,6 +420,20 @@ export function recordArtifact(
 ): PipelineExecutionState {
   ensureFeatureName(feature);
   if (!artifact) throw new Error('缺少 artifact 参数');
+  return recordArtifacts(feature, [artifact], stage, { cwd });
+}
+
+export function recordArtifacts(
+  feature: string,
+  artifacts: string[],
+  stage: number | string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): PipelineExecutionState {
+  ensureFeatureName(feature);
+  if (artifacts.length === 0) throw new Error('缺少 artifact 参数');
+  for (const artifact of artifacts) {
+    if (!artifact) throw new Error('缺少 artifact 参数');
+  }
   if (stage == null) {
     throw new Error('缺少 stage 参数');
   }
@@ -437,22 +451,24 @@ export function recordArtifact(
     throw new Error(`未找到事件文件: ${path.relative(cwd, eventsFile)}`);
   }
 
-  const currentVersion = getArtifactVersion(feature, artifact, { cwd });
-  const newVersion = currentVersion + 1;
-  if (currentVersion >= 1) {
-    backupArtifactVersion(cwd, feature, artifact, currentVersion);
-  }
-
   const now = new Date().toISOString();
-  appendEvent(eventsFile, {
-    type: EVENT_TYPES.ARTIFACT_RECORDED,
-    timestamp: now,
-    data: {
-      artifact,
-      stage: stageNumber,
-      version: newVersion
+  for (const artifact of artifacts) {
+    const currentVersion = getArtifactVersion(feature, artifact, { cwd });
+    const newVersion = currentVersion + 1;
+    if (currentVersion >= 1) {
+      backupArtifactVersion(cwd, feature, artifact, currentVersion);
     }
-  });
+
+    appendEvent(eventsFile, {
+      type: EVENT_TYPES.ARTIFACT_RECORDED,
+      timestamp: now,
+      data: {
+        artifact,
+        stage: stageNumber,
+        version: newVersion
+      }
+    });
+  }
 
   const { state } = materializeState(feature, cwd);
   refreshMemory(feature, cwd);

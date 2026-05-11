@@ -255,6 +255,73 @@ describe('runtime report generation', () => {
     expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.html');
   });
 
+  it('record-artifact avoids stale records when html companion rendering fails', () => {
+    const prdPath = path.join(tmpDir, '.boss', 'test-feat', 'prd.md');
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    const executionPath = path.join(metaDir, 'execution.json');
+    const execution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    execution.stages['1'].artifacts = execution.stages['1'].artifacts.filter(
+      (artifact) => artifact !== 'prd.md' && artifact !== 'prd.html'
+    );
+    fs.writeFileSync(executionPath, JSON.stringify(execution, null, 2), 'utf8');
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2026-04-12T00:00:00.000Z',
+        data: { initialState: execution }
+      })}\n`,
+      'utf8'
+    );
+    fs.writeFileSync(prdPath, '# PRD\n\n## 摘要\n- ok\n', 'utf8');
+    fs.mkdirSync(path.join(tmpDir, '.boss', 'templates', 'artifact.html.template'), { recursive: true });
+
+    const result = runRuntimeCommand('record-artifact', ['test-feat', 'prd.md', '1']);
+
+    expect(result.status).not.toBe(0);
+    const updatedExecution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.md');
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('prd.html');
+  });
+
+  it('record-artifact rejects path-like markdown artifacts without recording stale artifacts', () => {
+    const metaDir = path.join(tmpDir, '.boss', 'test-feat', '.meta');
+    const executionPath = path.join(metaDir, 'execution.json');
+    const execution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    execution.stages['1'].artifacts = execution.stages['1'].artifacts.filter(
+      (artifact) => artifact !== '../prd.md' && artifact !== '../prd.html'
+    );
+    fs.writeFileSync(executionPath, JSON.stringify(execution, null, 2), 'utf8');
+    fs.writeFileSync(
+      path.join(metaDir, 'events.jsonl'),
+      `${JSON.stringify({
+        id: 1,
+        type: 'PipelineInitialized',
+        timestamp: '2026-04-12T00:00:00.000Z',
+        data: { initialState: execution }
+      })}\n`,
+      'utf8'
+    );
+    fs.writeFileSync(path.join(tmpDir, '.boss', 'prd.md'), '# Escaped PRD\n', 'utf8');
+
+    const result = runRuntimeCommand('record-artifact', ['test-feat', '../prd.md', '1']);
+
+    expect(result.status).not.toBe(0);
+    expect(`${result.stderr}\n${result.stdout}`).toMatch(/Markdown 产物|basename/);
+    const updatedExecution = JSON.parse(fs.readFileSync(executionPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('../prd.md');
+    expect(updatedExecution.stages['1'].artifacts).not.toContain('../prd.html');
+  });
+
   it('generate-summary runtime CLI emits markdown via stdout', () => {
     const result = runRuntimeCommand('generate-summary', ['test-feat', '--stdout']);
 
@@ -340,6 +407,60 @@ describe('runtime report generation', () => {
       requires_approval: false
     });
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.json'))).toBe(false);
+
+    const recordMarkdownResult = runRuntimeCommand('record-artifact', [
+      'test-feat',
+      'prd.md',
+      '1',
+      '--dry-run',
+      '--json'
+    ]);
+    expect(recordMarkdownResult.status).toBe(0);
+    expect(recordMarkdownResult.stderr).toBe('');
+    const recordMarkdownPayload = JSON.parse(recordMarkdownResult.stdout) as {
+      actions: Array<{ type: string; artifact?: string; path?: string; format?: string; stage?: number }>;
+    };
+    expect(recordMarkdownPayload.actions).toEqual([
+      {
+        type: 'record_artifact',
+        feature: 'test-feat',
+        artifact: 'prd.md',
+        stage: 1
+      },
+      {
+        type: 'write_file',
+        path: '.boss/test-feat/prd.html',
+        format: 'html'
+      },
+      {
+        type: 'record_artifact',
+        feature: 'test-feat',
+        artifact: 'prd.html',
+        stage: 1
+      }
+    ]);
+    expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'prd.html'))).toBe(false);
+
+    const recordJsonResult = runRuntimeCommand('record-artifact', [
+      'test-feat',
+      'ui-design.json',
+      '1',
+      '--dry-run',
+      '--json'
+    ]);
+    expect(recordJsonResult.status).toBe(0);
+    expect(recordJsonResult.stderr).toBe('');
+    const recordJsonPayload = JSON.parse(recordJsonResult.stdout) as {
+      actions: Array<{ type: string; artifact?: string }>;
+    };
+    expect(recordJsonPayload.actions).toEqual([
+      {
+        type: 'record_artifact',
+        feature: 'test-feat',
+        artifact: 'ui-design.json',
+        stage: 1
+      }
+    ]);
 
     const diagnosticsResult = runRuntimeCommand('render-diagnostics', ['test-feat', '--dry-run', '--json']);
     expect(diagnosticsResult.status).toBe(0);
