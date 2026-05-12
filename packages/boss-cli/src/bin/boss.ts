@@ -13,6 +13,7 @@ import {
   removeFirstPositional,
   runArtifactCommand,
   runDesignCommand,
+  runGateCommand,
   runHooksCommand,
   runPacksCommand,
   runProjectCommand,
@@ -45,6 +46,7 @@ function describeRoot() {
       'path',
       'status FEATURE',
       'continue FEATURE',
+      'gate FEATURE',
       'runtime COMMAND',
       'design preview',
       'project init',
@@ -93,6 +95,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case 'continue':
       return continueMain(commandArgv, { cwd: process.cwd() });
+
+    case 'gate':
+      return runGateCommand(commandArgv);
 
     case 'runtime':
       return runRuntimeCommand(commandArgv);

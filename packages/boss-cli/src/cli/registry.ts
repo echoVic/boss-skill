@@ -67,6 +67,17 @@ export const runtimeDescription: CommandDescription = {
   summary: 'Run Boss runtime commands'
 };
 
+export const gateDescription: CommandDescription = {
+  command: 'boss gate',
+  summary: 'Evaluate Boss quality gates',
+  parameters: [{ name: 'feature', type: 'string', required: true }],
+  options: [
+    ...runtimeBaseOptions,
+    { name: 'gate', type: 'string', default: 'gate1' }
+  ],
+  risk_tier: 'medium'
+};
+
 export const designDescription: CommandDescription = {
   ...rootDescription,
   command: 'boss design',
@@ -160,6 +171,23 @@ export const commandDescriptions: Record<string, CommandDescription> = {
     parameters: [{ name: 'feature', type: 'string', required: true }],
     options: topLevelDriverOptions,
     risk_tier: 'medium'
+  },
+  'boss gate': {
+    command: 'boss gate',
+    summary: 'Evaluate a Boss runtime gate',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: [
+      ...runtimeBaseOptions,
+      { name: 'gate', type: 'string', default: 'gate1' }
+    ],
+    risk_tier: 'medium'
+  },
+  'boss gate final': {
+    command: 'boss gate final',
+    summary: 'Evaluate final Boss completion gate',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: runtimeBaseOptions,
+    risk_tier: 'low'
   },
   'boss uninstall': {
     command: 'boss uninstall',

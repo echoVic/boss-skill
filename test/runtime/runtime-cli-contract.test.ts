@@ -359,7 +359,7 @@ describe('runtime CLI contract', () => {
     expect(payload.error.retryable).toBe(false);
   });
 
-  it('top-level multi-driver commands expose describe metadata', () => {
+  it('top-level multi-driver commands preserve existing describe metadata', () => {
     for (const args of [
       ['status', '--describe'],
       ['continue', '--describe']
@@ -370,6 +370,90 @@ describe('runtime CLI contract', () => {
       expect(payload.command).toContain(args[0]!);
       expect(payload.options.map((option) => option.name)).toEqual(['json', 'describe', 'driver']);
     }
+  });
+
+  it('boss gate commands expose scoped describe metadata', () => {
+    const gate = runBoss(['gate', '--describe']);
+    expect(gate.status).toBe(0);
+    const gatePayload = JSON.parse(gate.stdout) as { command: string; options: Array<{ name: string }> };
+    expect(gatePayload.command).toBe('boss gate');
+    expect(gatePayload.options.map((option) => option.name)).toEqual(['json', 'describe', 'gate']);
+
+    const final = runBoss(['gate', 'final', '--describe']);
+    expect(final.status).toBe(0);
+    const finalPayload = JSON.parse(final.stdout) as { command: string; options: Array<{ name: string }> };
+    expect(finalPayload.command).toBe('boss gate final');
+    expect(finalPayload.options.map((option) => option.name)).toEqual(['json', 'describe']);
+  });
+
+  it('boss gate final emits structured JSON and fails when required artifacts are missing', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['gate', 'final', 'test-feat']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      passed: boolean;
+      checks: Array<{ name: string; passed: boolean; missing?: string[] }>;
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.passed).toBe(false);
+    expect(payload.checks).toContainEqual(
+      expect.objectContaining({
+        name: 'required-artifacts',
+        passed: false,
+        missing: ['prd.md', 'architecture.md', 'tasks.md', 'qa-report.md']
+      })
+    );
+  });
+
+  it('boss gate final accepts global options before the final subcommand', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['gate', '--json', 'final', 'test-feat']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      checks: Array<{ name: string; missing?: string[] }>;
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.checks).toContainEqual(
+      expect.objectContaining({
+        name: 'required-artifacts',
+        missing: ['prd.md', 'architecture.md', 'tasks.md', 'qa-report.md']
+      })
+    );
+  });
+
+  it('boss gate rejects unadvertised dry-run instead of executing a real gate', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['gate', 'test-feat', '--dry-run', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { option?: string } } };
+    expect(payload.error.code).toBe('unknown_option');
+    expect(payload.error.input?.option).toBe('--dry-run');
+  });
+
+  it('boss gate missing feature returns a structured argument error', () => {
+    const result = runBoss(['gate', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { argument?: string } } };
+    expect(payload.error.code).toBe('missing_argument');
+    expect(payload.error.input?.argument).toBe('feature');
+  });
+
+  it('boss gate final missing feature returns a structured argument error', () => {
+    const result = runBoss(['gate', 'final', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { argument?: string } } };
+    expect(payload.error.code).toBe('missing_argument');
+    expect(payload.error.input?.argument).toBe('feature');
   });
 
   it('boss status returns driver capabilities and checkpoint fields', () => {

@@ -12,6 +12,7 @@ import { commandDescriptions, runtimeCommandDescriptions, runtimeCommandNames } 
 import {
   artifactDescription,
   designDescription,
+  gateDescription,
   hooksDescription,
   packsDescription,
   projectDescription,
@@ -20,6 +21,7 @@ import {
 import {
   ARTIFACT_USAGE,
   DESIGN_USAGE,
+  GATE_USAGE,
   HOOKS_USAGE,
   PACKS_USAGE,
   PROJECT_USAGE,
@@ -241,6 +243,32 @@ export async function runDesignCommand(argv: string[]): Promise<number> {
 
   const mod: CommandModule = await import('../commands/design/preview.js');
   return mod.main(commandArgv, { cwd: process.cwd() });
+}
+
+export async function runGateCommand(argv: string[]): Promise<number> {
+  const context = createCliContext(argv, { command: 'boss gate' });
+  const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(gateDescription, ['final']), context);
+    return 0;
+  }
+
+  if (argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(GATE_USAGE);
+    return 0;
+  }
+
+  const commandKey = subcommand === 'final' ? 'boss gate final' : 'boss gate';
+  const commandArgv = subcommand === 'final' ? removeFirstPositional(argv, subcommand) : argv;
+  const normalizedArgv = subcommand === 'final' ? [subcommand, ...commandArgv] : argv;
+  const commandContext = createCliContext(commandArgv, { command: commandKey });
+  if (commandContext.values.describe) {
+    writeDescription(describeRegisteredCommand(commandKey), commandContext);
+    return 0;
+  }
+
+  const mod: CommandModule = await import('../commands/gate/index.js');
+  return mod.main(normalizedArgv, { cwd: process.cwd() });
 }
 
 export async function runProjectCommand(argv: string[]): Promise<number> {
