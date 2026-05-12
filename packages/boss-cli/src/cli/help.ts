@@ -7,6 +7,7 @@ import {
   hooksDescription,
   packsDescription,
   projectDescription,
+  qaDescription,
   rootDescription,
   runtimeDescription
 } from './registry.js';
@@ -20,6 +21,7 @@ export const ROOT_USAGE = [
   '  status FEATURE',
   '  continue FEATURE',
   '  gate FEATURE',
+  '  qa attack FEATURE',
   '  runtime COMMAND',
   '  design preview',
   '  project init',
@@ -43,6 +45,13 @@ export const GATE_USAGE = [
   renderHelp(gateDescription, 'boss gate <feature> [--gate <gateName>]'),
   'Commands:',
   '  final',
+  ''
+].join('\n');
+
+export const QA_USAGE = [
+  renderHelp(qaDescription, 'boss qa attack <feature>'),
+  'Commands:',
+  '  attack',
   ''
 ].join('\n');
 

@@ -17,6 +17,7 @@ import {
   runHooksCommand,
   runPacksCommand,
   runProjectCommand,
+  runQaCommand,
   runRuntimeCommand,
   throwUnknownCommand,
   writeDescription
@@ -47,6 +48,7 @@ function describeRoot() {
       'status FEATURE',
       'continue FEATURE',
       'gate FEATURE',
+      'qa attack',
       'runtime COMMAND',
       'design preview',
       'project init',
@@ -98,6 +100,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case 'gate':
       return runGateCommand(commandArgv);
+
+    case 'qa':
+      return runQaCommand(commandArgv);
 
     case 'runtime':
       return runRuntimeCommand(commandArgv);

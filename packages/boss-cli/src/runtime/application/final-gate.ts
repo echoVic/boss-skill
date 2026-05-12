@@ -4,6 +4,7 @@ import {
   type ActiveAgentSummary,
   type FailureSummary
 } from './inspection.js';
+import { runQaAttack, type QaFinding } from './qa-attack.js';
 
 const REQUIRED_ARTIFACTS = ['prd.md', 'architecture.md', 'tasks.md', 'qa-report.md'] as const;
 
@@ -24,6 +25,11 @@ export type FinalGateCheck =
       name: 'no-recent-failures';
       passed: boolean;
       recentFailures: FailureSummary[];
+    }
+  | {
+      name: 'qa-attack-findings';
+      passed: boolean;
+      findings: QaFinding[];
     };
 
 export interface FinalGateResult {
@@ -50,6 +56,7 @@ export function evaluateFinalGate(
   const recorded = collectRecordedArtifacts(feature, cwd);
   const missing = REQUIRED_ARTIFACTS.filter((artifact) => !recorded.includes(artifact));
   const inspection = inspectPipeline(feature, { cwd });
+  const qaAttack = runQaAttack(feature, { cwd });
 
   const checks: FinalGateCheck[] = [
     {
@@ -68,6 +75,11 @@ export function evaluateFinalGate(
       name: 'no-recent-failures',
       passed: inspection.recentFailures.length === 0,
       recentFailures: inspection.recentFailures
+    },
+    {
+      name: 'qa-attack-findings',
+      passed: qaAttack.findings.filter((finding) => finding.status === 'open').length === 0,
+      findings: qaAttack.findings
     }
   ];
 

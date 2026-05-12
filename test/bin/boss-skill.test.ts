@@ -50,7 +50,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('exposes thin skill helper commands through the boss dispatcher', () => {
-    for (const command of ['project', 'artifact', 'packs', 'hooks']) {
+    for (const command of ['project', 'artifact', 'packs', 'hooks', 'qa']) {
       const result = runCli(['packages/boss-cli/dist/bin/boss.js', command, '--help']);
 
       expect(result.status).toBe(0);
@@ -118,6 +118,7 @@ describe('boss-skill dist bin', () => {
     expect(payload.command).toBe('boss');
     expect(payload.commands).toContain('project init');
     expect(payload.commands).toContain('runtime COMMAND');
+    expect(payload.commands).toContain('qa attack');
     expect(payload.options.map((option) => option.name)).toContain('json');
   });
 

@@ -74,4 +74,47 @@ describe('final gate runtime', () => {
       recentFailures: [{ scope: 'agent', stage: 3, agent: 'boss-qa', reason: 'tests failed' }]
     });
   });
+
+  it('fails when QA attack findings are open', () => {
+    recordArtifact('test-feat', 'prd.md', 1, { cwd: tmpDir });
+    recordArtifact('test-feat', 'architecture.md', 2, { cwd: tmpDir });
+    recordArtifact('test-feat', 'tasks.md', 2, { cwd: tmpDir });
+    recordArtifact('test-feat', 'qa-report.md', 4, { cwd: tmpDir });
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', 'test-feat', 'qa-report.md'),
+      [
+        '# QA Report',
+        '',
+        '## Verification',
+        '- npm test',
+        '',
+        '## Evidence',
+        '- Captured command output and artifact references.',
+        '',
+        '## Findings',
+        '- [open] critical: final evidence is incomplete',
+        '',
+        '## QA Attack Checks',
+        '- none',
+        '',
+        '## Known Failures',
+        '- none',
+        ''
+      ].join('\n')
+    );
+
+    const result = evaluateFinalGate('test-feat', { cwd: tmpDir });
+
+    expect(result.passed).toBe(false);
+    expect(result.checks.find((check) => check.name === 'qa-attack-findings')).toMatchObject({
+      passed: false,
+      findings: [
+        expect.objectContaining({
+          id: 'qa-report-open-critical',
+          severity: 'critical',
+          status: 'open'
+        })
+      ]
+    });
+  });
 });

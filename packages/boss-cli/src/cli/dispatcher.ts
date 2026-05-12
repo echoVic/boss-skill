@@ -16,6 +16,7 @@ import {
   hooksDescription,
   packsDescription,
   projectDescription,
+  qaDescription,
   runtimeDescription
 } from './registry.js';
 import {
@@ -25,6 +26,7 @@ import {
   HOOKS_USAGE,
   PACKS_USAGE,
   PROJECT_USAGE,
+  QA_USAGE,
   showRuntimeHelp
 } from './help.js';
 import { packageRootFromImportMeta } from '../infrastructure/paths.js';
@@ -268,6 +270,36 @@ export async function runGateCommand(argv: string[]): Promise<number> {
   }
 
   const mod: CommandModule = await import('../commands/gate/index.js');
+  return mod.main(normalizedArgv, { cwd: process.cwd() });
+}
+
+export async function runQaCommand(argv: string[]): Promise<number> {
+  const context = createCliContext(argv, { command: 'boss qa' });
+  const subcommand = context.positionals[0];
+  if (context.values.describe && context.positionals.length === 0) {
+    writeDescription(describeGroup(qaDescription, ['attack']), context);
+    return 0;
+  }
+
+  if (argv.includes('-h') || argv.includes('--help')) {
+    process.stdout.write(QA_USAGE);
+    return 0;
+  }
+
+  if (subcommand && subcommand !== 'attack') {
+    throwUnknownCommand('boss qa', subcommand);
+  }
+
+  const commandKey = subcommand === 'attack' ? 'boss qa attack' : 'boss qa';
+  const commandArgv = subcommand === 'attack' ? removeFirstPositional(argv, subcommand) : argv;
+  const normalizedArgv = subcommand === 'attack' ? [subcommand, ...commandArgv] : argv;
+  const commandContext = createCliContext(commandArgv, { command: commandKey });
+  if (commandContext.values.describe) {
+    writeDescription(describeRegisteredCommand(commandKey), commandContext);
+    return 0;
+  }
+
+  const mod: CommandModule = await import('../commands/qa/index.js');
   return mod.main(normalizedArgv, { cwd: process.cwd() });
 }
 

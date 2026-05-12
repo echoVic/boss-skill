@@ -78,6 +78,14 @@ export const gateDescription: CommandDescription = {
   risk_tier: 'medium'
 };
 
+export const qaDescription: CommandDescription = {
+  command: 'boss qa',
+  summary: 'Run Boss QA attack checks',
+  parameters: [{ name: 'command', type: 'string', required: false }],
+  options: runtimeBaseOptions,
+  risk_tier: 'medium'
+};
+
 export const designDescription: CommandDescription = {
   ...rootDescription,
   command: 'boss design',
@@ -188,6 +196,20 @@ export const commandDescriptions: Record<string, CommandDescription> = {
     parameters: [{ name: 'feature', type: 'string', required: true }],
     options: runtimeBaseOptions,
     risk_tier: 'low'
+  },
+  'boss qa': {
+    command: 'boss qa',
+    summary: 'Run Boss QA commands',
+    parameters: [{ name: 'command', type: 'string', required: false }],
+    options: runtimeBaseOptions,
+    risk_tier: 'medium'
+  },
+  'boss qa attack': {
+    command: 'boss qa attack',
+    summary: 'Run structured Boss QA attack checks',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: runtimeBaseOptions,
+    risk_tier: 'medium'
   },
   'boss uninstall': {
     command: 'boss uninstall',

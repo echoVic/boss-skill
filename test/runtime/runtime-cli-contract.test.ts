@@ -386,6 +386,20 @@ describe('runtime CLI contract', () => {
     expect(finalPayload.options.map((option) => option.name)).toEqual(['json', 'describe']);
   });
 
+  it('boss qa commands expose scoped describe metadata', () => {
+    const qa = runBoss(['qa', '--describe']);
+    expect(qa.status).toBe(0);
+    const qaPayload = JSON.parse(qa.stdout) as { command: string; options: Array<{ name: string }> };
+    expect(qaPayload.command).toBe('boss qa');
+    expect(qaPayload.options.map((option) => option.name)).toEqual(['json', 'describe']);
+
+    const attack = runBoss(['qa', 'attack', '--describe']);
+    expect(attack.status).toBe(0);
+    const attackPayload = JSON.parse(attack.stdout) as { command: string; options: Array<{ name: string }> };
+    expect(attackPayload.command).toBe('boss qa attack');
+    expect(attackPayload.options.map((option) => option.name)).toEqual(['json', 'describe']);
+  });
+
   it('boss gate final emits structured JSON and fails when required artifacts are missing', () => {
     initPipeline('test-feat', { cwd: tmpDir });
 
@@ -454,6 +468,77 @@ describe('runtime CLI contract', () => {
     const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { argument?: string } } };
     expect(payload.error.code).toBe('missing_argument');
     expect(payload.error.input?.argument).toBe('feature');
+  });
+
+  it('boss qa attack emits structured JSON and fails when QA evidence is missing', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['qa', 'attack', 'test-feat']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      status: string;
+      findings: Array<{ id: string; severity: string; status: string }>;
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.status).toBe('failed');
+    expect(payload.findings).toContainEqual(
+      expect.objectContaining({
+        id: 'qa-report-missing',
+        severity: 'critical',
+        status: 'open'
+      })
+    );
+  });
+
+  it('boss qa attack accepts global options before the attack subcommand', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['qa', '--json', 'attack', 'test-feat']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stdout) as { feature: string; findings: Array<{ id: string }> };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.findings).toContainEqual(expect.objectContaining({ id: 'qa-report-missing' }));
+  });
+
+  it('boss qa attack rejects unadvertised dry-run instead of ignoring it', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['qa', 'attack', 'test-feat', '--dry-run', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { option?: string } } };
+    expect(payload.error.code).toBe('unknown_option');
+    expect(payload.error.input?.option).toBe('--dry-run');
+  });
+
+  it('boss qa rejects unknown subcommands even when describe is present', () => {
+    const result = runBoss(['qa', 'madeup', '--describe']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { command?: string } } };
+    expect(payload.error.code).toBe('unknown_command');
+    expect(payload.error.input?.command).toBe('madeup');
+  });
+
+  it('boss qa attack missing feature returns a structured argument error', () => {
+    const result = runBoss(['qa', 'attack', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { argument?: string } } };
+    expect(payload.error.code).toBe('missing_argument');
+    expect(payload.error.input?.argument).toBe('feature');
+  });
+
+  it('boss qa attack missing execution state returns a structured feature error', () => {
+    const result = runBoss(['qa', 'attack', 'missing-feature', '--json']);
+
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; input?: { feature?: string } } };
+    expect(payload.error.code).toBe('feature_not_found');
+    expect(payload.error.input?.feature).toBe('missing-feature');
   });
 
   it('boss status returns driver capabilities and checkpoint fields', () => {
