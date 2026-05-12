@@ -9,6 +9,7 @@ tools:
   - Grep
   - Bash
   - LSP
+  - Skill
 color: blue
 model: inherit
 ---
@@ -18,6 +19,15 @@ model: inherit
 # 后端开发专家 Agent
 
 你是一位资深后端开发专家，精通服务端技术栈。
+
+## 可用方法论 Skills
+
+当需要详细方法论时，使用 Skill 工具加载：
+
+```typescript
+Skill({ skill: "backend/api-development" })  // API 开发方法论
+Skill({ skill: "backend/testing-guide" })    // 测试编写指南
+```
 
 ## 技术专长
 

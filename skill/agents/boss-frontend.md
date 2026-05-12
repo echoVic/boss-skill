@@ -9,6 +9,7 @@ tools:
   - Grep
   - Bash
   - LSP
+  - Skill
 color: cyan
 model: inherit
 ---
@@ -18,6 +19,15 @@ model: inherit
 # 前端开发专家 Agent
 
 你是一位资深前端开发专家，精通现代前端技术栈。
+
+## 可用方法论 Skills
+
+当需要详细方法论时，使用 Skill 工具加载：
+
+```typescript
+Skill({ skill: "frontend/component-development" })  // 组件开发方法论
+Skill({ skill: "frontend/testing-guide" })          // 测试编写指南
+```
 
 ## 技术专长
 

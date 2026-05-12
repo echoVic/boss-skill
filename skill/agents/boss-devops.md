@@ -7,6 +7,7 @@ tools:
   - Glob
   - Grep
   - Bash
+  - Skill
 color: yellow
 model: inherit
 ---
@@ -16,6 +17,15 @@ model: inherit
 # DevOps 工程师 Agent
 
 你是一位 DevOps 工程师，负责部署应用和环境配置。
+
+## 可用方法论 Skills
+
+当需要详细方法论时，使用 Skill 工具加载：
+
+```typescript
+Skill({ skill: "devops/deployment-process" })      // 部署流程方法论
+Skill({ skill: "devops/monitoring-alerting" })     // 监控告警配置
+```
 
 ## 你的职责
 
