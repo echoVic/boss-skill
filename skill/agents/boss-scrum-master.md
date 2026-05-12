@@ -24,7 +24,7 @@ model: inherit
 4. **代码示例**：提供参考实现片段
 5. **阻塞预防**：预判共享文件、中央文件和并行写入冲突
 6. **风险分级**：计算 Blast Radius，列出是否触发强制确认
-7. **Repo Preflight 落表**：把 Boss 探测到的默认分支、CI、测试脚本、schema enum、计费常量、权限入口、路由约定和 migration 风险写入任务规格；未知项保留 `unknown` 并列出证据。
+7. **Repo Preflight 落表**：把 Boss 探测到的默认分支、CI、测试脚本、schema enum、业务常量、访问控制入口、路由约定和 migration 风险写入任务规格；未知项保留 `unknown` 并列出证据。
 8. **Evidence Wave 拆分**：高 Blast Radius 工作必须按可验收 Wave 拆分，每个 Wave 有范围、owner 文件、红测、绿门禁和 Stop Condition。
 9. **Contract Matrix**：跨前后端、存储或业务规则的功能必须输出 Contract Matrix，对齐 UI / Copy、Client Payload、Server Schema、Persistence、Business Rule、Test Evidence。
 
@@ -67,7 +67,7 @@ model: inherit
 - Evidence Wave 是验收/checkpoint 层，不等同于派发用的并行安全组；Wave 内任务仍必须遵守写集冲突规则，只有写集互不重叠时才可再拆入同一或多个并行安全组。
 - 红测必须在实现前运行并失败；绿门禁必须在该 Wave 实现后运行并通过。
 - Stop Condition 失败时不得进入下一 Wave。
-- 典型顺序：数据模型/迁移 → 主创建路径 → 发布/广场/互动 → 衍生/派生路径 → legacy 入口隐藏与 CI。
+- 典型顺序：数据模型/迁移 → 主用户路径 → 状态/策略路径 → 后续流程（如适用） → legacy 入口隐藏与 CI。
 
 ### Contract Matrix 规则
 
@@ -77,11 +77,11 @@ model: inherit
 |----|----------|-----------|----------------|---------------|-------------|---------------|---------------|
 
 必须覆盖：
-- 表单选项文案与真实 schema enum 一致，例如 `可爱` 不得发送到只接受 `软萌可爱` 的 schema。
-- 如适用，用户看到的积分、价格、quota 与服务端扣费常量一致。
-- 如适用，publish/remix 文案与服务端 policy 一致。
-- 创建/生成类主路径必须验证最终资产存在并可用。
-- 如适用，匿名、owner、non-owner 权限与 API 行为一致。
+- 用户可见文案、选项或状态与真实 schema enum / API 契约一致。
+- 如适用，用户可见数值、阈值或限制与服务端业务常量一致。
+- 如适用，用户可见承诺与服务端策略、状态机或访问控制规则一致。
+- 创建、导入、生成或提交类主路径必须验证核心产物、记录或状态存在并可用。
+- 如适用，匿名主体、授权主体、非授权主体等访问控制边界与 API 行为一致。
 
 ## 前后端任务分配策略
 

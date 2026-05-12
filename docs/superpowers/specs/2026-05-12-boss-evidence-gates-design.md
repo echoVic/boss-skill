@@ -6,7 +6,7 @@ Boss currently produces convincing planning artifacts, but its delivery confiden
 
 - Core user paths can remain broken even when PRD, architecture, tasks, and QA documents exist.
 - TDD is present as a principle, but not enforced as a wave-level execution constraint.
-- Frontend payloads, backend schemas, user-facing copy, pricing, permissions, and publish/remix policy can drift apart.
+- Frontend payloads, backend schemas, user-facing copy, business constants, access rules, and state/policy promises can drift apart.
 - Existing project facts are sometimes guessed instead of discovered before planning.
 - High blast radius work can be planned as one large implementation batch.
 - QA can verify file presence and mocked tests without attacking realistic user journeys.
@@ -18,7 +18,7 @@ This design upgrades Boss at the skill, agent prompt, template, and final report
 
 1. Make repo fact discovery a mandatory preflight before implementation planning.
 2. Require high blast radius work to be split into independently verifiable waves.
-3. Add explicit cross-layer contract checks for UI, request payloads, schemas, business rules, permissions, pricing, and copy.
+3. Add explicit cross-layer contract checks for UI, request payloads, schemas, business rules, access rules, user-facing values, and copy.
 4. Make QA simulate core user paths with real browser/API/schema behavior instead of relying on mocked happy paths.
 5. Put executable evidence before document inventory in final Boss reports.
 
@@ -55,7 +55,7 @@ Before code-stage planning, Boss must gather project facts and pass them to down
 - Whether `npm test` or equivalent includes integration and E2E suites.
 - Existing E2E/browser tooling.
 - Schema validators and enum sources, such as Zod, Yup, OpenAPI, Prisma, Drizzle, Pydantic, or JSON Schema.
-- Pricing, credit, quota, or billing constants.
+- Business constants such as user-visible values, thresholds, limits, state transitions, access rules, or resource policies.
 - Auth and authorization entry points.
 - Route conventions, including async route params where relevant.
 - Migration files and any silent limit, truncation, backfill, or destructive operation.
@@ -73,7 +73,7 @@ Scrum Master must split high blast radius work into waves that can each pass the
 - Cross-layer contract checks relevant to the wave.
 - Stop conditions that block the next wave.
 
-High blast radius triggers include data model changes, migrations, auth/permission changes, pricing/credit logic, global state, route entry points, publish/remix policy, dependency or CI changes, and large write sets.
+High blast radius triggers include data model changes, migrations, auth/access changes, business constants, state/policy changes, global state, route entry points, dependency or CI changes, and large write sets.
 
 ### 3. Contract Matrix
 
@@ -84,11 +84,11 @@ High blast radius triggers include data model changes, migrations, auth/permissi
 
 Examples:
 
-- Form option label maps to a legal server enum value.
-- Displayed credit cost matches server charge.
-- Publish copy matches remix policy.
-- Create flow produces the promised generated asset.
-- Anonymous, owner, and non-owner permissions match API behavior.
+- User-visible option copy maps to a legal server enum value.
+- User-visible numeric values match server-side business constants.
+- User-facing state or policy copy matches server behavior.
+- A core flow produces the promised durable record, state, or output and that result is usable.
+- Anonymous, authorized, and unauthorized actors match API behavior.
 
 Rows without test evidence are not considered verified.
 
@@ -109,10 +109,10 @@ QA must verify as an attacker, not a paperwork reviewer. The QA report must incl
 - Real browser or API execution where the project supports it.
 - Actual request payload and actual server response for critical submits.
 - Schema validation evidence for payloads.
-- Authorization checks for anonymous users, owners, and non-owners.
+- Authorization checks for anonymous, authorized, and unauthorized actors.
 - Empty state, pagination beyond first page, old migrated data, and failure states.
-- User-visible numeric/copy consistency with backend business logic.
-- Generated asset existence and usability for creation/generation features.
+- User-visible value/copy consistency with backend business logic.
+- Promised record, state, or output existence and usability for core workflows.
 
 If the only available test mocks the critical backend response, QA must mark the core path unverified.
 

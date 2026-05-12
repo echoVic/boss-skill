@@ -64,10 +64,10 @@ E2E 测试最少覆盖：
 
 - **重放核心用户路径**：QA 必须证明核心用户路径真实可用，而不是只证明文件存在；每条路径记录步骤、证据、结果。
 - **捕获真实 payload 与服务端响应**：关键 submit 不能只 mock fetch；必须通过真实 server schema、共享 schema 或真实 API response 验证请求 payload、服务端响应和 schema 一致性。
-- **攻击认证授权**：覆盖 anonymous、owner、non-owner、expired session、privilege escalation，确认越权访问无法通过。
+- **攻击认证授权**：覆盖匿名主体、授权主体、非授权主体、过期登录态、越权提升，确认越权访问无法通过。
 - **攻击数据边界**：覆盖 empty state、第二页 pagination、旧数据 / old migrated data、illegal enum、long input、double submit。
-- **攻击业务一致性**：项目存在 credits/pricing/quota 时，核对界面展示与服务端 charge 一致；项目存在 publish/remix 时，核对文案与服务端 policy 一致。
-- **验证生成类功能**：项目存在生成类功能时，必须验证 final asset exists、displays、and can be used downstream。
+- **攻击业务一致性**：项目存在用户可见数值、阈值或限制时，核对界面展示与服务端业务常量一致；项目存在内容/资源策略时，核对文案与服务端策略一致。
+- **验证产物类功能**：项目存在创建、导入、生成或提交类主路径时，必须验证核心产物、记录或状态存在、可展示、可继续用于下游流程。
 - **Mock 证据边界**：关键路径只有 Mock 证据时，标记 `未验证`，不得记为通过。
 
 ---

@@ -37,8 +37,8 @@ dependencies: [prd, tech-review]
 | 测试脚本 | `unknown` | `package.json` / `pyproject.toml` / `go.mod` / 等价文件 |
 | Integration/E2E 覆盖 | `unknown` | 测试脚本与 E2E 配置 |
 | schema enum 来源 | `unknown` | Zod/Yup/OpenAPI/JSON Schema/Prisma/Drizzle/Pydantic |
-| 计费/积分常量 | `unknown` | pricing/credits/quota 常量文件 |
-| 权限入口 | `unknown` | auth middleware / policy / route guard |
+| 业务常量 | `unknown` | 用户可见数值、阈值、限制、状态流转、访问策略、内容/资源策略等常量或规则文件 |
+| 访问控制入口 | `unknown` | auth middleware / policy / route guard |
 | 路由约定 | `unknown` | framework route files and docs in repo |
 | migration 风险 | `unknown` | migration/backfill files |
 
@@ -254,7 +254,7 @@ graph TD
 |---------------|------|------------|------|--------|--------------------|----------------|
 | Wave 1：数据模型/迁移 | schema enum、migration、backfill 风险 | `src/schema/*`, `migrations/*` | `npm test -- tests/schema/feature.test.ts` 预期失败 | `npm test -- tests/schema/feature.test.ts` 通过 | CM-001 | migration 无法回滚、schema 与 UI enum 不一致时停止 |
 | Wave 2：主创建路径 | 主 API、业务规则、核心产物 | `src/api/main.ts`, `src/services/domain.ts` | `npm test -- tests/main-flow.test.ts` 预期失败 | `npm test -- tests/main-flow.test.ts` 通过 | CM-002 | 真实 payload、业务规则或核心产物任一项未验证时停止 |
-| Wave 3：派生/权限路径 | 如适用的 publish/remix policy、权限、列表展示 | `src/api/access.ts`, `src/pages/list.tsx` | `npm test -- tests/access-policy.test.ts` 预期失败 | `npm test -- tests/access-policy.test.ts` 通过 | CM-003 | 如适用，匿名、owner、non-owner 权限未对齐时停止 |
+| Wave 3：策略/访问路径 | 如适用的内容策略、资源策略、访问控制、列表展示 | `src/api/access.ts`, `src/pages/list.tsx` | `npm test -- tests/access-policy.test.ts` 预期失败 | `npm test -- tests/access-policy.test.ts` 通过 | CM-003 | 如适用，匿名主体、授权主体、非授权主体边界未对齐时停止 |
 
 > 高 Blast Radius 工作不得压成单个大 Wave。每个 Evidence Wave 都必须有范围、Owner 文件、红测、绿门禁、Contract Matrix 行和 Stop Condition；红测必须在实现前失败，绿门禁必须在实现后通过。Stop Condition 失败时不得进入下一 Wave。Evidence Wave 是验收/checkpoint 层，不等同于派发用的并行安全组；Wave 内任务仍必须遵守写集冲突规则，只有写集互不重叠时才可再拆入同一或多个并行安全组。
 
@@ -262,10 +262,10 @@ graph TD
 
 | ID | Contract | UI / Copy | Client Payload | Server Schema | Persistence | Business Rule | Test Evidence |
 |----|----------|-----------|----------------|---------------|-------------|---------------|---------------|
-| CM-001 | 表单枚举与 schema enum 一致 | 显示真实 schema 支持的选项文案 | payload 发送真实 enum 值 | Zod/OpenAPI/Prisma enum 接受同一值 | 保存同一 enum 值 | 禁止 UI 文案发送到不兼容 schema | `npm test -- tests/schema/enum-contract.test.ts` |
-| CM-002 | 如适用，积分、价格、quota 前后端一致 | 显示本次操作消耗的积分/额度 | payload 包含 plan/quantity 或等价字段 | 服务端校验 pricing/credits/quota 常量 | 账本或用量记录写入一致值 | 余额或额度不足时阻止，成功只扣一次 | `npm test -- tests/usage-contract.test.ts` |
+| CM-001 | 枚举与 schema enum 一致 | 显示真实 schema 支持的用户可见文案 | payload 发送真实 enum 值 | Zod/OpenAPI/Prisma enum 接受同一值 | 保存同一 enum 值 | 禁止 UI 文案发送到不兼容 schema | `npm test -- tests/schema/enum-contract.test.ts` |
+| CM-002 | 如适用，用户可见数值与服务端业务常量一致 | 显示本次操作的数值、阈值或限制 | payload 包含业务动作和必要数量字段 | 服务端校验对应业务常量 | 持久化记录写入一致值 | 不满足业务规则时阻止，成功时只应用一次 | `npm test -- tests/business-contract.test.ts` |
 
-> 跨前后端、存储或业务规则的功能必须保留 Contract Matrix，不得删除。必须覆盖 enum label/schema consistency；如项目适用，还必须覆盖 credits/pricing/quota consistency、publish/remix policy consistency、generated asset existence/usability、anonymous/owner/non-owner permissions。没有 Test Evidence 的行视为未验证。
+> 跨前后端、存储或业务规则的功能必须保留 Contract Matrix，不得删除。必须覆盖 enum label/schema consistency；如项目适用，还必须覆盖 user-visible value/business-constant consistency、policy/state consistency、artifact or state existence/usability、access-control boundary consistency。没有 Test Evidence 的行视为未验证。
 
 ---
 

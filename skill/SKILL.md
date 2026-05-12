@@ -38,7 +38,7 @@ user-invocable: true
 12. **任务写集冲突检测** — code 阶段派发前必须从 `tasks.md` 解析每个任务的文件输出列表；写集重叠、共享文件 owner 未定、或路径待确认的任务不得并行进入同一并行安全组
 13. **风险等级感知确认** — 确认节点不只按阶段固定触发；code 阶段若命中高 Blast Radius 的强制确认 trigger，必须先向用户确认再派发实现 Agent
 14. **协议 manifest / prefix 缓存** — 子代理共享协议通过 `agents/shared/protocol-manifest.md` 做短前缀复用和按需加载，避免每个 subagent 重复读取长协议全文
-15. **Repo Preflight 不可猜测** — code 阶段规划前必须探测默认分支、CI、测试脚本、schema enum、计费常量、权限入口、路由约定和 migration 风险；未知事实必须写 `unknown` 并列出已检查命令/文件，不得猜测。
+15. **Repo Preflight 不可猜测** — code 阶段规划前必须探测默认分支、CI、测试脚本、schema enum、业务常量、访问控制入口、路由约定和 migration 风险；未知事实必须写 `unknown` 并列出已检查命令/文件，不得猜测。
 16. **证据优先交付** — 每个 code 产物至少必须有一个可验收 Evidence Wave；高 Blast Radius 功能必须拆成多个更小 Evidence Wave。每个 Wave 有红测、绿门禁、Contract Matrix 和 Stop Condition；缺任一项不得派发 code Agent。
 
 ## 参数
@@ -138,7 +138,7 @@ Copy this checklist and check off items as you complete them:
     - [ ] 包管理与脚本：package manager、install 命令、test/build/lint/typecheck 脚本，确认 `npm test` 或等价命令是否包含 integration/E2E。
     - [ ] 测试工具：单元、集成、E2E、浏览器自动化工具。
     - [ ] 契约来源：真实 schema enum、OpenAPI/JSON Schema、Zod/Yup/Pydantic、Prisma/Drizzle、共享类型、API 路由。
-    - [ ] 业务常量：计费、积分、quota、权限策略、publish/remix policy。
+    - [ ] 业务常量：用户可见数值、阈值、限制、状态流转、访问策略、内容/资源策略等项目实际存在的业务规则。
     - [ ] 路由与迁移：框架路由约定（如 Next async params）、destructive migrations、silent pagination/row limits、irreversible backfills。
     - [ ] 对无法确认的事实写 `unknown`，并列出已检查命令或文件；不得猜测或用模板默认值代替。
   - [ ] 0.5 🔌 调用 `boss runtime register-plugins <feature>` 扫描 `.boss/plugins/` 目录，识别已注册插件，记录到 `execution.json` 的 `plugins` 字段

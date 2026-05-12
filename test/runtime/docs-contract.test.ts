@@ -49,6 +49,14 @@ const techReviewTemplate = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'templates', 'tech-review.md.template'),
   'utf8'
 );
+const evidenceGatesDesign = fs.readFileSync(
+  path.join(REPO_ROOT, 'docs', 'superpowers', 'specs', '2026-05-12-boss-evidence-gates-design.md'),
+  'utf8'
+);
+const evidenceGatesPlan = fs.readFileSync(
+  path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-evidence-gates.md'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -236,7 +244,7 @@ describe('boss evidence gates contract', () => {
       expect(doc).toContain('CI');
       expect(doc).toContain('测试脚本');
       expect(doc).toContain('schema enum');
-      expect(doc).toContain('计费');
+      expect(doc).toContain('业务常量');
       expect(doc).toContain('migration');
       expect(doc).toContain('unknown');
     }
@@ -271,8 +279,43 @@ describe('boss evidence gates contract', () => {
       expect(doc).toContain('Server Schema');
       expect(doc).toContain('Business Rule');
       expect(doc).toContain('Test Evidence');
-      expect(doc).toContain('积分');
-      expect(doc).toContain('remix');
+      expect(doc).toContain('用户可见文案');
+      expect(doc).toContain('业务规则');
+    }
+  });
+
+  it('keeps evidence-gate examples business-agnostic', () => {
+    const businessSpecificExamples = [
+      '可爱',
+      '软萌可爱',
+      '积分',
+      '计费',
+      '扣费',
+      '价格',
+      'quota',
+      '配额',
+      '额度',
+      'publish/remix',
+      'generated asset',
+      '生成资产',
+      '最终资产',
+      'ledger',
+      'non-owner',
+      'owner/non-owner',
+    ];
+
+    for (const doc of [
+      scrumMaster,
+      tasksTemplate,
+      qaAgent,
+      qaTemplate,
+      testingStandards,
+      evidenceGatesDesign,
+      evidenceGatesPlan,
+    ]) {
+      for (const example of businessSpecificExamples) {
+        expect(doc).not.toContain(example);
+      }
     }
   });
 
