@@ -174,6 +174,20 @@ describe('multi-driver runtime documentation contract', () => {
     expect(multiDriverRuntimePlan).toContain('execution.json');
     expect(skill).not.toContain('Codex-only');
   });
+
+  it('documents Platform Driver mode in the Boss skill itself', () => {
+    expect(skill).toContain('Platform Driver 模式');
+    expect(skill).toContain('Runtime Core');
+    expect(skill).toContain('boss status <feature>');
+    expect(skill).toContain('boss continue <feature>');
+    expect(skill).toContain('boss gate <feature>');
+    expect(skill).toContain('boss gate final <feature>');
+    expect(skill).toContain('boss qa attack <feature>');
+    expect(skill).toContain('CHECKPOINT_REQUIRED');
+    expect(skill).toContain('不得替代 hooks');
+    expect(skill).toContain('Codex 适配是 additive');
+    expect(skill).toContain('不得删除或弱化 Claude Code hooks');
+  });
 });
 
 describe('subagent orchestration safety contract', () => {

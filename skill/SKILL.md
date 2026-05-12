@@ -257,6 +257,11 @@ Copy this checklist and check off items as you complete them:
 | `boss runtime inspect-progress` | 实时进度监控（读取 progress.jsonl） |
 | `boss runtime record-feedback` | Agent 间反馈循环记录（REVISION_NEEDED） |
 | `boss design preview <feature>` | 预览 `.boss/<feature>/ui-design.json` 可渲染设计产物 |
+| `boss status <feature>` | 读取 Runtime Core 状态并输出下一 checkpoint |
+| `boss continue <feature>` | 重新读取状态并输出当前 checkpoint/阻塞原因 |
+| `boss gate <feature>` | 运行或汇总当前阶段/波次门禁 |
+| `boss gate final <feature>` | 最终回答前统一完成门禁 |
+| `boss qa attack <feature>` | 生成结构化 QA findings |
 | `boss runtime evaluate-gates <feature> gate0` | Gate 0：代码质量（编译 + Lint） |
 | `boss runtime evaluate-gates <feature> gate1` | Gate 1：测试门禁（覆盖率 + 通过率 + E2E） |
 | `boss runtime evaluate-gates <feature> gate2` | Gate 2：性能门禁（Lighthouse + API P99） |
@@ -274,6 +279,29 @@ Pack 选择与插件生命周期都应进入事件流，而不是停留在 shell
 - `packages/boss-cli/src/runtime/report/summary-model.ts` 从 `execution.json` 构建统一 summary model。
 - `packages/boss-cli/src/runtime/report/render-markdown.ts` / `packages/boss-cli/src/runtime/report/render-json.ts` 负责不同输出格式。
 - `packages/boss-cli/src/runtime/report/render-html.ts` 负责最小 HTML 诊断页。
+
+## Platform Driver 模式
+
+Boss 使用统一 Runtime Core 和多个 Platform Driver。所有平台都以 `.boss/<feature>/.meta/execution.json` 为状态源；不要从聊天上下文推断流水线状态。
+
+### Claude Code Driver
+
+- 继续优先使用 hooks、artifact guard、stop guard、subagent 协议和现有 Skill 流程。
+- `boss status <feature>`、`boss gate final <feature>` 可作为可观测性和兜底命令，但不得替代 hooks。
+- hooks 可用时，checkpoint 文本只是透明提示，不是唯一约束来源。
+
+### Codex Driver
+
+- 每轮先运行 `boss status <feature> --json --driver codex`。
+- 只执行 Runtime Core 返回的单个下一步或 checkpoint。
+- 看到 `CHECKPOINT_REQUIRED` 时，必须运行 `requiredChecks` 并读取结果，再调用 `boss continue <feature> --driver codex` 重新获取当前 checkpoint/阻塞原因。
+- 最终回答前必须运行 `boss gate final <feature>` 并确认通过；需要攻击式 QA 时先运行 `boss qa attack <feature>`。
+
+### Shared Rules
+
+- Runtime Core 负责状态、waves、gates、QA findings 和 final evidence。
+- Platform Driver 只决定 enforcement 方式，不改变状态语义。
+- Codex 适配是 additive，不得删除或弱化 Claude Code hooks。
 
 ## Claude Code Hooks（Agent 生命周期集成）
 
