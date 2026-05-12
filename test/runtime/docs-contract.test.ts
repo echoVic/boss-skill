@@ -57,6 +57,10 @@ const evidenceGatesPlan = fs.readFileSync(
   path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-evidence-gates.md'),
   'utf8'
 );
+const multiDriverRuntimePlan = fs.readFileSync(
+  path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-multi-driver-runtime.md'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -157,6 +161,18 @@ describe('boss natural language command contract', () => {
     expect(bossCommand).toContain('约束类输入不会启动新流水线');
     expect(bossCommand).toContain('当前 Boss Skill 的 `SKILL.md`');
     expect(bossCommand).not.toContain('skills/boss/SKILL.md');
+  });
+});
+
+describe('multi-driver runtime documentation contract', () => {
+  it('documents multi-driver runtime without weakening Claude Code hooks', () => {
+    expect(multiDriverRuntimePlan).toContain('Claude Code');
+    expect(multiDriverRuntimePlan).toContain('Codex');
+    expect(multiDriverRuntimePlan).toContain('platform-neutral');
+    expect(multiDriverRuntimePlan).toContain('hooks');
+    expect(multiDriverRuntimePlan).toContain('CHECKPOINT_REQUIRED');
+    expect(multiDriverRuntimePlan).toContain('execution.json');
+    expect(skill).not.toContain('Codex-only');
   });
 });
 

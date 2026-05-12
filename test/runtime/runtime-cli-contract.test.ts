@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -13,6 +13,7 @@ import {
   updateAgent,
   updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { main as continueMain } from '../../packages/boss-cli/src/commands/continue.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -42,6 +43,13 @@ describe('runtime CLI contract', () => {
 
   function runCli(name: string, args: string[]) {
     return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], {
+      cwd: tmpDir,
+      encoding: 'utf8'
+    });
+  }
+
+  function runBoss(args: string[]) {
+    return spawnSync(process.execPath, [BOSS_BIN, ...args], {
       cwd: tmpDir,
       encoding: 'utf8'
     });
@@ -349,6 +357,92 @@ describe('runtime CLI contract', () => {
     const payload = JSON.parse(result.stderr) as { error: { code: string; retryable: boolean } };
     expect(payload.error.code).toBe('unknown_option');
     expect(payload.error.retryable).toBe(false);
+  });
+
+  it('top-level multi-driver commands expose describe metadata', () => {
+    for (const args of [
+      ['status', '--describe'],
+      ['continue', '--describe']
+    ]) {
+      const result = runBoss(args);
+      expect(result.status, `${args.join(' ')} --describe`).toBe(0);
+      const payload = JSON.parse(result.stdout) as { command: string; options: Array<{ name: string }> };
+      expect(payload.command).toContain(args[0]!);
+      expect(payload.options.map((option) => option.name)).toEqual(['json', 'describe', 'driver']);
+    }
+  });
+
+  it('boss status returns driver capabilities and checkpoint fields', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['status', 'test-feat', '--json']);
+    expect(result.status).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      driver: { name: string; hooks: boolean };
+      capabilities: { checkpointPrompt: boolean; hooks: boolean };
+      currentStage: { id: number; status: string } | null;
+      readyArtifacts: string[];
+      checkpoint: { checkpointRequired: boolean; continueCommand: string };
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.driver.name).toBe('generic');
+    expect(payload.capabilities).toMatchObject({ checkpointPrompt: true });
+    expect(payload.readyArtifacts).toContain('prd.md');
+    expect(payload.checkpoint.continueCommand).toBe('boss continue test-feat');
+  });
+
+  it('boss continue returns structured json by default in non-tty mode', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    updateStage('test-feat', 3, 'running', { cwd: tmpDir });
+
+    const result = runBoss(['continue', 'test-feat']);
+    expect(result.status).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      checkpoint: { checkpointRequired: boolean; requiredChecks: Array<{ command: string }> };
+    };
+    expect(payload.feature).toBe('test-feat');
+    expect(payload.checkpoint.checkpointRequired).toBe(true);
+    expect(payload.checkpoint.requiredChecks.map((check) => check.command)).toEqual([
+      'npm run typecheck',
+      'npm test'
+    ]);
+  });
+
+  it('boss continue prints checkpoint-required human output with stage 3 checks in tty mode', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+    updateStage('test-feat', 3, 'running', { cwd: tmpDir });
+
+    const originalIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { configurable: true, value: true });
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    try {
+      const status = continueMain(['test-feat'], { cwd: tmpDir });
+      expect(status).toBe(0);
+      const output = writeSpy.mock.calls.map((call) => String(call[0])).join('');
+      expect(output).toContain('CHECKPOINT_REQUIRED');
+      expect(output).toContain('Feature: test-feat');
+      expect(output).toContain('Required checks:');
+      expect(output).toContain('- npm run typecheck');
+      expect(output).toContain('- npm test');
+      expect(output).toContain('Continue: boss continue test-feat');
+    } finally {
+      writeSpy.mockRestore();
+      Object.defineProperty(process.stdout, 'isTTY', { configurable: true, value: originalIsTTY });
+    }
+  });
+
+  it('top-level multi-driver commands reject unadvertised contract options', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const result = runBoss(['status', 'test-feat', '--dry-run', '--json']);
+    expect(result.status).toBe(1);
+    const payload = JSON.parse(result.stderr) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe('unknown_option');
+    expect(payload.error.message).toContain('--dry-run');
   });
 
   it('read-only runtime commands default to json in non-tty mode and support fields/limit', () => {

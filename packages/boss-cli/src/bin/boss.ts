@@ -3,7 +3,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { main as continueMain } from '../commands/continue.js';
 import { installMain } from '../commands/install/index.js';
+import { main as statusMain } from '../commands/status.js';
 import { createCliContext, describeCommand, runMain } from '../cli/contract.js';
 import { runtimeCommandNames } from '../cli/registry.js';
 import {
@@ -41,6 +43,8 @@ function describeRoot() {
       'install',
       'uninstall',
       'path',
+      'status FEATURE',
+      'continue FEATURE',
       'runtime COMMAND',
       'design preview',
       'project init',
@@ -83,6 +87,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
         return 0;
       }
       return installMain(argv);
+
+    case 'status':
+      return statusMain(commandArgv, { cwd: process.cwd() });
+
+    case 'continue':
+      return continueMain(commandArgv, { cwd: process.cwd() });
 
     case 'runtime':
       return runRuntimeCommand(commandArgv);

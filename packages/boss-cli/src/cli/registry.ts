@@ -15,6 +15,11 @@ export const runtimeBaseOptions = [
   { name: 'describe', type: 'boolean' as const, default: false }
 ];
 
+export const topLevelDriverOptions = [
+  ...runtimeBaseOptions,
+  { name: 'driver', type: 'string' as const, default: 'generic' }
+];
+
 export const runtimeFieldOptions = [
   ...runtimeBaseOptions,
   { name: 'fields', type: 'string' as const }
@@ -140,6 +145,20 @@ export const commandDescriptions: Record<string, CommandDescription> = {
     summary: 'Install the thin Boss skill bundle into detected agents',
     parameters: [],
     options: commonOptions,
+    risk_tier: 'medium'
+  },
+  'boss status': {
+    command: 'boss status',
+    summary: 'Inspect Boss pipeline state and next checkpoint',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: topLevelDriverOptions,
+    risk_tier: 'low'
+  },
+  'boss continue': {
+    command: 'boss continue',
+    summary: 'Advance a Boss pipeline to the next safe checkpoint',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: topLevelDriverOptions,
     risk_tier: 'medium'
   },
   'boss uninstall': {

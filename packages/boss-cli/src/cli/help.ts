@@ -16,6 +16,8 @@ export const ROOT_USAGE = [
   '  install',
   '  uninstall',
   '  path',
+  '  status FEATURE',
+  '  continue FEATURE',
   '  runtime COMMAND',
   '  design preview',
   '  project init',
