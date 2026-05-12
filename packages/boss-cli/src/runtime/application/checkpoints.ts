@@ -1,5 +1,6 @@
 import { inspectPipeline, type CurrentStageSummary } from './inspection.js';
 import { resolveDriverCapabilities, type BossDriverCapabilities } from './drivers.js';
+import { readWaves, type EvidenceWave } from './waves.js';
 
 export interface RequiredCheck {
   id: string;
@@ -21,7 +22,7 @@ export interface BossStatus {
   driver: BossDriverCapabilities;
   capabilities: Omit<BossDriverCapabilities, 'name'>;
   currentStage: CurrentStageSummary | null;
-  currentWave: null;
+  currentWave: EvidenceWave | null;
   readyArtifacts: string[];
   blockedReason: string | null;
   checkpoint: BossCheckpoint;
@@ -47,6 +48,7 @@ export function buildBossStatus(
   const requiredChecks = defaultRequiredChecks(inspection.currentStage);
   const blockedReason = inspection.recentFailures[0]?.reason || null;
   const checkpointRequired = requiredChecks.length > 0 || blockedReason !== null;
+  const currentWave = readWaves(feature, { cwd }).find((wave) => wave.status !== 'completed') ?? null;
 
   return {
     feature,
@@ -59,7 +61,7 @@ export function buildBossStatus(
       subagents: driverCapabilities.subagents
     },
     currentStage: inspection.currentStage,
-    currentWave: null,
+    currentWave,
     readyArtifacts: inspection.readyArtifacts,
     blockedReason,
     checkpoint: {
