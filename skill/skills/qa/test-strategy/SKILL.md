@@ -50,9 +50,10 @@ triggers:
 - **重放核心用户路径**：证明核心用户路径真实可用
 - **捕获真实 payload 与服务端响应**：验证请求 payload、服务端响应和 schema 一致性
 - **攻击认证授权**：覆盖匿名、授权、非授权、过期、越权
-- **攻击数据边界**：empty state、pagination、旧数据、illegal enum、long input、double submit
+- **攻击数据边界**：empty state、pagination、第二页、旧数据、illegal enum、long input、double submit
 - **攻击业务一致性**：核对界面展示与服务端业务常量一致
 - **验证产物类功能**：验证核心产物、记录或状态存在、可展示、可继续用于下游流程
+- **标记未验证路径**：若核心用户路径只由 Mock 或桩数据证明，必须标记为未验证，不能作为发布证据
 
 ## 安全测试
 

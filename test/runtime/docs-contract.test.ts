@@ -15,6 +15,10 @@ const tasksTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates',
 const scrumMaster = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-scrum-master.md'), 'utf8');
 const qaTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'qa-report.md.template'), 'utf8');
 const qaAgent = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-qa.md'), 'utf8');
+const qaTestStrategy = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'skills', 'qa', 'test-strategy', 'SKILL.md'),
+  'utf8'
+);
 const testingStandards = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'references', 'testing-standards.md'),
   'utf8'
@@ -149,6 +153,33 @@ describe('package metadata', () => {
     expect(skill).toContain('.boss/plugins/');
     expect(skill).not.toContain('harness/plugins/');
     expect(contributing).toContain('packages/boss-cli/assets/');
+  });
+});
+
+describe('agent methodology skill contract', () => {
+  it('references only discoverable bundled skills from agent prompts', () => {
+    const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
+    const agentFiles = fs
+      .readdirSync(agentsDir)
+      .filter((file) => file.startsWith('boss-') && file.endsWith('.md'));
+    const unresolved: string[] = [];
+
+    for (const file of agentFiles) {
+      const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
+      const matches = content.matchAll(/skill:\s*["']([^"']+)["']/g);
+
+      for (const match of matches) {
+        const skillName = match[1];
+        if (!skillName.includes('/')) continue;
+
+        const skillPath = path.join(REPO_ROOT, 'skill', 'skills', skillName, 'SKILL.md');
+        if (!fs.existsSync(skillPath)) {
+          unresolved.push(`${file}: ${skillName}`);
+        }
+      }
+    }
+
+    expect(unresolved).toEqual([]);
   });
 });
 
@@ -350,7 +381,9 @@ describe('boss evidence gates contract', () => {
   });
 
   it('requires QA to replay real core paths and mark mocked critical paths unverified', () => {
-    for (const doc of [qaAgent, qaTemplate]) {
+    const qaMethodology = `${qaAgent}\n${qaTestStrategy}`;
+
+    for (const doc of [qaMethodology, qaTemplate]) {
       expect(doc).toContain('核心用户路径');
       expect(doc).toContain('真实 payload');
       expect(doc).toContain('服务端响应');
