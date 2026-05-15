@@ -9,6 +9,10 @@ tools:
   - Skill
 color: orange
 model: inherit
+available_skills:
+  required:
+    - tech-lead/code-review
+    - tech-lead/technical-standards
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -22,8 +26,8 @@ model: inherit
 当需要详细方法论时，使用 Skill 工具加载：
 
 ```typescript
-Skill({ skill: "tech-lead/code-review" })          // 代码审查方法论
-Skill({ skill: "tech-lead/technical-standards" })  // 技术标准制定
+Skill(skill: "tech-lead/code-review")          // 代码审查方法论
+Skill(skill: "tech-lead/technical-standards")  // 技术标准制定
 ```
 
 ## 你的核心职责

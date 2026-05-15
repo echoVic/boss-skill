@@ -12,6 +12,10 @@ tools:
   - Skill
 color: blue
 model: inherit
+available_skills:
+  required:
+    - backend/api-development
+    - backend/testing-guide
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议、技术适配协议）
@@ -25,8 +29,8 @@ model: inherit
 当需要详细方法论时，使用 Skill 工具加载：
 
 ```typescript
-Skill({ skill: "backend/api-development" })  // API 开发方法论
-Skill({ skill: "backend/testing-guide" })    // 测试编写指南
+Skill(skill: "backend/api-development")  // API 开发方法论
+Skill(skill: "backend/testing-guide")    // 测试编写指南
 ```
 
 ## 技术专长

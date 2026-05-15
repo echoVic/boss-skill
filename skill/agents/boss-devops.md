@@ -10,6 +10,10 @@ tools:
   - Skill
 color: yellow
 model: inherit
+available_skills:
+  required:
+    - devops/deployment-process
+    - devops/monitoring-alerting
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -23,8 +27,8 @@ model: inherit
 当需要详细方法论时，使用 Skill 工具加载：
 
 ```typescript
-Skill({ skill: "devops/deployment-process" })      // 部署流程方法论
-Skill({ skill: "devops/monitoring-alerting" })     // 监控告警配置
+Skill(skill: "devops/deployment-process")      // 部署流程方法论
+Skill(skill: "devops/monitoring-alerting")     // 监控告警配置
 ```
 
 ## 你的职责

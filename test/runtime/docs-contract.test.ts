@@ -157,29 +157,98 @@ describe('package metadata', () => {
 });
 
 describe('agent methodology skill contract', () => {
-  it('references only discoverable bundled skills from agent prompts', () => {
-    const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
-    const agentFiles = fs
-      .readdirSync(agentsDir)
-      .filter((file) => file.startsWith('boss-') && file.endsWith('.md'));
-    const unresolved: string[] = [];
+  const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
+  const agentFiles = fs
+    .readdirSync(agentsDir)
+    .filter((file) => file.startsWith('boss-') && file.endsWith('.md'));
+
+  function getAvailableSkills(content: string): Set<string> {
+    const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
+    const skills = new Set<string>();
+    let inAvailableSkills = false;
+
+    for (const line of frontmatter?.[1].split('\n') ?? []) {
+      if (line === 'available_skills:') {
+        inAvailableSkills = true;
+        continue;
+      }
+
+      if (inAvailableSkills && /^[a-zA-Z_-]+:/.test(line)) {
+        break;
+      }
+
+      const skill = line.match(/^\s*-\s+([a-z0-9-]+\/[a-z0-9-]+)/)?.[1];
+      if (inAvailableSkills && skill) {
+        skills.add(skill);
+      }
+    }
+
+    return skills;
+  }
+
+  function getReferencedSkills(content: string): Set<string> {
+    return new Set(
+      Array.from(content.matchAll(/Skill\(\s*skill:\s*["']([^"']+)["']/g))
+        .map((match) => match[1])
+        .filter((skillName) => skillName.includes('/'))
+    );
+  }
+
+  it('uses the canonical Skill call form in agent prompts', () => {
+    const legacyCalls: string[] = [];
 
     for (const file of agentFiles) {
       const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
-      const matches = content.matchAll(/skill:\s*["']([^"']+)["']/g);
+      if (content.includes('Skill({')) {
+        legacyCalls.push(file);
+      }
+    }
 
-      for (const match of matches) {
-        const skillName = match[1];
-        if (!skillName.includes('/')) continue;
+    expect(legacyCalls).toEqual([]);
+  });
 
+  it('keeps agent skill references discoverable and declared', () => {
+    const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
+    const unresolved: string[] = [];
+    const undeclared: string[] = [];
+    const declaredMissing: string[] = [];
+
+    for (const file of agentFiles) {
+      const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
+      const availableSkills = getAvailableSkills(content);
+      const referencedSkills = getReferencedSkills(content);
+
+      for (const skillName of new Set([...availableSkills, ...referencedSkills])) {
         const skillPath = path.join(REPO_ROOT, 'skill', 'skills', skillName, 'SKILL.md');
         if (!fs.existsSync(skillPath)) {
           unresolved.push(`${file}: ${skillName}`);
         }
       }
+
+      for (const skillName of referencedSkills) {
+        if (!availableSkills.has(skillName)) {
+          undeclared.push(`${file}: ${skillName}`);
+        }
+      }
+
+      for (const skillName of availableSkills) {
+        if (!referencedSkills.has(skillName)) {
+          declaredMissing.push(`${file}: ${skillName}`);
+        }
+      }
     }
 
     expect(unresolved).toEqual([]);
+    expect(undeclared).toEqual([]);
+    expect(declaredMissing).toEqual([]);
+  });
+
+  it('documents the bundled skill layout and forbids flat methodology files', () => {
+    const skillsReadme = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'skills', 'README.md'), 'utf8');
+
+    expect(skillsReadme).toContain('skill/skills/<domain>/<name>/SKILL.md');
+    expect(skillsReadme).toContain('不要新增平铺');
+    expect(skillsReadme).toContain('available_skills');
   });
 });
 

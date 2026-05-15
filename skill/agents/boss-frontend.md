@@ -12,6 +12,10 @@ tools:
   - Skill
 color: cyan
 model: inherit
+available_skills:
+  required:
+    - frontend/component-development
+    - frontend/testing-guide
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议、技术适配协议）
@@ -25,8 +29,8 @@ model: inherit
 当需要详细方法论时，使用 Skill 工具加载：
 
 ```typescript
-Skill({ skill: "frontend/component-development" })  // 组件开发方法论
-Skill({ skill: "frontend/testing-guide" })          // 测试编写指南
+Skill(skill: "frontend/component-development")  // 组件开发方法论
+Skill(skill: "frontend/testing-guide")          // 测试编写指南
 ```
 
 ## 技术专长
