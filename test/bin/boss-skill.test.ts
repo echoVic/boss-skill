@@ -198,6 +198,10 @@ describe('boss-skill dist bin', () => {
       expect(existsSync(resolve(installed, 'templates', 'prd.md.template'))).toBe(true);
       expect(existsSync(resolve(installed, 'hooks', 'hooks.json'))).toBe(true);
       expect(existsSync(resolve(installed, 'skills', 'brainstorming', 'SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'skills', 'pm', 'requirement-penetration', 'SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'skills', 'qa', 'test-strategy', 'SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'skills', 'shared', 'tech-stack-detection', 'SKILL.md'))).toBe(true);
+      expect(existsSync(resolve(installed, 'skills', 'README.md'))).toBe(true);
 
       expect(existsSync(resolve(installed, 'package.json'))).toBe(false);
       expect(existsSync(resolve(installed, 'packages'))).toBe(false);

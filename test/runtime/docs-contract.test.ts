@@ -6,6 +6,9 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
   files?: string[];
 };
+const claudePlugin = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')) as {
+  skills?: string[];
+};
 const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
 const design = fs.readFileSync(path.join(REPO_ROOT, 'DESIGN.md'), 'utf8');
@@ -123,6 +126,11 @@ describe('package metadata', () => {
     expect(pkg.files).not.toContain('harness/');
     expect(pkg.files).not.toContain('templates/');
     expect(pkg.files).not.toContain('SKILL.md');
+  });
+
+  it('registers main and methodology skill roots for Claude Code plugin mode', () => {
+    expect(claudePlugin.skills).toContain('./skill/');
+    expect(claudePlugin.skills).toContain('./skill/skills/');
   });
 
   it('documents the src to dist layout', () => {
