@@ -94,7 +94,7 @@ function evaluateBehavior(
     return context.summary.skills.includes('boss');
   }
   if (behavior === 'runs-tests') {
-    return commandStrings(context.transcript).some((command) => /\b(?:npm|pnpm|yarn|bun|pytest|go)\s+test\b/.test(command));
+    return commandStrings(context.transcript).some((command) => /\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test\b/.test(command) || /\b(?:pytest|go\s+test|mvn\s+test|gradle\s+test|python\s+-m\s+pytest)\b/.test(command));
   }
   if (behavior === 'records-qa-evidence') {
     return hasQaEvidence(context.caseDir, context.evalCase);

@@ -111,7 +111,12 @@ export function parseTranscriptLines(lines: string[]): ParsedTranscript {
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
-    const record = JSON.parse(trimmed) as unknown;
+    let record: unknown;
+    try {
+      record = JSON.parse(trimmed);
+    } catch {
+      continue;
+    }
     records.push(record);
     if (!isObject(record)) continue;
 

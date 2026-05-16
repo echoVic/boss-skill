@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as runtime from '../../packages/boss-cli/dist/runtime/application/pipeline.js';
 
 function hasArtifactInEventLog(eventsPath, artifact, stage) {
   if (!fs.existsSync(eventsPath)) return false;

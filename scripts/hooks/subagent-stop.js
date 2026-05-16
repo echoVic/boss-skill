@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { findActiveFeature, readExecJson, AGENT_STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as runtime from '../../packages/boss-cli/dist/runtime/application/pipeline.js';
 
 const ALLOWED_BOSS_STATUSES = new Set([
   'DONE',

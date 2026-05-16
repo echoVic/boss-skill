@@ -71,25 +71,55 @@ if [[ ! -f "$PROMPT_FILE" ]]; then
 fi
 
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/boss-headless-skill-XXXXXX")"
+trap 'rm -rf "$WORK_DIR"' EXIT
 OUTPUT_FILE="$WORK_DIR/claude-output.txt"
 PROMPT="$(cat "$PROMPT_FILE")"
 
 echo "Running Claude Code headless skill test: $CASE_ID" >&2
 echo "Workspace: $WORK_DIR" >&2
 
-timeout "$TIMEOUT_SECONDS" claude -p "$PROMPT" \
-  --allowed-tools=all \
-  --add-dir "$WORK_DIR" \
-  --permission-mode bypassPermissions \
-  2>&1 | tee "$OUTPUT_FILE" >&2
+# Use gtimeout on macOS (GNU coreutils), fall back to timeout on Linux
+TIMEOUT_CMD="timeout"
+if ! command -v timeout >/dev/null 2>&1; then
+  if command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="gtimeout"
+  else
+    echo "Warning: neither 'timeout' nor 'gtimeout' found; running without timeout" >&2
+    TIMEOUT_CMD=""
+  fi
+fi
+
+if [[ -n "$TIMEOUT_CMD" ]]; then
+  "$TIMEOUT_CMD" "$TIMEOUT_SECONDS" claude -p "$PROMPT" \
+    --allowed-tools=all \
+    --add-dir "$WORK_DIR" \
+    --permission-mode bypassPermissions \
+    2>&1 | tee "$OUTPUT_FILE" >&2
+else
+  claude -p "$PROMPT" \
+    --allowed-tools=all \
+    --add-dir "$WORK_DIR" \
+    --permission-mode bypassPermissions \
+    2>&1 | tee "$OUTPUT_FILE" >&2
+fi
 
 SESSION_DIR_NAME="$(printf '%s' "$ROOT_DIR" | sed 's#/#-#g' | sed 's#^-##')"
 SESSION_DIR="$HOME/.claude/projects/$SESSION_DIR_NAME"
-SESSION_FILE="$(find "$SESSION_DIR" -name "*.jsonl" -type f -mmin -60 2>/dev/null | sort -r | head -1)"
+
+# Find the most recently modified .jsonl file (within last hour).
+# Use -Bmin on macOS (BSD find) or -mmin on GNU find.
+if find --version 2>/dev/null | grep -q 'GNU'; then
+  SESSION_FILE="$(find "$SESSION_DIR" -name "*.jsonl" -type f -mmin -60 2>/dev/null | sort -r | head -1)"
+else
+  # BSD find (macOS): -mmin is supported on modern macOS (10.11+)
+  SESSION_FILE="$(find "$SESSION_DIR" -name "*.jsonl" -type f -mmin -60 2>/dev/null | sort -r | head -1)"
+fi
 
 if [[ -z "$SESSION_FILE" ]]; then
   echo "Could not find Claude session transcript under: $SESSION_DIR" >&2
+  echo "Hint: if multiple Claude sessions ran concurrently, the wrong transcript may have been selected." >&2
   exit 1
 fi
 
+echo "Using transcript: $SESSION_FILE" >&2
 "$RUNNER" --id "$CASE_ID" --transcript "$SESSION_FILE" --skill boss "${METHODOLOGY_ARGS[@]}"

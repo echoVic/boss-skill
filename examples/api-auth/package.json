@@ -1,0 +1,21 @@
+{
+  "name": "api-auth-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo API key authentication middleware for Express (Boss Skill example)",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/auth.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}

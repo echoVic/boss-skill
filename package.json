@@ -52,7 +52,7 @@
     "boss-skill": "packages/boss-cli/dist/bin/boss.js"
   },
   "scripts": {
-    "build": "node -e \"fs.rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" && tsc -p packages/boss-cli/tsconfig.json",
+    "build": "node -e \"require('node:fs').rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" --input-type=commonjs && tsc -p packages/boss-cli/tsconfig.json",
     "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
     "test": "vitest run",
     "test:faults": "vitest run test/faults",
