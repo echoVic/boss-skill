@@ -7,6 +7,7 @@ import {
   skipUpTo,
   getReadyArtifacts
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('skipUpTo (continue-from artifact)', () => {
   let tmpDir: string;
@@ -17,7 +18,7 @@ describe('skipUpTo (continue-from artifact)', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('skipUpTo("prd.md") marks prd.md and design-brief as skipped', () => {

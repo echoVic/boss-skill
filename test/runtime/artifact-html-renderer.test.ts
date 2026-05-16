@@ -8,6 +8,7 @@ import {
   renderArtifactHtml,
   writeArtifactHtmlCompanion
 } from '../../packages/boss-cli/src/runtime/report/render-artifact-html.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('artifact html renderer', () => {
   const markdown = [
@@ -88,7 +89,7 @@ describe('artifact html renderer', () => {
       });
       expect(overridden.startsWith('<article>产品需求文档|checkout-flow|prd.md|')).toBe(true);
     } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(tmpDir);
     }
   });
 
@@ -106,7 +107,7 @@ describe('artifact html renderer', () => {
       expect(artifact).toBe('prd.html');
       expect(fs.existsSync(path.join(tmpDir, '.boss', 'checkout-flow', 'prd.html'))).toBe(true);
     } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(tmpDir);
     }
   });
 
@@ -134,7 +135,7 @@ describe('artifact html renderer', () => {
         })
       ).toThrow(/sourceArtifact/);
     } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(tmpDir);
     }
   });
 
@@ -152,7 +153,7 @@ describe('artifact html renderer', () => {
       ).toThrow(/featureDir|feature/);
       expect(fs.existsSync(path.join(tmpDir, 'escape', 'prd.html'))).toBe(false);
     } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(tmpDir);
     }
   });
 

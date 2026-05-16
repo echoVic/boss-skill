@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { cleanupTempDir } from '../helpers/fixtures.js';
+
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
@@ -19,7 +21,7 @@ describe('feature flow integration (runtime commands only)', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    cleanupTempDir(tmpDir);
   });
 
   function runRuntimeCommand(name: string, args: string[]) {

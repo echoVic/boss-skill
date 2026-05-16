@@ -1,16 +1,17 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  initPipeline,
-  updateStage,
-  updateAgent,
-  checkStall,
   cacheTechStack,
-  readCachedTechStack
+  checkStall,
+  initPipeline,
+  readCachedTechStack,
+  updateAgent,
+  updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('checkStall', () => {
   let tmpDir: string;
@@ -23,7 +24,7 @@ describe('checkStall', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('detects stalled agents exceeding maxDurationMs', () => {
@@ -78,7 +79,7 @@ describe('cacheTechStack / readCachedTechStack', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('writes and reads back tech stack data', () => {

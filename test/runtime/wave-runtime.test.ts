@@ -6,6 +6,7 @@ import path from 'node:path';
 import { buildBossStatus } from '../../packages/boss-cli/src/runtime/application/checkpoints.js';
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { readWaves } from '../../packages/boss-cli/src/runtime/application/waves.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('evidence wave runtime', () => {
   let tmpDir: string;
@@ -15,7 +16,7 @@ describe('evidence wave runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('returns an empty array when tasks.md is missing', () => {

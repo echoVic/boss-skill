@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { evaluateGates } from '../../packages/boss-cli/src/runtime/application/gates.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -23,7 +24,7 @@ describe('evaluateGates', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('returns gate result data and materializes qualityGates', () => {

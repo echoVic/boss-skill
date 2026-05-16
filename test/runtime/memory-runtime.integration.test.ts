@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { cleanupTempDir } from '../helpers/fixtures.js';
+
 describe('memory runtime integration', () => {
   let tmpDir: string;
   let cwd: string;
@@ -17,7 +19,7 @@ describe('memory runtime integration', () => {
     vi.doUnmock('node:child_process');
     vi.resetModules();
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   async function loadModules() {

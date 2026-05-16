@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { runCli } from '../helpers/run-cli.js';
 import { validateUiDesignArtifact } from '../../packages/boss-cli/src/runtime/design/schema.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
@@ -87,7 +88,7 @@ describe('boss-skill dist bin', () => {
       const validation = validateUiDesignArtifact(uiDesign);
       expect(validation).toEqual({ ok: true, errors: [] });
     } finally {
-      rmSync(workspace, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      cleanupTempDir(workspace);
     }
   });
 
@@ -213,7 +214,7 @@ describe('boss-skill dist bin', () => {
       expect(existsSync(resolve(hermesInstalled, 'SKILL.md'))).toBe(true);
       expect(readFileSync(resolve(hermesInstalled, 'SKILL.md'), 'utf8')).toContain('hermes:');
     } finally {
-      rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(home);
     }
   });
 

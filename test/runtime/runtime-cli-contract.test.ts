@@ -14,6 +14,7 @@ import {
   updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { main as continueMain } from '../../packages/boss-cli/src/commands/continue.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -34,7 +35,7 @@ describe('runtime CLI contract', () => {
 
   afterEach(() => {
     process.chdir(originalCwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    cleanupTempDir(tmpDir);
   });
 
   function distCli(name: string) {
@@ -964,7 +965,7 @@ describe('runtime CLI contract', () => {
       encoding: 'utf8'
     });
 
-    fs.rmSync(pluginRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(pluginRoot);
 
     expect(result.status).toBe(0);
     expect(

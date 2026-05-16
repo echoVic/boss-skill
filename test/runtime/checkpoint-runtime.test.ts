@@ -6,6 +6,7 @@ import path from 'node:path';
 import { initPipeline, updateStage } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { buildBossStatus } from '../../packages/boss-cli/src/runtime/application/checkpoints.js';
 import { resolveDriverCapabilities } from '../../packages/boss-cli/src/runtime/application/drivers.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('multi-driver checkpoint runtime', () => {
   let tmpDir: string;
@@ -15,7 +16,7 @@ describe('multi-driver checkpoint runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('resolves generic capabilities without assuming hooks', () => {

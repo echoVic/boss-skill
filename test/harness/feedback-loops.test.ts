@@ -8,6 +8,7 @@ import {
   recordFeedback
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('feedback-loops', () => {
   let tmpDir: string;
@@ -19,7 +20,7 @@ describe('feedback-loops', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function readExecJson() {

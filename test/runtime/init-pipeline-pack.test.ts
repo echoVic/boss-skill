@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('initPipeline pack application', () => {
   let tmpDir: string;
@@ -15,7 +16,7 @@ describe('initPipeline pack application', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('records detected pack configuration into runtime state truth', () => {

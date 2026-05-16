@@ -10,6 +10,7 @@ import { buildSummaryModel } from '../../packages/boss-cli/src/runtime/report/su
 import { renderHtml } from '../../packages/boss-cli/src/runtime/report/render-html.js';
 import { renderJson } from '../../packages/boss-cli/src/runtime/report/render-json.js';
 import { renderMarkdown } from '../../packages/boss-cli/src/runtime/report/render-markdown.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -143,7 +144,7 @@ describe('runtime report generation', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function runRuntimeCommand(name: string, args: string[]) {

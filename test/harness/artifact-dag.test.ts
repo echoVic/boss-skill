@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { cleanupTempDir } from '../helpers/fixtures.js';
+
 const BOSS_BIN = path.join(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'assets', 'artifact-dag.json');
 
@@ -53,7 +55,7 @@ describe('artifact-dag', () => {
 
   afterEach(() => {
     process.chdir(origCwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function runCli(args: string[]) {

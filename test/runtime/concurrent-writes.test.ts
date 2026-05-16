@@ -8,6 +8,7 @@ import {
   recordArtifact,
   updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('concurrent append to events.jsonl', () => {
   let tmpDir: string;
@@ -19,7 +20,7 @@ describe('concurrent append to events.jsonl', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function eventsFile(): string {

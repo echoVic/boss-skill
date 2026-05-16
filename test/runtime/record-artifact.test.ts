@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('recordArtifact', () => {
   let tmpDir: string;
@@ -18,7 +19,7 @@ describe('recordArtifact', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('appends ArtifactRecorded and materializes the artifact list', () => {

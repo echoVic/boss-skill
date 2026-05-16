@@ -11,6 +11,7 @@ import {
   updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('event-sourcing', () => {
   let tmpDir: string;
@@ -64,7 +65,7 @@ describe('event-sourcing', () => {
 
   afterEach(() => {
     process.chdir(origCwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('runtime stage updates add events to events.jsonl', () => {

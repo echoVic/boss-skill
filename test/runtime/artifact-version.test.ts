@@ -8,6 +8,7 @@ import {
   getArtifactVersion,
   collectCompletedArtifactsVersioned
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('artifact version control', () => {
   let tmpDir: string;
@@ -18,7 +19,7 @@ describe('artifact version control', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('first record of artifact is version 1', () => {

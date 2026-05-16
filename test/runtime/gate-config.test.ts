@@ -10,6 +10,7 @@ import {
   evaluateGates,
   resolveGateConfig
 } from '../../packages/boss-cli/src/runtime/application/gates.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -23,7 +24,7 @@ describe('configurable gate coverage threshold', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('resolveGateConfig returns default 70 when no pack override', () => {

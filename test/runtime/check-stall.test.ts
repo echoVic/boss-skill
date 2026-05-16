@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline.js');
 
@@ -16,7 +17,7 @@ describe('checkStall', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('returns empty array when no agents are running', () => {

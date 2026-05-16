@@ -10,6 +10,7 @@ import {
   skipUpTo,
   getReadyArtifacts
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('DAG edge cases', () => {
   let tmpDir: string;
@@ -20,7 +21,7 @@ describe('DAG edge cases', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function writeDag(dag: Record<string, unknown>): string {

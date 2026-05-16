@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { emitProgress } from '../../packages/boss-cli/src/infrastructure/process.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('progress emitter runtime', () => {
   let tmpDir: string;
@@ -13,7 +14,7 @@ describe('progress emitter runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('emits progress events to progress.jsonl with feature and timestamp fields', () => {

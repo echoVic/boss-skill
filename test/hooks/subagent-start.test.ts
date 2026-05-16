@@ -8,6 +8,7 @@ import {
   buildFeatureSummary,
   writeFeatureMemory
 } from '../../packages/boss-cli/src/runtime/application/memory.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 function createTempBossDir(feature: string, execData?: Record<string, unknown>) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-test-'));
@@ -49,10 +50,6 @@ function createExecData(overrides: Record<string, unknown>) {
     },
     ...overrides
   };
-}
-
-function cleanupTempDir(dir: string) {
-  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 
 describe('subagent-start hook', () => {

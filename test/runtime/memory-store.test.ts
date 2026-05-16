@@ -11,6 +11,7 @@ import {
   saveGlobalMemory,
   saveGlobalSummary
 } from '../../packages/boss-cli/src/runtime/memory/store.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('memory store runtime', () => {
   let tmpDir: string;
@@ -20,7 +21,7 @@ describe('memory store runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('persists feature memory records under .boss/<feature>/.meta', () => {

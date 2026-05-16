@@ -8,6 +8,7 @@ import {
   recordArtifact
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { runQaAttack } from '../../packages/boss-cli/src/runtime/application/qa-attack.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('qa attack runtime', () => {
   let tmpDir: string;
@@ -18,7 +19,7 @@ describe('qa attack runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('marks missing QA report evidence as an open critical finding', () => {

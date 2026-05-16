@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { runHook } from '../../packages/boss-cli/src/runtime/application/plugins.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -51,7 +52,7 @@ describe('plugin hook execution', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('records PluginHookExecuted for matching plugins and materializes lifecycle state', () => {

@@ -12,6 +12,7 @@ import {
 import { startKnowledgeWorker } from '../../packages/boss-cli/src/runtime/application/knowledge.js';
 import { readGlobalKnowledge, readProjectKnowledge } from '../../packages/boss-cli/src/runtime/knowledge/store.js';
 import { main as workerMain } from '../../packages/boss-cli/src/runtime/knowledge/worker.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('knowledge worker runtime', () => {
   let tmpDir: string;
@@ -21,7 +22,7 @@ describe('knowledge worker runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();

@@ -10,6 +10,7 @@ import {
   retryAgent,
   retryStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('recordFeedback', () => {
   let tmpDir: string;
@@ -21,7 +22,7 @@ describe('recordFeedback', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('records a revision request and increments round', () => {
@@ -76,7 +77,7 @@ describe('retryAgent', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('retries a failed agent and increments retryCount', () => {
@@ -116,7 +117,7 @@ describe('retryStage', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('retries a failed stage and increments retryCount', () => {

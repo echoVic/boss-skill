@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { cleanupTempDir } from '../helpers/fixtures.js';
+
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 // Dynamic import of pipeline (ESM)
@@ -27,7 +29,7 @@ describe('tech stack caching', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('returns null when no cache exists', () => {

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const BOSS_BIN = path.resolve(import.meta.dirname, '..', '..', 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
@@ -25,7 +26,7 @@ describe('stage/agent runtime updates', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function readEvents(): RuntimeEvent[] {

@@ -11,6 +11,7 @@ import {
   updateAgent,
   updateStage
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('Boss runtime fault injection', () => {
   let tmpDir: string;
@@ -21,7 +22,7 @@ describe('Boss runtime fault injection', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function eventsText(): string {

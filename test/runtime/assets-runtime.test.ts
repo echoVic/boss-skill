@@ -10,6 +10,7 @@ import {
   resolveBuiltInAssetPath,
   resolvePluginSchemaPath
 } from '../../packages/boss-cli/src/runtime/assets.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
@@ -21,7 +22,7 @@ describe('runtime asset resolver', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('resolves built-in assets under packages/boss-cli/assets', () => {

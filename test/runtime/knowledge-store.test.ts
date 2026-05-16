@@ -15,6 +15,7 @@ import {
   saveProjectKnowledge,
   saveProjectKnowledgeSummary
 } from '../../packages/boss-cli/src/runtime/knowledge/store.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('knowledge store runtime', () => {
   let tmpDir: string;
@@ -24,7 +25,7 @@ describe('knowledge store runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('persists and merges project knowledge', () => {

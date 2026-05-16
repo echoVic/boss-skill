@@ -8,6 +8,7 @@ import {
   discoverPlugins,
   registerPlugins
 } from '../../packages/boss-cli/src/runtime/application/plugins.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -57,7 +58,7 @@ describe('plugin runtime registration', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('discovers enabled plugins, validates manifests, and honors dependency order', () => {
@@ -172,7 +173,7 @@ describe('plugin runtime registration', () => {
 
   it('orders independent plugins deterministically', () => {
     const pluginsRoot = path.join(tmpDir, '.boss', 'plugins');
-    fs.rmSync(pluginsRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(pluginsRoot);
     fs.mkdirSync(pluginsRoot, { recursive: true });
 
     const names = ['zeta', 'delta', 'epsilon'];

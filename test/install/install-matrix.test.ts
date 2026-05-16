@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { ensureBuilt } from '../helpers/run-cli.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -57,7 +58,7 @@ describe('Boss install matrix', () => {
 
   afterEach(() => {
     for (const tmpDir of tmpDirs.splice(0)) {
-      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(tmpDir);
     }
   });
 

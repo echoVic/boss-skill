@@ -9,6 +9,7 @@ import {
   recordArtifact,
   updateAgent
 } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('final gate runtime', () => {
   let tmpDir: string;
@@ -23,7 +24,7 @@ describe('final gate runtime', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('fails when required artifacts are missing from recorded execution state', () => {

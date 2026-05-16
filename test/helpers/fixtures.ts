@@ -59,7 +59,17 @@ function createExecData(overrides: Record<string, unknown> = {}) {
 }
 
 function cleanupTempDir(dir: string) {
-  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      return;
+    } catch (err: unknown) {
+      if (attempt === 4) return; // best-effort: don't fail tests on cleanup
+      const ms = (attempt + 1) * 200;
+      const start = Date.now();
+      while (Date.now() - start < ms) { /* spin wait */ }
+    }
+  }
 }
 
 export { cleanupTempDir, createExecData, createTempBossDir };

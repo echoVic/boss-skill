@@ -11,6 +11,7 @@ import {
 } from '../../packages/boss-cli/src/runtime/application/memory.js';
 import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection.js';
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
@@ -27,7 +28,7 @@ describe('inspection runtime CLIs', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   function runRuntimeCommand(name: string, args: string[]) {

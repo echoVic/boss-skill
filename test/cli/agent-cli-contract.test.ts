@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { cleanupTempDir } from '../helpers/fixtures.js';
+
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
 
@@ -29,7 +31,7 @@ describe('agent-friendly boss CLI contract', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(tmpDir);
   });
 
   it('defaults to JSON for non-TTY command output', () => {
@@ -259,7 +261,7 @@ describe('agent-friendly boss CLI contract', () => {
 
   it('artifact prepare rejects feature traversal before building target paths', () => {
     const outside = path.resolve(tmpDir, '..', 'sibling');
-    fs.rmSync(outside, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    cleanupTempDir(outside);
     fs.mkdirSync(outside, { recursive: true });
 
     try {
@@ -273,7 +275,7 @@ describe('agent-friendly boss CLI contract', () => {
       expect(payload.error.input).toEqual({ feature: '../../sibling' });
       expect(fs.existsSync(path.join(outside, 'prd.md'))).toBe(false);
     } finally {
-      fs.rmSync(outside, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      cleanupTempDir(outside);
     }
   });
 
