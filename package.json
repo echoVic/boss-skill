@@ -65,6 +65,7 @@
     "prepublishOnly": "npm run build && node packages/boss-cli/dist/bin/boss.js --version"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "engines": {
