@@ -19,7 +19,7 @@ describe('feature flow integration (runtime commands only)', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   });
 
   function runRuntimeCommand(name: string, args: string[]) {

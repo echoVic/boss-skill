@@ -87,7 +87,7 @@ describe('boss-skill dist bin', () => {
       const validation = validateUiDesignArtifact(uiDesign);
       expect(validation).toEqual({ ok: true, errors: [] });
     } finally {
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }
   });
 
