@@ -57,7 +57,7 @@ describe('Boss install matrix', () => {
 
   afterEach(() => {
     for (const tmpDir of tmpDirs.splice(0)) {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
+      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 

@@ -23,7 +23,7 @@ describe('checkStall', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('detects stalled agents exceeding maxDurationMs', () => {
@@ -78,7 +78,7 @@ describe('cacheTechStack / readCachedTechStack', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('writes and reads back tech stack data', () => {

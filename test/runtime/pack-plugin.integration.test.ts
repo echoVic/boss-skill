@@ -54,7 +54,7 @@ describe('pack/plugin runtime integration', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('reconstructs pack and plugin hook state from events only', () => {

@@ -21,7 +21,7 @@ describe('runtime asset resolver', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('resolves built-in assets under packages/boss-cli/assets', () => {

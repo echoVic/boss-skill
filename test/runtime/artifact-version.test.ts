@@ -18,7 +18,7 @@ describe('artifact version control', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('first record of artifact is version 1', () => {

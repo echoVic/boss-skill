@@ -964,7 +964,7 @@ describe('runtime CLI contract', () => {
       encoding: 'utf8'
     });
 
-    fs.rmSync(pluginRoot, { recursive: true, force: true });
+    fs.rmSync(pluginRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 
     expect(result.status).toBe(0);
     expect(

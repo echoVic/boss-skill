@@ -19,7 +19,7 @@ describe('runtime check-stage and replay-events CLIs', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   function runRuntimeCommand(name: string, args: string[]) {

@@ -139,7 +139,7 @@ describe('boss design preview CLI', () => {
       });
       expect(payload.url).toMatch(/^http:\/\/localhost:\d+$/);
     } finally {
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
@@ -153,7 +153,7 @@ describe('boss design preview CLI', () => {
       const payload = JSON.parse(result.stderr) as { error: { code: string } };
       expect(payload.error.code).toBe('ui_design_not_found');
     } finally {
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
@@ -177,7 +177,7 @@ describe('boss design preview CLI', () => {
       expect(payload.valid).toBe(false);
       expect(payload.errors).toContain('page.viewport.width must be a positive number');
     } finally {
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
@@ -192,7 +192,7 @@ describe('boss design preview CLI', () => {
       expect(payload.error.code).toBe('invalid_feature');
       expect(payload.error.input).toEqual({ feature: '../escaped' });
     } finally {
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
@@ -254,7 +254,7 @@ describe('boss design preview CLI', () => {
         child.kill('SIGTERM');
         await waitForExit(child);
       }
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
@@ -286,7 +286,7 @@ describe('boss design preview CLI', () => {
         child.kill('SIGTERM');
         await waitForExit(child);
       }
-      rmSync(workspace, { recursive: true, force: true });
+      rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 });

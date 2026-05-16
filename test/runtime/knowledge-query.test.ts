@@ -39,7 +39,7 @@ describe('knowledge query runtime', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('prefers project knowledge before global knowledge and boosts current agent and stage', () => {

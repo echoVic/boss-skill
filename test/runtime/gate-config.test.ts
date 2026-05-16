@@ -23,7 +23,7 @@ describe('configurable gate coverage threshold', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('resolveGateConfig returns default 70 when no pack override', () => {

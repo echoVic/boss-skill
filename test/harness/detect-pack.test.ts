@@ -16,7 +16,7 @@ describe('boss packs detect', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   function run(projectDir: string, extraArgs: string[] = []) {

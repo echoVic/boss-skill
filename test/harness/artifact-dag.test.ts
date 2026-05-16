@@ -53,7 +53,7 @@ describe('artifact-dag', () => {
 
   afterEach(() => {
     process.chdir(origCwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   function runCli(args: string[]) {

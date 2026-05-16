@@ -15,7 +15,7 @@ describe('initPipeline pack application', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('records detected pack configuration into runtime state truth', () => {

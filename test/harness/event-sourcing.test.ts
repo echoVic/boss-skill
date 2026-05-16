@@ -64,7 +64,7 @@ describe('event-sourcing', () => {
 
   afterEach(() => {
     process.chdir(origCwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('runtime stage updates add events to events.jsonl', () => {

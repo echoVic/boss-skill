@@ -48,7 +48,7 @@ function createExecData(overrides: Record<string, unknown>) {
 }
 
 function cleanupTempDir(dir: string) {
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 
 describe('session-start hook', () => {

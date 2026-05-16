@@ -213,7 +213,7 @@ describe('boss-skill dist bin', () => {
       expect(existsSync(resolve(hermesInstalled, 'SKILL.md'))).toBe(true);
       expect(readFileSync(resolve(hermesInstalled, 'SKILL.md'), 'utf8')).toContain('hermes:');
     } finally {
-      rmSync(home, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 

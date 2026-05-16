@@ -57,7 +57,7 @@ describe('plugin runtime registration', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('discovers enabled plugins, validates manifests, and honors dependency order', () => {
@@ -172,7 +172,7 @@ describe('plugin runtime registration', () => {
 
   it('orders independent plugins deterministically', () => {
     const pluginsRoot = path.join(tmpDir, '.boss', 'plugins');
-    fs.rmSync(pluginsRoot, { recursive: true, force: true });
+    fs.rmSync(pluginsRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     fs.mkdirSync(pluginsRoot, { recursive: true });
 
     const names = ['zeta', 'delta', 'epsilon'];

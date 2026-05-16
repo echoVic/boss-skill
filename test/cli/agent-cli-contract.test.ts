@@ -29,7 +29,7 @@ describe('agent-friendly boss CLI contract', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('defaults to JSON for non-TTY command output', () => {
@@ -259,7 +259,7 @@ describe('agent-friendly boss CLI contract', () => {
 
   it('artifact prepare rejects feature traversal before building target paths', () => {
     const outside = path.resolve(tmpDir, '..', 'sibling');
-    fs.rmSync(outside, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     fs.mkdirSync(outside, { recursive: true });
 
     try {
@@ -273,7 +273,7 @@ describe('agent-friendly boss CLI contract', () => {
       expect(payload.error.input).toEqual({ feature: '../../sibling' });
       expect(fs.existsSync(path.join(outside, 'prd.md'))).toBe(false);
     } finally {
-      fs.rmSync(outside, { recursive: true, force: true });
+      fs.rmSync(outside, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 

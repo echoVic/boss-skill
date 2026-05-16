@@ -17,7 +17,7 @@ describe('memory runtime integration', () => {
     vi.doUnmock('node:child_process');
     vi.resetModules();
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   async function loadModules() {

@@ -13,7 +13,7 @@ describe('progress emitter runtime', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('emits progress events to progress.jsonl with feature and timestamp fields', () => {

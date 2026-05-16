@@ -23,7 +23,7 @@ describe('final gate runtime', () => {
 
   afterEach(() => {
     process.chdir(cwd);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
   it('fails when required artifacts are missing from recorded execution state', () => {
