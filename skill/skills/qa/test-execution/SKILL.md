@@ -45,6 +45,57 @@ triggers:
 
 | 语言 | 单元测试 | E2E测试 |
 |------|----------|---------|
-| Node.js | `npm test` | `npm run test:e2e` |
+| Node.js | `npm test` | `npx playwright test` |
 | Python | `pytest` | `pytest tests/e2e` |
 | Go | `go test ./...` | - |
+
+## Playwright E2E 执行细节
+
+> **完整方法论**：详见 `Skill(skill: "qa/e2e-playwright")`
+
+### 检测 Playwright 项目
+
+检查以下标志确认项目使用 Playwright：
+- `playwright.config.ts` 或 `playwright.config.js` 存在
+- `package.json` 中包含 `@playwright/test` 依赖
+- `e2e/` 或 `tests/e2e/` 目录存在
+
+### 执行命令
+
+```bash
+# 安装浏览器（首次或 CI 环境）
+npx playwright install --with-deps
+
+# 运行全部 E2E 测试
+npx playwright test
+
+# 仅 critical 标签（门禁加速）
+npx playwright test --grep @critical
+
+# 指定浏览器
+npx playwright test --project=chromium
+
+# JSON 报告（门禁解析用）
+npx playwright test --reporter=json
+```
+
+### 结果解析
+
+Playwright JSON 报告关键字段：
+
+| 字段 | 说明 |
+|------|------|
+| `stats.expected` | 通过的测试数 |
+| `stats.unexpected` | 失败的测试数 |
+| `stats.flaky` | 重试后通过的测试数 |
+| `stats.skipped` | 跳过的测试数 |
+
+### 失败排查
+
+```bash
+# 查看 trace（失败时自动生成）
+npx playwright show-trace <trace.zip路径>
+
+# 打开 HTML 报告
+npx playwright show-report
+```

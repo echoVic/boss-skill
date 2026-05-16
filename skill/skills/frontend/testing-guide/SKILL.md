@@ -176,6 +176,8 @@ describe('Store integration', () => {
 
 ## E2E 测试编写（必须）
 
+> **完整 Playwright 方法论**：详见 `Skill(skill: "qa/e2e-playwright")`，包含项目初始化、Page Object Model、认证复用、API Mock、视觉回归、多浏览器测试、CI 集成和调试技巧。
+
 ### E2E 测试必须覆盖
 
 - ✅ 创建流程（如：添加数据）
@@ -184,92 +186,87 @@ describe('Store integration', () => {
 - ✅ 列表展示（如：查看列表）
 - ✅ 核心业务流程
 
-### Playwright 示例
+### Playwright 示例（Page Object Model）
 
 ```typescript
-// e2e/user-management.spec.ts
-import { test, expect } from '@playwright/test';
+// e2e/pages/user-list.page.ts
+import { type Page, type Locator } from '@playwright/test';
 
-test.describe('User Management', () => {
-  test('complete user CRUD flow', async ({ page }) => {
-    await page.goto('/users');
-    
-    // 创建用户
-    await page.click('text=Add User');
-    await page.fill('[name="name"]', 'John Doe');
-    await page.fill('[name="email"]', 'john@example.com');
-    await page.click('button:has-text("Submit")');
-    
-    // 验证用户出现在列表中
-    await expect(page.locator('text=John Doe')).toBeVisible();
-    
-    // 编辑用户
-    await page.click('[aria-label="Edit John Doe"]');
-    await page.fill('[name="name"]', 'Jane Doe');
-    await page.click('button:has-text("Save")');
-    
-    // 验证更新
-    await expect(page.locator('text=Jane Doe')).toBeVisible();
-    await expect(page.locator('text=John Doe')).not.toBeVisible();
-    
-    // 删除用户
-    await page.click('[aria-label="Delete Jane Doe"]');
-    await page.click('button:has-text("Confirm")');
-    
-    // 验证删除
-    await expect(page.locator('text=Jane Doe')).not.toBeVisible();
+export class UserListPage {
+  private readonly addButton: Locator;
+  private readonly table: Locator;
+
+  constructor(private readonly page: Page) {
+    this.addButton = page.getByRole('button', { name: '添加用户' });
+    this.table = page.getByRole('table');
+  }
+
+  async goto() { await this.page.goto('/users'); }
+  async clickAddUser() { await this.addButton.click(); }
+  getTable() { return this.table; }
+
+  async editUser(name: string) {
+    await this.page.getByRole('row', { name }).getByRole('button', { name: '编辑' }).click();
+  }
+  async deleteUser(name: string) {
+    await this.page.getByRole('row', { name }).getByRole('button', { name: '删除' }).click();
+  }
+  async confirmDelete() {
+    await this.page.getByRole('button', { name: '确认' }).click();
+  }
+}
+```
+
+```typescript
+// e2e/specs/crud/user-management.spec.ts
+import { test, expect } from '@playwright/test';
+import { UserListPage } from '../../pages/user-list.page';
+
+test.describe('用户管理 CRUD', () => {
+  let userList: UserListPage;
+
+  test.beforeEach(async ({ page }) => {
+    userList = new UserListPage(page);
+    await userList.goto();
   });
-  
-  test('displays user list with pagination', async ({ page }) => {
-    await page.goto('/users');
-    
-    // 验证列表加载
-    await expect(page.locator('[data-testid="user-list"]')).toBeVisible();
-    
-    // 测试分页
-    await page.click('button:has-text("Next")');
+
+  test('创建 → 编辑 → 删除完整流程', async ({ page }) => {
+    // 创建
+    await userList.clickAddUser();
+    await page.getByLabel('姓名').fill('测试用户');
+    await page.getByLabel('邮箱').fill('test@example.com');
+    await page.getByRole('button', { name: '提交' }).click();
+    await expect(page.getByText('测试用户')).toBeVisible();
+
+    // 编辑
+    await userList.editUser('测试用户');
+    await page.getByLabel('姓名').fill('修改后的用户');
+    await page.getByRole('button', { name: '提交' }).click();
+    await expect(page.getByText('修改后的用户')).toBeVisible();
+
+    // 删除
+    await userList.deleteUser('修改后的用户');
+    await userList.confirmDelete();
+    await expect(page.getByText('修改后的用户')).not.toBeVisible();
+  });
+
+  test('列表分页展示', async ({ page }) => {
+    await expect(userList.getTable()).toBeVisible();
+    await page.getByRole('button', { name: 'Next' }).click();
     await expect(page).toHaveURL(/page=2/);
   });
 });
 ```
 
-### Cypress 示例
+### 定位器优先级
 
-```typescript
-// cypress/e2e/user-management.cy.ts
-describe('User Management', () => {
-  beforeEach(() => {
-    cy.visit('/users');
-  });
-
-  it('creates, edits, and deletes a user', () => {
-    // 创建
-    cy.contains('Add User').click();
-    cy.get('[name="name"]').type('John Doe');
-    cy.get('[name="email"]').type('john@example.com');
-    cy.contains('Submit').click();
-    
-    // 验证创建
-    cy.contains('John Doe').should('be.visible');
-    
-    // 编辑
-    cy.get('[aria-label="Edit John Doe"]').click();
-    cy.get('[name="name"]').clear().type('Jane Doe');
-    cy.contains('Save').click();
-    
-    // 验证编辑
-    cy.contains('Jane Doe').should('be.visible');
-    cy.contains('John Doe').should('not.exist');
-    
-    // 删除
-    cy.get('[aria-label="Delete Jane Doe"]').click();
-    cy.contains('Confirm').click();
-    
-    // 验证删除
-    cy.contains('Jane Doe').should('not.exist');
-  });
-});
-```
+| 优先级 | 方法 | 说明 |
+|--------|------|------|
+| 1 | `getByRole` | 无障碍语义，最稳定 |
+| 2 | `getByLabel` | 表单元素首选 |
+| 3 | `getByText` | 静态文本 |
+| 4 | `getByTestId` | 无语义标记时兜底 |
+| 5 | CSS/XPath | **尽量避免** |
 
 ## 测试最佳实践
 

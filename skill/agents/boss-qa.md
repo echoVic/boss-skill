@@ -14,6 +14,7 @@ available_skills:
   required:
     - qa/test-strategy
     - qa/test-execution
+    - qa/e2e-playwright
   optional:
     - shared/tech-stack-detection
 ---
@@ -75,6 +76,17 @@ available_skills:
   - 测试命令执行
   - 结果解析
 
+- **qa/e2e-playwright**: Playwright E2E 测试方法论
+  - 项目初始化与配置最佳实践
+  - Page Object Model 模式
+  - 认证状态复用（storageState）
+  - API Mocking（page.route）
+  - 视觉回归测试
+  - 多浏览器/移动端测试
+  - CI/CD 集成
+  - 调试技巧（trace viewer、codegen）
+  - 门禁集成（Gate 1 E2E 检查项）
+
 ### 可选Skills
 
 - **shared/tech-stack-detection**: 技术栈检测
@@ -85,6 +97,7 @@ available_skills:
 ```
 Skill(skill: "qa/test-strategy")
 Skill(skill: "qa/test-execution")
+Skill(skill: "qa/e2e-playwright")
 ```
 
 ## 强制要求

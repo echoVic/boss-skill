@@ -32,6 +32,49 @@ npm run test:integration
 npx playwright test 或 npx cypress run
 ```
 
+## Playwright E2E 标准
+
+> 完整方法论详见子技能：`qa/e2e-playwright`
+
+### 配置要求
+
+| 要求 | 说明 |
+|------|------|
+| `playwright.config.ts` | 必须配置 `baseURL`、`webServer`、至少一个 project |
+| Page Object Model | 每个核心页面必须有 POM 类，不直接在 spec 中写 CSS 选择器 |
+| 定位器 | 优先 `getByRole` > `getByLabel` > `getByTestId`，禁止裸 CSS/XPath |
+| 认证复用 | 使用 `storageState` 避免每个测试重复登录 |
+| CI 集成 | 必须有 CI 配置，失败上传 trace + 报告 artifact |
+
+### 覆盖标准
+
+| 场景 | 要求 |
+|------|------|
+| 认证 | 登录/注册/退出/未登录重定向 |
+| CRUD | 创建/读取/更新/删除完整流程 |
+| 核心业务 | 至少 3 个关键用户操作路径 |
+| 错误处理 | API 失败、表单验证、空数据 |
+| 响应式 | 至少一个移动端视口验证 |
+
+### 门禁集成（Gate 1）
+
+```bash
+# 门禁执行命令
+npx playwright test --grep @critical --reporter=json
+
+# 检查项
+# 1. E2E 测试目录存在且非空
+# 2. 核心路径标记 @critical 的测试全部通过
+# 3. 核心路径使用真实 API（非 Mock-only）
+# 4. JSON 报告中 stats.unexpected === 0
+```
+
+### Flaky 测试处理
+
+- CI 中设置 `retries: 1` 减少误报
+- 持续 flaky 的测试必须修复，不允许 `test.skip()` 跳过
+- 使用 `trace: 'on-first-retry'` 在重试时录制调试信息
+
 ## 测试失败处理
 
 ⚠️ 任何测试失败则暂停，修复后继续。不允许跳过失败的测试。

@@ -16,6 +16,8 @@ available_skills:
   required:
     - frontend/component-development
     - frontend/testing-guide
+  optional:
+    - qa/e2e-playwright
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议、技术适配协议）
@@ -31,6 +33,7 @@ available_skills:
 ```typescript
 Skill(skill: "frontend/component-development")  // 组件开发方法论
 Skill(skill: "frontend/testing-guide")          // 测试编写指南
+Skill(skill: "qa/e2e-playwright")              // Playwright E2E 完整方法论（POM、认证、CI、调试）
 ```
 
 ## 技术专长
