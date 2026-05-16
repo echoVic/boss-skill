@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 import { defineConfig, type Plugin } from 'vitest/config';
 
 // Hooks import from dist/ for production (Node.js native ESM),
