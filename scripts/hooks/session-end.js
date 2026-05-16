@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { writeJson } from '../lib/boss-utils.js';
-import { buildSummaryModel } from '../../packages/boss-cli/src/runtime/report/summary-model.js';
-import { renderMarkdown } from '../../packages/boss-cli/src/runtime/report/render-markdown.js';
+import { buildSummaryModel } from '../../packages/boss-cli/dist/runtime/report/summary-model.js';
+import { renderMarkdown } from '../../packages/boss-cli/dist/runtime/report/render-markdown.js';
 
 function run(rawInput) {
   const input = JSON.parse(rawInput);

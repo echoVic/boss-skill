@@ -1,0 +1,23 @@
+{
+  "id": "release-evidence",
+  "prompt": "Build a production-ready todo web app and provide evidence gates.",
+  "feature": "todo-app",
+  "transcript": "transcript.jsonl",
+  "requiredArtifacts": [
+    "prd.md",
+    "architecture.md",
+    "tasks.md",
+    "qa-report.md"
+  ],
+  "requiredBehaviors": [
+    "uses-boss-skill",
+    "runs-tests",
+    "records-qa-evidence",
+    "produces-evidence-wave"
+  ],
+  "metrics": {
+    "maxCostUsd": 2,
+    "maxDurationSeconds": 900,
+    "minArtifactCompleteness": 1
+  }
+}

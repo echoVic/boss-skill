@@ -52,9 +52,14 @@
     "boss-skill": "packages/boss-cli/dist/bin/boss.js"
   },
   "scripts": {
-    "build": "node -e \"fs.rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" && tsc -p packages/boss-cli/tsconfig.json",
+    "build": "node -e \"require('node:fs').rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" --input-type=commonjs && tsc -p packages/boss-cli/tsconfig.json",
     "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
     "test": "vitest run",
+    "test:faults": "vitest run test/faults",
+    "test:harness": "vitest run test/harness",
+    "test:install-matrix": "vitest run test/install",
+    "test:skills": "vitest run test/skills",
+    "evals": "bash test/evals/run-evals.sh",
     "test:watch": "vitest",
     "release": "node scripts/release.js",
     "prepublishOnly": "npm run build && node packages/boss-cli/dist/bin/boss.js --version"
@@ -66,6 +71,7 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^24.0.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"

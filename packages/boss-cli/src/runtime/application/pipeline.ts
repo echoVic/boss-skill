@@ -417,6 +417,19 @@ function readNextEventId(eventsFile: string): number {
   return raw ? raw.split('\n').length + 1 : 1;
 }
 
+function assertSafeArtifactName(artifact: string): void {
+  if (
+    artifact !== path.basename(artifact) ||
+    path.isAbsolute(artifact) ||
+    artifact.includes('/') ||
+    artifact.includes('\\') ||
+    artifact.split(/[\\/]/).includes('..') ||
+    artifact.includes('..')
+  ) {
+    throw new Error(`无效 artifact 路径: ${artifact}`);
+  }
+}
+
 export function recordArtifact(
   feature: string,
   artifact: string,
@@ -444,6 +457,7 @@ export function recordArtifacts(
   if (artifacts.length === 0) throw new Error('缺少 artifact 参数');
   for (const artifact of artifacts) {
     if (!artifact) throw new Error('缺少 artifact 参数');
+    assertSafeArtifactName(artifact);
   }
   if (stage == null) {
     throw new Error('缺少 stage 参数');

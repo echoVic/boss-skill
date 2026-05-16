@@ -151,4 +151,55 @@ describe('subagent-stop hook', () => {
 
     expect(execJson.stages['2'].agents['boss-tech-lead'].status).toBe('failed');
   });
+
+  it('marks malformed BOSS_STATUS values with a parse reason', () => {
+    const execData = createExecData({
+      feature: 'test-feat',
+      status: 'running',
+      stages: {
+        '1': { name: 'Planning', status: 'completed', artifacts: [] },
+        '2': { name: 'Review', status: 'running', artifacts: [] },
+        '3': { name: 'Development', status: 'pending', artifacts: [] },
+        '4': { name: 'Deployment', status: 'pending', artifacts: [] }
+      }
+    });
+    tmpDir = createTempBossDir('test-feat', execData);
+
+    hook.run(
+      JSON.stringify({
+        cwd: tmpDir,
+        agent_type: 'boss-tech-lead',
+        agent_id: 'agent-791',
+        last_assistant_message: [
+          '[BOSS_STATUS]',
+          'status: ALL_GOOD',
+          'reason: ship it',
+          '[/BOSS_STATUS]'
+        ].join('\n')
+      })
+    );
+
+    const execJson = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json'), 'utf8')
+    ) as {
+      stages: {
+        '2': {
+          agents: {
+            'boss-tech-lead': { status: string; failureReason: string };
+          };
+        };
+      };
+    };
+    expect(execJson.stages['2'].agents['boss-tech-lead'].status).toBe('failed');
+    expect(execJson.stages['2'].agents['boss-tech-lead'].failureReason).toContain('Invalid BOSS_STATUS');
+    expect(execJson.stages['2'].agents['boss-tech-lead'].failureReason).toContain('ALL_GOOD');
+
+    const logFile = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'agent-log.jsonl');
+    const entry = JSON.parse(fs.readFileSync(logFile, 'utf8').trim()) as {
+      status: string;
+      reason: string;
+    };
+    expect(entry.status).toBe('INVALID');
+    expect(entry.reason).toContain('Invalid BOSS_STATUS');
+  });
 });

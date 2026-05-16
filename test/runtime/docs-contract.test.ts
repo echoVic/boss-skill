@@ -6,6 +6,9 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
   files?: string[];
 };
+const claudePlugin = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')) as {
+  skills?: string[];
+};
 const readme = fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8');
 const contributing = fs.readFileSync(path.join(REPO_ROOT, 'CONTRIBUTING.md'), 'utf8');
 const design = fs.readFileSync(path.join(REPO_ROOT, 'DESIGN.md'), 'utf8');
@@ -15,6 +18,10 @@ const tasksTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates',
 const scrumMaster = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-scrum-master.md'), 'utf8');
 const qaTemplate = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'templates', 'qa-report.md.template'), 'utf8');
 const qaAgent = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'agents', 'boss-qa.md'), 'utf8');
+const qaTestStrategy = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'skills', 'qa', 'test-strategy', 'SKILL.md'),
+  'utf8'
+);
 const testingStandards = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'references', 'testing-standards.md'),
   'utf8'
@@ -121,6 +128,11 @@ describe('package metadata', () => {
     expect(pkg.files).not.toContain('SKILL.md');
   });
 
+  it('registers main and methodology skill roots for Claude Code plugin mode', () => {
+    expect(claudePlugin.skills).toContain('./skill/');
+    expect(claudePlugin.skills).toContain('./skill/skills/');
+  });
+
   it('documents the src to dist layout', () => {
     expect(readme).toContain('src/');
     expect(readme).toContain('dist/');
@@ -149,6 +161,102 @@ describe('package metadata', () => {
     expect(skill).toContain('.boss/plugins/');
     expect(skill).not.toContain('harness/plugins/');
     expect(contributing).toContain('packages/boss-cli/assets/');
+  });
+});
+
+describe('agent methodology skill contract', () => {
+  const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
+  const agentFiles = fs
+    .readdirSync(agentsDir)
+    .filter((file) => file.startsWith('boss-') && file.endsWith('.md'));
+
+  function getAvailableSkills(content: string): Set<string> {
+    const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
+    const skills = new Set<string>();
+    let inAvailableSkills = false;
+
+    for (const line of frontmatter?.[1].split('\n') ?? []) {
+      if (line === 'available_skills:') {
+        inAvailableSkills = true;
+        continue;
+      }
+
+      if (inAvailableSkills && /^[a-zA-Z_-]+:/.test(line)) {
+        break;
+      }
+
+      const skill = line.match(/^\s*-\s+([a-z0-9-]+\/[a-z0-9-]+)/)?.[1];
+      if (inAvailableSkills && skill) {
+        skills.add(skill);
+      }
+    }
+
+    return skills;
+  }
+
+  function getReferencedSkills(content: string): Set<string> {
+    return new Set(
+      Array.from(content.matchAll(/Skill\(\s*skill:\s*["']([^"']+)["']/g))
+        .map((match) => match[1])
+        .filter((skillName) => skillName.includes('/'))
+    );
+  }
+
+  it('uses the canonical Skill call form in agent prompts', () => {
+    const legacyCalls: string[] = [];
+
+    for (const file of agentFiles) {
+      const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
+      if (content.includes('Skill({')) {
+        legacyCalls.push(file);
+      }
+    }
+
+    expect(legacyCalls).toEqual([]);
+  });
+
+  it('keeps agent skill references discoverable and declared', () => {
+    const agentsDir = path.join(REPO_ROOT, 'skill', 'agents');
+    const unresolved: string[] = [];
+    const undeclared: string[] = [];
+    const declaredMissing: string[] = [];
+
+    for (const file of agentFiles) {
+      const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
+      const availableSkills = getAvailableSkills(content);
+      const referencedSkills = getReferencedSkills(content);
+
+      for (const skillName of new Set([...availableSkills, ...referencedSkills])) {
+        const skillPath = path.join(REPO_ROOT, 'skill', 'skills', skillName, 'SKILL.md');
+        if (!fs.existsSync(skillPath)) {
+          unresolved.push(`${file}: ${skillName}`);
+        }
+      }
+
+      for (const skillName of referencedSkills) {
+        if (!availableSkills.has(skillName)) {
+          undeclared.push(`${file}: ${skillName}`);
+        }
+      }
+
+      for (const skillName of availableSkills) {
+        if (!referencedSkills.has(skillName)) {
+          declaredMissing.push(`${file}: ${skillName}`);
+        }
+      }
+    }
+
+    expect(unresolved).toEqual([]);
+    expect(undeclared).toEqual([]);
+    expect(declaredMissing).toEqual([]);
+  });
+
+  it('documents the bundled skill layout and forbids flat methodology files', () => {
+    const skillsReadme = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'skills', 'README.md'), 'utf8');
+
+    expect(skillsReadme).toContain('skill/skills/<domain>/<name>/SKILL.md');
+    expect(skillsReadme).toContain('不要新增平铺');
+    expect(skillsReadme).toContain('available_skills');
   });
 });
 
@@ -350,7 +458,9 @@ describe('boss evidence gates contract', () => {
   });
 
   it('requires QA to replay real core paths and mark mocked critical paths unverified', () => {
-    for (const doc of [qaAgent, qaTemplate]) {
+    const qaMethodology = `${qaAgent}\n${qaTestStrategy}`;
+
+    for (const doc of [qaMethodology, qaTemplate]) {
       expect(doc).toContain('核心用户路径');
       expect(doc).toContain('真实 payload');
       expect(doc).toContain('服务端响应');

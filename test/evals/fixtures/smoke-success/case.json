@@ -1,0 +1,22 @@
+{
+  "id": "smoke-success",
+  "prompt": "Build a small todo web app with add, complete, filter, and persistence.",
+  "feature": "todo-app",
+  "transcript": "transcript.jsonl",
+  "requiredArtifacts": [
+    "prd.md",
+    "architecture.md",
+    "tasks.md",
+    "qa-report.md"
+  ],
+  "requiredBehaviors": [
+    "uses-boss-skill",
+    "runs-tests",
+    "records-qa-evidence"
+  ],
+  "metrics": {
+    "maxCostUsd": 1,
+    "maxDurationSeconds": 600,
+    "minArtifactCompleteness": 1
+  }
+}

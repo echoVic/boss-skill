@@ -183,6 +183,7 @@ function main() {
   run('npm run build');
   run('npm run typecheck');
   run('npm test');
+  run('npm run test:install-matrix');
 
   // 3. 同步所有版本号
   console.log(`\n✏️  同步版本号 → ${next}`);

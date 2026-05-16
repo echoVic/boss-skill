@@ -3,7 +3,15 @@ import path from 'node:path';
 
 import { findActiveFeature, readExecJson, AGENT_STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as runtime from '../../packages/boss-cli/dist/runtime/application/pipeline.js';
+
+const ALLOWED_BOSS_STATUSES = new Set([
+  'DONE',
+  'DONE_WITH_CONCERNS',
+  'NEEDS_CONTEXT',
+  'BLOCKED',
+  'REVISION_NEEDED'
+]);
 
 function parseStructuredStatus(message) {
   const match = message.match(/\[BOSS_STATUS\]([\s\S]*?)\[\/BOSS_STATUS\]/i);
@@ -18,8 +26,16 @@ function parseStructuredStatus(message) {
   }
 
   const reasonMatch = block.match(/^\s*reason\s*:\s*(.*?)\s*$/im);
+  const rawStatus = statusMatch[1];
+  if (!ALLOWED_BOSS_STATUSES.has(rawStatus)) {
+    return {
+      status: 'INVALID',
+      reason: `Invalid BOSS_STATUS status: ${rawStatus}`,
+      rawStatus
+    };
+  }
   return {
-    status: statusMatch[1],
+    status: rawStatus,
     reason: reasonMatch ? reasonMatch[1] : ''
   };
 }

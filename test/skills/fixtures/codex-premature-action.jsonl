@@ -1,0 +1,3 @@
+{"type":"user","content":"Use boss before changing code."}
+{"type":"tool_call","tool":"apply_patch","arguments":{"path":"src/app.ts"}}
+{"type":"tool_call","tool":"Skill","arguments":{"skill":"boss"}}
