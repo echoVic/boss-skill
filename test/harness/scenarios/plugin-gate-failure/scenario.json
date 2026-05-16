@@ -1,0 +1,31 @@
+{
+  "name": "plugin-gate-failure",
+  "description": "Registers a plugin gate, records one failure, then records a recovery pass.",
+  "feature": "plugin-gate-harness",
+  "fixture": "fixture",
+  "commands": [
+    { "run": ["boss", "project", "init", "plugin-gate-harness", "--json"] },
+    { "run": ["boss", "runtime", "register-plugins", "plugin-gate-harness", "--json"] },
+    { "run": ["boss", "runtime", "run-plugin-hook", "gate", "plugin-gate-harness", "--json"], "expectExit": 1 },
+    { "run": ["node", "-e", "require('node:fs').mkdirSync('.boss/plugin-gate-harness/.meta',{recursive:true}); require('node:fs').writeFileSync('.boss/plugin-gate-harness/.meta/allow-gate','ok')"] },
+    { "run": ["boss", "runtime", "run-plugin-hook", "gate", "plugin-gate-harness", "--json"] }
+  ],
+  "expect": {
+    "artifacts": [
+      ".boss/plugin-gate-harness/.meta/execution.json",
+      ".boss/plugin-gate-harness/.meta/events.jsonl",
+      ".boss/plugin-gate-harness/.meta/allow-gate"
+    ],
+    "events": [
+      "PipelineInitialized",
+      "PluginDiscovered",
+      "PluginActivated",
+      "PluginHookFailed",
+      "PluginHookExecuted"
+    ],
+    "state": {
+      "feature": "plugin-gate-harness",
+      "metrics.pluginFailureCount": 1
+    }
+  }
+}

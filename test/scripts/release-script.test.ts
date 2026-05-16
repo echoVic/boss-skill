@@ -24,13 +24,15 @@ describe('release script contract', () => {
     const buildIndex = source.indexOf("run('npm run build')");
     const typecheckIndex = source.indexOf("run('npm run typecheck')");
     const testIndex = source.indexOf("run('npm test')");
+    const installMatrixIndex = source.indexOf("run('npm run test:install-matrix')");
     const packIndex = source.indexOf("run('npm pack --dry-run')");
     const publishIndex = source.indexOf("run('npm publish')");
 
     expect(buildIndex).toBeGreaterThan(-1);
     expect(typecheckIndex).toBeGreaterThan(buildIndex);
     expect(testIndex).toBeGreaterThan(typecheckIndex);
-    expect(packIndex).toBeGreaterThan(testIndex);
+    expect(installMatrixIndex).toBeGreaterThan(testIndex);
+    expect(packIndex).toBeGreaterThan(installMatrixIndex);
     expect(publishIndex).toBeGreaterThan(packIndex);
   });
 
