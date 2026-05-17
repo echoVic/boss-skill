@@ -60,4 +60,20 @@ describe('post-tool-bash hook', () => {
 
     expect(parsed.hookSpecificOutput.additionalContext).toContain('流水线');
   });
+
+  it('detects Codex-shaped Bash payloads', () => {
+    const parsed = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'Bash',
+          arguments: { command: 'boss runtime update-stage my-feat 1 running' },
+          cwd: '/tmp'
+        })
+      )
+    ) as {
+      hookSpecificOutput: { additionalContext: string };
+    };
+
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('流水线');
+  });
 });

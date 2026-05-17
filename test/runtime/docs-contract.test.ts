@@ -38,7 +38,8 @@ const protocolManifest = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'protocol-manifest.md'),
   'utf8'
 );
-const hooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'hooks.json'), 'utf8');
+const claudeHooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'claude', 'hooks.json'), 'utf8');
+const codexHooksConfig = fs.readFileSync(path.join(REPO_ROOT, 'skill', 'hooks', 'codex', 'hooks.json'), 'utf8');
 const claudeSettings = fs.readFileSync(path.join(REPO_ROOT, '.claude', 'settings.json'), 'utf8');
 const bmadMethodology = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'references', 'bmad-methodology.md'),
@@ -502,12 +503,33 @@ describe('thin skill CLI contract', () => {
   });
 
   it('routes hook config through the boss hooks dispatcher', () => {
-    expect(hooksConfig).toContain('boss hooks run');
-    expect(hooksConfig).not.toContain('scripts/lib/run-with-flags.js');
+    expect(claudeHooksConfig).toContain('boss hooks run');
+    expect(codexHooksConfig).toContain('boss hooks run');
+    expect(codexHooksConfig).toContain('"matcher": "apply_patch"');
+    expect(codexHooksConfig).not.toContain('SessionEnd');
+    expect(codexHooksConfig).not.toContain('Notification');
     expect(claudeSettings).toContain('boss hooks run');
     expect(claudeSettings).not.toContain('scripts/lib/run-with-flags.js');
     expect(bmadMethodology).toContain('boss hooks run');
+    expect(bmadMethodology).toContain('hooks/claude/hooks.json');
+    expect(bmadMethodology).toContain('hooks/codex/hooks.json');
     expect(bmadMethodology).not.toContain('scripts/hooks/run-with-flags.js');
+  });
+
+  it('keeps repository Claude settings aligned with the Claude hook manifest for safety hooks', () => {
+    const repositorySettings = JSON.parse(claudeSettings) as {
+      hooks: Record<string, Array<{ id?: string; matcher?: string }>>;
+    };
+    const claudeManifest = JSON.parse(claudeHooksConfig) as {
+      hooks: Record<string, Array<{ id?: string; matcher?: string }>>;
+    };
+
+    for (const hookId of ['pre:write:artifact-guard', 'pre:bash:dangerous-cmd-guard']) {
+      const manifestHook = claudeManifest.hooks.PreToolUse?.find((hook) => hook.id === hookId);
+      const settingsHook = repositorySettings.hooks.PreToolUse?.find((hook) => hook.id === hookId);
+
+      expect(settingsHook).toEqual(manifestHook);
+    }
   });
 });
 

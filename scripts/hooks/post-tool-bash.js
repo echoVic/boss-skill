@@ -1,5 +1,6 @@
 import { findActiveFeature } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
 function isGateCommand(command) {
   return /boss\s+runtime\s+evaluate-gates|runtime\/cli\/evaluate-gates\.js|gate-runner\.sh|gate0-|gate1-|gate2-/.test(command);
@@ -14,9 +15,10 @@ function isTestCommand(command) {
 }
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const command = (input.tool_input || {}).command || '';
-  const cwd = input.cwd || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const command = input.command;
+  const cwd = input.cwd;
 
   if (!command) return '';
 

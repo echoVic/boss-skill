@@ -44,6 +44,86 @@ describe('pre-tool-write hook', () => {
     expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
   });
 
+  it('denies Codex apply_patch edits to execution.json', () => {
+    const parsed = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'apply_patch',
+          tool_input: {
+            patch: `*** Begin Patch
+*** Update File: /tmp/project/.boss/feat/.meta/execution.json
+@@
+-old
++new
+*** End Patch`
+          },
+          cwd: '/tmp/project'
+        })
+      )
+    ) as {
+      hookSpecificOutput: { permissionDecision: string };
+    };
+
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('denies Codex apply_patch deletes to execution.json', () => {
+    const parsed = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'apply_patch',
+          tool_input: {
+            patch: `*** Begin Patch
+*** Delete File: /tmp/project/.boss/feat/.meta/execution.json
+*** End Patch`
+          },
+          cwd: '/tmp/project'
+        })
+      )
+    ) as {
+      hookSpecificOutput: { permissionDecision: string };
+    };
+
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('asks when Codex apply_patch file extraction fails', () => {
+    const parsed = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'apply_patch',
+          tool_input: {
+            patch: `*** Begin Patch
+broken patch references /tmp/project/.boss/feat/prd.md but has no file header
+*** End Patch`
+          },
+          cwd: '/tmp/project'
+        })
+      )
+    ) as {
+      hookSpecificOutput: { permissionDecision: string; permissionDecisionReason: string };
+    };
+
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('ask');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('apply_patch');
+  });
+
+  it('allows unparsed Codex apply_patch payloads when they do not mention .boss paths', () => {
+    expect(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'apply_patch',
+          tool_input: {
+            patch: `*** Begin Patch
+broken patch references /tmp/project/src/app.ts but has no file header
+*** End Patch`
+          },
+          cwd: '/tmp/project'
+        })
+      )
+    ).toBe('');
+  });
+
   it('allows writes when stage is running', () => {
     const execData = createExecData({
       feature: 'feat',

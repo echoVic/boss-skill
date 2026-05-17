@@ -27,7 +27,8 @@ const REPRESENTATIVE_BUNDLE_FILES = [
   'agents/boss-pm.md',
   'agents/boss-qa.md',
   'commands/boss.md',
-  'hooks/hooks.json',
+  'hooks/claude/hooks.json',
+  'hooks/codex/hooks.json',
   'templates/prd.md.template',
   'skills/README.md',
   'skills/brainstorming/SKILL.md',
@@ -48,8 +49,13 @@ const REQUIRED_PACKED_FILES = [
   'skill/skills/README.md',
   'skill/skills/pm/requirement-penetration/SKILL.md',
   'skill/skills/qa/test-strategy/SKILL.md',
+  'skill/hooks/claude/hooks.json',
+  'skill/hooks/codex/hooks.json',
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
+  '.codex-plugin/plugin.json',
+  '.codex-plugin/marketplace.json',
+  'scripts/hooks/lib/normalize-input.js',
   'scripts/hooks/subagent-stop.js'
 ] as const;
 
@@ -95,6 +101,216 @@ describe('Boss install matrix', () => {
     expect(fs.existsSync(path.join(installed, '.claude-plugin'))).toBe(false);
   });
 
+  it('merges Codex hooks into ~/.codex/hooks.json without overwriting user hooks', () => {
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const home = makeHome();
+    const codexHome = path.join(home, '.codex');
+    fs.mkdirSync(codexHome, { recursive: true });
+    const existingHooks = {
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: 'Bash',
+            hooks: [
+              {
+                type: 'command',
+                command: 'echo keep-user-hook'
+              }
+            ],
+            description: 'user hook',
+            id: 'user:pre:bash'
+          }
+        ]
+      }
+    };
+    fs.writeFileSync(path.join(codexHome, 'hooks.json'), JSON.stringify(existingHooks, null, 2) + '\n', 'utf8');
+
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'install', '--json'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+
+    const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8')) as {
+      hooks: Record<string, Array<{ id: string }>>;
+    };
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'user:pre:bash')).toBe(true);
+    expect(hooksJson.hooks.SessionStart?.some((entry) => entry.id === 'session:start')).toBe(true);
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'pre:write:artifact-guard')).toBe(true);
+    const state = JSON.parse(fs.readFileSync(path.join(codexHome, '.boss-hooks-state.json'), 'utf8')) as {
+      manifestChecksum?: string;
+      hookIds: string[];
+    };
+    expect(state.manifestChecksum).toMatch(/^sha256:/);
+    expect(state.hookIds).toContain('pre:write:artifact-guard');
+  });
+
+  it('warns when user hooks without ids use Codex write matcher aliases', async () => {
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const home = makeHome();
+    const codexHome = path.join(home, '.codex');
+    fs.mkdirSync(codexHome, { recursive: true });
+    fs.writeFileSync(
+      path.join(codexHome, 'hooks.json'),
+      JSON.stringify(
+        {
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: 'Edit',
+                hooks: [{ type: 'command', command: 'echo user-edit-hook' }]
+              }
+            ]
+          }
+        },
+        null,
+        2
+      ) + '\n',
+      'utf8'
+    );
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'install', '--human'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain('PreToolUse/apply_patch');
+  });
+
+  it('dry-run shows both Codex skill copy and hooks merge actions', () => {
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const home = makeHome();
+    fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
+
+    const result = spawnSync(process.execPath, [BOSS_BIN, 'install', '--dry-run', '--human'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(`[dry-run] Codex: would install to ${path.join(home, '.codex', 'skills', 'boss')}`);
+    expect(result.stdout).toContain(`[dry-run] Codex: would merge hooks into ${path.join(home, '.codex', 'hooks.json')}`);
+  });
+
+  it('uninstall removes stale Boss-managed Codex hook ids from older installs', () => {
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const home = makeHome();
+    const codexHome = path.join(home, '.codex');
+    const installed = path.join(codexHome, 'skills', 'boss');
+    fs.mkdirSync(installed, { recursive: true });
+    fs.writeFileSync(path.join(installed, 'SKILL.md'), 'installed\n', 'utf8');
+    fs.writeFileSync(
+      path.join(codexHome, 'hooks.json'),
+      JSON.stringify(
+        {
+          hooks: {
+            PreToolUse: [
+              { matcher: 'Bash', hooks: [], id: 'pre:bash:dangerous-cmd-guard' },
+              { matcher: 'Bash', hooks: [], id: 'pre:my-custom-thing' },
+              { matcher: 'Bash', hooks: [], id: 'user:pre:bash' }
+            ]
+          }
+        },
+        null,
+        2
+      ) + '\n',
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(codexHome, '.boss-hooks-state.json'),
+      JSON.stringify(
+        { version: '3.8.9', installMode: 'hooks-json', hookIds: ['pre:bash:dangerous-cmd-guard'] },
+        null,
+        2
+      ) + '\n',
+      'utf8'
+    );
+
+    const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes', '--json'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+    expect(uninstall.status, uninstall.stderr).toBe(0);
+
+    const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8')) as {
+      hooks: Record<string, Array<{ id: string }>>;
+    };
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'pre:bash:dangerous-cmd-guard') ?? false).toBe(false);
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'pre:my-custom-thing')).toBe(true);
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'user:pre:bash')).toBe(true);
+  });
+
+  it('legacy Boss hook id cleanup list covers current Claude and Codex manifests', async () => {
+    const { LEGACY_BOSS_HOOK_IDS } = await import('../../packages/boss-cli/src/commands/install/index.js');
+    const legacyIds = new Set(LEGACY_BOSS_HOOK_IDS);
+
+    for (const manifestPath of [
+      path.join(REPO_ROOT, 'skill', 'hooks', 'claude', 'hooks.json'),
+      path.join(REPO_ROOT, 'skill', 'hooks', 'codex', 'hooks.json')
+    ]) {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+        hooks: Record<string, Array<{ id?: string }>>;
+      };
+      const currentIds = Object.values(manifest.hooks).flatMap((entries) => entries.map((entry) => entry.id));
+
+      for (const id of currentIds) {
+        expect(legacyIds.has(id!)).toBe(true);
+      }
+    }
+  });
+
+  it('uninstall removes only Boss-managed Codex hook entries', () => {
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const home = makeHome();
+    const codexHome = path.join(home, '.codex');
+    fs.mkdirSync(codexHome, { recursive: true });
+    const existingHooks = {
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: 'Bash',
+            hooks: [
+              {
+                type: 'command',
+                command: 'echo keep-user-hook'
+              }
+            ],
+            description: 'user hook',
+            id: 'user:pre:bash'
+          }
+        ]
+      }
+    };
+    fs.writeFileSync(path.join(codexHome, 'hooks.json'), JSON.stringify(existingHooks, null, 2) + '\n', 'utf8');
+
+    const install = spawnSync(process.execPath, [BOSS_BIN, 'install', '--json'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+    expect(install.status, install.stderr).toBe(0);
+
+    const uninstall = spawnSync(process.execPath, [BOSS_BIN, 'uninstall', '--yes', '--json'], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, HOME: home },
+      encoding: 'utf8'
+    });
+    expect(uninstall.status, uninstall.stderr).toBe(0);
+
+    const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8')) as {
+      hooks: Record<string, Array<{ id: string }>>;
+    };
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'user:pre:bash')).toBe(true);
+    expect(hooksJson.hooks.SessionStart?.some((entry) => entry.id === 'session:start') ?? false).toBe(false);
+    expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'pre:write:artifact-guard') ?? false).toBe(false);
+    expect(fs.existsSync(path.join(codexHome, '.boss-hooks-state.json'))).toBe(false);
+  });
+
   it('Claude plugin declares the main skill and methodology skill roots', () => {
     const plugin = JSON.parse(
       fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')
@@ -102,6 +318,16 @@ describe('Boss install matrix', () => {
 
     expect(plugin.skills).toContain('./skill/');
     expect(plugin.skills).toContain('./skill/skills/');
+  });
+
+  it('Codex plugin declares the Codex-specific hook manifest', () => {
+    const plugin = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, '.codex-plugin', 'plugin.json'), 'utf8')
+    ) as { hooks?: string; skills: string[] };
+
+    expect(plugin.skills).toContain('./skill/');
+    expect(plugin.skills).toContain('./skill/skills/');
+    expect(plugin.hooks).toBe('./skill/hooks/codex/hooks.json');
   });
 
   it('npm dry-run pack includes release-critical runtime, skill, and plugin files', () => {
@@ -119,5 +345,6 @@ describe('Boss install matrix', () => {
     for (const file of REQUIRED_PACKED_FILES) {
       expect(packedFiles.has(file), `npm package missing ${file}`).toBe(true);
     }
+    expect(packedFiles.has('skill/hooks/hooks.json'), 'npm package should not include legacy hook manifest').toBe(false);
   });
 });

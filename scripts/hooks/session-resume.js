@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const cwd = input.cwd || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const cwd = input.cwd;
 
   if (!cwd) return '';
 

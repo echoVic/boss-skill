@@ -3,10 +3,12 @@ import path from 'node:path';
 
 import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
 import { inspectPipeline } from '../../packages/boss-cli/dist/runtime/application/inspection.js';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const cwd = input.cwd || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const cwd = input.cwd;
 
   if (!cwd) return '';
 

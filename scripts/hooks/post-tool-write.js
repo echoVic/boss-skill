@@ -4,6 +4,7 @@ import path from 'node:path';
 import { STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
 import * as runtime from '../../packages/boss-cli/dist/runtime/application/pipeline.js';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
 function hasArtifactInEventLog(eventsPath, artifact, stage) {
   if (!fs.existsSync(eventsPath)) return false;
@@ -31,51 +32,59 @@ function hasArtifactInEventLog(eventsPath, artifact, stage) {
 }
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const filePath = (input.tool_input || {}).file_path || '';
-  const cwd = input.cwd || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const cwd = input.cwd;
+  const recordedArtifacts = [];
 
-  if (!filePath) return '';
+  for (const filePath of input.filePaths) {
+    if (!filePath.includes('.boss/')) continue;
 
-  if (!filePath.includes('.boss/')) return '';
+    const match = filePath.match(/\.boss\/([^/]+)\//);
+    const artifact = path.basename(filePath);
 
-  const match = filePath.match(/\.boss\/([^/]+)\//);
-  const artifact = path.basename(filePath);
+    if (!match || !artifact) continue;
 
-  if (!match || !artifact) return '';
+    if (artifact === 'execution.json' || artifact === 'summary-report.md' || artifact === 'summary-report.json') {
+      continue;
+    }
 
-  if (artifact === 'execution.json' || artifact === 'summary-report.md' || artifact === 'summary-report.json') {
-    return '';
+    const feature = match[1];
+    const execJsonPath = path.join(cwd, '.boss', feature, '.meta', 'execution.json');
+    const eventsPath = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+
+    if (!fs.existsSync(execJsonPath)) continue;
+
+    const stage = STAGE_MAP[artifact];
+    if (stage === undefined) continue;
+
+    if (hasArtifactInEventLog(eventsPath, artifact, stage)) continue;
+
+    emitProgress(cwd, feature, {
+      type: 'artifact-written',
+      data: { artifact, stage }
+    });
+
+    try {
+      runtime.recordArtifact(feature, artifact, stage, { cwd });
+    } catch (err) {
+      process.stderr.write('[boss-skill] post-tool-write/materialize: ' + err.message + '\n');
+      continue;
+    }
+
+    recordedArtifacts.push({ artifact, stage });
   }
 
-  const feature = match[1];
-  const execJsonPath = path.join(cwd, '.boss', feature, '.meta', 'execution.json');
-  const eventsPath = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+  if (recordedArtifacts.length === 0) return '';
 
-  if (!fs.existsSync(execJsonPath)) return '';
-
-  const stage = STAGE_MAP[artifact];
-  if (stage === undefined) return '';
-
-  if (hasArtifactInEventLog(eventsPath, artifact, stage)) return '';
-
-  // 进度事件
-  emitProgress(cwd, feature, {
-    type: 'artifact-written',
-    data: { artifact, stage }
-  });
-
-  try {
-    runtime.recordArtifact(feature, artifact, stage, { cwd });
-  } catch (err) {
-    process.stderr.write('[boss-skill] post-tool-write/materialize: ' + err.message + '\n');
-    return '';
-  }
+  const context = recordedArtifacts
+    .map(({ artifact, stage }) => `[Harness] 产物 ${artifact} 已通过事件记录到阶段 ${stage}`)
+    .join('\n');
 
   return JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PostToolUse',
-      additionalContext: `[Harness] 产物 ${artifact} 已通过事件记录到阶段 ${stage}`
+      additionalContext: context
     }
   });
 }

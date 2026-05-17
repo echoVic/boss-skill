@@ -1,3 +1,5 @@
+import { normalizeHookInput } from './lib/normalize-input.js';
+
 const DANGEROUS_PATTERNS = [
   { pattern: /\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\b/, reason: 'rm -rf 可能造成不可恢复的数据丢失' },
   { pattern: /\bgit\s+push\s+.*(-f|--force)\b/, reason: 'git push --force 可能覆盖远程历史' },
@@ -10,8 +12,9 @@ const DANGEROUS_PATTERNS = [
 ];
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const command = (input.tool_input || {}).command || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const command = input.command;
 
   if (!command) return '';
 

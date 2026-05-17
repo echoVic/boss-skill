@@ -12,6 +12,10 @@ describe('pre-tool-bash hook', () => {
     expect(hook.run(JSON.stringify({ tool_input: { command: '' }, cwd: '/tmp' }))).toBe('');
   });
 
+  it('returns empty string for malformed hook payloads', () => {
+    expect(hook.run('{not-json')).toBe('');
+  });
+
   it('returns empty string for safe commands', () => {
     expect(hook.run(JSON.stringify({ tool_input: { command: 'ls -la' }, cwd: '/tmp' }))).toBe('');
   });
@@ -62,6 +66,19 @@ describe('pre-tool-bash hook', () => {
 
   it('denies TRUNCATE TABLE', () => {
     const result = JSON.parse(hook.run(JSON.stringify({ tool_input: { command: 'mysql -e "TRUNCATE TABLE logs"' }, cwd: '/tmp' })));
+    expect(result.hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('denies dangerous Codex Bash payloads', () => {
+    const result = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'Bash',
+          arguments: { command: 'git push --force origin main' },
+          cwd: '/tmp'
+        })
+      )
+    );
     expect(result.hookSpecificOutput.permissionDecision).toBe('deny');
   });
 });

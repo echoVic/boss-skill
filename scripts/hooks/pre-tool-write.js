@@ -2,12 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { STAGE_MAP, loadArtifactDag, getReadyArtifacts } from '../lib/boss-utils.js';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
-function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const filePath = (input.tool_input || {}).file_path || '';
-  const cwd = input.cwd || '';
-
+function classifyWriteDecision(filePath, cwd) {
   if (!filePath) return '';
 
   if (filePath.includes('.boss/') && filePath.endsWith('execution.json')) {
@@ -20,56 +17,96 @@ function run(rawInput) {
     });
   }
 
-  if (filePath.includes('.boss/')) {
-    const match = filePath.match(/\.boss\/([^/]+)\//);
-    const artifact = path.basename(filePath);
+  if (!filePath.includes('.boss/')) {
+    return '';
+  }
 
-    if (match) {
-      const feature = match[1];
-      const execJsonPath = path.join(cwd, '.boss', feature, '.meta', 'execution.json');
+  const match = filePath.match(/\.boss\/([^/]+)\//);
+  const artifact = path.basename(filePath);
 
-      if (fs.existsSync(execJsonPath)) {
-        const expectedStage = STAGE_MAP[artifact];
+  if (match) {
+    const feature = match[1];
+    const execJsonPath = path.join(cwd, '.boss', feature, '.meta', 'execution.json');
 
-        if (expectedStage !== undefined) {
-          let data;
-          try {
-            data = JSON.parse(fs.readFileSync(execJsonPath, 'utf8'));
-          } catch (err) {
-            process.stderr.write('[boss-skill] pre-tool-write/readExecJson: ' + err.message + '\n');
-            return '';
-          }
+    if (fs.existsSync(execJsonPath)) {
+      const expectedStage = STAGE_MAP[artifact];
 
-          const stages = data.stages || {};
-          const stage = stages[String(expectedStage)] || {};
-          const stageStatus = stage.status || 'unknown';
+      if (expectedStage !== undefined) {
+        let data;
+        try {
+          data = JSON.parse(fs.readFileSync(execJsonPath, 'utf8'));
+        } catch (err) {
+          process.stderr.write('[boss-skill] pre-tool-write/readExecJson: ' + err.message + '\n');
+          return '';
+        }
 
-          if (stageStatus !== 'running' && stageStatus !== 'retrying') {
-            // Also check DAG: if artifact inputs are ready, allow with ask
-            const dagPath = path.join(cwd, 'harness', 'artifact-dag.json');
-            const dag = loadArtifactDag(dagPath);
-            if (dag && dag.artifacts && dag.artifacts[artifact]) {
-              const ready = getReadyArtifacts(dag, data, data.parameters || {});
-              const isReady = ready.some(r => r.artifact === artifact);
-              if (isReady) {
-                return ''; // DAG says inputs are satisfied, allow write
-              }
+        const stages = data.stages || {};
+        const stage = stages[String(expectedStage)] || {};
+        const stageStatus = stage.status || 'unknown';
+
+        if (stageStatus !== 'running' && stageStatus !== 'retrying') {
+          const dagPath = path.join(cwd, 'harness', 'artifact-dag.json');
+          const dag = loadArtifactDag(dagPath);
+          if (dag && dag.artifacts && dag.artifacts[artifact]) {
+            const ready = getReadyArtifacts(dag, data, data.parameters || {});
+            const isReady = ready.some(r => r.artifact === artifact);
+            if (isReady) {
+              return '';
             }
-
-            return JSON.stringify({
-              hookSpecificOutput: {
-                hookEventName: 'PreToolUse',
-                permissionDecision: 'ask',
-                permissionDecisionReason: `产物 ${artifact} 属于阶段 ${expectedStage}，但该阶段状态为 ${stageStatus}（非 running）。确认要写入吗？`
-              }
-            });
           }
+
+          return JSON.stringify({
+            hookSpecificOutput: {
+              hookEventName: 'PreToolUse',
+              permissionDecision: 'ask',
+              permissionDecisionReason: `产物 ${artifact} 属于阶段 ${expectedStage}，但该阶段状态为 ${stageStatus}（非 running）。确认要写入吗？`
+            }
+          });
         }
       }
     }
   }
 
   return '';
+}
+
+function askForUnparsedPatch() {
+  return JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'ask',
+      permissionDecisionReason: '[boss-skill] apply_patch payload 未能解析出目标文件。为避免绕过 .boss 产物护栏，请确认是否继续。'
+    }
+  });
+}
+
+function run(rawInput) {
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const filePaths = input.filePaths;
+  const cwd = input.cwd;
+
+  if (filePaths.length === 0) {
+    if (input.toolName === 'apply_patch' && input.patch && input.patch.includes('.boss/')) {
+      return askForUnparsedPatch();
+    }
+    return '';
+  }
+
+  let askDecision = '';
+  for (const filePath of filePaths) {
+    const decision = classifyWriteDecision(filePath, cwd);
+    if (!decision) continue;
+    const parsed = JSON.parse(decision);
+    if (parsed.hookSpecificOutput?.permissionDecision === 'deny') {
+      return decision;
+    }
+    if (parsed.hookSpecificOutput?.permissionDecision === 'ask') {
+      askDecision = decision;
+    }
+  }
+
+  return askDecision;
 }
 
 export { run };

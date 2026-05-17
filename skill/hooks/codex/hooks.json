@@ -28,7 +28,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -54,7 +54,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -62,7 +62,7 @@
             "timeout": 10
           }
         ],
-        "description": "Auto-track artifacts to execution.json after Write operations",
+        "description": "Auto-track artifacts to execution.json after apply_patch operations",
         "id": "post:write:artifact-track"
       },
       {
@@ -78,32 +78,6 @@
         "id": "post:bash:context"
       }
     ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "boss hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"",
-            "timeout": 5
-          }
-        ],
-        "description": "Inject pipeline stage context into subagents",
-        "id": "subagent:start"
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "boss hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"",
-            "timeout": 10
-          }
-        ],
-        "description": "Log subagent execution to agent-log.jsonl",
-        "id": "subagent:stop"
-      }
-    ],
     "Stop": [
       {
         "hooks": [
@@ -115,33 +89,6 @@
         ],
         "description": "Block premature exit when pipeline stages are still running",
         "id": "stop:pipeline-guard"
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "boss hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"",
-            "async": true,
-            "timeout": 5
-          }
-        ],
-        "description": "Async notification logging to notifications.jsonl",
-        "id": "notification:log"
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "boss hooks run \"session:end\" \"scripts/hooks/session-end.js\"",
-            "timeout": 10
-          }
-        ],
-        "description": "Save session state and generate summary report",
-        "id": "session:end"
       }
     ]
   }

@@ -1,0 +1,29 @@
+{
+  "name": "boss-skill",
+  "description": "BMAD Codex plugin marketplace metadata",
+  "version": "3.8.10",
+  "owner": {
+    "name": "echoVic",
+    "email": "137844255@qq.com"
+  },
+  "plugins": [
+    {
+      "name": "boss",
+      "source": "./",
+      "description": "BMAD pipeline plugin for Codex with dedicated hook manifests and shared runtime enforcement.",
+      "version": "3.8.10",
+      "author": {
+        "name": "echoVic",
+        "email": "137844255@qq.com"
+      },
+      "category": "development",
+      "keywords": [
+        "bmad",
+        "pipeline",
+        "codex",
+        "agent-orchestration",
+        "automation"
+      ]
+    }
+  ]
+}

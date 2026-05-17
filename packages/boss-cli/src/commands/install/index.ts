@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -14,11 +15,13 @@ import {
   writeOutput
 } from '../../cli/contract.js';
 import { commandDescriptions } from '../../cli/registry.js';
-import { copyDirectory, readJsonFile } from '../../infrastructure/fs.js';
+import { copyDirectory, readJsonFile, writeJsonFile } from '../../infrastructure/fs.js';
 import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
 
 const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
 const SKILL_ROOT = path.join(PKG_ROOT, 'skill');
+const CODEX_HOOKS_SOURCE = path.join(SKILL_ROOT, 'hooks', 'codex', 'hooks.json');
+const CODEX_HOOKS_STATE = '.boss-hooks-state.json';
 const __filename = fileURLToPath(import.meta.url);
 const pkg = readJsonFile<{
   version: string;
@@ -29,7 +32,7 @@ interface Agent {
   name: string;
   detect: () => boolean;
   dest: () => string;
-  method: 'copy' | 'hooks' | 'plugin';
+  method: 'copy' | 'codex-copy' | 'plugin';
 }
 
 type InstallAction = {
@@ -42,6 +45,43 @@ type UninstallAction = {
   type: 'remove_skill' | 'skip_missing';
   agent: string;
   path: string;
+};
+
+type HookEntry = {
+  id?: string;
+  [key: string]: unknown;
+};
+
+type HooksConfig = {
+  hooks?: Record<string, HookEntry[]>;
+};
+
+type CodexHooksState = {
+  version: string;
+  installMode: 'hooks-json';
+  hookIds: string[];
+  manifestChecksum?: string;
+};
+
+export const LEGACY_BOSS_HOOK_IDS = [
+  'session:start',
+  'session:resume',
+  'pre:write:artifact-guard',
+  'pre:bash:dangerous-cmd-guard',
+  'post:write:artifact-track',
+  'post:bash:context',
+  'stop:pipeline-guard',
+  'subagent:start',
+  'subagent:stop',
+  'notification:log',
+  'session:end'
+];
+
+const CODEX_MATCHER_ALIASES: Record<string, string[]> = {
+  apply_patch: ['apply_patch', 'Edit', 'Write', 'Edit|Write'],
+  Edit: ['apply_patch', 'Edit', 'Write', 'Edit|Write'],
+  Write: ['apply_patch', 'Edit', 'Write', 'Edit|Write'],
+  'Edit|Write': ['apply_patch', 'Edit', 'Write', 'Edit|Write']
 };
 
 const METADATA: Record<string, string> = {
@@ -97,7 +137,7 @@ const AGENTS: Agent[] = [
     name: 'Codex',
     detect: () => fs.existsSync(path.join(HOME, '.codex')),
     dest: () => path.join(HOME, '.codex', 'skills', 'boss'),
-    method: 'copy',
+    method: 'codex-copy',
   },
   {
     name: 'Antigravity',
@@ -135,7 +175,7 @@ Usage:
 
 Auto-detect logic (checks all, installs to every detected agent):
   ~/.openclaw/                →  ~/.openclaw/skills/boss/     (copy + inject metadata)
-  ~/.codex/                   →  ~/.codex/skills/boss/        (copy + inject metadata)
+  ~/.codex/                   →  ~/.codex/skills/boss/        (copy + inject metadata + hooks merge)
   ~/.gemini/antigravity/      →  ~/.gemini/.../skills/boss/   (copy + inject metadata)
   ~/.hermes/                  →  ~/.hermes/skills/boss/       (copy + inject metadata)
   Claude Code                 →  plugin mode (--plugin-dir)
@@ -175,6 +215,142 @@ function copyInstall(agent: Agent, dryRun: boolean, silent = false): void {
   if (!silent) console.log(`  ✅ ${agent.name}: ${dest} (copied + metadata injected)`);
 }
 
+function readHooksConfig(filePath: string): HooksConfig {
+  if (!fs.existsSync(filePath)) {
+    return { hooks: {} };
+  }
+  return readJsonFile<HooksConfig>(filePath);
+}
+
+function getBossHookIds(hooksConfig: HooksConfig): string[] {
+  const ids: string[] = [];
+  for (const entries of Object.values(hooksConfig.hooks || {})) {
+    for (const entry of entries || []) {
+      if (typeof entry.id === 'string' && entry.id.length > 0) {
+        ids.push(entry.id);
+      }
+    }
+  }
+  return ids;
+}
+
+function mergeHooksConfig(existingConfig: HooksConfig, bossConfig: HooksConfig): HooksConfig {
+  const result: HooksConfig = { hooks: {} };
+  const allEventNames = new Set([
+    ...Object.keys(existingConfig.hooks || {}),
+    ...Object.keys(bossConfig.hooks || {})
+  ]);
+  const bossHookIds = new Set(getBossHookIds(bossConfig));
+
+  for (const eventName of allEventNames) {
+    const existingEntries = (existingConfig.hooks || {})[eventName] || [];
+    const bossEntries = (bossConfig.hooks || {})[eventName] || [];
+    const preservedExisting = existingEntries.filter((entry) => !entry.id || !bossHookIds.has(String(entry.id)));
+    const mergedEntries = [...preservedExisting, ...bossEntries];
+    if (mergedEntries.length > 0) {
+      result.hooks![eventName] = mergedEntries;
+    }
+  }
+
+  return result;
+}
+
+function removeBossHooks(existingConfig: HooksConfig, hookIds: string[]): HooksConfig {
+  const result: HooksConfig = { hooks: {} };
+  const blockedIds = new Set([...hookIds, ...LEGACY_BOSS_HOOK_IDS]);
+
+  for (const [eventName, entries] of Object.entries(existingConfig.hooks || {})) {
+    const preservedEntries = (entries || []).filter((entry) => {
+      if (!entry.id) return true;
+      const id = String(entry.id);
+      return !blockedIds.has(id);
+    });
+    if (preservedEntries.length > 0) {
+      result.hooks![eventName] = preservedEntries;
+    }
+  }
+
+  return result;
+}
+
+function fileSha256(filePath: string): string {
+  return 'sha256:' + createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+function findDuplicateMatcherWarnings(existingConfig: HooksConfig, bossConfig: HooksConfig): string[] {
+  const warnings: string[] = [];
+  for (const [eventName, bossEntries] of Object.entries(bossConfig.hooks || {})) {
+    const existingEntries = existingConfig.hooks?.[eventName] || [];
+    for (const bossEntry of bossEntries || []) {
+      if (typeof bossEntry.matcher !== 'string') continue;
+      const equivalentMatchers = new Set(CODEX_MATCHER_ALIASES[bossEntry.matcher] || [bossEntry.matcher]);
+      const duplicate = existingEntries.find((entry) => {
+        return !entry.id && typeof entry.matcher === 'string' && equivalentMatchers.has(entry.matcher);
+      });
+      if (duplicate) {
+        warnings.push(`${eventName}/${bossEntry.matcher}`);
+      }
+    }
+  }
+  return warnings;
+}
+
+function installCodexHooks(dryRun: boolean, silent = false): void {
+  const codexHome = path.join(HOME, '.codex');
+  const hooksPath = path.join(codexHome, 'hooks.json');
+  const statePath = path.join(codexHome, CODEX_HOOKS_STATE);
+
+  if (dryRun) {
+    if (!silent) console.log(`  [dry-run] Codex: would merge hooks into ${hooksPath}`);
+    return;
+  }
+
+  const existingConfig = readHooksConfig(hooksPath);
+  const bossConfig = readJsonFile<HooksConfig>(CODEX_HOOKS_SOURCE);
+  const currentChecksum = fileSha256(CODEX_HOOKS_SOURCE);
+  const previousState = fs.existsSync(statePath) ? readJsonFile<CodexHooksState>(statePath) : null;
+  const duplicateWarnings = findDuplicateMatcherWarnings(existingConfig, bossConfig);
+  const mergedConfig = mergeHooksConfig(existingConfig, bossConfig);
+  writeJsonFile(hooksPath, mergedConfig);
+  writeJsonFile(statePath, {
+    version: pkg.version,
+    installMode: 'hooks-json',
+    hookIds: getBossHookIds(bossConfig),
+    manifestChecksum: currentChecksum
+  } satisfies CodexHooksState);
+
+  if (!silent) console.log(`  ✅ Codex: merged hooks into ${hooksPath}`);
+  if (!silent && previousState?.manifestChecksum && previousState.manifestChecksum !== currentChecksum) {
+    console.log('  ℹ️  Codex: hook manifest changed since last install; refreshed Boss-managed hooks.');
+  }
+  if (!silent && duplicateWarnings.length > 0) {
+    console.log(`  ⚠️  Codex: existing hook(s) without id share matcher(s): ${duplicateWarnings.join(', ')}`);
+  }
+}
+
+function uninstallCodexHooks(silent = false): void {
+  const codexHome = path.join(HOME, '.codex');
+  const hooksPath = path.join(codexHome, 'hooks.json');
+  const statePath = path.join(codexHome, CODEX_HOOKS_STATE);
+
+  if (!fs.existsSync(statePath)) {
+    return;
+  }
+
+  const state = readJsonFile<CodexHooksState>(statePath);
+  const existingConfig = readHooksConfig(hooksPath);
+  const cleanedConfig = removeBossHooks(existingConfig, state.hookIds);
+  writeJsonFile(hooksPath, cleanedConfig);
+  fs.rmSync(statePath, { force: true });
+
+  if (!silent) console.log(`  ✅ Codex: removed Boss-managed hooks from ${hooksPath}`);
+}
+
+function codexInstall(agent: Agent, dryRun: boolean, silent = false): void {
+  copyInstall(agent, dryRun, silent);
+  installCodexHooks(dryRun, silent);
+}
+
 function pluginInstall(dryRun: boolean, silent = false): void {
   if (dryRun) {
     if (!silent) console.log(`  [dry-run] Claude Code: would register plugin at ${PKG_ROOT}`);
@@ -196,7 +372,7 @@ export function buildInstallPlan(): InstallAction[] {
 }
 
 export function buildUninstallPlan(): UninstallAction[] {
-  return AGENTS.filter((agent) => agent.method === 'copy' && agent.detect()).map((agent) => {
+  return AGENTS.filter((agent) => agent.method !== 'plugin' && agent.detect()).map((agent) => {
     const dest = agent.dest();
     return {
       type: fs.existsSync(dest) ? 'remove_skill' : 'skip_missing',
@@ -215,6 +391,8 @@ function autoInstall(dryRun: boolean, silent = false): void {
   for (const agent of detected) {
     if (agent.method === 'copy') {
       copyInstall(agent, dryRun, silent);
+    } else if (agent.method === 'codex-copy') {
+      codexInstall(agent, dryRun, silent);
     } else {
       pluginInstall(dryRun, silent);
     }
@@ -231,7 +409,7 @@ function autoInstall(dryRun: boolean, silent = false): void {
 function uninstall(silent = false): void {
   if (!silent) console.log(`@blade-ai/boss-skill v${pkg.version} — uninstall\n`);
 
-  const copyAgents = AGENTS.filter((a) => a.method === 'copy' && a.detect());
+  const copyAgents = AGENTS.filter((a) => a.method !== 'plugin' && a.detect());
 
   for (const agent of copyAgents) {
     const dest = agent.dest();
@@ -240,6 +418,10 @@ function uninstall(silent = false): void {
       if (!silent) console.log(`  ✅ ${agent.name}: removed ${dest}`);
     } else {
       if (!silent) console.log(`  ⏭️  ${agent.name}: not installed, skipped`);
+    }
+
+    if (agent.name === 'Codex') {
+      uninstallCodexHooks(silent);
     }
   }
 
@@ -255,9 +437,14 @@ export function showHelp(): void {
 }
 
 export function installMain(argv: string[] = process.argv.slice(2)): number {
-  const context = createCliContext(argv, { command: 'boss install' });
-  const cmd = argv[0];
-  const rest = argv.slice(1);
+  const forceHuman = argv.includes('--human');
+  const normalizedArgv = argv.filter((arg) => arg !== '--human');
+  const context = createCliContext(normalizedArgv, { command: 'boss install' });
+  if (forceHuman) {
+    context.useJson = false;
+  }
+  const cmd = normalizedArgv[0];
+  const rest = normalizedArgv.slice(1);
   const dryRun = context.values.dryRun;
 
   switch (cmd) {

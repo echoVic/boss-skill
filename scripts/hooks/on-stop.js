@@ -1,9 +1,11 @@
 import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
+import { normalizeHookInput } from './lib/normalize-input.js';
 
 function run(rawInput) {
-  const input = JSON.parse(rawInput);
-  const stopHookActive = input.stop_hook_active;
-  const cwd = input.cwd || '';
+  const input = normalizeHookInput(rawInput);
+  if (!input) return '';
+  const stopHookActive = input.stopHookActive;
+  const cwd = input.cwd;
 
   if (stopHookActive === true || stopHookActive === 'true') {
     return '';

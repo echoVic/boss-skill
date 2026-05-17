@@ -66,6 +66,29 @@ const VERSION_FILES = [
     }
   },
   {
+    path: '.codex-plugin/plugin.json',
+    kind: 'json',
+    update(content, version) {
+      const obj = JSON.parse(content);
+      obj.version = version;
+      return JSON.stringify(obj, null, 2) + '\n';
+    }
+  },
+  {
+    path: '.codex-plugin/marketplace.json',
+    kind: 'marketplace',
+    update(content, version) {
+      const obj = JSON.parse(content);
+      obj.version = version;
+      if (Array.isArray(obj.plugins)) {
+        for (const p of obj.plugins) {
+          p.version = version;
+        }
+      }
+      return JSON.stringify(obj, null, 2) + '\n';
+    }
+  },
+  {
     path: 'skill/SKILL.md',
     kind: 'skill',
     update(content, version) {
