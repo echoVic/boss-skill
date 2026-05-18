@@ -3,6 +3,13 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { EVENT_TYPES, EVENT_TYPE_VALUES, type EventType } from '../domain/event-types.js';
+import type {
+  ConversationMessage,
+  ConversationResolution,
+  ConversationThread,
+  DerivedTodo,
+  ResolutionTodo
+} from '../domain/conversation-types.js';
 import {
   PIPELINE_STATUS,
   STAGE_STATUS,
@@ -96,6 +103,20 @@ export interface RevisionRequest {
   resolved: boolean;
 }
 
+export interface ConversationState {
+  threads: ConversationThread[];
+  messages: ConversationMessage[];
+  resolutions: ConversationResolution[];
+}
+
+export interface ConversationMetrics {
+  opened: number;
+  resolved: number;
+  todos: number;
+  huddles: number;
+  unresolved: number;
+}
+
 export interface ExecutionState {
   schemaVersion: string;
   feature: string;
@@ -108,6 +129,9 @@ export interface ExecutionState {
   metrics: ExecutionMetrics;
   plugins: PluginSummary[];
   pluginLifecycle: PluginLifecycleState;
+  conversations: ConversationState;
+  derivedTodos: DerivedTodo[];
+  conversationMetrics: ConversationMetrics;
   humanInterventions: unknown[];
   revisionRequests: RevisionRequest[];
   feedbackLoops: { maxRounds: number; currentRound: number };
@@ -216,10 +240,56 @@ export function defaultExecutionState(feature = ''): ExecutionState {
       executed: [],
       failed: []
     },
+    conversations: {
+      threads: [],
+      messages: [],
+      resolutions: []
+    },
+    derivedTodos: [],
+    conversationMetrics: {
+      opened: 0,
+      resolved: 0,
+      todos: 0,
+      huddles: 0,
+      unresolved: 0
+    },
     humanInterventions: [],
     revisionRequests: [],
     feedbackLoops: { maxRounds: 2, currentRound: 0 }
   };
+}
+
+function upsertThread(
+  threads: ConversationThread[],
+  thread: ConversationThread
+): ConversationThread[] {
+  const next = threads.filter((candidate) => candidate.id !== thread.id);
+  next.push(clone(thread));
+  return next;
+}
+
+function closeThread(threads: ConversationThread[], threadId: string): ConversationThread[] {
+  return threads.map((thread) => {
+    if (thread.id !== threadId) return thread;
+    return {
+      ...thread,
+      status: 'closed',
+      updatedAt: thread.updatedAt || thread.createdAt
+    };
+  });
+}
+
+function ensureConversationSections(state: ExecutionState): void {
+  if (!state.conversations || typeof state.conversations !== 'object') {
+    state.conversations = { threads: [], messages: [], resolutions: [] };
+  }
+  if (!Array.isArray(state.conversations.threads)) state.conversations.threads = [];
+  if (!Array.isArray(state.conversations.messages)) state.conversations.messages = [];
+  if (!Array.isArray(state.conversations.resolutions)) state.conversations.resolutions = [];
+  if (!Array.isArray(state.derivedTodos)) state.derivedTodos = [];
+  if (!state.conversationMetrics || typeof state.conversationMetrics !== 'object') {
+    state.conversationMetrics = { opened: 0, resolved: 0, todos: 0, huddles: 0, unresolved: 0 };
+  }
 }
 
 function ensureStage(state: ExecutionState, stageId: unknown): StageState {
@@ -429,6 +499,41 @@ function validateEvent(event: unknown): asserts event is RuntimeEvent {
         failValidation('reason 必须是非空字符串', context);
       }
       break;
+    case EVENT_TYPES.CONVERSATION_OPENED:
+      if (!isObject(event.data.thread)) {
+        failValidation('thread 必须是对象', context);
+      }
+      if (!isNonEmptyString(event.data.thread.id)) {
+        failValidation('thread.id 必须是非空字符串', context);
+      }
+      break;
+    case EVENT_TYPES.CONVERSATION_MESSAGE_APPENDED:
+      if (!isObject(event.data.message)) {
+        failValidation('message 必须是对象', context);
+      }
+      if (!isNonEmptyString(event.data.message.id)) {
+        failValidation('message.id 必须是非空字符串', context);
+      }
+      if (!isNonEmptyString(event.data.message.threadId)) {
+        failValidation('message.threadId 必须是非空字符串', context);
+      }
+      break;
+    case EVENT_TYPES.CONVERSATION_RESOLVED:
+      if (!isObject(event.data.resolution)) {
+        failValidation('resolution 必须是对象', context);
+      }
+      if (!isNonEmptyString(event.data.resolution.threadId)) {
+        failValidation('resolution.threadId 必须是非空字符串', context);
+      }
+      break;
+    case EVENT_TYPES.TODO_MATERIALIZED:
+      if (!isObject(event.data.todo)) {
+        failValidation('todo 必须是对象', context);
+      }
+      if (!isNonEmptyString(event.data.todo.id)) {
+        failValidation('todo.id 必须是非空字符串', context);
+      }
+      break;
     case EVENT_TYPES.PLUGIN_DISCOVERED:
     case EVENT_TYPES.PLUGIN_ACTIVATED:
       validatePluginSummary(event.data.plugin, `${context}.plugin`);
@@ -517,6 +622,29 @@ function validateExecutionState(state: unknown, feature: string): asserts state 
   }
   if (!Array.isArray(state.pluginLifecycle.failed)) {
     failValidation('execution.pluginLifecycle.failed 必须是数组');
+  }
+  if (!isObject(state.conversations)) {
+    failValidation('execution.conversations 必须是对象');
+  }
+  if (!Array.isArray(state.conversations.threads)) {
+    failValidation('execution.conversations.threads 必须是数组');
+  }
+  if (!Array.isArray(state.conversations.messages)) {
+    failValidation('execution.conversations.messages 必须是数组');
+  }
+  if (!Array.isArray(state.conversations.resolutions)) {
+    failValidation('execution.conversations.resolutions 必须是数组');
+  }
+  if (!Array.isArray(state.derivedTodos)) {
+    failValidation('execution.derivedTodos 必须是数组');
+  }
+  if (!isObject(state.conversationMetrics)) {
+    failValidation('execution.conversationMetrics 必须是对象');
+  }
+  for (const key of ['opened', 'resolved', 'todos', 'huddles', 'unresolved']) {
+    if (!(key in state.conversationMetrics)) {
+      failValidation(`execution.conversationMetrics.${key} 缺失`);
+    }
   }
 }
 
@@ -671,6 +799,93 @@ export function applyEvent(
         resolved: false
       });
       state.feedbackLoops.currentRound = (state.feedbackLoops.currentRound || 0) + 1;
+      return state;
+    }
+
+    case EVENT_TYPES.CONVERSATION_OPENED: {
+      ensureConversationSections(state);
+      const thread = clone(event.data.thread as ConversationThread);
+      state.conversations.threads = upsertThread(state.conversations.threads, thread);
+      state.conversationMetrics.opened += 1;
+      if (thread.kind === 'huddle') {
+        state.conversationMetrics.huddles += 1;
+      }
+      return state;
+    }
+
+    case EVENT_TYPES.CONVERSATION_MESSAGE_APPENDED: {
+      ensureConversationSections(state);
+      const baseMessage = clone(event.data.message as Partial<ConversationMessage> & { id: string; threadId: string });
+      const message: ConversationMessage = {
+        id: baseMessage.id,
+        threadId: baseMessage.threadId,
+        from: typeof baseMessage.from === 'string' ? baseMessage.from : '',
+        to: Array.isArray(baseMessage.to) ? baseMessage.to.filter((value): value is string => typeof value === 'string') : [],
+        intent: (baseMessage.intent as ConversationMessage['intent']) ?? 'question',
+        content: typeof baseMessage.content === 'string' ? baseMessage.content : '',
+        evidence: Array.isArray(baseMessage.evidence) ? clone(baseMessage.evidence) : undefined,
+        createdAt: typeof baseMessage.createdAt === 'string' ? baseMessage.createdAt : event.timestamp
+      };
+      state.conversations.messages = state.conversations.messages.concat(message);
+      return state;
+    }
+
+    case EVENT_TYPES.CONVERSATION_RESOLVED: {
+      ensureConversationSections(state);
+      const baseResolution = clone(event.data.resolution as Partial<ConversationResolution> & { threadId: string });
+      const todos = Array.isArray(baseResolution.todos)
+        ? baseResolution.todos.map((todo) => ({
+            id: String(todo.id),
+            owner: String(todo.owner),
+            title: String(todo.title),
+            status: (todo.status ?? 'pending') as ResolutionTodo['status']
+          }))
+        : [];
+      const resolution: ConversationResolution = {
+        threadId: baseResolution.threadId,
+        summary: typeof baseResolution.summary === 'string' ? baseResolution.summary : '',
+        decision: typeof baseResolution.decision === 'string' ? baseResolution.decision : '',
+        todos,
+        createdAt: typeof baseResolution.createdAt === 'string' ? baseResolution.createdAt : event.timestamp
+      };
+      state.conversations.resolutions = state.conversations.resolutions.concat(resolution);
+      state.conversations.threads = closeThread(state.conversations.threads, resolution.threadId);
+      state.conversationMetrics.resolved += 1;
+      return state;
+    }
+
+    case EVENT_TYPES.TODO_MATERIALIZED: {
+      ensureConversationSections(state);
+      const baseTodo = clone(event.data.todo as Partial<DerivedTodo> & { id: string; owner: string; title: string });
+      const derivedTodo: DerivedTodo = {
+        id: baseTodo.id,
+        sourceThreadId: typeof baseTodo.sourceThreadId === 'string' ? baseTodo.sourceThreadId : '',
+        title: baseTodo.title,
+        owner: baseTodo.owner,
+        type: (baseTodo.type as DerivedTodo['type']) ?? 'change',
+        status: (baseTodo.status as DerivedTodo['status']) ?? 'pending',
+        successCriteria: Array.isArray(baseTodo.successCriteria)
+          ? baseTodo.successCriteria.filter((value): value is string => typeof value === 'string')
+          : [],
+        impact: {
+          artifacts: Array.isArray(baseTodo.impact?.artifacts)
+            ? baseTodo.impact.artifacts.filter((value): value is string => typeof value === 'string')
+            : [],
+          scope: Array.isArray(baseTodo.impact?.scope)
+            ? baseTodo.impact.scope.filter((value): value is string => typeof value === 'string')
+            : []
+        },
+        dispatchHint: {
+          stage:
+            typeof baseTodo.dispatchHint?.stage === 'number' && Number.isFinite(baseTodo.dispatchHint.stage)
+              ? baseTodo.dispatchHint.stage
+              : 0,
+          agent: typeof baseTodo.dispatchHint?.agent === 'string' ? baseTodo.dispatchHint.agent : ''
+        },
+        createdAt: typeof baseTodo.createdAt === 'string' ? baseTodo.createdAt : event.timestamp
+      };
+      state.derivedTodos = state.derivedTodos.concat(derivedTodo);
+      state.conversationMetrics.todos += 1;
       return state;
     }
 
@@ -829,6 +1044,10 @@ export function finalizeState(state: ExecutionState): ExecutionState {
     ? state.pluginLifecycle.failed
     : [];
   state.metrics.pluginFailureCount = state.pluginLifecycle.failed.length;
+  ensureConversationSections(state);
+  state.conversationMetrics.unresolved = state.conversations.threads.filter(
+    (thread) => thread.status !== 'closed' && thread.status !== 'materialized'
+  ).length;
   return state;
 }
 

@@ -129,6 +129,17 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 2.4 执行中会话层
+
+Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍是正式 source of truth，但执行期间允许点对点会话来处理偏差、求助和局部决策。
+
+- **会话原语**：`ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
+- **锚点要求**：每条会话必须绑定到 `artifact`、`task`、`scope` 或 `decision`
+- **最小模型**：`Thread -> Message -> Resolution -> Todo`
+- **闭环规则**：每次 `resolve` 都必须 materialize 为至少一个 executable、single-owner todo；如果结论触及正式真相源，则升级为 revision loop，而不是停留在聊天层
+
+这层设计让 QA 指回 Frontend、Frontend 向 Architect 求证、或多方 huddle 对齐都可以发生，同时仍然保留可回放、可派发、可审计的运行时结构。
+
 ---
 
 ## 3. 四阶段工作流
@@ -193,6 +204,11 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 - 单元测试：覆盖率 ≥ 70%
 - 集成测试：API 端点、组件交互
 - E2E 测试：关键用户流程
+
+**执行中协作要求**：
+- 发现实现偏差、契约歧义或证据冲突时，优先开执行中会话，不要直接把问题埋进最终报告
+- 会话必须 anchored，并在收敛后生成 single-owner todo 或升级为正式修订循环
+- QA、Frontend、Backend、Tech Lead 等角色可按需点对点沟通或拉小范围 huddle
 
 ### 3.4 阶段 4：部署 + 交付
 

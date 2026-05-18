@@ -82,8 +82,22 @@ export function renderMarkdown(model: SummaryModel): string {
     `- **平均阶段重试**：${model.metrics.meanRetriesPerStage ?? 0}`,
     `- **修订循环次数**：${model.metrics.revisionLoopCount ?? 0}`,
     `- **插件失败次数**：${model.metrics.pluginFailureCount ?? 0}`,
+    `- **Conversation 打开/收敛/落地**：${model.conversationMetrics.opened} / ${model.conversationMetrics.resolved} / ${model.conversationMetrics.todos}`,
+    `- **Conversation huddle / unresolved**：${model.conversationMetrics.huddles} / ${model.conversationMetrics.unresolved}`,
     '',
     '---',
+    '',
+    '## 执行协作',
+    '',
+    '| Todo | Owner | Status | Title |',
+    '|------|-------|--------|-------|'
+  ];
+
+  for (const todo of model.derivedTodos) {
+    lines.push(`| ${todo.id} | ${todo.owner} | ${todo.status} | ${todo.title} |`);
+  }
+
+  lines.push(
     '',
     '## 证据链',
     '',
@@ -98,7 +112,7 @@ export function renderMarkdown(model: SummaryModel): string {
     '',
     '| 门禁 | 状态 | 通过 | 检查项 | 失败项 | 执行时间 |',
     '|------|------|------|--------|--------|----------|'
-  ];
+  );
 
   for (const [name, gate] of Object.entries(model.qualityGates || {})) {
     lines.push(gateTableRow(name, gate, true));

@@ -14,7 +14,7 @@ import {
 } from '../memory/store.js';
 import { extractFeatureMemories } from '../memory/extractor.js';
 import { queryAgentMemories } from '../memory/query.js';
-import { buildAgentSections, buildStartupSummary } from '../memory/summarizer.js';
+import { buildAgentSections, buildConversationSummary, buildStartupSummary } from '../memory/summarizer.js';
 import type { ExecutionState, RuntimeEvent } from '../projectors/materialize-state.js';
 import type { MemorySummaryEntry } from '../memory/store.js';
 
@@ -114,7 +114,11 @@ export function buildFeatureSummary(
     feature,
     generatedAt: new Date().toISOString(),
     startupSummary: buildStartupSummary(combined),
-    agentSections: buildAgentSections(combined, agents)
+    agentSections: {
+      ...buildAgentSections(combined, agents),
+      conversation: buildConversationSummary(combined)
+    },
+    conversationSummary: buildConversationSummary(combined)
   };
 
   saveFeatureSummary(feature, summary, { cwd });

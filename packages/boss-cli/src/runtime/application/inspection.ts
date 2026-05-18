@@ -46,6 +46,8 @@ export interface PipelineInspection {
     failed: ExecutionState['pluginLifecycle']['failed'];
   };
   metrics: ExecutionState['metrics'];
+  conversationMetrics: ExecutionState['conversationMetrics'];
+  derivedTodos: ExecutionState['derivedTodos'];
 }
 
 export interface EventInspection<TEvent = RuntimeEvent | Record<string, unknown>> {
@@ -279,7 +281,15 @@ export function inspectPipeline(
       meanRetriesPerStage: 0,
       revisionLoopCount: 0,
       pluginFailureCount: 0
-    }
+    },
+    conversationMetrics: execution.conversationMetrics || {
+      opened: 0,
+      resolved: 0,
+      todos: 0,
+      huddles: 0,
+      unresolved: 0
+    },
+    derivedTodos: Array.isArray(execution.derivedTodos) ? execution.derivedTodos : []
   };
 }
 

@@ -148,6 +148,13 @@ Skill(skill: "backend/testing-guide")    // 测试编写指南
 
 请严格按照架构文档和任务规格实现后端功能，**必须编写 E2E 测试**。
 
+## 执行中沟通层
+
+执行中需要对齐时，不要等到最终文档才反馈：
+- 可向相关 Agent 发起 `ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
+- 每次沟通都必须锚定到 `artifact`、`task`、`scope` 或 `decision`
+- 会话收敛后必须落成 single-owner todo；只有触及正式 source of truth 时才升级为正式修订循环
+
 ## 状态报告
 
 任务完成后，必须在输出末尾附加结构化状态块（详见 `agents/prompts/subagent-protocol.md`）：
@@ -156,10 +163,13 @@ Skill(skill: "backend/testing-guide")    // 测试编写指南
 [BOSS_STATUS]
 status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED
 summary: 一句话总结执行结果
+conversation_id: [仅参与执行中会话时填写]
+resolution_summary: [仅会话已收敛时填写]
+todo_ids: [仅会话产出 todo 时填写]
 concerns: [仅 DONE_WITH_CONCERNS 时填写]
 missing: [仅 NEEDS_CONTEXT 时填写]
 blocker: [仅 BLOCKED 时填写]
-revision_target: [仅 REVISION_NEEDED 时填写，如 architecture.md]
+revision_target: [仅 REVISION_NEEDED 或会话升级为正式修订时填写，如 architecture.md]
 revision_reason: [仅 REVISION_NEEDED 时填写]
 [/BOSS_STATUS]
 ```

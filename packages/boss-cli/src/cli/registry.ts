@@ -259,6 +259,12 @@ export const runtimeCommandNames = [
   'register-plugins',
   'run-plugin-hook',
   'record-feedback',
+  'open-conversation',
+  'append-conversation-message',
+  'resolve-conversation',
+  'materialize-todo',
+  'list-conversations',
+  'list-todos',
   'retry-agent',
   'retry-stage'
 ] as const;
@@ -280,7 +286,9 @@ for (const name of [
   'get-ready-artifacts',
   'inspect-pipeline',
   'inspect-plugins',
-  'query-memory'
+  'query-memory',
+  'list-conversations',
+  'list-todos'
 ]) {
   runtimeDescriptions[name] = {
     ...runtimeDescriptions[name]!,
@@ -320,6 +328,10 @@ for (const name of [
   'update-agent',
   'record-artifact',
   'record-feedback',
+  'open-conversation',
+  'append-conversation-message',
+  'resolve-conversation',
+  'materialize-todo',
   'register-plugins',
   'run-plugin-hook'
 ]) {
@@ -532,6 +544,83 @@ Object.assign(runtimeDescriptions, {
       { name: 'reason', type: 'string' as const },
       { name: 'priority', type: 'string' as const, default: 'recommended' }
     ]
+  },
+  'open-conversation': {
+    ...runtimeDescriptions['open-conversation']!,
+    summary: 'Open an execution-time conversation thread',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'kind', type: 'string' as const, default: 'ask' },
+      { name: 'artifact', type: 'string' as const },
+      { name: 'task', type: 'string' as const },
+      { name: 'scope', type: 'string' as const },
+      { name: 'decision', type: 'string' as const },
+      { name: 'initiator', type: 'string' as const },
+      { name: 'participants', type: 'string' as const },
+      { name: 'priority', type: 'string' as const, default: 'medium' }
+    ]
+  },
+  'append-conversation-message': {
+    ...runtimeDescriptions['append-conversation-message']!,
+    summary: 'Append a short message to a conversation thread',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'thread-id', type: 'string' as const },
+      { name: 'from', type: 'string' as const },
+      { name: 'to', type: 'string' as const },
+      { name: 'intent', type: 'string' as const, default: 'question' },
+      { name: 'content', type: 'string' as const }
+    ]
+  },
+  'resolve-conversation': {
+    ...runtimeDescriptions['resolve-conversation']!,
+    summary: 'Resolve a conversation and optionally materialize follow-up todos',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'thread-id', type: 'string' as const },
+      { name: 'summary', type: 'string' as const },
+      { name: 'decision', type: 'string' as const },
+      { name: 'todo-title', type: 'string' as const },
+      { name: 'todo-owner', type: 'string' as const },
+      { name: 'todo-type', type: 'string' as const, default: 'change' },
+      { name: 'success-criteria', type: 'string' as const },
+      { name: 'escalate-artifact', type: 'string' as const },
+      { name: 'escalate-from', type: 'string' as const },
+      { name: 'escalate-to', type: 'string' as const },
+      { name: 'escalate-reason', type: 'string' as const },
+      { name: 'escalate-priority', type: 'string' as const, default: 'recommended' }
+    ]
+  },
+  'materialize-todo': {
+    ...runtimeDescriptions['materialize-todo']!,
+    summary: 'Materialize a derived todo from a conversation thread',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'thread-id', type: 'string' as const },
+      { name: 'title', type: 'string' as const },
+      { name: 'owner', type: 'string' as const },
+      { name: 'type', type: 'string' as const, default: 'change' },
+      { name: 'success-criteria', type: 'string' as const },
+      { name: 'status', type: 'string' as const, default: 'pending' },
+      { name: 'artifacts', type: 'string' as const },
+      { name: 'scope', type: 'string' as const },
+      { name: 'stage', type: 'number' as const },
+      { name: 'agent', type: 'string' as const }
+    ]
+  },
+  'list-conversations': {
+    ...runtimeDescriptions['list-conversations']!,
+    summary: 'List conversation threads from execution state',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }]
+  },
+  'list-todos': {
+    ...runtimeDescriptions['list-todos']!,
+    summary: 'List derived todos from execution state',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }]
   },
   'retry-agent': {
     ...runtimeDescriptions['retry-agent']!,

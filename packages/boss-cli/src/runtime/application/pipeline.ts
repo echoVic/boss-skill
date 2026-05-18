@@ -37,6 +37,21 @@ export interface ArtifactStatus {
   missing?: string[];
 }
 
+export const FORMAL_SOURCE_OF_TRUTH_ARTIFACTS = Object.freeze([
+  'prd.md',
+  'architecture.md',
+  'ui-spec.md',
+  'ui-design.json',
+  'tech-review.md',
+  'tasks.md'
+] as const);
+
+export function isFormalSourceOfTruthArtifact(artifact: string): boolean {
+  return FORMAL_SOURCE_OF_TRUTH_ARTIFACTS.includes(
+    artifact as (typeof FORMAL_SOURCE_OF_TRUTH_ARTIFACTS)[number]
+  );
+}
+
 function resolveDagPath(cwd: string, feature: string, dagPath?: string): string {
   if (dagPath) {
     return path.isAbsolute(dagPath) ? dagPath : path.resolve(cwd, dagPath);
@@ -325,6 +340,19 @@ export function initPipeline(
       activated: [],
       executed: [],
       failed: []
+    },
+    conversations: {
+      threads: [],
+      messages: [],
+      resolutions: []
+    },
+    derivedTodos: [],
+    conversationMetrics: {
+      opened: 0,
+      resolved: 0,
+      todos: 0,
+      huddles: 0,
+      unresolved: 0
     },
     humanInterventions: [],
     revisionRequests: [],

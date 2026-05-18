@@ -236,6 +236,228 @@ describe('runtime CLI contract', () => {
     expect(summaryHelp.stdout + summaryHelp.stderr).toMatch(/Usage: boss runtime build-memory-summary FEATURE/);
   });
 
+  it('conversation runtime commands expose describe metadata', () => {
+    for (const name of [
+      'open-conversation',
+      'append-conversation-message',
+      'resolve-conversation',
+      'materialize-todo',
+      'list-conversations',
+      'list-todos'
+    ]) {
+      const result = runCli(name, ['--describe']);
+      expect(result.status, name).toBe(0);
+
+      const payload = JSON.parse(result.stdout) as {
+        command: string;
+        options: Array<{ name: string }>;
+      };
+      expect(payload.command).toBe(`boss runtime ${name}`);
+      expect(payload.options.map((option) => option.name)).toContain('json');
+    }
+  });
+
+  it('conversation runtime commands can open threads and materialize todos', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const opened = runCli('open-conversation', [
+      'test-feat',
+      '--kind',
+      'request_change',
+      '--scope',
+      'src/app/checkout/page.tsx',
+      '--initiator',
+      'boss-qa',
+      '--participants',
+      'boss-frontend'
+    ]);
+    expect(opened.status, opened.stderr).toBe(0);
+
+    const openPayload = JSON.parse(opened.stdout) as {
+      feature: string;
+      threadId: string;
+      status: string;
+    };
+    expect(openPayload.feature).toBe('test-feat');
+    expect(openPayload.threadId).toBeTruthy();
+    expect(openPayload.status).toBe('open');
+
+    const appended = runCli('append-conversation-message', [
+      'test-feat',
+      '--thread-id',
+      openPayload.threadId,
+      '--from',
+      'boss-qa',
+      '--to',
+      'boss-frontend',
+      '--intent',
+      'objection',
+      '--content',
+      'The loading state leaks a second click.'
+    ]);
+    expect(appended.status, appended.stderr).toBe(0);
+
+    const materialized = runCli('materialize-todo', [
+      'test-feat',
+      '--thread-id',
+      openPayload.threadId,
+      '--title',
+      'Disable the checkout button while loading',
+      '--owner',
+      'boss-frontend',
+      '--type',
+      'change',
+      '--success-criteria',
+      'button stays disabled during loading,existing tests still pass'
+    ]);
+    expect(materialized.status, materialized.stderr).toBe(0);
+
+    const resolved = runCli('resolve-conversation', [
+      'test-feat',
+      '--thread-id',
+      openPayload.threadId,
+      '--summary',
+      'Fix the loading state and keep the UI locked until the request finishes',
+      '--decision',
+      'request change',
+      '--todo-title',
+      'Verify the checkout loading interaction',
+      '--todo-owner',
+      'boss-qa',
+      '--todo-type',
+      'verify',
+      '--success-criteria',
+      'manual QA covers double-click prevention'
+    ]);
+    expect(resolved.status, resolved.stderr).toBe(0);
+
+    const threads = runCli('list-conversations', ['test-feat']);
+    expect(threads.status, threads.stderr).toBe(0);
+    const threadPayload = JSON.parse(threads.stdout) as Array<{
+      id: string;
+      status: string;
+      messageCount: number;
+      todoCount: number;
+    }>;
+    expect(threadPayload).toHaveLength(1);
+    expect(threadPayload[0]).toMatchObject({
+      id: openPayload.threadId,
+      status: 'closed',
+      messageCount: 1,
+      todoCount: 2
+    });
+
+    const todos = runCli('list-todos', ['test-feat']);
+    expect(todos.status, todos.stderr).toBe(0);
+    const todoPayload = JSON.parse(todos.stdout) as Array<{ owner: string; title: string }>;
+    expect(todoPayload).toHaveLength(2);
+    expect(todoPayload.map((todo) => todo.owner)).toEqual(expect.arrayContaining(['boss-frontend', 'boss-qa']));
+  });
+
+  it('materialize-todo CLI works as a standalone command', () => {
+    initPipeline('test-feat-standalone', { cwd: tmpDir });
+
+    const opened = runCli('open-conversation', [
+      'test-feat-standalone',
+      '--kind',
+      'ask',
+      '--artifact',
+      'architecture.md',
+      '--initiator',
+      'boss-pm',
+      '--participants',
+      'boss-architect'
+    ]);
+    expect(opened.status, opened.stderr).toBe(0);
+
+    const openPayload = JSON.parse(opened.stdout) as {
+      threadId: string;
+    };
+
+    const result = runCli('materialize-todo', [
+      'test-feat-standalone',
+      '--thread-id',
+      openPayload.threadId,
+      '--title',
+      'Draft architecture follow-up notes',
+      '--owner',
+      'boss-architect',
+      '--type',
+      'followup',
+      '--success-criteria',
+      'notes are linked to the thread'
+    ]);
+    expect(result.status, result.stderr).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      feature: string;
+      threadId: string;
+      todo: {
+        owner: string;
+        title: string;
+        type: string;
+      };
+    };
+    expect(payload.feature).toBe('test-feat-standalone');
+    expect(payload.threadId).toBe(openPayload.threadId);
+    expect(payload.todo).toMatchObject({
+      owner: 'boss-architect',
+      title: 'Draft architecture follow-up notes',
+      type: 'followup'
+    });
+  });
+
+  it('resolve-conversation CLI can escalate to a revision request', () => {
+    initPipeline('test-feat-revision', { cwd: tmpDir });
+
+    const opened = runCli('open-conversation', [
+      'test-feat-revision',
+      '--kind',
+      'challenge',
+      '--artifact',
+      'architecture.md',
+      '--initiator',
+      'boss-backend',
+      '--participants',
+      'boss-architect'
+    ]);
+    expect(opened.status, opened.stderr).toBe(0);
+
+    const openPayload = JSON.parse(opened.stdout) as { threadId: string };
+
+    const result = runCli('resolve-conversation', [
+      'test-feat-revision',
+      '--thread-id',
+      openPayload.threadId,
+      '--summary',
+      'The source-of-truth contract must change',
+      '--decision',
+      'revise architecture',
+      '--escalate-artifact',
+      'architecture.md',
+      '--escalate-from',
+      'boss-backend',
+      '--escalate-to',
+      'boss-architect',
+      '--escalate-reason',
+      'The callback contract needs a formal source-of-truth update.'
+    ]);
+    expect(result.status, result.stderr).toBe(0);
+
+    const payload = JSON.parse(result.stdout) as {
+      policy: string;
+      escalation?: { artifact: string; from: string; to: string };
+      todos: unknown[];
+    };
+    expect(payload.policy).toBe('revision_escalated');
+    expect(payload.escalation).toMatchObject({
+      artifact: 'architecture.md',
+      from: 'boss-backend',
+      to: 'boss-architect'
+    });
+    expect(payload.todos).toHaveLength(0);
+  });
+
   it('query-memory emits stable json payloads for startup summaries', () => {
     writeFeatureMemory(
       'test-feat',

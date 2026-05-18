@@ -75,10 +75,18 @@ npm update -g @blade-ai/boss-skill
 
 - **阶段 1 — 规划**：PM 需求穿透 → Architect 架构设计 → UI Designer 输出 `ui-spec.md` + `ui-design.json`（并行）
 - **阶段 2 — 评审**：Tech Lead 技术评审 → Scrum Master 任务拆解
-- **阶段 3 — 开发**：Frontend + Backend 并行开发 → QA 测试 → 质量门禁
+- **阶段 3 — 开发**：Frontend + Backend 并行开发 → 执行中会话对齐 → QA 测试 → 质量门禁
 - **阶段 4 — 部署**：DevOps 构建部署 → 最终报告
 
 每个阶段由 Harness Engine 驱动，状态机追踪，门禁不可绕过。
+
+### 执行中会话层
+
+Boss 仍然以文档为正式媒介，但执行过程不再只有“交付文档”这一种协作方式：
+
+- 任意 Agent 可发起 `ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
+- 每条会话都必须锚定到 `artifact`、`task`、`scope` 或 `decision`
+- `resolve` 后必须落成至少一个 single-owner todo；只有触及正式 source of truth 时才升级为正式修订循环
 
 ## 9 个专业 Agent
 
@@ -216,6 +224,9 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 | `DONE_WITH_CONCERNS` | 完成但有疑虑 |
 | `NEEDS_CONTEXT` | 需要更多上下文 |
 | `BLOCKED` | 被阻塞，无法继续 |
+| `REVISION_NEEDED` | 会话触及正式真相源，需要进入修订循环 |
+
+状态块在相关时还要携带 `conversation_id`、`resolution_summary`、`todo_ids` 和 `revision_target`，让执行中会话能够回放到具体待办或正式修订目标。
 
 ### Session 记忆持久化
 

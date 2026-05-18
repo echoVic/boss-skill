@@ -9,6 +9,7 @@ import {
   buildFeatureSummary,
   writeFeatureMemory
 } from '../../packages/boss-cli/src/runtime/application/memory.js';
+import { openConversation, resolveConversation } from '../../packages/boss-cli/src/runtime/application/conversations.js';
 import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection.js';
 import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
 import { cleanupTempDir } from '../helpers/fixtures.js';
@@ -73,6 +74,8 @@ describe('inspection runtime CLIs', () => {
       readyArtifacts: string[];
       activeAgents: Array<{ stage: number; agent: string; status: string }>;
       metrics: Record<string, number>;
+      conversationMetrics: { opened: number; resolved: number; todos: number };
+      derivedTodos: Array<{ title: string }>;
     };
     expect(payload.feature).toBe('test-feat');
     expect(payload.status).toBe('running');
@@ -90,6 +93,8 @@ describe('inspection runtime CLIs', () => {
     expect(typeof payload.metrics.meanRetriesPerStage).toBe('number');
     expect(typeof payload.metrics.revisionLoopCount).toBe('number');
     expect(typeof payload.metrics.pluginFailureCount).toBe('number');
+    expect(payload.conversationMetrics.opened).toBe(0);
+    expect(Array.isArray(payload.derivedTodos)).toBe(true);
   });
 
   it('inspect-events returns recent events in reverse chronological order with filtering', () => {
@@ -215,5 +220,39 @@ describe('inspection runtime CLIs', () => {
 
     const payload = inspectPipeline('test-feat', { cwd: tmpDir });
     expect(payload.memory.startupSummary[0].summary).toBe('Stage 3 is unstable');
+  });
+
+  it('inspect-pipeline surfaces conversation metrics and derived todos', () => {
+    initPipeline('test-feat', { cwd: tmpDir });
+
+    const opened = openConversation('test-feat', {
+      kind: 'request_change',
+      anchor: { scope: 'src/app/checkout/page.tsx' },
+      initiator: 'boss-qa',
+      participants: ['boss-frontend'],
+      priority: 'high'
+    }, { cwd: tmpDir });
+
+    resolveConversation('test-feat', {
+      threadId: opened.threadId,
+      summary: 'Fix checkout loading state copy',
+      decision: 'request change',
+      todos: [
+        {
+          title: 'Update checkout loading copy',
+          owner: 'boss-frontend',
+          type: 'change',
+          successCriteria: ['copy updated']
+        }
+      ]
+    }, { cwd: tmpDir });
+
+    const payload = inspectPipeline('test-feat', { cwd: tmpDir });
+    expect(payload.conversationMetrics).toMatchObject({
+      opened: 1,
+      resolved: 1,
+      todos: 1
+    });
+    expect(payload.derivedTodos[0]?.title).toBe('Update checkout loading copy');
   });
 });

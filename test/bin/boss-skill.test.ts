@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -40,6 +41,17 @@ describe('boss-skill dist bin', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain('boss runtime');
+  });
+
+  it('shows the new conversation runtime commands in built help', () => {
+    const result = spawnSync(process.execPath, [distEntry, 'runtime', '--help'], {
+      cwd: root,
+      encoding: 'utf8'
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('open-conversation');
+    expect(result.stdout).toContain('resolve-conversation');
+    expect(result.stdout).toContain('list-todos');
   });
 
   it('exposes design help through the boss dispatcher', () => {
