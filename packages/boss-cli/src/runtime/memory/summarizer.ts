@@ -43,3 +43,23 @@ export function buildAgentSections(
   }
   return sections;
 }
+
+export function buildConversationSummary(
+  records: MemoryQueryRecord[],
+  { limit = 3 }: { limit?: number } = {}
+): MemorySummaryEntry[] {
+  return records
+    .slice()
+    .filter((record) => record.category.startsWith('conversation_'))
+    .sort((left, right) => {
+      const rightScore = (right.decayScore ?? 0) * 100 + (right.confidence ?? 0) * 10;
+      const leftScore = (left.decayScore ?? 0) * 100 + (left.confidence ?? 0) * 10;
+      return rightScore - leftScore;
+    })
+    .slice(0, limit)
+    .map((record) => ({
+      category: record.category,
+      summary: record.summary,
+      scope: record.scope
+    }));
+}

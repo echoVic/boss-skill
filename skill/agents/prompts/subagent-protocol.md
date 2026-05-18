@@ -8,6 +8,25 @@
 
 每个子代理在完成工作后，**必须**使用以下五种状态之一进行报告。不允许使用自由格式的输出。
 
+## 执行中会话层
+
+Boss 以文档为正式媒介，但执行过程允许 Agent 之间通过短会话对齐差异、发起求助和落地修复。
+
+- 任意 Agent 都可以向相关 Agent 发起执行中会话。
+- 每条会话都必须带 `anchor`，锚定到 `artifact`、`task`、`scope` 或 `decision`。
+- 统一会话原语：`ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`。
+- `resolve` 只在会话已经 materialize / materialized 为至少一个 executable todo，或升级为正式 `RevisionRequested` / `REVISION_NEEDED` 修订循环时成立。
+- 若当前角色无权直接发起正式修订，先 `escalate` 给有裁决权的 Agent；不要跳过会话层直接改写上游真相源。
+
+### 最终状态块中的会话字段
+
+最终 `BOSS_STATUS` 除状态本身外，还要在相关时携带以下字段：
+
+- `conversation_id`：本次任务引用的执行中会话线程 ID
+- `resolution_summary`：会话收敛后的 1 句结论
+- `todo_ids`：会话落下的 todo ID 列表
+- `revision_target`：仅在会话升级为正式修订或状态为 `REVISION_NEEDED` 时填写
+
 ### DONE
 
 **含义**：任务已成功完成，所有验证通过，无遗留问题。
@@ -135,6 +154,23 @@ DONE_WITH_CONCERNS  → 评估风险 → 继续 / 暂停等待用户
 NEEDS_CONTEXT       → 尝试自动解决 → 成功则重新派发 / 失败则请求用户
 BLOCKED             → 暂停 → 报告用户 → 等待干预 → 重试
 REVISION_NEEDED     → 记录反馈 → 检查轮次 → 重派上游修订 → 重新验证（≤2轮）
+```
+
+### 标准状态块格式
+
+```text
+[BOSS_STATUS]
+status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED
+summary: 一句话总结执行结果
+conversation_id: [仅参与执行中会话时填写]
+resolution_summary: [仅会话已收敛时填写]
+todo_ids: [仅会话已 materialize 出 todo 时填写]
+concerns: [仅 DONE_WITH_CONCERNS 时填写]
+missing: [仅 NEEDS_CONTEXT 时填写]
+blocker: [仅 BLOCKED 时填写]
+revision_target: [仅 REVISION_NEEDED 或会话升级为正式修订时填写]
+revision_reason: [仅 REVISION_NEEDED 时填写]
+[/BOSS_STATUS]
 ```
 
 ---

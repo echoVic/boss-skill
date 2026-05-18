@@ -46,14 +46,28 @@
 | `BLOCKED` | 被阻塞，无法继续 | 暂停流水线，向用户报告阻塞原因 |
 | `REVISION_NEEDED` | 需要上游产物修订 | 触发反馈循环，重派上游 Agent 修订（≤2轮） |
 
+## 执行中会话层
+
+文档仍是正式 source of truth，但执行过程中允许 Agent 之间做短会话对齐，而不是把所有问题都憋到最终报告里。
+
+- Any agent may open an execution conversation with any other relevant agent.
+- Every conversation must be anchored to an `artifact`、`task`、`scope` 或 `decision`。
+- 统一会话原语：`ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`。
+- `resolve` 只有在结论已 materialized 为至少一个 executable、single-owner todo，或升级为正式 `RevisionRequested` 修订循环后才成立。
+- 对话层负责执行中的判断与求助；正式文档、正式修订目标和最终裁决仍以产物层为准。
+
 ### 任务完成报告格式
 
 ```markdown
 ## 执行报告
 
-- **状态**：[DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED]
+- **状态**：[DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED]
 - **产物路径**：[生成的文件路径列表]
+- **conversation_id**：[如本次任务参与了执行中会话]
+- **resolution_summary**：[如会话已收敛，简述结论]
+- **todo_ids**：[如会话产出了 follow-up todo，列出 todo ID]
 - **关键决策**：[本次执行中的重要决策及理由]
+- **revision_target**：[仅会话升级为正式修订或状态为 REVISION_NEEDED 时填写]
 - **遗留风险**：[如有，列出风险项及建议的应对方案]
 ```
 

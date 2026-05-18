@@ -111,6 +111,81 @@ export function extractFeatureMemories({
         );
       }
     }
+
+    if (event.type === 'ConversationOpened' && event.data?.thread) {
+      const thread = event.data.thread as Record<string, any>;
+      const kind = String(thread.kind ?? 'conversation');
+      const anchor =
+        String(thread.anchor?.artifact ?? thread.anchor?.task ?? thread.anchor?.scope ?? thread.anchor?.decision ?? 'unanchored');
+      records.push(
+        buildRecord({
+          id: `conversation-open-${event.id}`,
+          scope: 'feature',
+          kind: 'execution',
+          category: kind === 'huddle' ? 'conversation_huddle' : 'conversation_pattern',
+          feature,
+          stage: null,
+          agent: typeof thread.initiator === 'string' ? thread.initiator : null,
+          summary: `${kind} opened on ${anchor}`,
+          source: { type: 'events', window: 'latest' },
+          evidence: [{ type: 'event', ref: String(event.id) }],
+          tags: [kind, anchor],
+          confidence: 0.75,
+          createdAt: event.timestamp,
+          lastSeenAt: event.timestamp,
+          expiresAt: null,
+          decayScore: kind === 'huddle' ? 11 : 9
+        })
+      );
+    }
+
+    if (event.type === 'ConversationResolved' && event.data?.resolution) {
+      const resolution = event.data.resolution as Record<string, any>;
+      const decision = String(resolution.decision ?? 'resolved');
+      records.push(
+        buildRecord({
+          id: `conversation-resolved-${event.id}`,
+          scope: 'feature',
+          kind: 'execution',
+          category: 'conversation_pattern',
+          feature,
+          stage: null,
+          agent: null,
+          summary: `conversation resolved with decision=${decision}`,
+          source: { type: 'events', window: 'latest' },
+          evidence: [{ type: 'event', ref: String(event.id) }],
+          tags: [decision],
+          confidence: 0.7,
+          createdAt: event.timestamp,
+          lastSeenAt: event.timestamp,
+          expiresAt: null,
+          decayScore: 8
+        })
+      );
+    }
+
+    if (event.type === 'RevisionRequested' && event.data) {
+      records.push(
+        buildRecord({
+          id: `conversation-revision-${event.id}`,
+          scope: 'feature',
+          kind: 'execution',
+          category: 'conversation_revision',
+          feature,
+          stage: null,
+          agent: typeof event.data.to === 'string' ? event.data.to : null,
+          summary: `formal revision requested for ${String(event.data.artifact)}`,
+          source: { type: 'events', window: 'latest' },
+          evidence: [{ type: 'event', ref: String(event.id) }],
+          tags: [String(event.data.artifact)],
+          confidence: 0.85,
+          createdAt: event.timestamp,
+          lastSeenAt: event.timestamp,
+          expiresAt: null,
+          decayScore: 12
+        })
+      );
+    }
   }
 
   const stages = execution.stages ?? {};
@@ -134,6 +209,30 @@ export function extractFeatureMemories({
         lastSeenAt: now,
         expiresAt: null,
         decayScore: 8
+      })
+    );
+  }
+
+  const conversationMetrics = (execution as Record<string, any>).conversationMetrics ?? {};
+  if ((conversationMetrics.unresolved ?? 0) > 0) {
+    records.push(
+      buildRecord({
+        id: `conversation-unresolved-${feature}`,
+        scope: 'feature',
+        kind: 'execution',
+        category: 'conversation_pattern',
+        feature,
+        stage: null,
+        agent: null,
+        summary: `${conversationMetrics.unresolved} unresolved conversation threads remain`,
+        source: { type: 'execution-state', window: 'latest' },
+        evidence: [{ type: 'stage', ref: 'conversation' }],
+        tags: ['unresolved'],
+        confidence: 0.8,
+        createdAt: now,
+        lastSeenAt: now,
+        expiresAt: null,
+        decayScore: 10
       })
     );
   }

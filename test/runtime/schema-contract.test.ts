@@ -87,6 +87,23 @@ describe('runtime schema contract', () => {
     ]);
   });
 
+  it('documents the conversation event types and execution sections', () => {
+    const eventSchema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
+    const executionSchema = loadJson('packages/boss-cli/src/runtime/schema/execution-schema.json');
+
+    expect(eventSchema.properties.type.enum).toEqual(
+      expect.arrayContaining([
+        'ConversationOpened',
+        'ConversationMessageAppended',
+        'ConversationResolved',
+        'TodoMaterialized'
+      ])
+    );
+    expect(executionSchema.required).toEqual(
+      expect.arrayContaining(['conversations', 'derivedTodos', 'conversationMetrics'])
+    );
+  });
+
   it('progress schema requires feature on emitted progress events', () => {
     const schema = loadJson('packages/boss-cli/src/runtime/schema/progress-schema.json');
 

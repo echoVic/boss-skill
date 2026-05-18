@@ -70,6 +70,13 @@ export function renderHtml(model: DiagnosticsModel): string {
     </li>
   `);
 
+  const todoCards = renderList(model.derivedTodos, (todo) => `
+    <li class="card">
+      <strong>${escapeHtml(todo.title)}</strong>
+      <p>${escapeHtml(todo.owner)} · ${escapeHtml(todo.status)}</p>
+    </li>
+  `);
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -166,6 +173,13 @@ export function renderHtml(model: DiagnosticsModel): string {
       <div class="metric"><h3>plugin failures</h3><p>${model.metrics.pluginFailureCount}</p></div>
     </section>
 
+    <section class="metric-row">
+      <div class="metric"><h3>conversations</h3><p>${model.conversationMetrics.opened}/${model.conversationMetrics.resolved}</p></div>
+      <div class="metric"><h3>todos</h3><p>${model.conversationMetrics.todos}</p></div>
+      <div class="metric"><h3>huddles</h3><p>${model.conversationMetrics.huddles}</p></div>
+      <div class="metric"><h3>unresolved</h3><p>${model.conversationMetrics.unresolved}</p></div>
+    </section>
+
     <section class="grid">
       <div class="panel">
         <h2>stages</h2>
@@ -179,6 +193,11 @@ export function renderHtml(model: DiagnosticsModel): string {
         <h2>recent events</h2>
         <ul>${eventCards}</ul>
       </div>
+    </section>
+
+    <section class="flow">
+      <h2>derived todos</h2>
+      <ul>${todoCards}</ul>
     </section>
 
     <section class="flow">

@@ -134,6 +134,44 @@ describe('runtime report generation', () => {
           }
         ]
       },
+      conversations: {
+        threads: [
+          {
+            id: 'conv-1',
+            kind: 'request_change',
+            anchor: { scope: 'src/app/checkout/page.tsx' },
+            initiator: 'boss-qa',
+            participants: ['boss-frontend'],
+            status: 'closed',
+            priority: 'high',
+            createdAt: '2026-04-12T00:03:30.000Z',
+            updatedAt: '2026-04-12T00:04:40.000Z'
+          }
+        ],
+        messages: [],
+        resolutions: []
+      },
+      derivedTodos: [
+        {
+          id: 'todo-1',
+          sourceThreadId: 'conv-1',
+          title: 'Fix checkout loading copy',
+          owner: 'boss-frontend',
+          type: 'change',
+          status: 'pending',
+          successCriteria: ['copy updated'],
+          impact: { artifacts: ['ui-design.json'], scope: ['checkout loading state'] },
+          dispatchHint: { stage: 3, agent: 'boss-frontend' },
+          createdAt: '2026-04-12T00:04:40.000Z'
+        }
+      ],
+      conversationMetrics: {
+        opened: 1,
+        resolved: 1,
+        todos: 1,
+        huddles: 0,
+        unresolved: 0
+      },
       humanInterventions: [],
       revisionRequests: [],
       feedbackLoops: { maxRounds: 2, currentRound: 0 }
@@ -175,6 +213,8 @@ describe('runtime report generation', () => {
     expect(payload.metrics.pluginFailureCount).toBe(1);
     expect(payload.stages[0]?.artifacts.length).toBe(2);
     expect(payload.qualityGates.gate2.passed).toBe(false);
+    expect(payload.conversationMetrics.opened).toBe(1);
+    expect(payload.derivedTodos[0]?.title).toBe('Fix checkout loading copy');
   });
 
   it('record-artifact writes and records html companions for markdown artifacts', () => {
@@ -410,6 +450,8 @@ describe('runtime report generation', () => {
     expect(result.stdout).toMatch(/api-only/);
     expect(result.stdout).toMatch(/Gate 2 \(性能\)/);
     expect(result.stdout).toMatch(/插件失败次数/);
+    expect(result.stdout).toMatch(/执行协作/);
+    expect(result.stdout).toMatch(/Conversation 打开\/收敛\/落地/);
     expect(fs.existsSync(path.join(tmpDir, '.boss', 'test-feat', 'summary-report.html'))).toBe(false);
   });
 
@@ -422,6 +464,7 @@ describe('runtime report generation', () => {
     expect(result.stdout).toMatch(/test-feat/);
     expect(result.stdout).toMatch(/recent events/i);
     expect(result.stdout).toMatch(/progress flow/i);
+    expect(result.stdout).toMatch(/derived todos/i);
   });
 
   it('generate-summary runtime CLI writes markdown/json report files', () => {
@@ -698,6 +741,8 @@ describe('runtime report generation', () => {
     expect(gatesIndex).toBeGreaterThan(evidenceIndex);
     expect(artifactsIndex).toBeGreaterThan(evidenceIndex);
     expect(markdown).toContain('### Gate 命令与检查项');
+    expect(markdown).toContain('## 执行协作');
+    expect(markdown).toContain('Fix checkout loading copy');
     expect(markdown).toContain('| Gate 2 (性能) | ✅ completed | false | 1 | 1 | 2026-04-12T00:04:30.000Z |');
     expect(markdown).toContain('### 红测转绿证据');
     expect(markdown).toContain('### Contract Matrix 状态');
@@ -711,5 +756,6 @@ describe('runtime report generation', () => {
     expect(html).toContain('Current stage: 2 (review) running');
     expect(html).toContain('recent events');
     expect(html).toContain('progress flow');
+    expect(html).toContain('derived todos');
   });
 });

@@ -23,6 +23,10 @@
         "AgentFailed",
         "AgentRetryScheduled",
         "RevisionRequested",
+        "ConversationOpened",
+        "ConversationMessageAppended",
+        "ConversationResolved",
+        "TodoMaterialized",
         "PluginDiscovered",
         "PluginActivated",
         "PluginHookExecuted",
@@ -75,6 +79,87 @@
               "passed": { "type": "boolean" },
               "stage": { "type": "integer", "minimum": 1 },
               "checks": { "type": "array" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "ConversationOpened" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["thread"],
+            "properties": {
+              "thread": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "ConversationMessageAppended" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": {
+                "type": "object",
+                "required": ["id", "threadId"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "threadId": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "ConversationResolved" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["resolution"],
+            "properties": {
+              "resolution": {
+                "type": "object",
+                "required": ["threadId"],
+                "properties": {
+                  "threadId": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "TodoMaterialized" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["todo"],
+            "properties": {
+              "todo": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 }
+                }
+              }
             }
           }
         }

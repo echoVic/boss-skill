@@ -102,8 +102,9 @@ design-brief → prd.md ─┬→ architecture.md → tech-review.md → tasks.m
 
 **工作模式**：
 1. 按任务顺序实现代码（前后端并行）
-2. 代码完成后 QA 进行验证
-3. 发现问题及时修复
+2. 实现中允许 Agent 通过执行中会话层做点对点对齐或小范围 huddle
+3. 代码完成后 QA 进行验证
+4. 发现问题时，先落执行会话结论，再进入修复或正式修订循环
 
 **质量门禁**：Gate 1（测试门禁）、Gate 2（性能门禁）
 
@@ -146,6 +147,8 @@ Projector 投影 → execution.json（物化视图，可随时从事件重建）
 | Gate | `GateEvaluated` | 门禁评估结果 |
 | Agent | `AgentStarted` / `AgentCompleted` / `AgentFailed` | Agent 执行追踪 |
 | Agent | `AgentRetryScheduled` | Agent 重试调度 |
+| Conversation | `ConversationOpened` / `ConversationMessageAppended` | 执行中会话线程与消息 |
+| Conversation | `ConversationResolved` / `TodoMaterialized` | 会话结论与派生待办 |
 | Feedback | `RevisionRequested` | 修订请求（如 Tech Lead 要求架构师修改） |
 | Plugin | `PluginDiscovered` / `PluginActivated` / `PluginHookExecuted` | 插件生命周期 |
 
@@ -172,6 +175,7 @@ Agent:    pending → running → completed | failed
 `runtime/projectors/materialize-state.js` 从 `events.jsonl` 重建 `execution.json`：
 - 逐条读取事件 → apply 到状态
 - 计算派生指标：totalDuration, stageTimings, gatePassRate, retryTotal, agentSuccessRate
+- 同时物化 conversations、derivedTodos 和 conversationMetrics，保留执行中协作的可回放视图
 - 支持随时从事件完全重建状态
 
 ---
@@ -421,13 +425,22 @@ Boss Mode 通过 Hooks 机制在关键时点注入行为，实现流水线自动
 [BOSS_STATUS]
 status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED
 summary: 一句话总结执行结果
+conversation_id: [仅参与执行中会话时填写]
+resolution_summary: [仅会话已收敛时填写]
+todo_ids: [仅会话产出 todo 时填写]
 concerns: [仅 DONE_WITH_CONCERNS 时填写]
 missing: [仅 NEEDS_CONTEXT 时填写]
 blocker: [仅 BLOCKED 时填写]
-revision_target: [仅 REVISION_NEEDED 时填写，如 architecture.md]
+revision_target: [仅 REVISION_NEEDED 或会话升级为正式修订时填写，如 architecture.md]
 revision_reason: [仅 REVISION_NEEDED 时填写]
 [/BOSS_STATUS]
 ```
+
+### 执行中会话闭环
+
+- 任意 Agent 可发起 `ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
+- 每条会话都必须 anchored 到 `artifact`、`task`、`scope` 或 `decision`
+- 每次 `resolve` 都必须 materialize 为至少一个 executable、single-owner todo，或升级为正式 `RevisionRequested` 修订循环
 
 ### 修订循环
 

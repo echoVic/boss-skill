@@ -65,6 +65,8 @@ function renderText(summary: ReturnType<typeof inspectPipeline>): string {
   lines.push(`activeAgents: ${summary.activeAgents.map((item) => `${item.agent}@${item.stage}`).join(', ') || 'none'}`);
   lines.push(`pack: ${summary.pack.name}`);
   lines.push(`plugins: ${summary.plugins.active.map((plugin) => plugin.name).join(', ') || 'none'}`);
+  lines.push(`conversationMetrics: opened=${summary.conversationMetrics.opened} resolved=${summary.conversationMetrics.resolved} todos=${summary.conversationMetrics.todos} huddles=${summary.conversationMetrics.huddles} unresolved=${summary.conversationMetrics.unresolved}`);
+  lines.push(`derivedTodos: ${summary.derivedTodos.length}`);
   lines.push(`memoryStartup: ${((summary.memory && summary.memory.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}`);
   lines.push(`knowledgeStartup: ${((summary.knowledge && summary.knowledge.startupSummary) || []).map((item) => item.summary).join(' | ') || 'none'}`);
   return `${lines.join('\n')}\n`;

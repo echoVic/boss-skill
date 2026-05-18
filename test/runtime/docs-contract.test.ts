@@ -373,6 +373,34 @@ describe('subagent orchestration safety contract', () => {
     expect(skill).toContain('agents/shared/protocol-manifest.md');
     expect(skill).not.toContain('每个 Agent 调用前 Load 对应的 Agent Prompt 文件 + `agents/shared/agent-protocol.md` + `agents/shared/tech-detection.md`');
   });
+
+  it('documents execution conversation primitives in the shared agent protocol', () => {
+    for (const primitive of ['ask', 'challenge', 'propose', 'request_change', 'escalate', 'huddle', 'resolve']) {
+      expect(sharedAgentProtocol).toContain(primitive);
+    }
+    expect(sharedAgentProtocol).toContain('single-owner todo');
+    expect(sharedAgentProtocol).toContain('artifact');
+    expect(sharedAgentProtocol).toContain('task');
+    expect(sharedAgentProtocol).toContain('scope');
+    expect(sharedAgentProtocol).toContain('decision');
+  });
+
+  it('documents conversation anchoring and materialization in the subagent protocol', () => {
+    expect(subagentProtocol).toContain('conversation_id');
+    expect(subagentProtocol).toContain('resolution_summary');
+    expect(subagentProtocol).toContain('todo_ids');
+    expect(subagentProtocol).toContain('revision_target');
+    expect(subagentProtocol).toContain('anchor');
+    expect(subagentProtocol).toContain('materialize');
+    expect(subagentProtocol).toContain('todo');
+    expect(subagentProtocol).toContain('RevisionRequested');
+  });
+
+  it('documents conversation escalation behavior in the QA prompt', () => {
+    expect(qaAgent).toContain('request_change');
+    expect(qaAgent).toContain('huddle');
+    expect(qaAgent).toContain('single-owner todo');
+  });
 });
 
 describe('boss evidence gates contract', () => {

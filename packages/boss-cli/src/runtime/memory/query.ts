@@ -8,6 +8,9 @@ export interface MemoryQueryOptions {
 
 function score(record: MemoryQueryRecord, target: Pick<MemoryQueryOptions, 'agent' | 'stage'>): number {
   let value = (record.decayScore ?? 0) * 100 + (record.confidence ?? 0) * 10;
+  if (record.category && record.category.startsWith('conversation_')) {
+    value += 50;
+  }
   if (record.agent && record.agent === target.agent) {
     value += 1000;
   }

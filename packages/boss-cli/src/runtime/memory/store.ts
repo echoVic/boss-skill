@@ -60,12 +60,14 @@ export interface FeatureMemorySummary {
   generatedAt: string | null;
   startupSummary: MemorySummaryEntry[];
   agentSections: Record<string, MemorySummaryEntry[]>;
+  conversationSummary?: MemorySummaryEntry[];
 }
 
 export interface GlobalMemorySummary {
   generatedAt: string | null;
   startupSummary: MemorySummaryEntry[];
   agentSections: Record<string, MemorySummaryEntry[]>;
+  conversationSummary?: MemorySummaryEntry[];
 }
 
 function ensureDir(dirPath: string): void {

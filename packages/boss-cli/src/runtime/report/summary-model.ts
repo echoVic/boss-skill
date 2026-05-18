@@ -9,6 +9,21 @@ import type {
   StageState
 } from '../projectors/materialize-state.js';
 
+export interface ConversationMetrics {
+  opened: number;
+  resolved: number;
+  todos: number;
+  huddles: number;
+  unresolved: number;
+}
+
+export interface DerivedTodoSummary {
+  id: string;
+  owner: string;
+  status: string;
+  title: string;
+}
+
 export interface StageSummary {
   stage: number;
   name: string;
@@ -34,6 +49,8 @@ export interface SummaryModel {
   qualityGates: Record<string, GateState>;
   metrics: ExecutionMetrics;
   plugins: PluginSummary[];
+  conversationMetrics: ConversationMetrics;
+  derivedTodos: DerivedTodoSummary[];
 }
 
 function readExecution(feature: string, cwd = process.cwd()): ExecutionState {
@@ -112,6 +129,21 @@ export function buildSummaryModel(
       revisionLoopCount: metrics.revisionLoopCount ?? 0,
       pluginFailureCount: metrics.pluginFailureCount ?? 0
     },
-    plugins: Array.isArray(execution.plugins) ? execution.plugins : []
+    plugins: Array.isArray(execution.plugins) ? execution.plugins : [],
+    conversationMetrics: execution.conversationMetrics || {
+      opened: 0,
+      resolved: 0,
+      todos: 0,
+      huddles: 0,
+      unresolved: 0
+    },
+    derivedTodos: Array.isArray(execution.derivedTodos)
+      ? execution.derivedTodos.map((todo) => ({
+          id: String(todo.id),
+          owner: String(todo.owner),
+          status: String(todo.status),
+          title: String(todo.title)
+        }))
+      : []
   };
 }

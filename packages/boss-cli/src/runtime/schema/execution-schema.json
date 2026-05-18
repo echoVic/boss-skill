@@ -3,7 +3,7 @@
   "$id": "https://boss-skill.local/schema/execution-schema.json",
   "title": "Boss Execution State",
   "type": "object",
-  "required": ["schemaVersion", "feature", "status", "stages", "qualityGates", "metrics", "plugins", "pluginLifecycle"],
+  "required": ["schemaVersion", "feature", "status", "stages", "qualityGates", "metrics", "plugins", "pluginLifecycle", "conversations", "derivedTodos", "conversationMetrics"],
   "properties": {
     "schemaVersion": { "type": "string" },
     "feature": { "type": "string" },
@@ -141,6 +141,29 @@
             }
           }
         }
+      }
+    },
+    "conversations": {
+      "type": "object",
+      "required": ["threads", "messages", "resolutions"],
+      "properties": {
+        "threads": { "type": "array" },
+        "messages": { "type": "array" },
+        "resolutions": { "type": "array" }
+      }
+    },
+    "derivedTodos": {
+      "type": "array"
+    },
+    "conversationMetrics": {
+      "type": "object",
+      "required": ["opened", "resolved", "todos", "huddles", "unresolved"],
+      "properties": {
+        "opened": { "type": "integer", "minimum": 0 },
+        "resolved": { "type": "integer", "minimum": 0 },
+        "todos": { "type": "integer", "minimum": 0 },
+        "huddles": { "type": "integer", "minimum": 0 },
+        "unresolved": { "type": "integer", "minimum": 0 }
       }
     },
     "humanInterventions": { "type": "array" },
