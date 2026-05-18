@@ -171,6 +171,18 @@ Structured errors are written to stderr as `{"error":{...}}` and include `code`,
 | 查看插件生命周期 | `boss runtime inspect-plugins` |
 | 生成流水线报告 | `boss runtime generate-summary` |
 | 生成诊断页 | `boss runtime render-diagnostics` |
+| 开启会话 | `boss runtime open-conversation` |
+| 追加会话消息 | `boss runtime append-conversation-message` |
+| 解决会话 | `boss runtime resolve-conversation` |
+| 查看会话列表 | `boss runtime list-conversations` |
+| 物化待办 | `boss runtime materialize-todo` |
+| 查看待办列表 | `boss runtime list-todos` |
+| 提取记忆 | `boss runtime extract-memory` |
+| 查询记忆 | `boss runtime query-memory` |
+| 构建记忆摘要 | `boss runtime build-memory-summary` |
+| 记录反馈 | `boss runtime record-feedback` |
+| 重试 Agent | `boss runtime retry-agent` |
+| 重试阶段 | `boss runtime retry-stage` |
 
 Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell 侧副作用：
 - pack 选择通过 `PackApplied` 进入状态真相。
@@ -212,7 +224,7 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 | `BOSS_HOOK_PROFILE` | Hook 运行级别 | `minimal` / `standard`（默认）/ `strict` |
 | `BOSS_DISABLED_HOOKS` | 禁用指定 hook | 逗号分隔的 Hook ID |
 
-10 个 Node.js hooks 覆盖完整 Agent 生命周期：session 启停、文件读写守卫、bash 命令捕获、子 Agent 调度、流水线退出保护。
+11 个 Node.js hooks 覆盖完整 Agent 生命周期：session 启停、文件读写守卫、bash 命令捕获、子 Agent 调度、流水线退出保护、通知。
 
 ### 子代理协议
 
@@ -235,7 +247,7 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 
 ### 插件系统
 
-通过 `.boss/plugins/` 注册自定义 gate、agent 或 pipeline 模板包。内置 4 套 Pipeline Pack（default、core、api-only、solana-contract）。
+通过 `.boss/plugins/` 注册自定义 gate、agent 或 pipeline 模板包。内置 5 套 Pipeline Pack（default、core、api-only、web-app、solana-contract）。
 
 ## 模板系统
 
@@ -330,16 +342,19 @@ boss-skill/
 │   ├── SKILL.md                      # 核心编排流程（通用 frontmatter，无平台 metadata）
 │   ├── agents/                       # 9 个 Agent Prompt + shared/prompts
 │   ├── commands/                     # 斜杠命令（/boss、/boss:upgrade）
-│   ├── hooks/                        # hook 配置（调用 boss hooks run）
+│   ├── hooks/                        # hook 配置（claude + codex 双平台）
 │   ├── references/                   # 按需加载的规范文档
-│   ├── templates/                    # 7 个产物模板
-│   └── skills/                       # 子 skill，如 brainstorming
+│   ├── templates/                    # 10 个产物模板
+│   └── skills/                       # 25+ 子 skill（按 Agent 角色分类）
 ├── scripts/
 │   ├── release.js                    # 统一发布脚本
 │   ├── lib/                          # Hook 运行辅助 JS
-│   └── hooks/                        # 10 个 Node.js Hook 脚本
+│   └── hooks/                        # 11 个 Node.js Hook 脚本
 ├── .claude-plugin/
 │   ├── plugin.json                   # Claude Code Plugin 清单
+│   └── marketplace.json
+├── .codex-plugin/
+│   ├── plugin.json                   # Codex Plugin 清单
 │   └── marketplace.json
 └── package.json
 ```
