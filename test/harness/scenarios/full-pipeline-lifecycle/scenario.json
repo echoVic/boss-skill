@@ -1,0 +1,43 @@
+{
+  "name": "full-pipeline-lifecycle",
+  "description": "Validates the complete pipeline lifecycle: init → record artifacts → update stages → generate summary.",
+  "feature": "full-lifecycle",
+  "commands": [
+    { "run": ["boss", "project", "init", "full-lifecycle", "--json"] },
+    { "run": ["boss", "runtime", "check-stage", "full-lifecycle", "--summary", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "1", "running", "--json"] },
+    { "run": ["boss", "runtime", "record-artifact", "full-lifecycle", "prd.md", "1", "--no-open", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "1", "completed", "--reason", "PRD approved", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "2", "running", "--json"] },
+    { "run": ["boss", "runtime", "record-artifact", "full-lifecycle", "architecture.md", "2", "--no-open", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "2", "completed", "--reason", "Architecture reviewed", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "3", "running", "--json"] },
+    { "run": ["boss", "runtime", "record-artifact", "full-lifecycle", "tasks.md", "3", "--no-open", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "3", "completed", "--reason", "Implementation done", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "4", "running", "--json"] },
+    { "run": ["boss", "runtime", "record-artifact", "full-lifecycle", "qa-report.md", "4", "--no-open", "--json"] },
+    { "run": ["boss", "runtime", "update-stage", "full-lifecycle", "4", "completed", "--reason", "QA passed", "--json"] },
+    { "run": ["boss", "runtime", "generate-summary", "full-lifecycle", "--json"] },
+    { "run": ["boss", "runtime", "check-stage", "full-lifecycle", "--summary", "--json"] }
+  ],
+  "expect": {
+    "artifacts": [
+      ".boss/full-lifecycle/.meta/execution.json",
+      ".boss/full-lifecycle/.meta/events.jsonl",
+      ".boss/full-lifecycle/prd.md",
+      ".boss/full-lifecycle/architecture.md",
+      ".boss/full-lifecycle/tasks.md",
+      ".boss/full-lifecycle/qa-report.md",
+      ".boss/full-lifecycle/summary-report.json"
+    ],
+    "events": [
+      "PipelineInitialized",
+      "StageStarted",
+      "ArtifactRecorded",
+      "StageCompleted"
+    ],
+    "state": {
+      "feature": "full-lifecycle"
+    }
+  }
+}

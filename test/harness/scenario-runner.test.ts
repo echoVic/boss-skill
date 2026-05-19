@@ -61,4 +61,19 @@ describe('Boss harness scenario runner', () => {
     expect(result.events.map((event) => event.type)).toContain('PluginHookFailed');
     expect(result.events.map((event) => event.type)).toContain('PluginHookExecuted');
   });
+
+  it('runs full-pipeline-lifecycle scenario through all stages', () => {
+    const result = runScenario(path.join(SCENARIOS, 'full-pipeline-lifecycle', 'scenario.json'));
+
+    assertScenarioExpectations(result);
+    assertTraceInvariants(result.events, result.execution);
+
+    const eventTypes = result.events.map((event) => event.type);
+    expect(eventTypes).toContain('PipelineInitialized');
+    expect(eventTypes).toContain('StageStarted');
+    expect(eventTypes).toContain('ArtifactRecorded');
+    expect(eventTypes).toContain('StageCompleted');
+    expect(eventTypes.filter((t) => t === 'StageStarted').length).toBe(4);
+    expect(eventTypes.filter((t) => t === 'StageCompleted').length).toBe(4);
+  });
 });
