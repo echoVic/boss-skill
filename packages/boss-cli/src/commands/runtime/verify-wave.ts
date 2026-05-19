@@ -134,7 +134,7 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
       dryRun: parsed.dryRun
     });
 
-    writeOutput(result, context, renderText);
+    writeOutput(result, context, (data) => renderText(data as ReturnType<typeof verifyWave>));
     return result.verified ? 0 : 1;
   } catch (err) {
     throw toFeatureNotFoundError(err, parsed.feature);
