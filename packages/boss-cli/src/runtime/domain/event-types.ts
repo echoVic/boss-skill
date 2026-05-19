@@ -21,7 +21,9 @@ export const EVENT_TYPES = Object.freeze({
   PLUGIN_ACTIVATED: 'PluginActivated',
   PLUGIN_HOOK_EXECUTED: 'PluginHookExecuted',
   PLUGIN_HOOK_FAILED: 'PluginHookFailed',
-  PLUGINS_REGISTERED: 'PluginsRegistered'
+  PLUGINS_REGISTERED: 'PluginsRegistered',
+  WAVE_VERIFIED: 'WaveVerified',
+  REQUIREMENTS_VERIFIED: 'RequirementsVerified'
 } as const);
 
 export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];

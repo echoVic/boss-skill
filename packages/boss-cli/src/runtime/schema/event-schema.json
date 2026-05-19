@@ -31,7 +31,9 @@
         "PluginActivated",
         "PluginHookExecuted",
         "PluginHookFailed",
-        "PluginsRegistered"
+        "PluginsRegistered",
+        "WaveVerified",
+        "RequirementsVerified"
       ]
     },
     "timestamp": { "type": "string", "format": "date-time" },

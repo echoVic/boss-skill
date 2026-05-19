@@ -69,7 +69,9 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'retry-stage': () => import('../commands/runtime/retry-stage.js'),
   'run-plugin-hook': () => import('../commands/runtime/run-plugin-hook.js'),
   'update-agent': () => import('../commands/runtime/update-agent.js'),
-  'update-stage': () => import('../commands/runtime/update-stage.js')
+  'update-stage': () => import('../commands/runtime/update-stage.js'),
+  'verify-wave': () => import('../commands/runtime/verify-wave.js'),
+  'verify-requirements': () => import('../commands/runtime/verify-requirements.js')
 };
 
 export function describeGroup(description: typeof runtimeDescription, commands: readonly string[]) {

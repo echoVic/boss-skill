@@ -266,7 +266,9 @@ export const runtimeCommandNames = [
   'list-conversations',
   'list-todos',
   'retry-agent',
-  'retry-stage'
+  'retry-stage',
+  'verify-wave',
+  'verify-requirements'
 ] as const;
 
 const runtimeDescriptions: Record<string, CommandDescription> = {};
@@ -333,7 +335,9 @@ for (const name of [
   'resolve-conversation',
   'materialize-todo',
   'register-plugins',
-  'run-plugin-hook'
+  'run-plugin-hook',
+  'verify-wave',
+  'verify-requirements'
 ]) {
   runtimeDescriptions[name] = {
     ...runtimeDescriptions[name]!,
@@ -637,6 +641,29 @@ Object.assign(runtimeDescriptions, {
     parameters: [
       { name: 'feature', type: 'string' as const, required: true },
       { name: 'stage', type: 'number' as const, required: true }
+    ]
+  },
+  'verify-wave': {
+    ...runtimeDescriptions['verify-wave']!,
+    summary: 'Verify TDD red-green cycle for an evidence wave',
+    parameters: [
+      { name: 'feature', type: 'string' as const, required: true },
+      { name: 'waveId', type: 'string' as const, required: true }
+    ],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'phase', type: 'string' as const, default: 'full' }
+    ]
+  },
+  'verify-requirements': {
+    ...runtimeDescriptions['verify-requirements']!,
+    summary: 'Generate requirements traceability matrix from PRD acceptance criteria',
+    parameters: [
+      { name: 'feature', type: 'string' as const, required: true }
+    ],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'test-dir', type: 'string' as const }
     ]
   }
 });
