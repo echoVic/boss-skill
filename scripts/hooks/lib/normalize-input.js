@@ -31,7 +31,8 @@ function normalizeHookInput(rawInput) {
   // Claude-style hooks use tool_input/tool_name; Codex apply_patch and Bash payloads observed in tests use arguments/tool.
   const toolInput = input.tool_input || input.arguments || {};
   const directFilePath = toolInput.file_path || toolInput.path || '';
-  const patch = toolInput.patch || '';
+  const command = toolInput.command || '';
+  const patch = toolInput.patch || (input.tool_name === 'apply_patch' || input.tool === 'apply_patch' ? command : '');
   const filePaths = directFilePath ? [directFilePath] : extractPatchedFiles(patch);
 
   return {
@@ -42,7 +43,7 @@ function normalizeHookInput(rawInput) {
     toolInput,
     filePaths,
     patch,
-    command: toolInput.command || '',
+    command,
     permissionMode: input.permission_mode || '',
     turnId: input.turn_id || '',
     stopHookActive: input.stop_hook_active

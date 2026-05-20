@@ -164,10 +164,6 @@ function runHookScript(argv: string[], context: ReturnType<typeof createCliConte
 
   ensureHookScriptInsideScripts(script);
   const scriptPath = path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js');
-  if (!context.useJson) {
-    return runNodeScript(scriptPath, argv);
-  }
-
   const result = spawnSync(process.execPath, [scriptPath, ...argv], {
     cwd: process.cwd(),
     env: process.env,
@@ -177,14 +173,12 @@ function runHookScript(argv: string[], context: ReturnType<typeof createCliConte
     throw result.error;
   }
 
-  const payload = {
-    hook,
-    script,
-    exitCode: result.status ?? 0,
-    stdout: result.stdout.toString(),
-    stderr: result.stderr.toString()
-  };
-  writeOutput(payload, context, () => result.stdout.toString());
+  if (result.stdout.length > 0) {
+    process.stdout.write(result.stdout);
+  }
+  if (result.stderr.length > 0) {
+    process.stderr.write(result.stderr);
+  }
   return result.status ?? 0;
 }
 

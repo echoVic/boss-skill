@@ -58,8 +58,8 @@ function classifyWriteDecision(filePath, cwd) {
           return JSON.stringify({
             hookSpecificOutput: {
               hookEventName: 'PreToolUse',
-              permissionDecision: 'ask',
-              permissionDecisionReason: `产物 ${artifact} 属于阶段 ${expectedStage}，但该阶段状态为 ${stageStatus}（非 running）。确认要写入吗？`
+              permissionDecision: 'deny',
+              permissionDecisionReason: `产物 ${artifact} 属于阶段 ${expectedStage}，但该阶段状态为 ${stageStatus}（非 running）。请先通过 boss runtime update-stage 将对应阶段置为 running/retrying，或按产物 DAG 进入可写状态后再写入。`
             }
           });
         }
@@ -74,8 +74,8 @@ function askForUnparsedPatch() {
   return JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
-      permissionDecision: 'ask',
-      permissionDecisionReason: '[boss-skill] apply_patch payload 未能解析出目标文件。为避免绕过 .boss 产物护栏，请确认是否继续。'
+      permissionDecision: 'deny',
+      permissionDecisionReason: '[boss-skill] apply_patch payload 未能解析出目标文件。为避免绕过 .boss 产物护栏，请使用标准 apply_patch 文件头后重试。'
     }
   });
 }
@@ -93,7 +93,6 @@ function run(rawInput) {
     return '';
   }
 
-  let askDecision = '';
   for (const filePath of filePaths) {
     const decision = classifyWriteDecision(filePath, cwd);
     if (!decision) continue;
@@ -101,12 +100,9 @@ function run(rawInput) {
     if (parsed.hookSpecificOutput?.permissionDecision === 'deny') {
       return decision;
     }
-    if (parsed.hookSpecificOutput?.permissionDecision === 'ask') {
-      askDecision = decision;
-    }
   }
 
-  return askDecision;
+  return '';
 }
 
 export { run };

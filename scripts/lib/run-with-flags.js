@@ -10,10 +10,7 @@ const MAX_STDIN = 1024 * 1024;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function passthrough(buf) {
-  if (buf && buf.length) {
-    process.stdout.write(buf);
-  }
+function exitCleanly() {
   process.exit(0);
 }
 
@@ -73,7 +70,7 @@ function writeStructuredResult(result, stdinBuf) {
     process.exit(0);
   }
 
-  passthrough(stdinBuf);
+  exitCleanly();
 }
 
 async function runModule(scriptAbs, stdinStr, stdinBuf) {
@@ -98,7 +95,7 @@ async function main() {
   const stdinBuf = readStdin();
 
   if (!isHookEnabled(hookId, { profiles: profilesCsv })) {
-    passthrough(stdinBuf);
+    exitCleanly();
   }
 
   const pluginRoot = resolvePluginRoot();
@@ -107,7 +104,7 @@ async function main() {
   const relative = path.relative(pluginRoot, scriptAbs);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     process.stderr.write('Path traversal blocked: ' + scriptRel + '\n');
-    passthrough(stdinBuf);
+    exitCleanly();
   }
 
   const stdinStr = stdinBuf.toString('utf8');
@@ -133,13 +130,13 @@ async function main() {
     if (child.stdout && child.stdout.length) {
       process.stdout.write(child.stdout);
     } else {
-      passthrough(stdinBuf);
+      exitCleanly();
     }
 
     process.exit(child.status || 0);
   } catch (_spawnErr) {
     process.stderr.write('[boss-skill] run-with-flags/spawn: ' + _spawnErr.message + '\n');
-    passthrough(stdinBuf);
+    exitCleanly();
   }
 }
 

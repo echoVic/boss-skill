@@ -98,6 +98,38 @@ describe('post-tool-write hook', () => {
     expect(updated.stages['1'].artifacts).toContain('prd.md');
   });
 
+  it('records artifact for Codex apply_patch command payloads', () => {
+    const execData = createExecData({ feature: 'test-feat' });
+    tmpDir = createTempBossDir('test-feat', execData);
+
+    const result = hook.run(
+      JSON.stringify({
+        tool_name: 'apply_patch',
+        tool_input: {
+          command: `*** Begin Patch
+*** Update File: ${path.join(tmpDir, '.boss', 'test-feat', 'prd.md')}
+@@
+-old
++new
+*** End Patch`
+        },
+        cwd: tmpDir
+      })
+    );
+
+    expect(result.length).toBeGreaterThan(0);
+    const parsed = JSON.parse(result) as {
+      hookSpecificOutput: { additionalContext: string };
+    };
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('prd.md');
+
+    const execPath = path.join(tmpDir, '.boss', 'test-feat', '.meta', 'execution.json');
+    const updated = JSON.parse(fs.readFileSync(execPath, 'utf8')) as {
+      stages: { '1': { artifacts: string[] } };
+    };
+    expect(updated.stages['1'].artifacts).toContain('prd.md');
+  });
+
   it('records every known artifact in a Codex multi-file apply_patch', () => {
     const execData = createExecData({ feature: 'test-feat' });
     tmpDir = createTempBossDir('test-feat', execData);

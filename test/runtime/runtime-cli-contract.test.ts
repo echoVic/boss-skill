@@ -1204,4 +1204,77 @@ describe('runtime CLI contract', () => {
       nearEnd: 'V'
     });
   });
+
+  it('run-with-flags emits empty stdout when a hook is disabled instead of echoing hook input', () => {
+    const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-launcher-'));
+    const hookPath = path.join(pluginRoot, 'empty-hook.js');
+    fs.writeFileSync(hookPath, 'export function run() { return ""; }\n', 'utf8');
+
+    const input = JSON.stringify({ hook_event_name: 'Stop', cwd: tmpDir });
+    const result = spawnSync(process.execPath, [RUN_WITH_FLAGS, 'stop:pipeline-guard', 'empty-hook.js'], {
+      cwd: tmpDir,
+      env: { ...process.env, SKILL_DIR: pluginRoot, BOSS_DISABLED_HOOKS: 'stop:pipeline-guard' },
+      input,
+      encoding: 'utf8'
+    });
+
+    cleanupTempDir(pluginRoot);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+  });
+
+  it('run-with-flags emits empty stdout when a hook module returns no output', () => {
+    const pluginRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-launcher-'));
+    const hookPath = path.join(pluginRoot, 'empty-hook.js');
+    fs.writeFileSync(hookPath, 'export function run() { return undefined; }\n', 'utf8');
+
+    const input = JSON.stringify({ hook_event_name: 'Stop', cwd: tmpDir });
+    const result = spawnSync(process.execPath, [RUN_WITH_FLAGS, 'stop:pipeline-guard', 'empty-hook.js'], {
+      cwd: tmpDir,
+      env: { ...process.env, SKILL_DIR: pluginRoot },
+      input,
+      encoding: 'utf8'
+    });
+
+    cleanupTempDir(pluginRoot);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+  });
+
+  it('boss hooks run forwards PreToolUse hook JSON without CLI wrapping in non-tty mode', () => {
+    const input = JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Bash',
+      tool_input: { command: 'rm -rf /' },
+      cwd: tmpDir
+    });
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        BOSS_BIN,
+        'hooks',
+        'run',
+        'pre:bash:dangerous-cmd-guard',
+        'scripts/hooks/pre-tool-bash.js',
+        'standard,strict'
+      ],
+      {
+        cwd: tmpDir,
+        input,
+        encoding: 'utf8'
+      }
+    );
+
+    expect(result.status).toBe(0);
+    const parsed = JSON.parse(result.stdout) as {
+      hook?: string;
+      hookSpecificOutput?: { hookEventName: string; permissionDecision: string };
+    };
+    expect(parsed.hook).toBeUndefined();
+    expect(parsed.hookSpecificOutput?.hookEventName).toBe('PreToolUse');
+    expect(parsed.hookSpecificOutput?.permissionDecision).toBe('deny');
+  });
 });

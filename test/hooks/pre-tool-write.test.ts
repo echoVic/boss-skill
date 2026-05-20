@@ -87,7 +87,7 @@ describe('pre-tool-write hook', () => {
     expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
   });
 
-  it('asks when Codex apply_patch file extraction fails', () => {
+  it('denies when Codex apply_patch file extraction fails for .boss paths', () => {
     const parsed = JSON.parse(
       hook.run(
         JSON.stringify({
@@ -104,7 +104,7 @@ broken patch references /tmp/project/.boss/feat/prd.md but has no file header
       hookSpecificOutput: { permissionDecision: string; permissionDecisionReason: string };
     };
 
-    expect(parsed.hookSpecificOutput.permissionDecision).toBe('ask');
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
     expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('apply_patch');
   });
 
@@ -146,7 +146,7 @@ broken patch references /tmp/project/src/app.ts but has no file header
     ).toBe('');
   });
 
-  it('asks when writing to non-running stage', () => {
+  it('denies when writing to non-running stage', () => {
     const execData = createExecData({
       feature: 'feat',
       stages: {
@@ -169,6 +169,29 @@ broken patch references /tmp/project/src/app.ts but has no file header
       hookSpecificOutput: { permissionDecision: string };
     };
 
-    expect(parsed.hookSpecificOutput.permissionDecision).toBe('ask');
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('denies Codex apply_patch command edits to execution.json', () => {
+    const parsed = JSON.parse(
+      hook.run(
+        JSON.stringify({
+          tool_name: 'apply_patch',
+          tool_input: {
+            command: `*** Begin Patch
+*** Update File: /tmp/project/.boss/feat/.meta/execution.json
+@@
+-old
++new
+*** End Patch`
+          },
+          cwd: '/tmp/project'
+        })
+      )
+    ) as {
+      hookSpecificOutput: { permissionDecision: string };
+    };
+
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
   });
 });
