@@ -9,6 +9,7 @@ export interface KnowledgeQueryRecord {
   category: string;
   summary: string;
   scope?: 'project' | 'global';
+  kind?: 'preference' | 'fact' | 'decision' | 'lesson';
   agent?: string | null;
   stage?: number | null;
   confidence?: number;
@@ -30,6 +31,7 @@ const AGENT_MATCH_BONUS = 1_000;
 const STAGE_MATCH_BONUS = 100;
 const DECAY_SCORE_WEIGHT = 10;
 const CONFIDENCE_WEIGHT = 10;
+const PREFERENCE_KIND_BONUS = 500;
 
 function nowMs(now: KnowledgeQueryOptions['now']): number {
   if (now instanceof Date) {
@@ -70,6 +72,9 @@ function score(record: KnowledgeQueryRecord, target: Pick<KnowledgeQueryOptions,
   }
   if (record.stage != null && target.stage != null && record.stage === target.stage) {
     value += STAGE_MATCH_BONUS;
+  }
+  if (record.kind === 'preference') {
+    value += PREFERENCE_KIND_BONUS;
   }
   value += (record.decayScore ?? 0) * DECAY_SCORE_WEIGHT;
   value += (record.confidence ?? 0) * CONFIDENCE_WEIGHT;

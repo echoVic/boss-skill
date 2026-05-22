@@ -102,6 +102,17 @@
         ],
         "description": "Log subagent execution to agent-log.jsonl",
         "id": "subagent:stop"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "boss hooks run \"post:stage:wip-checkpoint\" \"scripts/hooks/wip-checkpoint.js\"",
+            "timeout": 15
+          }
+        ],
+        "description": "Auto WIP checkpoint after agent completes work",
+        "id": "post:stage:wip-checkpoint"
       }
     ],
     "Stop": [

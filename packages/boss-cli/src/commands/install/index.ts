@@ -73,6 +73,7 @@ export const LEGACY_BOSS_HOOK_IDS = [
   'stop:pipeline-guard',
   'subagent:start',
   'subagent:stop',
+  'post:stage:wip-checkpoint',
   'notification:log',
   'session:end'
 ];

@@ -63,7 +63,7 @@ describe('plugin runtime registration', () => {
 
   it('discovers enabled plugins, validates manifests, and honors dependency order', () => {
     const result = discoverPlugins({ cwd: tmpDir });
-    expect(result.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
+    expect(result.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'llm-judge', 'owasp-scan', 'security-audit']);
   });
 
   it('discovers project plugins from .boss/plugins and built-in plugins from CLI assets', () => {
@@ -201,6 +201,8 @@ describe('plugin runtime registration', () => {
     expect(result.plugins.map((plugin) => plugin.name)).toEqual([
       'delta',
       'epsilon',
+      'llm-judge',
+      'owasp-scan',
       'security-audit',
       'zeta'
     ]);
@@ -264,7 +266,7 @@ describe('plugin runtime registration', () => {
     );
 
     const registered = registerPlugins('test-feat', { cwd: tmpDir });
-    expect(registered.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
+    expect(registered.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'llm-judge', 'owasp-scan', 'security-audit']);
 
     const events = fs
       .readFileSync(path.join(metaDir, 'events.jsonl'), 'utf8')
@@ -283,15 +285,19 @@ describe('plugin runtime registration', () => {
         activated: Array<{ name: string }>;
       };
     };
-    expect(execution.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'security-audit']);
+    expect(execution.plugins.map((plugin) => plugin.name)).toEqual(['beta', 'alpha', 'llm-judge', 'owasp-scan', 'security-audit']);
     expect(execution.pluginLifecycle.discovered.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'llm-judge',
+      'owasp-scan',
       'security-audit'
     ]);
     expect(execution.pluginLifecycle.activated.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'llm-judge',
+      'owasp-scan',
       'security-audit'
     ]);
   });
@@ -344,12 +350,16 @@ describe('plugin runtime registration', () => {
     expect(secondPass.plugins.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'llm-judge',
+      'owasp-scan',
       'security-audit',
       'echo-reporter'
     ]);
     expect(secondPass.execution.plugins.map((plugin) => plugin.name)).toEqual([
       'beta',
       'alpha',
+      'llm-judge',
+      'owasp-scan',
       'security-audit',
       'echo-reporter'
     ]);

@@ -45,6 +45,11 @@ export const FORMAL_SOURCE_OF_TRUTH_ARTIFACTS = Object.freeze([
   'tech-review.md',
   'tasks.md'
 ] as const);
+const OPT_IN_OPTIONAL_ARTIFACTS = new Set([
+  'strategic-review.md',
+  'ui-design-variants.json',
+  'changelog.md'
+]);
 
 export function isFormalSourceOfTruthArtifact(artifact: string): boolean {
   return FORMAL_SOURCE_OF_TRUTH_ARTIFACTS.includes(
@@ -169,6 +174,7 @@ function resolveReadyArtifacts(context: {
     if (!def) continue;
     if (isArtifactDone(name, context)) continue;
     if (isArtifactSkipped(name, context)) continue;
+    if (def.optional === true && OPT_IN_OPTIONAL_ARTIFACTS.has(name)) continue;
     if (def.agent == null) continue;
 
     const inputs = Array.isArray(def.inputs) ? def.inputs : [];

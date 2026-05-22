@@ -33,7 +33,9 @@
         "PluginHookFailed",
         "PluginsRegistered",
         "WaveVerified",
-        "RequirementsVerified"
+        "RequirementsVerified",
+        "WipCheckpointCreated",
+        "UserChoiceRecorded"
       ]
     },
     "timestamp": { "type": "string", "format": "date-time" },

@@ -98,6 +98,45 @@
       "runtime": "builtin",
       "optional": true,
       "description": "性能门禁（Lighthouse + API P99，仅 Web 项目）"
+    },
+    "owasp-scan": {
+      "inputs": ["code"],
+      "agent": null,
+      "stage": 3,
+      "type": "gate",
+      "runtime": "plugin",
+      "optional": true,
+      "description": "OWASP Top 10 安全模式扫描（注入、XSS、认证失效等）"
+    },
+    "llm-judge": {
+      "inputs": ["code", "qa-report.md"],
+      "agent": null,
+      "stage": 3,
+      "type": "gate",
+      "runtime": "plugin",
+      "optional": true,
+      "description": "LLM-as-Judge 产物质量评估（代码质量、测试完整性、架构合理性）"
+    },
+    "strategic-review.md": {
+      "inputs": ["prd.md"],
+      "agent": "boss-pm",
+      "stage": 2,
+      "optional": true,
+      "description": "战略评审报告（市场契合度、ROI、竞争优势）"
+    },
+    "ui-design-variants.json": {
+      "inputs": ["prd.md"],
+      "agent": "boss-ui-designer",
+      "stage": 1,
+      "optional": true,
+      "description": "UI 设计变体方案（2-3 个变体 + 对比分析）"
+    },
+    "changelog.md": {
+      "inputs": ["deploy-report.md"],
+      "agent": "boss-devops",
+      "stage": 4,
+      "optional": true,
+      "description": "自动生成的变更日志"
     }
   }
 }

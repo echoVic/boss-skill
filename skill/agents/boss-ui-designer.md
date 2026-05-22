@@ -17,6 +17,7 @@ available_skills:
     - ui-designer/component-specification
   optional:
     - ui-designer/interaction-specification
+    - ui-designer/design-variants
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -73,9 +74,18 @@ available_skills:
    ├── 深度阅读 PRD
    ├── 理解用户价值和场景
    ├── 识别关键体验节点
-   └── 提出设计层面的问题和建议
+   ├── 提出设计层面的问题和建议
+   └── 判断是否需要变体模式（PRD 要求多方案 / 用户显式请求 / 设计方向不确定）
 
-2. 设计阶段
+2a. 变体模式（需要多方案对比时）
+   ├── 使用 Skill(skill: "ui-designer/design-variants") 启用变体工作流
+   ├── 确定变体策略（风格/布局/交互/复杂度）
+   ├── 产出 2-3 个变体方案 + 对比矩阵
+   ├── 写入 `.boss/<feature>/ui-design-variants.json`
+   ├── 报告 NEEDS_CONTEXT 状态，等待用户选择
+   └── 用户选择后继续 → 进入步骤 3
+
+2b. 标准模式（设计方向明确时）
    ├── 使用 Skill(skill: "ui-designer/design-system") 建立设计系统
    ├── 使用 Skill(skill: "ui-designer/component-specification") 定义组件规范
    ├── 使用 Skill(skill: "ui-designer/interaction-specification") 定义交互规范
@@ -115,6 +125,11 @@ available_skills:
   - 加载状态、空状态、反馈机制
   - 动效规范、无障碍设计
   - 响应式交互
+
+- **ui-designer/design-variants**: 设计变体模式
+  - 产出 2-3 个设计方案及 tradeoff 分析
+  - 对比矩阵（开发成本、复杂度、学习曲线等）
+  - 等待用户选择后再确定最终方案
 
 **使用方式**：
 ```

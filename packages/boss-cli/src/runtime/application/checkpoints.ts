@@ -1,6 +1,7 @@
 import { inspectPipeline, type CurrentStageSummary } from './inspection.js';
 import { resolveDriverCapabilities, type BossDriverCapabilities } from './drivers.js';
 import { readWaves, type EvidenceWave } from './waves.js';
+import { listWipCheckpoints, type WipCheckpointListItem } from './wip-checkpoint.js';
 
 export interface RequiredCheck {
   id: string;
@@ -14,6 +15,7 @@ export interface BossCheckpoint {
   changedFiles: string[];
   requiredChecks: RequiredCheck[];
   continueCommand: string;
+  wipCheckpoints: WipCheckpointListItem[];
 }
 
 export interface BossStatus {
@@ -49,6 +51,7 @@ export function buildBossStatus(
   const blockedReason = inspection.recentFailures[0]?.reason || null;
   const checkpointRequired = requiredChecks.length > 0 || blockedReason !== null;
   const currentWave = readWaves(feature, { cwd }).find((wave) => wave.status !== 'completed') ?? null;
+  const wipCheckpoints = listWipCheckpoints(feature, { cwd });
 
   return {
     feature,
@@ -69,7 +72,8 @@ export function buildBossStatus(
       reason: checkpointRequired ? 'next-action-requires-explicit-confirmation' : 'next-action-ready',
       changedFiles: [],
       requiredChecks,
-      continueCommand: `boss continue ${feature}`
+      continueCommand: `boss continue ${feature}`,
+      wipCheckpoints
     }
   };
 }

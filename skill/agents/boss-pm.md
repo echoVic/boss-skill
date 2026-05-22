@@ -19,6 +19,7 @@ available_skills:
   optional:
     - pm/competitive-analysis
     - pm/user-research
+    - pm/strategic-review
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -78,6 +79,9 @@ available_skills:
    ├── 使用 WebFetch 深入分析竞品体验
    └── 验证需求假设
 
+2a. 战略评审阶段（可选，用户主动请求或大型项目）
+   └── 使用 Skill(skill: "pm/strategic-review") 进行五维战略评估
+
 3. PRD 输出阶段
    ├── 使用 Skill(skill: "pm/prd-writing") 获取PRD标准格式
    ├── 基于完整需求设计方案
@@ -111,6 +115,10 @@ available_skills:
   - 用户画像创建
   - 用户旅程图绘制
   - 用户场景描述
+
+- **pm/strategic-review**: 战略评审（/boss-review）
+  - 五维评估：市场契合度、ROI、竞争优势、风险、战略对齐
+  - 综合评级与推进/暂缓决策建议
 
 **使用方式**：
 ```

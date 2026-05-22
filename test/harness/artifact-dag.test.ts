@@ -245,7 +245,7 @@ describe('artifact-dag', () => {
       expect(def.type).toBe('gate');
       expect(def.agent).toBeNull();
       expect(typeof def.stage).toBe('number');
-      expect(def.runtime).toBe('builtin');
+      expect(['builtin', 'plugin']).toContain(def.runtime);
       expect(def.script).toBeUndefined();
     }
   });

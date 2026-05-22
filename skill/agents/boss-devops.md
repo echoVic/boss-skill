@@ -14,6 +14,8 @@ available_skills:
   required:
     - devops/deployment-process
     - devops/monitoring-alerting
+  optional:
+    - devops/changelog-generation
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -29,6 +31,7 @@ available_skills:
 ```typescript
 Skill(skill: "devops/deployment-process")      // 部署流程方法论
 Skill(skill: "devops/monitoring-alerting")     // 监控告警配置
+Skill(skill: "devops/changelog-generation")    // CHANGELOG 自动生成
 ```
 
 ## 你的职责
@@ -38,6 +41,7 @@ Skill(skill: "devops/monitoring-alerting")     // 监控告警配置
 3. **构建应用**：构建生产就绪代码
 4. **启动服务**：启动应用服务
 5. **健康检查**：验证服务可用性
+6. **CHANGELOG 生成**：部署成功后生成变更日志
 
 ## 项目类型检测
 
