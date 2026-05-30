@@ -255,7 +255,20 @@ function main() {
     console.log('\n⏭️  跳过 npm publish (--no-publish)');
   } else {
     console.log('\n🚀 发布到 npm...');
-    run('npm publish');
+    const npmToken = process.env.NPM_TOKEN;
+    const npmrcPath = path.join(ROOT, '.npmrc');
+    let npmrcCreated = false;
+    if (npmToken) {
+      fs.writeFileSync(npmrcPath, `//registry.npmjs.org/:_authToken=${npmToken}\n`, 'utf8');
+      npmrcCreated = true;
+    }
+    try {
+      run('npm publish');
+    } finally {
+      if (npmrcCreated) {
+        fs.unlinkSync(npmrcPath);
+      }
+    }
   }
 
   // 8. Push
