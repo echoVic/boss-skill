@@ -47,6 +47,9 @@ function describeRoot() {
       'path',
       'status FEATURE',
       'continue FEATURE',
+      'launch FEATURE',
+      'attach FEATURE',
+      'pause FEATURE',
       'gate FEATURE',
       'qa attack',
       'runtime COMMAND',
@@ -97,6 +100,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case 'continue':
       return continueMain(commandArgv, { cwd: process.cwd() });
+
+    case 'launch':
+      return runRuntimeCommand(['launch', ...commandArgv]);
+
+    case 'attach':
+      return runRuntimeCommand(['attach', ...commandArgv]);
+
+    case 'pause':
+      return runRuntimeCommand(['pause', ...commandArgv]);
 
     case 'gate':
       return runGateCommand(commandArgv);

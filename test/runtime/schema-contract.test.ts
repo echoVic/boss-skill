@@ -34,6 +34,7 @@ describe('runtime schema contract', () => {
     expect(PIPELINE_STATUS).toEqual({
       INITIALIZED: 'initialized',
       RUNNING: 'running',
+      PAUSED: 'paused',
       COMPLETED: 'completed',
       FAILED: 'failed'
     });

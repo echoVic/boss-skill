@@ -64,6 +64,12 @@ function renderText(summary: ReturnType<typeof inspectPipeline>): string {
   lines.push(`readyArtifacts: ${summary.readyArtifacts.join(', ') || 'none'}`);
   lines.push(`activeAgents: ${summary.activeAgents.map((item) => `${item.agent}@${item.stage}`).join(', ') || 'none'}`);
   lines.push(`pack: ${summary.pack.name}`);
+  if (summary.artifactDag.warning) {
+    lines.push(`artifactDagWarning: ${summary.artifactDag.warning}`);
+  }
+  if (summary.pause?.paused) {
+    lines.push(`pause: ${summary.pause.reason || 'paused'}`);
+  }
   lines.push(`plugins: ${summary.plugins.active.map((plugin) => plugin.name).join(', ') || 'none'}`);
   lines.push(`conversationMetrics: opened=${summary.conversationMetrics.opened} resolved=${summary.conversationMetrics.resolved} todos=${summary.conversationMetrics.todos} huddles=${summary.conversationMetrics.huddles} unresolved=${summary.conversationMetrics.unresolved}`);
   lines.push(`derivedTodos: ${summary.derivedTodos.length}`);

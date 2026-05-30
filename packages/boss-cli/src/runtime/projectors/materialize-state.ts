@@ -46,6 +46,8 @@ export interface AgentState {
   retryCount: number;
   maxRetries: number;
   failureReason: string | null;
+  promptFingerprint?: string | null;
+  inputDigest?: string | null;
 }
 
 export interface GateResult {
@@ -135,6 +137,12 @@ export interface ExecutionState {
   humanInterventions: unknown[];
   revisionRequests: RevisionRequest[];
   feedbackLoops: { maxRounds: number; currentRound: number };
+  pause?: {
+    paused: boolean;
+    reason: string;
+    requestedBy: string;
+    pausedAt: string;
+  } | null;
 }
 
 export interface RuntimeEvent {
@@ -208,7 +216,9 @@ function defaultAgentState(): AgentState {
     endTime: null,
     retryCount: 0,
     maxRetries: 2,
-    failureReason: null
+    failureReason: null,
+    promptFingerprint: null,
+    inputDigest: null
   };
 }
 
@@ -255,7 +265,8 @@ export function defaultExecutionState(feature = ''): ExecutionState {
     },
     humanInterventions: [],
     revisionRequests: [],
-    feedbackLoops: { maxRounds: 2, currentRound: 0 }
+    feedbackLoops: { maxRounds: 2, currentRound: 0 },
+    pause: null
   };
 }
 
@@ -325,6 +336,9 @@ function ensureAgent(stage: StageState, agentName: string): AgentState {
   if (!stage.agents[agentName]) {
     stage.agents[agentName] = defaultAgentState();
   }
+  const agent = stage.agents[agentName] as AgentState;
+  if (agent.promptFingerprint === undefined) agent.promptFingerprint = null;
+  if (agent.inputDigest === undefined) agent.inputDigest = null;
   return stage.agents[agentName] as AgentState;
 }
 
@@ -411,6 +425,38 @@ function validateEvent(event: unknown): asserts event is RuntimeEvent {
     case EVENT_TYPES.PIPELINE_INITIALIZED:
       if (!isObject(event.data.initialState)) {
         failValidation('initialState 必须是对象', context);
+      }
+      break;
+    case EVENT_TYPES.PIPELINE_PAUSED:
+      if (
+        event.data.reason !== undefined &&
+        event.data.reason !== null &&
+        typeof event.data.reason !== 'string'
+      ) {
+        failValidation('reason 必须是字符串或 null', context);
+      }
+      if (
+        event.data.requestedBy !== undefined &&
+        event.data.requestedBy !== null &&
+        typeof event.data.requestedBy !== 'string'
+      ) {
+        failValidation('requestedBy 必须是字符串或 null', context);
+      }
+      break;
+    case EVENT_TYPES.PIPELINE_RESUMED:
+      if (
+        event.data.stage !== undefined &&
+        event.data.stage !== null &&
+        !isPositiveInteger(event.data.stage)
+      ) {
+        failValidation('stage 必须是正整数或 null', context);
+      }
+      if (
+        event.data.requestedBy !== undefined &&
+        event.data.requestedBy !== null &&
+        typeof event.data.requestedBy !== 'string'
+      ) {
+        failValidation('requestedBy 必须是字符串或 null', context);
       }
       break;
     case EVENT_TYPES.PACK_APPLIED:
@@ -665,6 +711,23 @@ export function applyEvent(
       return initial;
     }
 
+    case EVENT_TYPES.PIPELINE_PAUSED: {
+      state.status = PIPELINE_STATUS.PAUSED;
+      state.pause = {
+        paused: true,
+        reason: typeof event.data.reason === 'string' ? event.data.reason : '',
+        requestedBy: typeof event.data.requestedBy === 'string' ? event.data.requestedBy : 'user',
+        pausedAt: event.timestamp
+      };
+      return state;
+    }
+
+    case EVENT_TYPES.PIPELINE_RESUMED: {
+      state.status = PIPELINE_STATUS.RUNNING;
+      state.pause = null;
+      return state;
+    }
+
     case EVENT_TYPES.PACK_APPLIED: {
       const eventData = isObject(event.data) ? event.data : {};
       const config = isObject(eventData.config) ? eventData.config : {};
@@ -689,6 +752,7 @@ export function applyEvent(
       stage.status = STAGE_STATUS.RUNNING;
       if (!stage.startTime) stage.startTime = event.timestamp;
       state.status = PIPELINE_STATUS.RUNNING;
+      state.pause = null;
       return state;
     }
 
@@ -714,6 +778,7 @@ export function applyEvent(
       stage.retryCount += 1;
       state.metrics.retryTotal += 1;
       state.status = PIPELINE_STATUS.RUNNING;
+      state.pause = null;
       return state;
     }
 
@@ -752,6 +817,12 @@ export function applyEvent(
       const agent = ensureAgent(stage, String(event.data.agent));
       agent.status = AGENT_STATUS.RUNNING;
       if (!agent.startTime) agent.startTime = event.timestamp;
+      if (typeof event.data.promptFingerprint === 'string') {
+        agent.promptFingerprint = event.data.promptFingerprint;
+      }
+      if (typeof event.data.inputDigest === 'string') {
+        agent.inputDigest = event.data.inputDigest;
+      }
       return state;
     }
 
@@ -760,6 +831,12 @@ export function applyEvent(
       const agent = ensureAgent(stage, String(event.data.agent));
       agent.status = AGENT_STATUS.COMPLETED;
       agent.endTime = event.timestamp;
+      if (typeof event.data.promptFingerprint === 'string') {
+        agent.promptFingerprint = event.data.promptFingerprint;
+      }
+      if (typeof event.data.inputDigest === 'string') {
+        agent.inputDigest = event.data.inputDigest;
+      }
       return state;
     }
 
@@ -1029,6 +1106,8 @@ export function finalizeState(state: ExecutionState): ExecutionState {
     )
   ) {
     state.status = PIPELINE_STATUS.RUNNING;
+  } else if (state.pause?.paused === true) {
+    state.status = PIPELINE_STATUS.PAUSED;
   }
 
   state.plugins = normalizePlugins(state.plugins);

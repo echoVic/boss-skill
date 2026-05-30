@@ -180,6 +180,31 @@ export const commandDescriptions: Record<string, CommandDescription> = {
     options: topLevelDriverOptions,
     risk_tier: 'medium'
   },
+  'boss launch': {
+    command: 'boss launch',
+    summary: 'Launch a Boss pipeline and return a run handle',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: runtimeMutationOptions,
+    risk_tier: 'medium'
+  },
+  'boss attach': {
+    command: 'boss attach',
+    summary: 'Attach to an existing Boss pipeline handle',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: runtimeFieldOptions,
+    risk_tier: 'low'
+  },
+  'boss pause': {
+    command: 'boss pause',
+    summary: 'Pause a Boss pipeline at a checkpoint-safe boundary',
+    parameters: [{ name: 'feature', type: 'string', required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'reason', type: 'string' },
+      { name: 'requested-by', type: 'string' }
+    ],
+    risk_tier: 'medium'
+  },
   'boss gate': {
     command: 'boss gate',
     summary: 'Evaluate a Boss runtime gate',
@@ -240,8 +265,12 @@ export const commandDescriptions: Record<string, CommandDescription> = {
 
 export const runtimeCommandNames = [
   'init-pipeline',
+  'launch',
+  'attach',
+  'pause',
   'update-stage',
   'update-agent',
+  'agent-cache',
   'record-artifact',
   'get-ready-artifacts',
   'evaluate-gates',
@@ -326,8 +355,10 @@ for (const name of ['build-memory-summary', 'extract-memory']) {
 
 for (const name of [
   'init-pipeline',
+  'launch',
   'update-stage',
   'update-agent',
+  'pause',
   'record-artifact',
   'record-feedback',
   'open-conversation',
@@ -378,6 +409,17 @@ Object.assign(runtimeDescriptions, {
     summary: 'Initialize a Boss feature pipeline',
     parameters: [{ name: 'feature', type: 'string' as const, required: true }]
   },
+  'launch': {
+    ...runtimeDescriptions.launch!,
+    summary: 'Launch a Boss pipeline and return a stable run handle',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }]
+  },
+  'attach': {
+    ...runtimeDescriptions.attach!,
+    summary: 'Attach to an existing Boss pipeline handle',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: runtimeFieldOptions
+  },
   'update-stage': {
     ...runtimeDescriptions['update-stage']!,
     summary: 'Update stage status and optionally record a gate result',
@@ -403,7 +445,40 @@ Object.assign(runtimeDescriptions, {
       { name: 'agent', type: 'string' as const, required: true },
       { name: 'status', type: 'string' as const, required: true, enum: ['running', 'completed', 'failed'] }
     ],
-    options: [...runtimeMutationOptions, { name: 'reason', type: 'string' as const }]
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'reason', type: 'string' as const },
+      { name: 'prompt', type: 'string' as const },
+      { name: 'prompt-fingerprint', type: 'string' as const },
+      { name: 'depends-on', type: 'string' as const },
+      { name: 'opts', type: 'string' as const }
+    ]
+  },
+  'pause': {
+    ...runtimeDescriptions.pause!,
+    summary: 'Pause a Boss pipeline at a checkpoint-safe boundary',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'reason', type: 'string' as const },
+      { name: 'requested-by', type: 'string' as const }
+    ]
+  },
+  'agent-cache': {
+    ...runtimeDescriptions['agent-cache']!,
+    summary: 'Check whether a completed agent run can be reused for the same prompt and inputs',
+    parameters: [
+      { name: 'feature', type: 'string' as const, required: true },
+      { name: 'stage', type: 'number' as const, required: true },
+      { name: 'agent', type: 'string' as const, required: true }
+    ],
+    options: [
+      ...runtimeFieldOptions,
+      { name: 'prompt', type: 'string' as const },
+      { name: 'prompt-fingerprint', type: 'string' as const },
+      { name: 'depends-on', type: 'string' as const },
+      { name: 'opts', type: 'string' as const }
+    ]
   },
   'record-artifact': {
     ...runtimeDescriptions['record-artifact']!,

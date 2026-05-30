@@ -1,6 +1,7 @@
 export const PIPELINE_STATUS = Object.freeze({
   INITIALIZED: 'initialized',
   RUNNING: 'running',
+  PAUSED: 'paused',
   COMPLETED: 'completed',
   FAILED: 'failed'
 } as const);

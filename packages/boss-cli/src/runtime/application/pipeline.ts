@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { resolveArtifactDagPath } from '../assets.js';
 import { EVENT_TYPES, type EventType } from '../domain/event-types.js';
@@ -35,6 +36,33 @@ export interface ReadyArtifact {
 export interface ArtifactStatus {
   status: 'completed' | 'skipped' | 'ready' | 'blocked';
   missing?: string[];
+}
+
+export interface RuntimeHashDescriptor {
+  algorithm: 'sha256';
+  value: string;
+}
+
+export interface ArtifactDagFingerprint {
+  path: string;
+  version: string;
+  hash: RuntimeHashDescriptor;
+}
+
+export interface AgentReuseInput {
+  prompt?: string;
+  promptFingerprint?: string;
+  dependencyArtifacts?: string[];
+  opts?: Record<string, unknown>;
+}
+
+export interface AgentReuseDecision {
+  reusable: boolean;
+  reason: string;
+  dagStale: boolean;
+  promptFingerprint: RuntimeHashDescriptor;
+  inputDigest: RuntimeHashDescriptor;
+  completedEventId?: number;
 }
 
 export const FORMAL_SOURCE_OF_TRUTH_ARTIFACTS = Object.freeze([
@@ -83,6 +111,83 @@ function loadDagForFeature(cwd: string, feature: string, dagPath?: string): { da
   }
   const dag = readJson<ArtifactDag>(resolvedPath);
   return { dag, dagPath: resolvedPath };
+}
+
+function sha256Hex(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  }
+  const object = value as Record<string, unknown>;
+  return `{${Object.keys(object)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`)
+    .join(',')}}`;
+}
+
+export function hashRuntimeValue(value: unknown): RuntimeHashDescriptor {
+  return {
+    algorithm: 'sha256',
+    value: sha256Hex(stableStringify(value))
+  };
+}
+
+function hashFile(filePath: string): RuntimeHashDescriptor {
+  return {
+    algorithm: 'sha256',
+    value: sha256Hex(fs.readFileSync(filePath))
+  };
+}
+
+function describeArtifactDag(cwd: string, feature: string, packDagPath?: string): ArtifactDagFingerprint {
+  const { dag, dagPath } = packDagPath
+    ? (() => {
+        const resolvedPath = resolveArtifactDagPath({ cwd, packDagPath });
+        return { dag: readJson<ArtifactDag>(resolvedPath), dagPath: resolvedPath };
+      })()
+    : loadDagForFeature(cwd, feature);
+  return {
+    path: path.relative(cwd, dagPath) || path.basename(dagPath),
+    version: typeof dag.version === 'string' ? dag.version : '',
+    hash: hashFile(dagPath)
+  };
+}
+
+export function getArtifactDagFingerprint(
+  feature: string,
+  { cwd = process.cwd() }: { cwd?: string } = {}
+): ArtifactDagFingerprint {
+  ensureFeatureName(feature);
+  return describeArtifactDag(cwd, feature);
+}
+
+function readRuntimeEvents(cwd: string, feature: string): RuntimeEvent[] {
+  const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
+  if (!fs.existsSync(eventsFile)) return [];
+  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
+  if (!raw) return [];
+  return raw
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as RuntimeEvent);
+}
+
+function isArtifactDagStale(cwd: string, feature: string, execution = readExecutionView(cwd, feature)): boolean {
+  const initializedDag = execution.parameters?.artifactDag;
+  if (!initializedDag || typeof initializedDag !== 'object') return false;
+  const initialHash = (initializedDag as { hash?: { value?: unknown } }).hash?.value;
+  if (typeof initialHash !== 'string') return false;
+  try {
+    return getArtifactDagFingerprint(feature, { cwd }).hash.value !== initialHash;
+  } catch {
+    return true;
+  }
 }
 
 function collectCompletedArtifacts(execution: PipelineExecutionState): Set<string> {
@@ -362,16 +467,29 @@ export function initPipeline(
     },
     humanInterventions: [],
     revisionRequests: [],
-    feedbackLoops: { maxRounds: 2, currentRound: 0 }
+    feedbackLoops: { maxRounds: 2, currentRound: 0 },
+    pause: null
   };
 
   const pack = resolvePipelinePack(cwd);
   const packParameters = getPackStateParameters(pack);
+  const packDagPath =
+    typeof packParameters.packConfig?.artifactDag === 'string'
+      ? packParameters.packConfig.artifactDag
+      : undefined;
+  const artifactDag = describeArtifactDag(cwd, feature, packDagPath);
+  const runId = hashRuntimeValue({
+    feature,
+    createdAt: now,
+    artifactDag
+  }).value;
   const initializedWithPack: PipelineExecutionState = {
     ...initialState,
     parameters: {
       ...initialState.parameters,
-      ...packParameters
+      ...packParameters,
+      artifactDag,
+      runId
     }
   };
 
@@ -380,7 +498,7 @@ export function initPipeline(
     id: 1,
     type: EVENT_TYPES.PIPELINE_INITIALIZED,
     timestamp: now,
-    data: { initialState: initializedWithPack }
+    data: { initialState: initializedWithPack, artifactDag, runId }
   };
   const events: RuntimeEvent[] = [initEvent];
   if (pack.name !== 'default') {
@@ -794,6 +912,13 @@ export function updateStage(
   const eventType = mapStageStatusToEvent(status);
   if (!eventType) throw new Error(`无效状态: ${status}`);
 
+  if (status === 'running' && currentState.status === 'paused') {
+    appendRuntimeEvent(cwd, feature, EVENT_TYPES.PIPELINE_RESUMED, {
+      stage: stageNumber,
+      requestedBy: 'runtime'
+    });
+  }
+
   appendRuntimeEvent(cwd, feature, eventType, {
     stage: stageNumber,
     ...(reason ? { reason } : {})
@@ -836,10 +961,18 @@ export function updateAgent(
   status: string,
   {
     cwd = process.cwd(),
-    reason
+    reason,
+    prompt,
+    promptFingerprint,
+    dependencyArtifacts,
+    opts
   }: {
     cwd?: string;
     reason?: string;
+    prompt?: string;
+    promptFingerprint?: string;
+    dependencyArtifacts?: string[];
+    opts?: Record<string, unknown>;
   } = {}
 ): PipelineExecutionState {
   ensureFeatureName(feature);
@@ -853,12 +986,170 @@ export function updateAgent(
   const eventType = mapAgentStatusToEvent(status);
   if (!eventType) throw new Error(`无效状态: ${status}`);
 
+  const currentExecution = readExecutionView(cwd, feature);
+  const currentAgent = currentExecution.stages?.[String(stageNumber)]?.agents?.[agent];
+  const hasFingerprintInput =
+    prompt !== undefined ||
+    promptFingerprint !== undefined ||
+    (dependencyArtifacts !== undefined && dependencyArtifacts.length > 0) ||
+    (opts !== undefined && Object.keys(opts).length > 0);
+  const fingerprints =
+    !hasFingerprintInput && currentAgent?.promptFingerprint && currentAgent?.inputDigest
+      ? {
+          promptFingerprint: { algorithm: 'sha256' as const, value: currentAgent.promptFingerprint },
+          inputDigest: { algorithm: 'sha256' as const, value: currentAgent.inputDigest }
+        }
+      : buildAgentFingerprints(feature, agent, stageNumber, {
+          cwd,
+          prompt,
+          promptFingerprint,
+          dependencyArtifacts,
+          opts
+        });
+
   appendRuntimeEvent(cwd, feature, eventType, {
     agent,
     stage: stageNumber,
+    promptFingerprint: fingerprints.promptFingerprint.value,
+    inputDigest: fingerprints.inputDigest.value,
     ...(reason ? { reason } : {})
   });
 
+  const { state } = materializeState(feature, cwd);
+  refreshMemory(feature, cwd);
+  return state as PipelineExecutionState;
+}
+
+function readArtifactDigest(cwd: string, feature: string, artifact: string): RuntimeHashDescriptor | null {
+  const artifactPath = path.join(cwd, '.boss', feature, artifact);
+  if (!fs.existsSync(artifactPath) || !fs.statSync(artifactPath).isFile()) return null;
+  return hashFile(artifactPath);
+}
+
+function buildAgentFingerprints(
+  feature: string,
+  agent: string,
+  stage: number,
+  {
+    cwd,
+    prompt,
+    promptFingerprint,
+    dependencyArtifacts = [],
+    opts = {}
+  }: AgentReuseInput & { cwd: string }
+): { promptFingerprint: RuntimeHashDescriptor; inputDigest: RuntimeHashDescriptor } {
+  const promptHash: RuntimeHashDescriptor = {
+    algorithm: 'sha256',
+    value: promptFingerprint || sha256Hex(prompt || '')
+  };
+  const dependencies = dependencyArtifacts
+    .slice()
+    .sort()
+    .map((artifact) => ({
+      artifact,
+      hash: readArtifactDigest(cwd, feature, artifact)
+    }));
+  const inputDigest = hashRuntimeValue({
+    agent,
+    stage,
+    promptFingerprint: promptHash,
+    opts,
+    dependencies
+  });
+  return { promptFingerprint: promptHash, inputDigest };
+}
+
+export function evaluateAgentReuse(
+  feature: string,
+  stage: number | string,
+  agent: string,
+  {
+    cwd = process.cwd(),
+    prompt,
+    promptFingerprint,
+    dependencyArtifacts = [],
+    opts = {}
+  }: AgentReuseInput & { cwd?: string } = {}
+): AgentReuseDecision {
+  ensureFeatureName(feature);
+  const stageNumber = normalizeStageNumber(stage);
+  const execution = readExecutionView(cwd, feature);
+  const dagStale = isArtifactDagStale(cwd, feature, execution);
+  const fingerprints = buildAgentFingerprints(feature, agent, stageNumber, {
+    cwd,
+    prompt,
+    promptFingerprint,
+    dependencyArtifacts,
+    opts
+  });
+
+  const completed = readRuntimeEvents(cwd, feature)
+    .slice()
+    .reverse()
+    .find((event) =>
+      event.type === EVENT_TYPES.AGENT_COMPLETED &&
+      event.data.agent === agent &&
+      Number(event.data.stage) === stageNumber
+    );
+
+  if (!completed) {
+    return {
+      reusable: false,
+      reason: 'no-completed-agent-event',
+      dagStale,
+      ...fingerprints
+    };
+  }
+
+  if (completed.data.promptFingerprint !== fingerprints.promptFingerprint.value) {
+    return {
+      reusable: false,
+      reason: 'prompt-fingerprint-changed',
+      dagStale,
+      completedEventId: completed.id,
+      ...fingerprints
+    };
+  }
+
+  if (completed.data.inputDigest !== fingerprints.inputDigest.value) {
+    return {
+      reusable: false,
+      reason: 'input-digest-changed',
+      dagStale,
+      completedEventId: completed.id,
+      ...fingerprints
+    };
+  }
+
+  return {
+    reusable: !dagStale,
+    reason: dagStale ? 'artifact-dag-stale' : 'input-digest-matched',
+    dagStale,
+    completedEventId: completed.id,
+    ...fingerprints
+  };
+}
+
+export function pausePipeline(
+  feature: string,
+  {
+    cwd = process.cwd(),
+    reason = '',
+    requestedBy = 'user'
+  }: { cwd?: string; reason?: string; requestedBy?: string } = {}
+): PipelineExecutionState {
+  ensureFeatureName(feature);
+  const execution = readExecutionView(cwd, feature);
+  if (execution.status === 'paused') {
+    throw new Error('流水线已处于暂停状态');
+  }
+  if (execution.status === 'completed' || execution.status === 'failed') {
+    throw new Error(`流水线已终止（${execution.status}），无法暂停`);
+  }
+  appendRuntimeEvent(cwd, feature, EVENT_TYPES.PIPELINE_PAUSED, {
+    reason,
+    requestedBy
+  });
   const { state } = materializeState(feature, cwd);
   refreshMemory(feature, cwd);
   return state as PipelineExecutionState;

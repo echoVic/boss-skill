@@ -15,6 +15,8 @@ export interface PipelineParameters extends Record<string, unknown>, PipelinePac
   roles: unknown;
   skipFrontend?: boolean;
   skipReview?: boolean;
+  artifactDag?: unknown;
+  runId?: string;
 }
 
 export interface PipelineExecutionState extends Omit<ExecutionState, 'parameters'> {

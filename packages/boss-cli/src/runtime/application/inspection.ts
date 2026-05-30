@@ -27,6 +27,7 @@ export interface FailureSummary {
 
 export interface PipelineInspection {
   feature: string;
+  runId: string;
   status: string;
   currentStage: CurrentStageSummary | null;
   readyArtifacts: string[];
@@ -48,6 +49,13 @@ export interface PipelineInspection {
   metrics: ExecutionState['metrics'];
   conversationMetrics: ExecutionState['conversationMetrics'];
   derivedTodos: ExecutionState['derivedTodos'];
+  pause: ExecutionState['pause'] | null;
+  artifactDag: {
+    initialized: unknown;
+    current: unknown;
+    matches: boolean | null;
+    warning: string | null;
+  };
 }
 
 export interface EventInspection<TEvent = RuntimeEvent | Record<string, unknown>> {
@@ -232,9 +240,44 @@ export function inspectPipeline(
   const readyArtifacts = pipelineRuntime
     .getReadyArtifacts(feature, { cwd })
     .map((item) => item.artifact);
+  const initializedDag = execution.parameters?.artifactDag || null;
+  let currentDag: unknown = null;
+  let dagMatches: boolean | null = null;
+  let dagWarning: string | null = null;
+  try {
+    currentDag = pipelineRuntime.getArtifactDagFingerprint(feature, { cwd });
+    const initialHash =
+      initializedDag &&
+      typeof initializedDag === 'object' &&
+      'hash' in initializedDag &&
+      initializedDag.hash &&
+      typeof initializedDag.hash === 'object' &&
+      'value' in initializedDag.hash
+        ? initializedDag.hash.value
+        : null;
+    const currentHash =
+      currentDag &&
+      typeof currentDag === 'object' &&
+      'hash' in currentDag &&
+      currentDag.hash &&
+      typeof currentDag.hash === 'object' &&
+      'value' in currentDag.hash
+        ? currentDag.hash.value
+        : null;
+    dagMatches =
+      typeof initialHash === 'string' && typeof currentHash === 'string'
+        ? initialHash === currentHash
+        : null;
+    if (dagMatches === false) {
+      dagWarning = 'Artifact DAG has changed since PipelineInitialized; cached agent/artifact decisions may be stale.';
+    }
+  } catch (err) {
+    dagWarning = (err as Error).message;
+  }
 
   return {
     feature,
+    runId: typeof execution.parameters?.runId === 'string' ? execution.parameters.runId : '',
     status: execution.status,
     currentStage: getCurrentStage(execution, activeAgents),
     readyArtifacts,
@@ -289,7 +332,14 @@ export function inspectPipeline(
       huddles: 0,
       unresolved: 0
     },
-    derivedTodos: Array.isArray(execution.derivedTodos) ? execution.derivedTodos : []
+    derivedTodos: Array.isArray(execution.derivedTodos) ? execution.derivedTodos : [],
+    pause: execution.pause || null,
+    artifactDag: {
+      initialized: initializedDag,
+      current: currentDag,
+      matches: dagMatches,
+      warning: dagWarning
+    }
   };
 }
 

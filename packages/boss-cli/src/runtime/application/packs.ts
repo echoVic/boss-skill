@@ -26,6 +26,7 @@ export interface PipelinePackConfig extends Record<string, unknown> {
   skipFrontend?: boolean;
   skipReview?: boolean;
   gateConfig?: { coverage?: number };
+  artifactDag?: string;
 }
 
 export interface PipelinePackDefinition {

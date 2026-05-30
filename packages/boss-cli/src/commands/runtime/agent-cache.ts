@@ -17,17 +17,14 @@ import {
   printRuntimeHelp,
   requireInputString,
   requireOptionValue,
-  toFeatureNotFoundError,
-  writeActionPlan
+  toFeatureNotFoundError
 } from './agent-command-utils.js';
-import { updateAgent } from '../../runtime/application/pipeline.js';
+import { evaluateAgentReuse } from '../../runtime/application/pipeline.js';
 
-interface UpdateAgentInput {
+interface AgentCacheInput {
   feature: string;
   stage: string;
   agent: string;
-  status: string;
-  reason?: string;
   prompt?: string;
   promptFingerprint?: string;
   dependencyArtifacts: string[];
@@ -35,15 +32,32 @@ interface UpdateAgentInput {
 }
 
 function showHelp(): void {
-  printRuntimeHelp('update-agent', 'boss runtime update-agent FEATURE STAGE AGENT STATUS [options]');
+  printRuntimeHelp('agent-cache', 'boss runtime agent-cache FEATURE STAGE AGENT [options]');
 }
 
-function parseFlatInput(argv: string[]): UpdateAgentInput {
+function parseCsv(value: string | undefined): string[] {
+  if (!value) return [];
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function parseJsonObject(value: string | undefined, label: string): Record<string, unknown> | undefined {
+  if (!value) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error(`${label} 不是有效的 JSON`);
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`${label} 必须是 JSON 对象`);
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function parseFlatInput(argv: string[]): AgentCacheInput {
   let feature = '';
   let stage = '';
   let agent = '';
-  let status = '';
-  let reason: string | undefined;
   let prompt: string | undefined;
   let promptFingerprint: string | undefined;
   let dependencyArtifacts: string[] = [];
@@ -51,11 +65,6 @@ function parseFlatInput(argv: string[]): UpdateAgentInput {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
-    if (arg === '--reason') {
-      reason = requireOptionValue('--reason', argv[index + 1]);
-      index += 1;
-      continue;
-    }
     if (arg === '--prompt') {
       prompt = requireOptionValue('--prompt', argv[index + 1]);
       index += 1;
@@ -67,19 +76,12 @@ function parseFlatInput(argv: string[]): UpdateAgentInput {
       continue;
     }
     if (arg === '--depends-on') {
-      dependencyArtifacts = requireOptionValue('--depends-on', argv[index + 1])
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
+      dependencyArtifacts = parseCsv(requireOptionValue('--depends-on', argv[index + 1]));
       index += 1;
       continue;
     }
     if (arg === '--opts') {
-      const parsed = JSON.parse(requireOptionValue('--opts', argv[index + 1])) as unknown;
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('--opts 必须是 JSON 对象');
-      }
-      opts = parsed as Record<string, unknown>;
+      opts = parseJsonObject(requireOptionValue('--opts', argv[index + 1]), '--opts');
       index += 1;
       continue;
     }
@@ -88,13 +90,10 @@ function parseFlatInput(argv: string[]): UpdateAgentInput {
       index = contractOptionEnd;
       continue;
     }
-    if (arg.startsWith('-')) {
-      throw new Error(`未知选项: ${arg}`);
-    }
+    if (arg.startsWith('-')) throw new Error(`未知选项: ${arg}`);
     if (!feature) feature = arg;
     else if (!stage) stage = arg;
     else if (!agent) agent = arg;
-    else if (!status) status = arg;
     else throw new Error(`多余的参数: ${arg}`);
   }
 
@@ -102,8 +101,6 @@ function parseFlatInput(argv: string[]): UpdateAgentInput {
     feature: requireInputString(feature, 'feature'),
     stage: requireInputString(stage, 'stage'),
     agent: requireInputString(agent, 'agent'),
-    status: requireInputString(status, 'status'),
-    reason,
     prompt,
     promptFingerprint,
     dependencyArtifacts,
@@ -111,7 +108,7 @@ function parseFlatInput(argv: string[]): UpdateAgentInput {
   };
 }
 
-function resolveInput(argv: string[], context: CliContext): UpdateAgentInput {
+function resolveInput(argv: string[], context: CliContext): AgentCacheInput {
   const jsonInput = readJsonInput(context.values.jsonInput);
   if (jsonInput) {
     const input = jsonInput as Record<string, unknown>;
@@ -119,8 +116,6 @@ function resolveInput(argv: string[], context: CliContext): UpdateAgentInput {
       feature: requireInputString(input.feature, 'feature'),
       stage: requireInputString(input.stage, 'stage'),
       agent: requireInputString(input.agent, 'agent'),
-      status: requireInputString(input.status, 'status'),
-      reason: optionalInputString(input.reason),
       prompt: optionalInputString(input.prompt),
       promptFingerprint: optionalInputString(input.promptFingerprint),
       dependencyArtifacts: Array.isArray(input.dependencyArtifacts)
@@ -135,25 +130,13 @@ function resolveInput(argv: string[], context: CliContext): UpdateAgentInput {
   return parseFlatInput(argv);
 }
 
-function actionFor(input: UpdateAgentInput) {
-  return {
-    type: 'update_agent',
-    feature: input.feature,
-    stage: Number(input.stage),
-    agent: input.agent,
-    target_status: input.status,
-    reason: input.reason,
-    dependency_artifacts: input.dependencyArtifacts
-  };
-}
-
 export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd() }: { cwd?: string } = {}): number {
-  const context = createCliContext(argv, { command: 'boss runtime update-agent' });
+  const context = createCliContext(argv, { command: 'boss runtime agent-cache' });
   if (context.values.describe) {
     writeOutput(
-      describeCommand(runtimeCommandDescriptions['update-agent']!),
+      describeCommand(runtimeCommandDescriptions['agent-cache']!),
       context,
-      () => `${JSON.stringify(runtimeCommandDescriptions['update-agent'], null, 2)}\n`
+      () => `${JSON.stringify(runtimeCommandDescriptions['agent-cache'], null, 2)}\n`
     );
     return 0;
   }
@@ -164,14 +147,8 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
   }
 
   const input = resolveInput(argv, context);
-  if (context.values.dryRun) {
-    writeActionPlan([actionFor(input)], context, 'medium');
-    return 0;
-  }
-
   try {
-    updateAgent(input.feature, input.stage, input.agent, input.status, {
-      reason: input.reason || '',
+    const decision = evaluateAgentReuse(input.feature, input.stage, input.agent, {
       cwd,
       prompt: input.prompt,
       promptFingerprint: input.promptFingerprint,
@@ -183,10 +160,13 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
         feature: input.feature,
         stage: Number(input.stage),
         agent: input.agent,
-        status: input.status
+        ...decision
       },
       context,
-      () => `Agent ${input.agent} (阶段 ${input.stage}): -> ${input.status}\n`
+      (data) => {
+        const payload = data as { reusable: boolean; reason: string };
+        return `Agent ${input.agent}: ${payload.reusable ? 'reusable' : 'rerun'} (${payload.reason})\n`;
+      }
     );
     return 0;
   } catch (err) {
@@ -195,6 +175,6 @@ export function main(argv: string[] = process.argv.slice(2), { cwd = process.cwd
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime update-agent', validateOptionValues: false });
+  const context = createCliContext(process.argv.slice(2), { command: 'boss runtime agent-cache', validateOptionValues: false });
   process.exit(await runMain(() => main(process.argv.slice(2), { cwd: process.cwd() }), context));
 }

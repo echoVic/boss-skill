@@ -42,6 +42,8 @@ type CommandModule = {
 };
 
 const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
+  'agent-cache': () => import('../commands/runtime/agent-cache.js'),
+  'attach': () => import('../commands/runtime/attach.js'),
   'build-memory-summary': () => import('../commands/runtime/build-memory-summary.js'),
   'check-stage': () => import('../commands/runtime/check-stage.js'),
   'evaluate-gates': () => import('../commands/runtime/evaluate-gates.js'),
@@ -49,6 +51,7 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'generate-summary': () => import('../commands/runtime/generate-summary.js'),
   'get-ready-artifacts': () => import('../commands/runtime/get-ready-artifacts.js'),
   'init-pipeline': () => import('../commands/runtime/init-pipeline.js'),
+  'launch': () => import('../commands/runtime/launch.js'),
   'inspect-events': () => import('../commands/runtime/inspect-events.js'),
   'inspect-pipeline': () => import('../commands/runtime/inspect-pipeline.js'),
   'inspect-plugins': () => import('../commands/runtime/inspect-plugins.js'),
@@ -57,6 +60,7 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'record-artifact': () => import('../commands/runtime/record-artifact.js'),
   'record-feedback': () => import('../commands/runtime/record-feedback.js'),
   'open-conversation': () => import('../commands/runtime/open-conversation.js'),
+  'pause': () => import('../commands/runtime/pause.js'),
   'append-conversation-message': () => import('../commands/runtime/append-conversation-message.js'),
   'resolve-conversation': () => import('../commands/runtime/resolve-conversation.js'),
   'materialize-todo': () => import('../commands/runtime/materialize-todo.js'),

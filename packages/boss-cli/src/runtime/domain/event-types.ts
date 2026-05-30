@@ -1,5 +1,7 @@
 export const EVENT_TYPES = Object.freeze({
   PIPELINE_INITIALIZED: 'PipelineInitialized',
+  PIPELINE_PAUSED: 'PipelinePaused',
+  PIPELINE_RESUMED: 'PipelineResumed',
   PACK_APPLIED: 'PackApplied',
   STAGE_STARTED: 'StageStarted',
   STAGE_COMPLETED: 'StageCompleted',

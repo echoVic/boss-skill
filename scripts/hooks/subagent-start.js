@@ -3,6 +3,14 @@ import { emitProgress } from '../lib/progress-emitter.js';
 import * as runtime from '../../packages/boss-cli/dist/runtime/application/pipeline.js';
 import * as memoryRuntime from '../../packages/boss-cli/dist/runtime/application/memory.js';
 
+function artifactInputsForStage(stage) {
+  if (Number(stage) === 1) return [];
+  if (Number(stage) === 2) return ['prd.md', 'architecture.md'];
+  if (Number(stage) === 3) return ['tech-review.md', 'tasks.md'];
+  if (Number(stage) === 4) return ['qa-report.md'];
+  return [];
+}
+
 function buildMemoryContext(feature, agentType, stage, cwd) {
   try {
     const section = memoryRuntime.queryAgentSection(feature, {
@@ -44,31 +52,37 @@ function run(rawInput) {
     }
   }
 
-  // Emit AgentStarted event if this is a known boss agent
   const agentType = input.agent_type || '';
+  let stablePrompt = `[Boss Harness] 当前流水线: ${active.feature}`;
+  if (currentStage) {
+    stablePrompt += `, 活跃阶段: ${currentStage} (${stageName})`;
+  }
+  stablePrompt += `\n子 Agent 类型: ${agentType}`;
+  stablePrompt += '\n请在最终消息中附带固定状态块：';
+  stablePrompt += '\n[BOSS_STATUS]';
+  stablePrompt += '\nstatus: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED';
+  stablePrompt += '\nreason: <optional>';
+  stablePrompt += '\n[/BOSS_STATUS]';
+  let context = stablePrompt;
+  context += buildMemoryContext(active.feature, agentType, currentStage, cwd);
+
+  // Emit AgentStarted event if this is a known boss agent.
   if (currentStage && AGENT_STAGE_MAP[agentType]) {
     emitProgress(cwd, active.feature, {
       type: 'agent-start',
       data: { agent: agentType, stage: parseInt(currentStage) }
     });
     try {
-      runtime.updateAgent(active.feature, currentStage, agentType, 'running', { cwd });
+      runtime.updateAgent(active.feature, currentStage, agentType, 'running', {
+        cwd,
+        prompt: stablePrompt,
+        dependencyArtifacts: artifactInputsForStage(currentStage),
+        opts: { hook: 'subagent-start', agentType }
+      });
     } catch (err) {
       process.stderr.write('[boss-skill] subagent-start/update-agent: ' + err.message + '\n');
     }
   }
-
-  let context = `[Boss Harness] 当前流水线: ${active.feature}`;
-  if (currentStage) {
-    context += `, 活跃阶段: ${currentStage} (${stageName})`;
-  }
-  context += `\n子 Agent 类型: ${agentType}`;
-  context += buildMemoryContext(active.feature, agentType, currentStage, cwd);
-  context += '\n请在最终消息中附带固定状态块：';
-  context += '\n[BOSS_STATUS]';
-  context += '\nstatus: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED';
-  context += '\nreason: <optional>';
-  context += '\n[/BOSS_STATUS]';
 
   return JSON.stringify({
     hookSpecificOutput: {

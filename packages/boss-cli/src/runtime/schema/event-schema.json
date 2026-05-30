@@ -10,6 +10,8 @@
       "type": "string",
       "enum": [
         "PipelineInitialized",
+        "PipelinePaused",
+        "PipelineResumed",
         "PackApplied",
         "StageStarted",
         "StageCompleted",
@@ -50,7 +52,50 @@
             "type": "object",
             "required": ["initialState"],
             "properties": {
-              "initialState": { "type": "object" }
+              "initialState": { "type": "object" },
+              "artifactDag": {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "version": { "type": "string" },
+                  "hash": {
+                    "type": "object",
+                    "required": ["algorithm", "value"],
+                    "properties": {
+                      "algorithm": { "const": "sha256" },
+                      "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "PipelinePaused" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "reason": { "type": "string" },
+              "requestedBy": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "PipelineResumed" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "stage": { "type": "integer", "minimum": 1 },
+              "requestedBy": { "type": "string" }
             }
           }
         }
