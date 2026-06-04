@@ -61,6 +61,7 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'record-feedback': () => import('../commands/runtime/record-feedback.js'),
   'open-conversation': () => import('../commands/runtime/open-conversation.js'),
   'pause': () => import('../commands/runtime/pause.js'),
+  'resume': () => import('../commands/runtime/resume.js'),
   'append-conversation-message': () => import('../commands/runtime/append-conversation-message.js'),
   'resolve-conversation': () => import('../commands/runtime/resolve-conversation.js'),
   'materialize-todo': () => import('../commands/runtime/materialize-todo.js'),

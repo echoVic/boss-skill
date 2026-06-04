@@ -156,6 +156,7 @@ Structured errors are written to stderr as `{"error":{...}}` and include `code`,
 | 编排动作 | Runtime CLI |
 |------|------|
 | 初始化流水线（低阶；`project init` 未执行时） | `boss runtime init-pipeline` |
+| 恢复 Workflow 执行图并查看节点级复用决策 | `boss runtime resume <feature> --from-run <run-id>` |
 | 查询 ready artifacts | `boss runtime get-ready-artifacts` |
 | 记录产物完成 | `boss runtime record-artifact` |
 | 更新阶段状态 | `boss runtime update-stage` |
@@ -188,6 +189,11 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 - pack 选择通过 `PackApplied` 进入状态真相。
 - 插件发现/激活通过 `PluginDiscovered` / `PluginActivated` 进入事件流。
 - 插件 hook 执行通过 `PluginHookExecuted` / `PluginHookFailed` 进入事件流。
+
+Workflow 定义和运行实例分离：
+- 初始化时会把选中的 pipeline pack + artifact DAG 编译为 `.boss/<feature>/.meta/workflow-plan.json`。
+- `workflowPlanPath` / `workflowHash` / `packHash` / `artifactDagHash` 描述可审计的 Workflow 定义。
+- `runId` 描述本次运行实例；`boss runtime resume <feature> --from-run <run-id>` 会重新加载 workflow plan，并按节点输入指纹判断 `reuse` / `run` / `skip`。
 
 四期排障 CLI 已开始补齐：
 - `boss runtime inspect-pipeline` 查看当前阶段、ready artifacts、active agents、pack、plugins、metrics。

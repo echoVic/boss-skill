@@ -12,6 +12,7 @@ import {
 } from '../projectors/materialize-state.js';
 import { getPackStateParameters, resolvePipelinePack } from './packs.js';
 import { registerPlugins as registerPluginsRuntime } from './plugins.js';
+import { compileWorkflowPlan, persistWorkflowPlan } from './workflow.js';
 import { emitProgress } from '../../infrastructure/process.js';
 import {
   appendEvent,
@@ -478,9 +479,20 @@ export function initPipeline(
       ? packParameters.packConfig.artifactDag
       : undefined;
   const artifactDag = describeArtifactDag(cwd, feature, packDagPath);
+  const artifactDagPath = path.isAbsolute(artifactDag.path)
+    ? artifactDag.path
+    : path.resolve(cwd, artifactDag.path);
+  const workflowPlan = compileWorkflowPlan({
+    feature,
+    pack,
+    artifactDag: readJson<ArtifactDag>(artifactDagPath),
+    artifactDagFingerprint: artifactDag
+  });
+  const workflow = persistWorkflowPlan({ cwd, feature, plan: workflowPlan });
   const runId = hashRuntimeValue({
     feature,
     createdAt: now,
+    workflowHash: workflow.workflowHash,
     artifactDag
   }).value;
   const initializedWithPack: PipelineExecutionState = {
@@ -489,6 +501,10 @@ export function initPipeline(
       ...initialState.parameters,
       ...packParameters,
       artifactDag,
+      workflowPlanPath: workflow.workflowPlanPath,
+      workflowHash: workflow.workflowHash.value,
+      packHash: workflow.packHash.value,
+      artifactDagHash: workflow.artifactDagHash.value,
       runId
     }
   };
@@ -498,7 +514,15 @@ export function initPipeline(
     id: 1,
     type: EVENT_TYPES.PIPELINE_INITIALIZED,
     timestamp: now,
-    data: { initialState: initializedWithPack, artifactDag, runId }
+    data: {
+      initialState: initializedWithPack,
+      artifactDag,
+      workflowPlan: {
+        path: workflow.workflowPlanPath,
+        hash: workflow.workflowHash
+      },
+      runId
+    }
   };
   const events: RuntimeEvent[] = [initEvent];
   if (pack.name !== 'default') {

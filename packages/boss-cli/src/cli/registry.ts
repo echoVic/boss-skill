@@ -268,6 +268,7 @@ export const runtimeCommandNames = [
   'launch',
   'attach',
   'pause',
+  'resume',
   'update-stage',
   'update-agent',
   'agent-cache',
@@ -359,6 +360,7 @@ for (const name of [
   'update-stage',
   'update-agent',
   'pause',
+  'resume',
   'record-artifact',
   'record-feedback',
   'open-conversation',
@@ -462,6 +464,15 @@ Object.assign(runtimeDescriptions, {
       ...runtimeMutationOptions,
       { name: 'reason', type: 'string' as const },
       { name: 'requested-by', type: 'string' as const }
+    ]
+  },
+  'resume': {
+    ...runtimeDescriptions.resume!,
+    summary: 'Resume a Boss workflow run and report node-level reuse decisions',
+    parameters: [{ name: 'feature', type: 'string' as const, required: true }],
+    options: [
+      ...runtimeMutationOptions,
+      { name: 'from-run', type: 'string' as const }
     ]
   },
   'agent-cache': {

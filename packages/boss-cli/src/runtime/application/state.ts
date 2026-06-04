@@ -16,6 +16,10 @@ export interface PipelineParameters extends Record<string, unknown>, PipelinePac
   skipFrontend?: boolean;
   skipReview?: boolean;
   artifactDag?: unknown;
+  workflowPlanPath?: string;
+  workflowHash?: string;
+  packHash?: string;
+  artifactDagHash?: string;
   runId?: string;
 }
 

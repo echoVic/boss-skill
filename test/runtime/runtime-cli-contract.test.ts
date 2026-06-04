@@ -565,6 +565,7 @@ describe('runtime CLI contract', () => {
       'register-plugins',
       'run-plugin-hook',
       'record-feedback',
+      'resume',
       'retry-agent',
       'retry-stage'
     ]) {
@@ -1120,6 +1121,7 @@ describe('runtime CLI contract', () => {
       'register-plugins',
       'run-plugin-hook',
       'record-feedback',
+      'resume',
       'retry-agent',
       'retry-stage'
     ]) {

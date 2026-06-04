@@ -525,6 +525,10 @@ describe('thin skill CLI contract', () => {
     expect(skill).toContain('boss runtime register-plugins <feature>');
     expect(skill).toContain('boss runtime query-memory <feature> --agent <agent-name>');
     expect(skill).toContain('boss runtime record-artifact <feature> <artifact-name> <N>');
+    expect(skill).toContain('boss runtime resume <feature> --from-run <run-id>');
+    expect(readme).toContain('boss runtime resume');
+    expect(readme).toContain('workflow-plan.json');
+    expect(readme).toContain('workflowHash');
     expect(skill).toContain('`project init` 已隐式执行');
     expect(skill).not.toContain('boss runtime query-memory <feature> --agent <agent-name> --json');
     expect(skill).not.toContain('update-stage <feature> <N> completed --artifact');

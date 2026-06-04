@@ -233,6 +233,7 @@ Copy this checklist and check off items as you complete them:
 | 编排动作 | Runtime CLI | Runtime API |
 |---------|-------------|-------------|
 | 初始化流水线（低阶；`project init` 未执行时使用） | `boss runtime init-pipeline` | `initPipeline(feature)` |
+| 恢复 Workflow 执行图 | `boss runtime resume <feature> --from-run <run-id>` | `resumeWorkflow(feature, options)` |
 | 查询 ready artifacts | `boss runtime get-ready-artifacts` | `getReadyArtifacts(feature, options)` |
 | 阶段状态变更 | `boss runtime update-stage` | `updateStage(feature, stage, status, options)` |
 | 记录产物 | `boss runtime record-artifact` | `recordArtifact(feature, artifact, stage)` |
@@ -269,6 +270,11 @@ Copy this checklist and check off items as you complete them:
 ### Runtime/CLI 编排对照
 
 运行时编排以 `boss runtime <command>` 为准；first-party 编排能力由 `packages/boss-cli/src/` 的 TypeScript CLI 实现，不再依赖 shell helper。
+
+Workflow 定义和运行实例分离：
+- 初始化时将 pipeline pack + artifact DAG 编译成 `.boss/<feature>/.meta/workflow-plan.json`。
+- `workflowPlanPath` / `workflowHash` / `packHash` / `artifactDagHash` 描述 Workflow 定义；`runId` 描述一次运行实例。
+- 恢复时调用 `boss runtime resume <feature> --from-run <run-id>`，runtime 重新加载 workflow plan，并按节点输入指纹输出 `reuse` / `run` / `skip` 决策。
 
 Pack 选择与插件生命周期都应进入事件流，而不是停留在 shell 日志里：
 - pack 应通过 `PackApplied` 进入 `execution.json` read model。
