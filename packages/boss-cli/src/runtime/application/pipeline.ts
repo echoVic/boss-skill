@@ -12,7 +12,7 @@ import {
 } from '../projectors/materialize-state.js';
 import { getPackStateParameters, resolvePipelinePack } from './packs.js';
 import { registerPlugins as registerPluginsRuntime } from './plugins.js';
-import { compileWorkflowPlan, persistWorkflowPlan } from './workflow.js';
+import { compileWorkflowPlan, createWorkflowExecutionState, persistWorkflowPlan } from './workflow.js';
 import { emitProgress } from '../../infrastructure/process.js';
 import {
   appendEvent,
@@ -497,6 +497,11 @@ export function initPipeline(
   }).value;
   const initializedWithPack: PipelineExecutionState = {
     ...initialState,
+    workflow: createWorkflowExecutionState({
+      plan: workflow.plan,
+      workflowPlanPath: workflow.workflowPlanPath,
+      workflowHash: workflow.workflowHash
+    }),
     parameters: {
       ...initialState.parameters,
       ...packParameters,
@@ -900,6 +905,14 @@ function parseGatePassed(value: boolean | string | null | undefined): boolean | 
   throw new Error('gate-passed 必须是 true 或 false');
 }
 
+function inferArtifactFromPrompt(agent: string, prompt?: string): string | undefined {
+  if (!prompt) return undefined;
+  const prefix = `${agent}:`;
+  if (!prompt.startsWith(prefix)) return undefined;
+  const artifact = prompt.slice(prefix.length).trim();
+  return artifact.length > 0 ? artifact : undefined;
+}
+
 export function updateStage(
   feature: string,
   stage: number | string,
@@ -1036,6 +1049,7 @@ export function updateAgent(
     stage: stageNumber,
     promptFingerprint: fingerprints.promptFingerprint.value,
     inputDigest: fingerprints.inputDigest.value,
+    ...(inferArtifactFromPrompt(agent, prompt) ? { artifact: inferArtifactFromPrompt(agent, prompt) } : {}),
     ...(reason ? { reason } : {})
   });
 

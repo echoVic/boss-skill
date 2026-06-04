@@ -193,7 +193,9 @@ Pack 选择和插件生命周期现在都是 runtime 事件，不再只是 shell
 Workflow 定义和运行实例分离：
 - 初始化时会把选中的 pipeline pack + artifact DAG 编译为 `.boss/<feature>/.meta/workflow-plan.json`。
 - `workflowPlanPath` / `workflowHash` / `packHash` / `artifactDagHash` 描述可审计的 Workflow 定义。
-- `runId` 描述本次运行实例；`boss runtime resume <feature> --from-run <run-id>` 会重新加载 workflow plan，并按节点输入指纹判断 `reuse` / `run` / `skip`。
+- `runId` 描述本次运行实例；`boss runtime resume <feature> --from-run <run-id>` 会重新加载 workflow plan，按节点输入指纹判断 `reuse` / `run` / `skip`，并把结果物化到 `execution.workflow.nodes`。
+- `execution.workflow.nextNodeIds` 是机器可读的下一批可调度节点；DAG loop 应优先读取它，再派发对应 Agent 或 Gate。
+- `GateEvaluated` / `WaveVerified` 会更新对应 workflow node 状态，让门禁和 Evidence Wave 不再只是外围检查。
 
 四期排障 CLI 已开始补齐：
 - `boss runtime inspect-pipeline` 查看当前阶段、ready artifacts、active agents、pack、plugins、metrics。

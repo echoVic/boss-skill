@@ -76,6 +76,41 @@ export interface GateState {
   executedAt: string | null;
 }
 
+export type WorkflowExecutionNodeStatus =
+  | 'pending'
+  | 'ready'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped'
+  | 'reused'
+  | 'blocked';
+
+export interface WorkflowExecutionNode {
+  id: string;
+  kind: string;
+  artifact?: string;
+  gate?: string;
+  agent?: string | string[] | null;
+  stage: number;
+  phase: string;
+  inputs: string[];
+  optional: boolean;
+  status: WorkflowExecutionNodeStatus;
+  decision?: string;
+  reason?: string;
+  updatedAt?: string;
+}
+
+export interface WorkflowExecutionState {
+  planPath: string;
+  hash: string;
+  nodes: Record<string, WorkflowExecutionNode>;
+  nextNodeIds: string[];
+  resumedFromRunId?: string;
+  updatedAt?: string;
+}
+
 export interface ExecutionMetrics {
   totalDuration: number | null;
   stageTimings: Record<string, number>;
@@ -137,6 +172,7 @@ export interface ExecutionState {
   humanInterventions: unknown[];
   revisionRequests: RevisionRequest[];
   feedbackLoops: { maxRounds: number; currentRound: number };
+  workflow?: WorkflowExecutionState;
   pause?: {
     paused: boolean;
     reason: string;
@@ -266,6 +302,7 @@ export function defaultExecutionState(feature = ''): ExecutionState {
     humanInterventions: [],
     revisionRequests: [],
     feedbackLoops: { maxRounds: 2, currentRound: 0 },
+    workflow: undefined,
     pause: null
   };
 }
@@ -340,6 +377,180 @@ function ensureAgent(stage: StageState, agentName: string): AgentState {
   if (agent.promptFingerprint === undefined) agent.promptFingerprint = null;
   if (agent.inputDigest === undefined) agent.inputDigest = null;
   return stage.agents[agentName] as AgentState;
+}
+
+function isSatisfiedWorkflowStatus(status: string | undefined): boolean {
+  return status === 'completed' || status === 'reused' || status === 'skipped';
+}
+
+function normalizeWorkflowNode(node: WorkflowExecutionNode): WorkflowExecutionNode {
+  return {
+    ...node,
+    inputs: Array.isArray(node.inputs) ? node.inputs : [],
+    optional: node.optional === true,
+    status: node.status ?? 'pending',
+    phase: typeof node.phase === 'string' ? node.phase : `stage-${Number(node.stage) || 0}`,
+    stage: Number.isFinite(Number(node.stage)) ? Number(node.stage) : 0
+  };
+}
+
+function findWorkflowNodeIdByArtifact(
+  workflow: WorkflowExecutionState,
+  artifact: string
+): string | null {
+  for (const node of Object.values(workflow.nodes ?? {})) {
+    if (node.artifact === artifact) return node.id;
+  }
+  return null;
+}
+
+function workflowInputsSatisfied(workflow: WorkflowExecutionState, node: WorkflowExecutionNode): boolean {
+  for (const input of node.inputs) {
+    const inputNodeId = findWorkflowNodeIdByArtifact(workflow, input);
+    if (!inputNodeId) continue;
+    if (!isSatisfiedWorkflowStatus(workflow.nodes[inputNodeId]?.status)) return false;
+  }
+  return true;
+}
+
+function refreshWorkflowSchedule(state: ExecutionState, timestamp?: string): void {
+  const workflow = state.workflow;
+  if (!workflow || !workflow.nodes || typeof workflow.nodes !== 'object') return;
+
+  for (const [id, rawNode] of Object.entries(workflow.nodes)) {
+    const node = normalizeWorkflowNode(rawNode);
+    if (node.kind === 'input') {
+      workflow.nodes[id] = {
+        ...node,
+        status: 'skipped',
+        decision: node.decision ?? 'skip',
+        updatedAt: node.updatedAt ?? timestamp
+      };
+      continue;
+    }
+    if (isSatisfiedWorkflowStatus(node.status) || node.status === 'running' || node.status === 'failed') {
+      workflow.nodes[id] = node;
+      continue;
+    }
+    workflow.nodes[id] = {
+      ...node,
+      status: workflowInputsSatisfied(workflow, node) ? 'ready' : 'blocked'
+    };
+  }
+
+  const ready = Object.values(workflow.nodes)
+    .filter((node) => node.status === 'ready')
+    .sort((left, right) => {
+      if (left.stage !== right.stage) return left.stage - right.stage;
+      return left.id.localeCompare(right.id);
+    });
+  const nextStage = ready[0]?.stage;
+  workflow.nextNodeIds = nextStage === undefined
+    ? []
+    : ready.filter((node) => node.stage === nextStage).map((node) => node.id);
+  workflow.updatedAt = timestamp ?? workflow.updatedAt;
+}
+
+function updateWorkflowNode(
+  state: ExecutionState,
+  nodeId: string,
+  updates: Partial<WorkflowExecutionNode>,
+  timestamp: string
+): void {
+  if (!state.workflow) return;
+  const current = state.workflow.nodes[nodeId];
+  if (!current) return;
+  state.workflow.nodes[nodeId] = normalizeWorkflowNode({
+    ...current,
+    ...updates,
+    updatedAt: timestamp
+  });
+}
+
+function updateWorkflowArtifactNode(
+  state: ExecutionState,
+  artifact: string,
+  updates: Partial<WorkflowExecutionNode>,
+  timestamp: string
+): void {
+  if (!state.workflow) return;
+  const nodeId = findWorkflowNodeIdByArtifact(state.workflow, artifact);
+  if (!nodeId) return;
+  updateWorkflowNode(state, nodeId, updates, timestamp);
+}
+
+function agentNames(value: string | string[] | null | undefined): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  return typeof value === 'string' && value.length > 0 ? [value] : [];
+}
+
+function updateWorkflowAgentNodes(
+  state: ExecutionState,
+  stage: unknown,
+  agent: string,
+  updates: Partial<WorkflowExecutionNode>,
+  timestamp: string,
+  artifact?: string
+): void {
+  if (!state.workflow) return;
+  const stageNumber = Number(stage);
+  const candidates = Object.values(state.workflow.nodes).filter((node) => {
+    if (node.kind !== 'agent') return false;
+    if (Number(node.stage) !== stageNumber) return false;
+    if (!agentNames(node.agent).includes(agent)) return false;
+    if (artifact && node.artifact !== artifact) return false;
+    return true;
+  });
+  const selected = artifact ? candidates : candidates.length === 1 ? candidates : [];
+  for (const node of selected) {
+    updateWorkflowNode(state, node.id, updates, timestamp);
+  }
+}
+
+function applyPipelineResumedWorkflow(state: ExecutionState, event: RuntimeEvent): void {
+  if (!state.workflow) return;
+  const decisions = Array.isArray(event.data.nodes) ? event.data.nodes : [];
+  state.workflow.resumedFromRunId = typeof event.data.fromRunId === 'string'
+    ? event.data.fromRunId
+    : state.workflow.resumedFromRunId;
+
+  for (const decision of decisions) {
+    if (!isObject(decision) || !isNonEmptyString(decision.id)) continue;
+    const status =
+      decision.decision === 'reuse'
+        ? 'reused'
+        : decision.decision === 'skip'
+          ? 'skipped'
+          : 'pending';
+    updateWorkflowNode(
+      state,
+      decision.id,
+      {
+        status,
+        decision: typeof decision.decision === 'string' ? decision.decision : undefined,
+        reason: typeof decision.reason === 'string' ? decision.reason : undefined
+      },
+      event.timestamp
+    );
+  }
+}
+
+function upsertWorkflowWaveNode(state: ExecutionState, event: RuntimeEvent): void {
+  if (!state.workflow) return;
+  const waveId = typeof event.data.waveId === 'string' ? event.data.waveId : '';
+  if (!waveId) return;
+  const nodeId = `wave:${waveId}`;
+  state.workflow.nodes[nodeId] = {
+    id: nodeId,
+    kind: 'wave',
+    stage: 0,
+    phase: 'wave-verification',
+    inputs: [],
+    optional: false,
+    status: event.data.verified === true ? 'completed' : 'failed',
+    reason: typeof event.data.phase === 'string' ? `wave-${event.data.phase}` : 'wave-verification',
+    updatedAt: event.timestamp
+  };
 }
 
 function uniqueArtifacts(artifacts: string[]): string[] {
@@ -725,6 +936,8 @@ export function applyEvent(
     case EVENT_TYPES.PIPELINE_RESUMED: {
       state.status = PIPELINE_STATUS.RUNNING;
       state.pause = null;
+      applyPipelineResumedWorkflow(state, event);
+      refreshWorkflowSchedule(state, event.timestamp);
       return state;
     }
 
@@ -792,6 +1005,13 @@ export function applyEvent(
     case EVENT_TYPES.ARTIFACT_RECORDED: {
       const stage = ensureStage(state, event.data.stage);
       stage.artifacts = uniqueArtifacts(stage.artifacts.concat(String(event.data.artifact)));
+      updateWorkflowArtifactNode(
+        state,
+        String(event.data.artifact),
+        { status: 'completed', decision: undefined, reason: 'artifact-recorded' },
+        event.timestamp
+      );
+      refreshWorkflowSchedule(state, event.timestamp);
       return state;
     }
 
@@ -809,6 +1029,16 @@ export function applyEvent(
       gate.passed = Boolean(event.data.passed);
       gate.executedAt = event.timestamp;
       gate.checks = checks;
+      updateWorkflowNode(
+        state,
+        `gate:${gateName}`,
+        {
+          status: Boolean(event.data.passed) ? 'completed' : 'failed',
+          reason: Boolean(event.data.passed) ? 'gate-passed' : 'gate-failed'
+        },
+        event.timestamp
+      );
+      refreshWorkflowSchedule(state, event.timestamp);
       return state;
     }
 
@@ -823,6 +1053,14 @@ export function applyEvent(
       if (typeof event.data.inputDigest === 'string') {
         agent.inputDigest = event.data.inputDigest;
       }
+      updateWorkflowAgentNodes(
+        state,
+        event.data.stage,
+        String(event.data.agent),
+        { status: 'running', reason: 'agent-started' },
+        event.timestamp,
+        typeof event.data.artifact === 'string' ? event.data.artifact : undefined
+      );
       return state;
     }
 
@@ -837,6 +1075,15 @@ export function applyEvent(
       if (typeof event.data.inputDigest === 'string') {
         agent.inputDigest = event.data.inputDigest;
       }
+      updateWorkflowAgentNodes(
+        state,
+        event.data.stage,
+        String(event.data.agent),
+        { status: 'completed', reason: 'agent-completed' },
+        event.timestamp,
+        typeof event.data.artifact === 'string' ? event.data.artifact : undefined
+      );
+      refreshWorkflowSchedule(state, event.timestamp);
       return state;
     }
 
@@ -848,6 +1095,14 @@ export function applyEvent(
         agent.status = AGENT_STATUS.FAILED;
         agent.endTime = event.timestamp;
         agent.failureReason = (event.data.reason as string | null | undefined) || null;
+        updateWorkflowAgentNodes(
+          state,
+          event.data.stage,
+          String(event.data.agent),
+          { status: 'failed', reason: (event.data.reason as string | undefined) ?? 'agent-failed' },
+          event.timestamp,
+          typeof event.data.artifact === 'string' ? event.data.artifact : undefined
+        );
       }
       return state;
     }
@@ -858,6 +1113,15 @@ export function applyEvent(
       agent.retryCount += 1;
       agent.status = 'retrying';
       agent.failureReason = null;
+      updateWorkflowAgentNodes(
+        state,
+        event.data.stage,
+        String(event.data.agent),
+        { status: 'pending', reason: 'agent-retry-scheduled' },
+        event.timestamp,
+        typeof event.data.artifact === 'string' ? event.data.artifact : undefined
+      );
+      refreshWorkflowSchedule(state, event.timestamp);
       return state;
     }
 
@@ -1022,6 +1286,12 @@ export function applyEvent(
       return state;
     }
 
+    case EVENT_TYPES.WAVE_VERIFIED: {
+      upsertWorkflowWaveNode(state, event);
+      refreshWorkflowSchedule(state, event.timestamp);
+      return state;
+    }
+
     default:
       return state;
   }
@@ -1124,6 +1394,7 @@ export function finalizeState(state: ExecutionState): ExecutionState {
     : [];
   state.metrics.pluginFailureCount = state.pluginLifecycle.failed.length;
   ensureConversationSections(state);
+  refreshWorkflowSchedule(state, state.updatedAt);
   state.conversationMetrics.unresolved = state.conversations.threads.filter(
     (thread) => thread.status !== 'closed' && thread.status !== 'materialized'
   ).length;

@@ -88,6 +88,46 @@ describe('runtime schema contract', () => {
     ]);
   });
 
+  it('execution schema documents workflow scheduler node state', () => {
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/execution-schema.json');
+
+    expect(schema.properties.workflow.properties.nextNodeIds.items.type).toBe('string');
+    expect(schema.properties.workflow.properties.nodes.additionalProperties.properties.status.enum).toEqual([
+      'pending',
+      'ready',
+      'running',
+      'completed',
+      'failed',
+      'skipped',
+      'reused',
+      'blocked'
+    ]);
+  });
+
+  it('event schema documents resumable workflow node decisions and wave verification payloads', () => {
+    const schema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
+    const clauses = Array.isArray(schema.allOf) ? schema.allOf : [];
+
+    const resumeClause = clauses.find(
+      (clause) => clause?.if?.properties?.type?.const === 'PipelineResumed'
+    );
+    const waveClause = clauses.find(
+      (clause) => clause?.if?.properties?.type?.const === 'WaveVerified'
+    );
+
+    expect(resumeClause.then.properties.data.properties.nodes.items.properties.decision.enum).toEqual([
+      'reuse',
+      'run',
+      'skip'
+    ]);
+    expect(resumeClause.then.properties.data.properties.nextNodeIds.items.type).toBe('string');
+    expect(waveClause.then.properties.data.required.slice().sort()).toEqual([
+      'phase',
+      'verified',
+      'waveId'
+    ]);
+  });
+
   it('documents the conversation event types and execution sections', () => {
     const eventSchema = loadJson('packages/boss-cli/src/runtime/schema/event-schema.json');
     const executionSchema = loadJson('packages/boss-cli/src/runtime/schema/execution-schema.json');

@@ -38,30 +38,31 @@
 
 重复以下步骤直到所有非跳过产物完成：
 
-1. 查询就绪产物：`boss runtime get-ready-artifacts <feature> --ready --json`。
-2. 阶段状态管理：对就绪产物所属阶段，若阶段为 `pending`，调用 `boss runtime update-stage <feature> <N> running`。
-3. 准备产物骨架：对每个就绪产物调用 `boss artifact prepare <feature-name> <artifact-name>`。
-4. 派发 Agent：
+1. 恢复 / 刷新 Workflow：若是从既有运行继续，先调用 `boss runtime resume <feature> --from-run <run-id>`；随后读取 `.boss/<feature>/.meta/execution.json` 的 `execution.workflow.nextNodeIds`。
+2. 查询就绪产物：兼容旧入口可调用 `boss runtime get-ready-artifacts <feature> --ready --json`，但调度以 `execution.workflow.nextNodeIds` 为准。
+3. 阶段状态管理：对下一批 node 所属阶段，若阶段为 `pending`，调用 `boss runtime update-stage <feature> <N> running`。
+4. 准备产物骨架：对每个 ready artifact node 调用 `boss artifact prepare <feature-name> <artifact-name>`。
+5. 派发 Agent：
    - 读取 `agents/shared/protocol-manifest.md` 建立公共协议 prefix 缓存。
    - 按需读取 `references/artifact-guide.md`。
    - 对同一阶段非 `code` 就绪产物可并行派发。
    - `code` 产物必须先通过 `references/evidence-waves.md` 中的 Repo Preflight、写集冲突检测和风险等级感知确认。
    - 每个 Agent 前调用 `boss runtime query-memory <feature> --agent <agent-name>` 注入相关记忆摘要。
-5. 保存产物到 `.boss/<feature>/`。
-6. 记录产物：`boss runtime record-artifact <feature> <artifact-name> <N>`；Markdown 会自动生成 HTML companion。
-7. 失败处理：
+6. 保存产物到 `.boss/<feature>/`。
+7. 记录产物：`boss runtime record-artifact <feature> <artifact-name> <N>`；Markdown 会自动生成 HTML companion，artifact node 会进入 `completed`。
+8. 失败处理：
    - 先调用 `boss runtime check-stage <feature> <N> --agents`。
    - 只重试失败 Agent：`boss runtime retry-agent <feature> <N> <agent-name>`。
    - Agent 达上限后才用 `boss runtime retry-stage <feature> <N>`。
-8. 反馈循环：若 Agent 返回 `REVISION_NEEDED`，调用 `boss runtime record-feedback ...`，再回派目标 Agent 修订。
-9. Wave 边界校验：见 `references/evidence-waves.md`。
-10. 确认节点：
+9. 反馈循环：若 Agent 返回 `REVISION_NEEDED`，调用 `boss runtime record-feedback ...`，再回派目标 Agent 修订。
+10. Wave 边界校验：见 `references/evidence-waves.md`；`boss runtime verify-wave` 产生 `WaveVerified` 后会更新 workflow node 状态。
+11. 确认节点：
     - 阶段 1 完成后确认规划结果。
     - code 阶段派发前按 Blast Radius 决定是否强制确认。
     - 阶段 3 门禁后，若 QA/门禁报告高风险疑虑则确认。
-11. 门禁：读取 DAG 中 `type: "gate"` 条目，依次调用 `boss runtime evaluate-gates <feature> <gate-name>`。
-12. 回到第 1 步。
-13. DAG 全部完成后，调用 `boss runtime extract-memory <feature> --json`，查看 `records` 与 `summaryPreview` 后写入记忆库。
+12. 门禁：读取 DAG 中 `type: "gate"` 条目，依次调用 `boss runtime evaluate-gates <feature> <gate-name>`；`GateEvaluated` 会更新对应 workflow node 状态。
+13. 回到第 1 步，直到 `execution.workflow.nextNodeIds` 为空且所有必需 workflow node 状态为 `completed` / `reused` / `skipped`。
+14. DAG 全部完成后，调用 `boss runtime extract-memory <feature> --json`，查看 `records` 与 `summaryPreview` 后写入记忆库。
 
 ## 收尾
 
@@ -75,4 +76,3 @@ design-brief -> prd.md -+-> architecture.md -> tech-review.md -> tasks.md -> [co
                         +-> ui-spec.md(opt) -+
                         +-> ui-design.json(opt) -+
 ```
-

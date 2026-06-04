@@ -95,7 +95,32 @@
             "type": "object",
             "properties": {
               "stage": { "type": "integer", "minimum": 1 },
-              "requestedBy": { "type": "string" }
+              "requestedBy": { "type": "string" },
+              "fromRunId": { "type": "string" },
+              "runId": { "type": "string" },
+              "workflowPlanPath": { "type": "string" },
+              "workflowHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "nextNodeIds": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "kind", "stage", "decision", "reason"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "kind": { "type": "string", "enum": ["input", "agent", "gate"] },
+                    "artifact": { "type": "string" },
+                    "gate": { "type": "string" },
+                    "agent": { "type": "string" },
+                    "stage": { "type": "integer", "minimum": 0 },
+                    "decision": { "type": "string", "enum": ["reuse", "run", "skip"] },
+                    "reason": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         }
@@ -328,6 +353,24 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "WaveVerified" } } },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["waveId", "phase", "verified"],
+            "properties": {
+              "waveId": { "type": "string", "minLength": 1 },
+              "phase": { "type": "string", "enum": ["red", "green", "full"] },
+              "verified": { "type": "boolean" },
+              "redTestsCorrect": { "type": ["boolean", "null"] },
+              "greenGatesCorrect": { "type": ["boolean", "null"] }
             }
           }
         }

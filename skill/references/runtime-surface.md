@@ -44,10 +44,12 @@
 - `workflowPlanPath` / `workflowHash` / `packHash` / `artifactDagHash` 描述 Workflow 定义。
 - `runId` 描述一次运行实例。
 - 恢复时调用 `boss runtime resume <feature> --from-run <run-id>`，runtime 重新加载 workflow plan，并按节点输入指纹输出 `reuse` / `run` / `skip` 决策。
+- resume 决策会进入 `execution.workflow.nodes`；`execution.workflow.nextNodeIds` 是下一批机器可调度节点。
+- `GateEvaluated` 和 `WaveVerified` 也会更新 workflow node 状态，门禁 / Evidence Wave 结果不再只存在于外围报告。
 
 ## Runtime Invariants
 
 - 不直接编辑 `.meta/execution.json`；它是 projector 物化出的 read model。
+- DAG loop 不从 Markdown 自行猜下一步；读取 `execution.workflow.nextNodeIds`，并用 `workflow node 状态` 判断 `ready` / `reused` / `completed` / `failed`。
 - 不用 shell 日志代替事件流。Pack 选择通过 `PackApplied`，插件生命周期通过 `PluginDiscovered` / `PluginActivated` / `PluginHookExecuted` / `PluginHookFailed`。
 - 报告生成走 runtime summary model，不在 shell 中拼接状态。
-

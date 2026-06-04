@@ -12,6 +12,7 @@ import {
   readJson,
   writeJson
 } from './state.js';
+import { materializeState } from '../projectors/materialize-state.js';
 import type { PipelinePackDefinition } from './packs.js';
 import { evaluateAgentReuse } from './pipeline.js';
 
@@ -19,6 +20,15 @@ type UnknownRecord = Record<string, unknown>;
 
 export type WorkflowNodeKind = 'input' | 'agent' | 'gate';
 export type WorkflowResumeDecision = 'reuse' | 'run' | 'skip';
+export type WorkflowNodeExecutionStatus =
+  | 'pending'
+  | 'ready'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped'
+  | 'reused'
+  | 'blocked';
 
 export interface WorkflowPlanNode {
   id: string;
@@ -64,6 +74,31 @@ export interface WorkflowPlan {
   };
 }
 
+export interface WorkflowExecutionNode {
+  id: string;
+  kind: WorkflowNodeKind | 'wave';
+  artifact?: string;
+  gate?: string;
+  agent?: string | string[] | null;
+  stage: number;
+  phase: string;
+  inputs: string[];
+  optional: boolean;
+  status: WorkflowNodeExecutionStatus;
+  decision?: WorkflowResumeDecision;
+  reason?: string;
+  updatedAt?: string;
+}
+
+export interface WorkflowExecutionState {
+  planPath: string;
+  hash: string;
+  nodes: Record<string, WorkflowExecutionNode>;
+  nextNodeIds: string[];
+  resumedFromRunId?: string;
+  updatedAt?: string;
+}
+
 export interface WorkflowPlanPersistence {
   plan: WorkflowPlan;
   workflowHash: RuntimeHashDescriptor;
@@ -90,6 +125,7 @@ export interface ResumeWorkflowResult {
   workflowPlanPath: string;
   workflowHash: string;
   nodes: ResumeWorkflowNodeDecision[];
+  nextNodeIds: string[];
 }
 
 function sha256Hex(value: string | Buffer): string {
@@ -301,6 +337,88 @@ export function persistWorkflowPlan({
   };
 }
 
+function isSatisfiedStatus(status: string | undefined): boolean {
+  return status === 'completed' || status === 'reused' || status === 'skipped';
+}
+
+function findNodeIdByArtifact(nodes: Record<string, WorkflowExecutionNode>, artifact: string): string | null {
+  for (const node of Object.values(nodes)) {
+    if (node.artifact === artifact) return node.id;
+  }
+  return null;
+}
+
+function nodeInputsSatisfied(node: WorkflowExecutionNode, nodes: Record<string, WorkflowExecutionNode>): boolean {
+  for (const input of node.inputs) {
+    const inputNodeId = findNodeIdByArtifact(nodes, input);
+    if (!inputNodeId) continue;
+    if (!isSatisfiedStatus(nodes[inputNodeId]?.status)) return false;
+  }
+  return true;
+}
+
+export function refreshWorkflowSchedule(workflow: WorkflowExecutionState): WorkflowExecutionState {
+  const nodes = { ...workflow.nodes };
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.kind === 'input') {
+      nodes[id] = { ...node, status: 'skipped', decision: node.decision ?? 'skip' };
+      continue;
+    }
+    if (isSatisfiedStatus(node.status) || node.status === 'running' || node.status === 'failed') {
+      continue;
+    }
+    nodes[id] = {
+      ...node,
+      status: nodeInputsSatisfied(node, nodes) ? 'ready' : 'blocked'
+    };
+  }
+
+  const ready = Object.values(nodes)
+    .filter((node) => node.status === 'ready')
+    .sort((left, right) => {
+      if (left.stage !== right.stage) return left.stage - right.stage;
+      return left.id.localeCompare(right.id);
+    });
+  const nextStage = ready[0]?.stage;
+  const nextNodeIds = nextStage === undefined
+    ? []
+    : ready.filter((node) => node.stage === nextStage).map((node) => node.id);
+
+  return {
+    ...workflow,
+    nodes,
+    nextNodeIds
+  };
+}
+
+export function createWorkflowExecutionState({
+  plan,
+  workflowPlanPath,
+  workflowHash
+}: {
+  plan: WorkflowPlan;
+  workflowPlanPath: string;
+  workflowHash: RuntimeHashDescriptor;
+}): WorkflowExecutionState {
+  const nodes = Object.fromEntries(
+    plan.nodes.map((node) => [
+      node.id,
+      {
+        ...node,
+        status: node.kind === 'input' ? 'skipped' : 'pending',
+        decision: node.kind === 'input' ? 'skip' : undefined,
+        reason: node.kind === 'input' ? 'input-node' : undefined
+      } satisfies WorkflowExecutionNode
+    ])
+  );
+  return refreshWorkflowSchedule({
+    planPath: workflowPlanPath,
+    hash: workflowHash.value,
+    nodes,
+    nextNodeIds: []
+  });
+}
+
 function readWorkflowPlan(cwd: string, workflowPlanPath: string): WorkflowPlan {
   const absolutePath = path.isAbsolute(workflowPlanPath)
     ? workflowPlanPath
@@ -400,6 +518,27 @@ export function resumeWorkflow(
       : '';
   const plan = readWorkflowPlan(cwd, workflowPlanPath);
   const nodes = plan.nodes.map((node) => resumeDecisionForNode(feature, node, cwd));
+  const projectedWorkflow = refreshWorkflowSchedule({
+    planPath: workflowPlanPath,
+    hash: workflowHash,
+    nodes: Object.fromEntries(
+      plan.nodes.map((node) => [
+        node.id,
+        {
+          ...node,
+          status:
+            nodes.find((decision) => decision.id === node.id)?.decision === 'reuse'
+              ? 'reused'
+              : nodes.find((decision) => decision.id === node.id)?.decision === 'skip'
+                ? 'skipped'
+                : 'pending',
+          decision: nodes.find((decision) => decision.id === node.id)?.decision,
+          reason: nodes.find((decision) => decision.id === node.id)?.reason
+        } satisfies WorkflowExecutionNode
+      ])
+    ),
+    nextNodeIds: []
+  });
 
   appendRuntimeEvent(cwd, feature, EVENT_TYPES.PIPELINE_RESUMED, {
     fromRunId,
@@ -407,8 +546,11 @@ export function resumeWorkflow(
     workflowPlanPath,
     workflowHash,
     reusedNodes: nodes.filter((node) => node.decision === 'reuse').length,
-    runnableNodes: nodes.filter((node) => node.decision === 'run').length
+    runnableNodes: nodes.filter((node) => node.decision === 'run').length,
+    nextNodeIds: projectedWorkflow.nextNodeIds,
+    nodes
   });
+  materializeState(feature, cwd);
 
   return {
     feature,
@@ -416,6 +558,7 @@ export function resumeWorkflow(
     runId,
     workflowPlanPath,
     workflowHash,
-    nodes
+    nodes,
+    nextNodeIds: projectedWorkflow.nextNodeIds
   };
 }

@@ -6,6 +6,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { verifyWave } from '../../packages/boss-cli/src/runtime/application/wave-verification.js';
+import { readExecutionView } from '../../packages/boss-cli/src/runtime/application/state.js';
 import { hashWorkflowValue } from '../../packages/boss-cli/src/runtime/application/workflow.js';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 import { ensureBuilt } from '../helpers/run-cli.js';
@@ -37,6 +39,14 @@ interface WorkflowPlan {
   validation: { deterministic: boolean; errors: string[] };
 }
 
+interface WorkflowExecutionNode {
+  id: string;
+  kind: string;
+  status: string;
+  decision?: string;
+  reason?: string;
+}
+
 describe('workflow runtime layer', () => {
   let tmpDir: string;
   let cwd: string;
@@ -63,6 +73,33 @@ describe('workflow runtime layer', () => {
       cwd: tmpDir,
       encoding: 'utf8'
     });
+  }
+
+  function writeCustomPack(dag: Record<string, unknown>) {
+    fs.mkdirSync(path.join(tmpDir, '.boss', 'pipeline-packs', 'custom'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'custom.marker'), 'yes\n', 'utf8');
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', 'custom-dag.json'),
+      JSON.stringify({ version: 'custom', artifacts: dag }, null, 2) + '\n',
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', 'pipeline-packs', 'custom', 'pipeline.json'),
+      JSON.stringify({
+        name: 'custom',
+        version: '1.0.0',
+        type: 'pipeline-pack',
+        priority: 100,
+        when: { fileExists: ['custom.marker'] },
+        config: {
+          stages: [1],
+          agents: ['boss-pm', 'boss-architect'],
+          gates: [],
+          artifactDag: '.boss/custom-dag.json'
+        }
+      }, null, 2) + '\n',
+      'utf8'
+    );
   }
 
   it('initializes a deterministic workflow plan and separates definition metadata from run metadata', () => {
@@ -216,5 +253,111 @@ describe('workflow runtime layer', () => {
     expect(payload.workflowPlanPath).toBe('.boss/workflow-feat/.meta/workflow-plan.json');
     expect(payload.nodes.some((node) => node.id === 'artifact:prd.md' && node.decision === 'reuse')).toBe(true);
     expect(payload.nodes.some((node) => node.decision === 'run')).toBe(true);
+  });
+
+  it('uses resume decisions to advance the workflow scheduler to the next runnable batch', () => {
+    writeCustomPack({
+      seed: {
+        inputs: [],
+        agent: null,
+        stage: 0,
+        optional: true
+      },
+      'a.md': {
+        inputs: ['seed'],
+        agent: 'boss-pm',
+        stage: 1
+      },
+      'b.md': {
+        inputs: ['a.md'],
+        agent: 'boss-architect',
+        stage: 1
+      }
+    });
+
+    const state = runtime.initPipeline('custom-feat', { cwd: tmpDir });
+    expect(state.workflow?.nextNodeIds).toEqual(['artifact:a.md']);
+
+    runtime.updateAgent('custom-feat', 1, 'boss-pm', 'completed', {
+      cwd: tmpDir,
+      prompt: 'boss-pm:a.md',
+      dependencyArtifacts: ['seed']
+    });
+    const result = runRuntimeCommand('resume', [
+      'custom-feat',
+      '--from-run',
+      String(state.parameters.runId),
+      '--json'
+    ]);
+    expect(result.status, result.stderr).toBe(0);
+
+    const execution = readExecutionView(tmpDir, 'custom-feat');
+    const nodes = execution.workflow?.nodes as Record<string, WorkflowExecutionNode>;
+    expect(nodes['artifact:a.md']).toMatchObject({
+      status: 'reused',
+      decision: 'reuse',
+      reason: 'input-digest-matched'
+    });
+    expect(nodes['artifact:b.md']).toMatchObject({
+      status: 'ready',
+      decision: 'run'
+    });
+    expect(execution.workflow?.nextNodeIds).toEqual(['artifact:b.md']);
+  });
+
+  it('projects gate evaluation results into workflow gate node status', () => {
+    writeCustomPack({
+      code: {
+        inputs: [],
+        agent: 'boss-pm',
+        stage: 1
+      },
+      'quality-gate': {
+        inputs: ['code'],
+        agent: null,
+        stage: 1,
+        type: 'gate'
+      }
+    });
+    runtime.initPipeline('custom-feat', { cwd: tmpDir });
+
+    runtime.updateStage('custom-feat', 1, 'running', { cwd: tmpDir });
+    runtime.recordArtifact('custom-feat', 'code', 1, { cwd: tmpDir });
+    const execution = runtime.updateStage('custom-feat', 1, 'completed', {
+      cwd: tmpDir,
+      gate: 'quality-gate',
+      gatePassed: true
+    });
+
+    const nodes = execution.workflow?.nodes as Record<string, WorkflowExecutionNode>;
+    expect(nodes['artifact:code']).toMatchObject({ status: 'completed' });
+    expect(nodes['gate:quality-gate']).toMatchObject({
+      status: 'completed',
+      kind: 'gate'
+    });
+  });
+
+  it('projects wave verification results into workflow node status', () => {
+    runtime.initPipeline('workflow-feat', { cwd: tmpDir });
+    fs.writeFileSync(
+      path.join(tmpDir, '.boss', 'workflow-feat', 'tasks.md'),
+      [
+        '| Evidence Wave | 范围 | Owner 文件 | 红测 | 绿门禁 | Contract Matrix 行 | Stop Condition |',
+        '| --- | --- | --- | --- | --- | --- | --- |',
+        '| Wave 1：Runtime | workflow node status | `packages/boss-cli/src/runtime/application/workflow.ts` | `node -e "process.exit(1)"` | `node -e "process.exit(0)"` | CM-runtime | Stop on failed status |'
+      ].join('\n') + '\n',
+      'utf8'
+    );
+
+    const result = verifyWave('workflow-feat', 'wave-1-runtime', 'green', { cwd: tmpDir });
+    expect(result.verified).toBe(true);
+
+    const execution = readExecutionView(tmpDir, 'workflow-feat');
+    const nodes = execution.workflow?.nodes as Record<string, WorkflowExecutionNode>;
+    expect(nodes['wave:wave-1-runtime']).toMatchObject({
+      id: 'wave:wave-1-runtime',
+      kind: 'wave',
+      status: 'completed'
+    });
   });
 });

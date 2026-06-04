@@ -4,6 +4,7 @@ import { EVENT_TYPES } from '../domain/event-types.js';
 import { readWaves, type EvidenceWave } from './waves.js';
 import { appendRuntimeEvent, ensureFeatureName } from './state.js';
 import type { RuntimeEvent } from '../projectors/materialize-state.js';
+import { materializeState } from '../projectors/materialize-state.js';
 
 export type VerifyPhase = 'red' | 'green' | 'full';
 
@@ -113,6 +114,7 @@ export function verifyWave(
         redTestsCorrect: redTests?.allCorrect ?? null,
         greenGatesCorrect: greenGates?.allCorrect ?? null
       });
+      materializeState(feature, cwd);
       result.event = { id: event.id, type: event.type };
     } catch {
       // events file may not exist in some contexts

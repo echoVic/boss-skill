@@ -568,7 +568,11 @@ describe('thin skill CLI contract', () => {
     expect(readme).toContain('boss runtime resume');
     expect(readme).toContain('workflow-plan.json');
     expect(readme).toContain('workflowHash');
+    expect(readme).toContain('workflow.nextNodeIds');
+    expect(readme).toContain('GateEvaluated` / `WaveVerified');
     expect(orchestrationLoop).toContain('`project init` 已隐式执行');
+    expect(orchestrationLoop).toContain('execution.workflow.nextNodeIds');
+    expect(orchestrationLoop).toContain('workflow node 状态');
     expect(runtimeSurface).not.toContain('boss runtime query-memory <feature> --agent <agent-name> --json');
     expect(runtimeSurface).not.toContain('update-stage <feature> <N> completed --artifact');
   });

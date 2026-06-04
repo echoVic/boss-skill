@@ -168,7 +168,54 @@
     },
     "humanInterventions": { "type": "array" },
     "revisionRequests": { "type": "array" },
-    "feedbackLoops": { "type": "object" }
+    "feedbackLoops": { "type": "object" },
+    "workflow": {
+      "type": "object",
+      "required": ["planPath", "hash", "nodes", "nextNodeIds"],
+      "properties": {
+        "planPath": { "type": "string" },
+        "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "nextNodeIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "resumedFromRunId": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "kind", "status", "inputs"],
+            "properties": {
+              "id": { "type": "string" },
+              "kind": { "type": "string", "enum": ["input", "agent", "gate", "wave"] },
+              "artifact": { "type": "string" },
+              "gate": { "type": "string" },
+              "agent": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "items": { "type": "string" } },
+                  { "type": "null" }
+                ]
+              },
+              "stage": { "type": "integer", "minimum": 0 },
+              "phase": { "type": "string" },
+              "inputs": { "type": "array", "items": { "type": "string" } },
+              "optional": { "type": "boolean" },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "ready", "running", "completed", "failed", "skipped", "reused", "blocked"]
+              },
+              "decision": { "type": "string", "enum": ["reuse", "run", "skip"] },
+              "reason": { "type": "string" },
+              "updatedAt": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": true
 }
