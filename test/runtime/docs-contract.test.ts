@@ -69,6 +69,26 @@ const multiDriverRuntimePlan = fs.readFileSync(
   path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-multi-driver-runtime.md'),
   'utf8'
 );
+const orchestrationLoop = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'orchestration-loop.md'),
+  'utf8'
+);
+const runtimeSurface = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'runtime-surface.md'),
+  'utf8'
+);
+const platformDrivers = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'platform-drivers.md'),
+  'utf8'
+);
+const hooksRuntime = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'hooks-runtime.md'),
+  'utf8'
+);
+const evidenceWaves = fs.readFileSync(
+  path.join(REPO_ROOT, 'skill', 'references', 'evidence-waves.md'),
+  'utf8'
+);
 
 const techDetection = fs.readFileSync(
   path.join(REPO_ROOT, 'skill', 'agents', 'shared', 'tech-detection.md'),
@@ -263,9 +283,9 @@ describe('agent methodology skill contract', () => {
 
 describe('boss natural language command contract', () => {
   it('documents feature slug derivation and constraint-only handling', () => {
-    expect(skill).toContain('Feature Slug 归一化');
-    expect(skill).toContain('约束类输入');
-    expect(skill).toContain('不要创建 `.boss/<feature>/`');
+    expect(orchestrationLoop).toContain('Feature Slug 归一化');
+    expect(orchestrationLoop).toContain('约束类输入');
+    expect(orchestrationLoop).toContain('不要创建 `.boss/<feature>/`');
     expect(bossCommand).toContain('自然语言需求会先归一化为 feature slug');
     expect(bossCommand).toContain('约束类输入不会启动新流水线');
     expect(bossCommand).toContain('当前 Boss Skill 的 `SKILL.md`');
@@ -285,23 +305,24 @@ describe('multi-driver runtime documentation contract', () => {
   });
 
   it('documents Platform Driver mode in the Boss skill itself', () => {
-    expect(skill).toContain('Platform Driver 模式');
-    expect(skill).toContain('Runtime Core');
-    expect(skill).toContain('boss status <feature>');
-    expect(skill).toContain('boss continue <feature>');
-    expect(skill).toContain('boss gate <feature>');
-    expect(skill).toContain('boss gate final <feature>');
-    expect(skill).toContain('boss qa attack <feature>');
-    expect(skill).toContain('CHECKPOINT_REQUIRED');
-    expect(skill).toContain('不得替代 hooks');
-    expect(skill).toContain('Codex 适配是 additive');
-    expect(skill).toContain('不得删除或弱化 Claude Code hooks');
+    expect(skill).toContain('references/platform-drivers.md');
+    expect(platformDrivers).toContain('Platform Driver 模式');
+    expect(platformDrivers).toContain('Runtime Core');
+    expect(platformDrivers).toContain('boss status <feature>');
+    expect(platformDrivers).toContain('boss continue <feature>');
+    expect(platformDrivers).toContain('boss gate <feature>');
+    expect(platformDrivers).toContain('boss gate final <feature>');
+    expect(platformDrivers).toContain('boss qa attack <feature>');
+    expect(platformDrivers).toContain('CHECKPOINT_REQUIRED');
+    expect(platformDrivers).toContain('不得替代 hooks');
+    expect(platformDrivers).toContain('Codex 适配是 additive');
+    expect(platformDrivers).toContain('不得删除或弱化 Claude Code hooks');
   });
 });
 
 describe('subagent orchestration safety contract', () => {
   it('documents adaptable wave boundary verification before trusting subagent DONE states', () => {
-    for (const doc of [skill, subagentProtocol]) {
+    for (const doc of [evidenceWaves, subagentProtocol]) {
       expect(doc).toContain('Wave 边界校验');
       expect(doc).toContain('按项目技术栈选择');
       expect(doc).toContain('类型检查');
@@ -324,13 +345,14 @@ describe('subagent orchestration safety contract', () => {
     expect(scrumMaster).toContain('并行安全组');
     expect(scrumMaster).toContain('不得并行');
 
-    expect(skill).toContain('任务写集冲突检测');
-    expect(skill).toContain('从 `tasks.md` 解析');
-    expect(skill).toContain('写集重叠');
-    expect(skill).toContain('同一并行安全组');
-    expect(skill).toContain('不得并行');
-    expect(skill).toContain('共享文件');
-    expect(skill).toContain('指定 owner');
+    expect(skill).toContain('references/evidence-waves.md');
+    expect(evidenceWaves).toContain('任务写集冲突检测');
+    expect(evidenceWaves).toContain('从 `tasks.md` 解析');
+    expect(evidenceWaves).toContain('写集重叠');
+    expect(evidenceWaves).toContain('同一并行安全组');
+    expect(evidenceWaves).toContain('不得并行');
+    expect(evidenceWaves).toContain('共享文件');
+    expect(evidenceWaves).toContain('指定 owner');
   });
 
   it('documents risk-aware mandatory confirmation before high blast-radius code changes', () => {
@@ -343,15 +365,15 @@ describe('subagent orchestration safety contract', () => {
     expect(scrumMaster).toContain('package.json');
     expect(scrumMaster).toContain('install');
 
-    expect(skill).toContain('风险等级感知确认');
-    expect(skill).toContain('强制确认 trigger');
-    expect(skill).toContain('Blast Radius');
-    expect(skill).toContain('≥');
-    expect(skill).toContain('package.json');
-    expect(skill).toContain('依赖安装命令');
-    expect(skill).toContain('核心模块');
-    expect(skill).toContain('不得派发 code Agent');
-    expect(skill).not.toContain('阶段 3 门禁后 → 可选确认');
+    expect(evidenceWaves).toContain('风险等级感知确认');
+    expect(evidenceWaves).toContain('强制确认 trigger');
+    expect(evidenceWaves).toContain('Blast Radius');
+    expect(evidenceWaves).toContain('≥');
+    expect(evidenceWaves).toContain('package.json');
+    expect(evidenceWaves).toContain('依赖安装命令');
+    expect(evidenceWaves).toContain('核心模块');
+    expect(evidenceWaves).toContain('不得派发 code Agent');
+    expect(evidenceWaves).not.toContain('阶段 3 门禁后 → 可选确认');
   });
 
   it('documents protocol manifest, prefix cache, and on-demand protocol loading', () => {
@@ -405,7 +427,7 @@ describe('subagent orchestration safety contract', () => {
 
 describe('boss evidence gates contract', () => {
   it('documents repo preflight before code-stage planning and dispatch', () => {
-    for (const doc of [skill, tasksTemplate]) {
+    for (const doc of [evidenceWaves, tasksTemplate]) {
       expect(doc).toContain('Repo Preflight');
       expect(doc).toContain('默认分支');
       expect(doc).toContain('CI');
@@ -416,8 +438,8 @@ describe('boss evidence gates contract', () => {
       expect(doc).toContain('unknown');
     }
 
-    expect(skill).toContain('不得派发 code Agent');
-    expect(skill).toContain('不得猜测');
+    expect(evidenceWaves).toContain('不得派发 code Agent');
+    expect(evidenceWaves).toContain('不得猜测');
   });
 
   it('requires evidence-driven waves with red tests and green gates', () => {
@@ -431,11 +453,11 @@ describe('boss evidence gates contract', () => {
   });
 
   it('keeps code dispatch, risk confirmation, and evidence wave terminology distinct', () => {
-    expect(skill).toContain('继续 D.4c');
-    expect(skill).not.toMatch(/风险确认：未触发[\s\S]*继续 D\.5/);
-    expect(skill).toContain('同一并行安全组');
-    expect(skill).toContain('Evidence Wave');
-    expect(skill).toContain('并行安全组');
+    expect(evidenceWaves).toContain('继续 D.4c');
+    expect(evidenceWaves).not.toMatch(/风险确认：未触发[\s\S]*继续 D\.5/);
+    expect(evidenceWaves).toContain('同一并行安全组');
+    expect(evidenceWaves).toContain('Evidence Wave');
+    expect(evidenceWaves).toContain('并行安全组');
   });
 
   it('requires cross-layer contract matrices for UI payload schema and business-rule consistency', () => {
@@ -511,27 +533,44 @@ describe('boss evidence gates contract', () => {
 });
 
 describe('thin skill CLI contract', () => {
+  it('keeps the main Boss skill lightweight and uses one-level progressive disclosure references', () => {
+    expect(skill.split(/\r?\n/).length).toBeLessThanOrEqual(220);
+    for (const reference of [
+      'references/orchestration-loop.md',
+      'references/runtime-surface.md',
+      'references/evidence-waves.md',
+      'references/platform-drivers.md',
+      'references/hooks-runtime.md',
+      'agents/shared/protocol-manifest.md',
+      'references/artifact-guide.md'
+    ]) {
+      expect(skill).toContain(reference);
+    }
+    expect(skill).not.toContain('Copy this checklist and check off items as you complete them');
+  });
+
   it('documents boss CLI commands instead of direct runtime/script entrypoints', () => {
-    expect(skill).toContain('boss project init');
-    expect(skill).toContain('boss runtime init-pipeline');
-    expect(skill).toContain('boss artifact prepare');
-    expect(skill).toContain('boss packs detect');
+    const runtimeDocs = `${skill}\n${runtimeSurface}\n${orchestrationLoop}`;
+    expect(runtimeDocs).toContain('boss project init');
+    expect(runtimeDocs).toContain('boss runtime init-pipeline');
+    expect(runtimeDocs).toContain('boss artifact prepare');
+    expect(runtimeDocs).toContain('boss packs detect');
     expect(skill).not.toContain('runtime/cli/');
     expect(skill).not.toContain('scripts/prepare-artifact.sh');
     expect(bossCommand).toContain('boss project init');
   });
 
   it('documents runtime command boundaries that match the CLI surface', () => {
-    expect(skill).toContain('boss runtime register-plugins <feature>');
-    expect(skill).toContain('boss runtime query-memory <feature> --agent <agent-name>');
-    expect(skill).toContain('boss runtime record-artifact <feature> <artifact-name> <N>');
-    expect(skill).toContain('boss runtime resume <feature> --from-run <run-id>');
+    expect(runtimeSurface).toContain('boss runtime register-plugins <feature>');
+    expect(runtimeSurface).toContain('boss runtime query-memory <feature> --agent <agent-name>');
+    expect(runtimeSurface).toContain('boss runtime record-artifact <feature> <artifact-name> <N>');
+    expect(runtimeSurface).toContain('boss runtime resume <feature> --from-run <run-id>');
     expect(readme).toContain('boss runtime resume');
     expect(readme).toContain('workflow-plan.json');
     expect(readme).toContain('workflowHash');
-    expect(skill).toContain('`project init` 已隐式执行');
-    expect(skill).not.toContain('boss runtime query-memory <feature> --agent <agent-name> --json');
-    expect(skill).not.toContain('update-stage <feature> <N> completed --artifact');
+    expect(orchestrationLoop).toContain('`project init` 已隐式执行');
+    expect(runtimeSurface).not.toContain('boss runtime query-memory <feature> --agent <agent-name> --json');
+    expect(runtimeSurface).not.toContain('update-stage <feature> <N> completed --artifact');
   });
 
   it('routes hook config through the boss hooks dispatcher', () => {
