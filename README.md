@@ -9,6 +9,67 @@ BMAD Harness Engineer — 全自动研发流水线编排 Skill，兼容 Claude C
 
 从需求到部署的完整研发流水线，编排 9 个专业 Agent 自动完成完整研发周期。
 
+> **定位说明**：Boss 提供可审计的 runtime 工作流与质量门禁；子 Agent 仍需按协议配合。门禁与 DAG 由 CLI/hooks 约束，**不能**等同于「装了就 100% 自动交付」——见下方 [质量与评测](#质量与评测)。
+
+## 适合 / 不适合用 Boss
+
+| 适合 | 不适合（直接让 Agent 改即可） |
+|------|------------------------------|
+| 新 feature：从需求到可运行/可部署 | 单文件修改、一行 bug、改个变量名 |
+| 需要 PRD、架构、任务拆解、测试证据 | 纯读代码、解释实现、代码审查问答 |
+| 团队希望产物落在 `.boss/<feature>/` 可追溯 | 已有完整 spec，只想快速 patch |
+| API/全栈/带 UI 的中小项目 | 极小事（<30 分钟人工能做完） |
+
+**经验法则**：若你不需要 `.boss/` 里一整套文档与门禁记录，就不要开 `/boss`。
+
+## 5 分钟快速上手
+
+**目标**：用最少角色跑通一条 feature，先熟悉产物目录与 runtime，再开完整 9 Agent 流水线。
+
+### 1. 安装并启动 Agent
+
+```bash
+npm install -g @blade-ai/boss-skill
+boss-skill
+# Claude Code:
+claude --plugin-dir "$(boss-skill path)"
+```
+
+### 2. 在 Agent 里触发（推荐轻量参数）
+
+```
+/boss 做一个 Todo 应用，个人用户本地记录 --roles core --skip-deploy
+```
+
+- `--roles core`：PM / Architect / Dev / QA，跳过 UI Designer、Scrum Master、DevOps 等重型角色
+- `--skip-deploy`：只做到开发与测试证据，不跑部署阶段
+
+### 3. 跑完后应看到的目录
+
+```
+.boss/todo-app/
+├── design-brief.md      # 需求澄清（非 --quick 时）
+├── prd.md
+├── architecture.md
+├── tasks.md
+├── qa-report.md
+└── .meta/
+    ├── events.jsonl       # 状态真相源（只通过 boss runtime 追加）
+    ├── execution.json     # 只读投影（调度看 workflow.nextNodeIds）
+    └── workflow-plan.json
+```
+
+### 4. 本地自检（可选）
+
+```bash
+boss status todo-app --json
+boss runtime inspect-pipeline todo-app
+npm run evals                    # 默认 smoke 确定性评测
+npm run evals:release            # release + pipeline-compliance
+```
+
+**下一步**：熟悉后去掉 `--roles core`，按需加 UI、部署；大项目保留完整 `full` 流水线。
+
 ## 安装
 
 ```bash
@@ -286,6 +347,22 @@ Boss 支持项目级模板覆盖：
 ```
 
 可在交互式环境运行 `boss design preview <feature>` 预览 `.boss/<feature>/ui-design.json`。
+
+## 质量与评测
+
+Boss 的质量保障分两层：
+
+1. **硬约束（CI 可验证）**：runtime 事件流、禁止直接写 `execution.json`、hooks、install matrix、harness 场景 —— `npm test` 覆盖。
+2. **软约束（依赖 Agent 遵从）**：按 DAG 派发子 Agent、渐进式读取 reference、测试与门禁 —— 由 Skill 协议驱动。
+
+**确定性 Eval**（不启动真实 LLM，评分已捕获的 fixture）：
+
+```bash
+npm run evals                              # smoke-success
+npm run evals:release                      # release-evidence + pipeline-compliance
+```
+
+`pipeline-compliance` 额外检查 transcript 是否出现 `boss runtime` / `record-artifact`、是否避免手改 `execution.json`、以及 `execution.workflow` 调度字段。真实 Agent 跑完后，可将 workspace + transcript 固化为新 fixture，再用 `--case` 评分。详见 [test/evals/README.md](./test/evals/README.md)。
 
 ## 开发
 

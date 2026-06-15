@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "0.1.0",
+  "feature": "todo-app",
+  "nodes": [
+    { "id": "artifact:prd.md", "stage": 1 },
+    { "id": "artifact:architecture.md", "stage": 1 }
+  ]
+}

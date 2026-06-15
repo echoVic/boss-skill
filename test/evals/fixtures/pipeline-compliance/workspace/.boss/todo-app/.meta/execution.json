@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "0.2.0",
+  "feature": "todo-app",
+  "createdAt": "2026-05-16T00:00:00.000Z",
+  "updatedAt": "2026-05-16T00:04:00.000Z",
+  "status": "in_progress",
+  "parameters": {},
+  "stages": {
+    "1": {
+      "artifacts": ["prd.md", "architecture.md", "tasks.md", "qa-report.md"],
+      "status": "completed"
+    }
+  },
+  "qualityGates": {},
+  "metrics": {
+    "totalDuration": 240,
+    "stageTimings": {
+      "1": 240
+    },
+    "gatePassRate": null,
+    "retryTotal": 0,
+    "agentSuccessCount": 4,
+    "agentFailureCount": 0,
+    "meanRetriesPerStage": 0,
+    "revisionLoopCount": 0,
+    "pluginFailureCount": 0
+  },
+  "plugins": [],
+  "pluginLifecycle": {
+    "discovered": [],
+    "activated": [],
+    "executed": [],
+    "failed": []
+  },
+  "humanInterventions": [],
+  "revisionRequests": [],
+  "feedbackLoops": {
+    "maxRounds": 2,
+    "currentRound": 0
+  },
+  "workflow": {
+    "nextNodeIds": [],
+    "nodes": {
+      "artifact:prd.md": {
+        "status": "completed",
+        "decision": "run"
+      },
+      "artifact:architecture.md": {
+        "status": "completed",
+        "decision": "run"
+      },
+      "artifact:tasks.md": {
+        "status": "completed",
+        "decision": "run"
+      },
+      "artifact:qa-report.md": {
+        "status": "completed",
+        "decision": "run"
+      }
+    }
+  }
+}

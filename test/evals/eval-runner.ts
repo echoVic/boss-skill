@@ -76,19 +76,83 @@ function commandStrings(transcript: ReturnType<typeof loadTranscript>): string[]
     .filter((value): value is string => typeof value === 'string');
 }
 
+function executionPath(caseDir: string, evalCase: EvalCase): string {
+  return path.join(caseDir, 'workspace', '.boss', evalCase.feature, '.meta', 'execution.json');
+}
+
+function readExecution(caseDir: string, evalCase: EvalCase): Record<string, unknown> | null {
+  const filePath = executionPath(caseDir, evalCase);
+  if (!fs.existsSync(filePath)) return null;
+  return readJson<Record<string, unknown>>(filePath);
+}
+
+function hasRuntimeCliEvidence(commands: string[]): boolean {
+  return commands.some((command) => /\bboss\s+(?:runtime|project|packs|artifact|status|gate)\b/.test(command));
+}
+
+function recordsArtifactsViaRuntime(
+  commands: string[],
+  context: EvaluationContext
+): boolean {
+  const { requiredArtifacts } = context.evalCase;
+  const { feature } = context.evalCase;
+
+  return requiredArtifacts.every((artifact) => {
+    const pattern = new RegExp(
+      `\\bboss\\s+runtime\\s+record-artifact\\s+${feature}\\s+${artifact.replace('.', '\\.')}\\b`
+    );
+    return commands.some((command) => pattern.test(command));
+  });
+}
+
+function avoidsDirectExecutionWrite(commands: string[]): boolean {
+  const READ_ONLY_PATTERNS = [
+    /\b(?:cat|less|more|head|tail|grep|jq|bat)\s+.*execution\.json/,
+    /\bsed\s+-n.*execution\.json/,
+    /\bboss\s+(?:status|runtime\s+(?:inspect|check-stage)).*execution\.json/,
+    /\b(?:diff|cmp|file|stat|ls)\s+.*execution\.json/,
+  ];
+
+  return !commands.some((command) => {
+    // Skip if it's a known read-only pattern
+    if (READ_ONLY_PATTERNS.some((pattern) => pattern.test(command))) {
+      return false;
+    }
+
+    // Any other reference to execution.json in .meta/ is suspicious
+    if (/\.meta[/\\]execution\.json/.test(command)) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+function hasWorkflowScheduler(execution: Record<string, unknown> | null): boolean {
+  if (!execution) return false;
+  const workflow = execution.workflow;
+  if (!workflow || typeof workflow !== 'object') return false;
+  const record = workflow as Record<string, unknown>;
+  if (Array.isArray(record.nextNodeIds)) return true;
+  if (record.nodes && typeof record.nodes === 'object') return true;
+  return false;
+}
+
 function hasQaEvidence(caseDir: string, evalCase: EvalCase): boolean {
   const qaReport = readArtifact(caseDir, evalCase, 'qa-report.md');
   return /未验证|unverified|replay|evidence/i.test(qaReport);
 }
 
+type EvaluationContext = {
+  summary: ReturnType<typeof summarizeTranscript>;
+  transcript: ReturnType<typeof loadTranscript>;
+  caseDir: string;
+  evalCase: EvalCase;
+};
+
 function evaluateBehavior(
   behavior: string,
-  context: {
-    summary: ReturnType<typeof summarizeTranscript>;
-    transcript: ReturnType<typeof loadTranscript>;
-    caseDir: string;
-    evalCase: EvalCase;
-  }
+  context: EvaluationContext
 ): boolean {
   if (behavior === 'uses-boss-skill') {
     return context.summary.skills.includes('boss');
@@ -102,6 +166,18 @@ function evaluateBehavior(
   if (behavior === 'produces-evidence-wave') {
     const tasks = readArtifact(context.caseDir, context.evalCase, 'tasks.md');
     return /Evidence Wave/i.test(tasks) && /Contract Matrix/i.test(tasks);
+  }
+  if (behavior === 'uses-runtime-cli') {
+    return hasRuntimeCliEvidence(commandStrings(context.transcript));
+  }
+  if (behavior === 'records-artifacts-via-runtime') {
+    return recordsArtifactsViaRuntime(commandStrings(context.transcript), context);
+  }
+  if (behavior === 'avoids-direct-execution-write') {
+    return avoidsDirectExecutionWrite(commandStrings(context.transcript));
+  }
+  if (behavior === 'has-workflow-scheduler') {
+    return hasWorkflowScheduler(readExecution(context.caseDir, context.evalCase));
   }
   return false;
 }

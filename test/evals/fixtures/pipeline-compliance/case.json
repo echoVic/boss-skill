@@ -1,0 +1,26 @@
+{
+  "id": "pipeline-compliance",
+  "prompt": "Build a small todo web app using Boss runtime-first orchestration.",
+  "feature": "todo-app",
+  "transcript": "transcript.jsonl",
+  "requiredArtifacts": [
+    "prd.md",
+    "architecture.md",
+    "tasks.md",
+    "qa-report.md"
+  ],
+  "requiredBehaviors": [
+    "uses-boss-skill",
+    "uses-runtime-cli",
+    "records-artifacts-via-runtime",
+    "avoids-direct-execution-write",
+    "has-workflow-scheduler",
+    "runs-tests",
+    "records-qa-evidence"
+  ],
+  "metrics": {
+    "maxCostUsd": 1.5,
+    "maxDurationSeconds": 600,
+    "minArtifactCompleteness": 1
+  }
+}

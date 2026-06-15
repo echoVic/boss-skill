@@ -42,7 +42,7 @@ describe('Boss eval shell runner', () => {
     expect(result.status, result.stderr).toBe(0);
     const payload = JSON.parse(result.stdout) as { passed: boolean; reports: Array<{ id: string }> };
     expect(payload.passed).toBe(true);
-    expect(payload.reports.map((report) => report.id)).toEqual(['release-evidence']);
+    expect(payload.reports.map((report) => report.id)).toEqual(['release-evidence', 'pipeline-compliance']);
   });
 
   it('returns non-zero when an eval case fails deterministic checks', () => {
@@ -68,6 +68,8 @@ describe('Boss eval shell runner', () => {
     expect(readme).toContain('npm run evals');
     expect(readme).toContain('--smoke');
     expect(readme).toContain('--release');
+    expect(readme).toContain('pipeline-compliance');
+    expect(readme).toContain('uses-runtime-cli');
     expect(readme).toContain('does not launch a');
     expect(readme).toContain('case.json');
     expect(readme).toContain('transcript.jsonl');

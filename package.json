@@ -61,6 +61,7 @@
     "test:install-matrix": "vitest run test/install",
     "test:skills": "vitest run test/skills",
     "evals": "bash test/evals/run-evals.sh",
+    "evals:release": "bash test/evals/run-evals.sh --release",
     "test:watch": "vitest",
     "release": "node scripts/release.js",
     "prepublishOnly": "npm run build && node packages/boss-cli/dist/bin/boss.js --version"

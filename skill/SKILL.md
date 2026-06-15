@@ -9,6 +9,7 @@ description: |
   - 单文件修改或简单 bug 修复（直接编辑即可）
   - 纯代码阅读或解释（使用 read 工具）
   - 已有 pipeline 正在运行时的重复启动
+  - 极小事（预计 <30 分钟人工可完成、不需要 PRD/架构/门禁记录）
 
   Output: 完整项目代码 + PRD/架构/UI/测试/部署文档，写入 .boss/<feature>/ 目录
 version: 3.9.6

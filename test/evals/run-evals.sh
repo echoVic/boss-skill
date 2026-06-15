@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SMOKE_CASE="$ROOT_DIR/test/evals/fixtures/smoke-success/case.json"
 RELEASE_CASE="$ROOT_DIR/test/evals/fixtures/release-evidence/case.json"
+COMPLIANCE_CASE="$ROOT_DIR/test/evals/fixtures/pipeline-compliance/case.json"
 
 usage() {
   cat <<'USAGE'
@@ -15,7 +16,7 @@ This script does not launch a real agent or call an LLM judge.
 
 Options:
   --smoke              Run the default deterministic smoke eval set.
-  --release            Run the deterministic release-readiness eval set.
+  --release            Run release-readiness + pipeline-compliance eval sets.
   --case <case.json>   Run an explicit eval case. Can be passed more than once.
 USAGE
 }
@@ -31,7 +32,7 @@ else
         shift
         ;;
       --release)
-        ARGS+=(--case "$RELEASE_CASE")
+        ARGS+=(--case "$RELEASE_CASE" --case "$COMPLIANCE_CASE")
         shift
         ;;
       --case)

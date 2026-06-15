@@ -8,6 +8,15 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 当用户执行 `/boss` 时，启动 Boss 流水线。
 
+## 适合 / 不适合
+
+| 适合 `/boss` | 不要用 `/boss` |
+|--------------|----------------|
+| 新 feature，需要 PRD → 架构 → 开发 → 测试证据 | 单文件修改、小 bug、解释代码 |
+| 需要 `.boss/<feature>/` 可追溯产物 | 用户只补充技术约束（先问应用到哪个 feature） |
+
+轻量首次体验：`/boss <需求> --roles core --skip-deploy`
+
 ## 执行步骤
 
 1. 读取当前 Boss Skill 的 `SKILL.md`，获取完整的 Boss 编排指令

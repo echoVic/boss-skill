@@ -41,6 +41,21 @@ describe('Boss deterministic eval runner', () => {
     });
   });
 
+  it('scores pipeline-compliance eval for runtime-first orchestration evidence', () => {
+    const report = evaluateEvalCase(path.join(FIXTURES, 'pipeline-compliance', 'case.json'));
+
+    expect(report.passed).toBe(true);
+    expect(report.behaviorResults).toEqual({
+      'uses-boss-skill': true,
+      'uses-runtime-cli': true,
+      'records-artifacts-via-runtime': true,
+      'avoids-direct-execution-write': true,
+      'has-workflow-scheduler': true,
+      'runs-tests': true,
+      'records-qa-evidence': true
+    });
+  });
+
   it('fails when QA evidence and required test execution are missing', () => {
     const report = evaluateEvalCase(path.join(FIXTURES, 'missing-qa', 'case.json'));
 
