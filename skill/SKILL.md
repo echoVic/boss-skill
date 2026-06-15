@@ -12,7 +12,7 @@ description: |
   - 极小事（预计 <30 分钟人工可完成、不需要 PRD/架构/门禁记录）
 
   Output: 完整项目代码 + PRD/架构/UI/测试/部署文档，写入 .boss/<feature>/ 目录
-version: 3.9.6
+version: 3.9.7
 license: MIT
 user-invocable: true
 ---
