@@ -23,7 +23,6 @@ Thumbs.db
 
 # Node
 node_modules/
-package-lock.json
 packages/*/dist/
 
 # Boss generated artifacts

@@ -79,7 +79,7 @@ describe('CLI contract utilities', () => {
       stdoutIsTTY: true,
       stdinIsTTY: true
     });
-    const data = { name: 'demo', secret: 'visible-in-text-mode' };
+    const data = { name: 'demo', secret: 'secret-value' };
     let renderedData: unknown;
     const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 

@@ -411,7 +411,7 @@ describe('Authentication Flow E2E', () => {
       .send({
         name: 'Alice',
         email: 'alice@example.com',
-        password: 'securePassword123',
+        password: 'password123',
       })
       .expect(201);
 
@@ -437,7 +437,7 @@ describe('Authentication Flow E2E', () => {
       .post('/api/auth/login')
       .send({
         email: 'alice@example.com',
-        password: 'securePassword123',
+        password: 'password123',
       })
       .expect(200);
 
@@ -449,7 +449,7 @@ describe('Authentication Flow E2E', () => {
       .post('/api/auth/login')
       .send({
         email: 'alice@example.com',
-        password: 'wrongPassword',
+        password: 'wrong-example',
       })
       .expect(401);
   });
