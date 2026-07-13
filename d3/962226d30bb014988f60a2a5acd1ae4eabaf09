@@ -1,0 +1,57 @@
+package-lock.json
+  s_9acc7410ba6876::t_9806e6a26b061b 3,9,14-16,35-62,528-555,568-914,1197-1220,1436-1441,1744
+package.json
+  s_9acc7410ba6876::t_ff2517fad187f7 86-88
+packages/boss-cli/src/bin/boss.ts
+  s_9acc7410ba6876::t_0c73cddaa50bdb 22,49-52,103-105
+packages/boss-cli/src/cli/dispatcher.ts
+  s_9acc7410ba6876::t_d8a475b034cf51 20-21,31,357-384
+packages/boss-cli/src/cli/help.ts
+  s_9acc7410ba6876::t_08ed6590ea9e9c 12-13,22-25,91-103
+packages/boss-cli/src/cli/registry.ts
+  s_9acc7410ba6876::t_a5d1413ff437bb 119-127,178-205
+packages/boss-cli/src/commands/install/index.ts
+  s_9acc7410ba6876::t_9a7a7f8a251e42 375-421,487,523-525
+packages/boss-cli/src/commands/skills/index.ts
+  s_9acc7410ba6876::t_d9b56b682c6a1c 1-799
+packages/boss-cli/src/skills/agent-registry.ts
+  s_9acc7410ba6876::t_b34f41bff67c76 1-155
+packages/boss-cli/src/skills/banner.ts
+  s_9acc7410ba6876::t_f51958367467e6 1-28
+packages/boss-cli/src/skills/discover.ts
+  s_9acc7410ba6876::t_dfc859240e7803 1-104
+packages/boss-cli/src/skills/installer.ts
+  s_9acc7410ba6876::t_d57f5e74829a45 1-43
+packages/boss-cli/src/skills/manifest.ts
+  s_9acc7410ba6876::t_ee767672d0f488 1-96
+packages/boss-cli/src/skills/project-lock.ts
+  s_9acc7410ba6876::t_2354610d4cc47a 1-69
+packages/boss-cli/src/skills/search-multiselect.ts
+  s_9acc7410ba6876::t_c07aa05d00d76f 1-206
+packages/boss-cli/src/skills/self-install-wizard.ts
+  s_9acc7410ba6876::t_fb04afa34978be 1-95
+packages/boss-cli/src/skills/source.ts
+  s_9acc7410ba6876::t_d38903c0ae86ea 1-164
+test/skills-manager/skills-cli.test.ts
+  s_9acc7410ba6876::t_4c6c8cd2ae036c 1-182
+test/skills-manager/skills-domain.test.ts
+  s_9acc7410ba6876::t_6b963022d4e7c7 1-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d3962226d30bb014988f60a2a5acd1ae4eabaf09",
+  "prompts": {},
+  "sessions": {
+    "s_9acc7410ba6876": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b8f68f6-32b6-4792-bd0d-eabcbf81b2f6",
+        "model": "unknown"
+      },
+      "human_author": "echoVic <137844255@qq.com>"
+    }
+  },
+  "attestation_metadata": {},
+  "remote_transcripts": {}
+}
