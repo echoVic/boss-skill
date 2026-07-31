@@ -44,13 +44,52 @@ export function copyDirectory(src: string, dest: string, exclude: string[] = [])
  */
 export function appendLineSync(filePath: string, line: string): void {
   const payload = line.endsWith('\n') ? line : `${line}\n`;
-  const fd = fs.openSync(filePath, 'a');
+  // 用 'a+'（O_APPEND | O_RDWR）而非 'a'：写入仍由内核定位到末尾，同时允许读取与
+  // ftruncate，以便在追加前清理崩溃残留的半行。
+  const fd = fs.openSync(filePath, 'a+');
   try {
+    // 每条已提交记录都以 '\n' 结尾（本函数保证），故文件末字节非 '\n' 唯一地标识
+    // 崩溃残留的半行——一条未写完的事件，readJsonlTolerant 本就视其「从未写入」。
+    // 若不清理直接 append，这半行会变成中间损坏行，下次读取即按「非末行损坏」抛错，
+    // 整个事件流永久不可读。故追加前把该半行截断掉，保证新记录接在完整行之后。
+    const { size } = fs.fstatSync(fd);
+    if (size > 0 && readLastByte(fd, size) !== 0x0a) {
+      fs.ftruncateSync(fd, offsetAfterLastNewline(fd, size));
+    }
     fs.writeSync(fd, payload);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
   }
+}
+
+/** 读取文件最后一个字节。 */
+function readLastByte(fd: number, size: number): number {
+  const tail = Buffer.alloc(1);
+  fs.readSync(fd, tail, 0, 1, size - 1);
+  return tail[0]!;
+}
+
+/**
+ * 返回「最后一个换行符之后」的字节偏移——即需要保留的完整内容长度。
+ * 全文件无换行（整体就是一条崩溃半行）时返回 0。从末尾按块反向扫描，
+ * 避免为定位换行而整文件读入。
+ */
+function offsetAfterLastNewline(fd: number, size: number): number {
+  const CHUNK = 65536;
+  const buffer = Buffer.alloc(Math.min(CHUNK, size));
+  let end = size;
+  while (end > 0) {
+    const readLength = Math.min(CHUNK, end);
+    const start = end - readLength;
+    fs.readSync(fd, buffer, 0, readLength, start);
+    const newlineIndex = buffer.subarray(0, readLength).lastIndexOf(0x0a);
+    if (newlineIndex !== -1) {
+      return start + newlineIndex + 1;
+    }
+    end = start;
+  }
+  return 0;
 }
 
 export interface JsonlReadResult<T> {
