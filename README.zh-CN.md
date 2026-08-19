@@ -386,7 +386,7 @@ Boss 受 BMAD（Breakthrough Method of Agile AI-Driven Development）启发，�
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=echoVic/boss-skill&type=Date)](https://star-history.com/#echoVic/boss-skill&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=echoVic/boss-skill&type=Date)](https://star-history.dera.page/#echoVic/boss-skill&Date)
 
 ## License
 
