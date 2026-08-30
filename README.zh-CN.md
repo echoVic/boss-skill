@@ -4,7 +4,7 @@
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
-[English README](./README.md)
+**Languages / 语言 / 言語 / 언어 / Idiomas / Langues:** [English](./README.md) · [中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md) · [Español](./README.es.md) · [Français](./README.fr.md) · [Português](./README.pt-BR.md)
 
 ![boss-skill 宣传图](https://raw.githubusercontent.com/echoVic/boss-skill/main/boss-skill-promo.png)
 
@@ -142,6 +142,17 @@ boss-skill --version
 | Antigravity | `~/.gemini/antigravity/` | 复制到 Antigravity skills 目录并注入 metadata |
 | Hermes | `~/.hermes/` | 复制到 `~/.hermes/skills/boss/` 并注入 metadata |
 | Claude Code | 始终可用 | 通过 `--plugin-dir` 使用 Plugin 模式 |
+
+## 平台支持
+
+Boss 面向 Node.js `>=20`，支持 Linux、macOS 和 Windows。CLI 只通过 `spawnSync` 加显式参数数组调用外部命令（从不使用 `shell: true`），并在 Windows 上把 `npm`/`npx` 解析为对应的 `.cmd` 变体，因此核心流水线没有任何 POSIX-only 假设。
+
+有两项能力依赖可选外部工具，缺失时会优雅降级：
+
+- **WIP checkpoint**（stash/commit/branch）需要 `git` 和 git working tree。在仓库之外、或 `PATH` 上没有 `git` 时，checkpoint 会被静默跳过——流水线不受影响。
+- **遗留的手写 `gate.sh` 插件**通过 `bash` 执行。在 Windows 上如果 `PATH` 中没有 bash，这些插件将无法启动；可移植插件建议使用跨平台的 Node gate 入口（`gate.js` / `gate.mjs`）。
+
+运行 `boss doctor` 可以查看解析后的 runtime 环境（Node 版本、平台、`git` 是否可用），以及安装和事件流健康状况。
 
 ## 使用命令
 
