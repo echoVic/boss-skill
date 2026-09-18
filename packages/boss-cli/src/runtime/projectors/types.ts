@@ -166,7 +166,13 @@ export interface ExecutionState {
   conversationMetrics: ConversationMetrics;
   humanInterventions: unknown[];
   revisionRequests: RevisionRequest[];
-  feedbackLoops: { maxRounds: number; currentRound: number };
+  feedbackLoops: {
+    maxRounds: number;
+    /** 全部产物的返工总轮次；保留供报表与既有消费方使用。 */
+    currentRound: number;
+    /** 按产物分别计数：上限限制的是同一产物的返工轮次，不是 feature 的一生。 */
+    rounds: Record<string, number>;
+  };
   workflow?: WorkflowExecutionState;
   pause?: {
     paused: boolean;

@@ -287,9 +287,14 @@ export function recordFeedback(
 
   const execution = readExecutionView(cwd, feature);
   const feedbackLoops = (execution as any).feedbackLoops || { currentRound: 0, maxRounds: 2 };
-  const { currentRound = 0, maxRounds = 2 } = feedbackLoops;
-  if (currentRound >= maxRounds) {
-    throw new Error(`反馈循环已达上限（${currentRound}/${maxRounds}），不再接受修订请求`);
+  const { maxRounds = 2, rounds = {} } = feedbackLoops;
+  // 按产物计数：防死循环的原意是「同一产物不要反复返工」，而不是限制 feature 的一生。
+  // 旧版本创建的 run 没有 rounds，从 0 起算——这正是要修的那种「活得久就失去反馈能力」。
+  const artifactRound = Number((rounds as Record<string, unknown>)[artifact] ?? 0);
+  if (artifactRound >= maxRounds) {
+    throw new Error(
+      `产物 ${artifact} 的反馈循环已达上限（${artifactRound}/${maxRounds}），不再接受修订请求`,
+    );
   }
 
   appendRuntimeEvent(cwd, feature, EVENT_TYPES.REVISION_REQUESTED, {

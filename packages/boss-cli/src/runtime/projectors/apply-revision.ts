@@ -20,6 +20,11 @@ export function projectRevisionLifecycle(
         resolved: false,
       });
       state.feedbackLoops.currentRound = (state.feedbackLoops.currentRound || 0) + 1;
+      // 上限限制的是同一产物的返工轮次；按产物分别计数，不同产物互不影响
+      const artifact = String(event.data.artifact);
+      if (!state.feedbackLoops.rounds) state.feedbackLoops.rounds = {};
+      const rounds = state.feedbackLoops.rounds;
+      rounds[artifact] = (rounds[artifact] ?? 0) + 1;
       return state;
     }
 
