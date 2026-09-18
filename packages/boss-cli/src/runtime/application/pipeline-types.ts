@@ -35,6 +35,7 @@ export interface AgentReuseDecision {
   reusable: boolean;
   reason: string;
   dagStale: boolean;
+  packStale: boolean;
   promptFingerprint: RuntimeHashDescriptor;
   inputDigest: RuntimeHashDescriptor;
   completedEventId?: number;
