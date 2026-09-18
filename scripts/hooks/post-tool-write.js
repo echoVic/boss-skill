@@ -11,7 +11,13 @@ function hasArtifactInEventLog(eventsPath, artifact, stage) {
   try {
     const lines = fs.readFileSync(eventsPath, 'utf8').split('\n').filter(Boolean);
     return lines.some((line) => {
-      const event = JSON.parse(line);
+      // 跳过崩溃残留的损坏行，而不是让整个查询降级为 false（会导致工件被重复记录）
+      let event;
+      try {
+        event = JSON.parse(line);
+      } catch {
+        return false;
+      }
       if (event.type === 'ArtifactRecorded' && event.data) {
         return event.data.artifact === artifact && String(event.data.stage) === String(stage);
       }

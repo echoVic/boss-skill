@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "daf9d1310ee0e4f3d6b684100449a8932e02ad52",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/daf9d1310ee0e4f3d6b684100449a8932e02ad52"
+    "commit": "5daba10401711b6de3207385cdca926e5143734e",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/5daba10401711b6de3207385cdca926e5143734e"
   },
   "publisher": {
     "name": "echoVic",
@@ -120,8 +120,8 @@
     },
     {
       "path": "scripts/hooks/post-tool-write.js",
-      "sha256": "77cffa433045de2698d3a0f114f61106ee1374b9449c8e43459d53873803dc8d",
-      "bytes": 2886
+      "sha256": "6a3ab0d2cbd01da93ab5565a06904233cb24ce3205169fe67d65619164922aa7",
+      "bytes": 3075
     },
     {
       "path": "scripts/hooks/on-stop.js",

@@ -5,6 +5,7 @@
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { readJsonlTolerant } from '../../infrastructure/fs.js';
 import { resolveArtifactDagPath } from '../assets.js';
 import type { RuntimeEvent } from '../projectors/types.js';
 import type {
@@ -115,12 +116,7 @@ export function getArtifactDagFingerprint(
 export function readRuntimeEvents(cwd: string, feature: string): RuntimeEvent[] {
   const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
   if (!fs.existsSync(eventsFile)) return [];
-  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
-  if (!raw) return [];
-  return raw
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as RuntimeEvent);
+  return readJsonlTolerant<RuntimeEvent>(eventsFile).records;
 }
 
 export function isArtifactDagStale(
