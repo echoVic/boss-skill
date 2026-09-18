@@ -11,7 +11,6 @@
   },
   "priority": 3,
   "config": {
-    "stages": [1, 2, 3, 4],
     "roles": "custom",
     "agents": [
       "boss-pm",
@@ -23,15 +22,6 @@
       "boss-devops"
     ],
     "gates": ["gate0", "gate1", "gate2"],
-    "agentStages": {
-      "boss-pm": 1,
-      "boss-architect": 1,
-      "boss-tech-lead": 2,
-      "boss-scrum-master": 2,
-      "boss-backend": 3,
-      "boss-qa": 3,
-      "boss-devops": 4
-    },
     "skipUI": true,
     "skipFrontend": true
   },

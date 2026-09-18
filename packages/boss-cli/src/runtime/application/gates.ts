@@ -499,6 +499,26 @@ export function evaluateGates(
   if (!gateName) throw new Error('缺少 gate-name 参数');
   readExecutionView(cwd, feature);
 
+  // pack 的 config.gates 声明启用哪些门禁；此前没有读取方，声明了也照跑不误。
+  // 未启用的门禁按「跳过」处理，而不是判失败——它本就不属于这条流水线。
+  // 只约束内置门禁：config.gates 声明的是「内置门禁的子集」，
+  // 插件门禁来自 .boss/plugins，不在该列表里并不代表被禁用。
+  const packGates = readExecutionView(cwd, feature).parameters?.enabledGates;
+  if (
+    isBuiltInGate(gateName) &&
+    Array.isArray(packGates) &&
+    packGates.length > 0 &&
+    !packGates.includes(gateName)
+  ) {
+    return {
+      gate: gateName,
+      passed: true,
+      checks: [],
+      skipped: true,
+      execution: readExecutionView(cwd, feature),
+    };
+  }
+
   const gateConfig = resolveGateConfig(feature, gateName, { cwd });
   let result: GateExecution;
   if (isBuiltInGate(gateName)) {

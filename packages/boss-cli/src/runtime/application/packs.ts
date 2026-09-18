@@ -19,7 +19,6 @@ export interface PipelinePackConfig extends Record<string, unknown> {
   gates?: string[];
   agents?: string[];
   roles?: unknown;
-  agentStages?: Record<string, unknown>;
   techStack?: Record<string, unknown>;
   skipUI?: boolean;
   skipDeploy?: boolean;
@@ -42,12 +41,10 @@ export interface PipelinePackDefinition {
 export interface PipelinePackStateParameters {
   pipelinePack: string;
   pipelinePackVersion: string;
-  enabledStages: number[];
   enabledGates: string[];
   activeAgents: string[];
   packConfig: PipelinePackConfig;
   roles?: unknown;
-  agentStages?: Record<string, unknown>;
   techStack?: Record<string, unknown>;
   skipUI?: boolean;
   skipDeploy?: boolean;
@@ -214,19 +211,26 @@ export function getPackStateParameters(
     pack && pack.config && typeof pack.config === 'object'
       ? pack.config
       : ({} as PipelinePackConfig);
+
+  // stages / agentStages 从未被任何代码消费——阶段实际由 artifact DAG 决定。
+  // 与其继续静默忽略，不如明确告知：照文档写了却没有效果，比报错更难排查。
+  for (const key of ['stages', 'agentStages'] as const) {
+    if (config[key] !== undefined) {
+      process.stderr.write(
+        `[boss-skill] pipeline pack「${pack?.name ?? 'unknown'}」声明了 config.${key}，但阶段由 config.artifactDag 决定，该字段不会生效；请移除它。\n`,
+      );
+    }
+  }
   const parameters: PipelinePackStateParameters = {
     pipelinePack: pack?.name || 'default',
     pipelinePackVersion: pack?.version || '',
-    enabledStages: Array.isArray(config.stages) ? clone(config.stages) : [],
+
     enabledGates: Array.isArray(config.gates) ? clone(config.gates) : [],
     activeAgents: Array.isArray(config.agents) ? clone(config.agents) : [],
     packConfig: clone(config),
   };
 
   if (config.roles !== undefined) parameters.roles = config.roles;
-  if (config.agentStages && typeof config.agentStages === 'object') {
-    parameters.agentStages = clone(config.agentStages);
-  }
   if (config.techStack && typeof config.techStack === 'object') {
     parameters.techStack = clone(config.techStack);
   }

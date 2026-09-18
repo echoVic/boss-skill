@@ -26,7 +26,8 @@ describe('initPipeline pack application', () => {
     expect(state.parameters.skipUI).toBe(true);
     expect(state.parameters.skipFrontend).toBe(true);
     expect(state.parameters.enabledGates).toEqual(['gate0', 'gate1', 'gate2']);
-    expect(state.parameters.enabledStages).toEqual([1, 2, 3, 4]);
+    // stages 从未被任何代码消费，已从 pack 契约中移除：不再记入 parameters
+    expect(state.parameters.enabledStages).toBeUndefined();
     expect(Array.isArray(state.parameters.activeAgents)).toBe(true);
     expect(state.parameters.activeAgents).toContain('boss-backend');
 

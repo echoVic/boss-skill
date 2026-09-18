@@ -30,7 +30,6 @@
       "properties": {
         "pipelinePack": { "type": "string" },
         "pipelinePackVersion": { "type": "string" },
-        "enabledStages": { "type": "array", "items": { "type": "integer" } },
         "enabledGates": { "type": "array", "items": { "type": "string" } },
         "activeAgents": { "type": "array", "items": { "type": "string" } },
         "skipUI": { "type": "boolean" },

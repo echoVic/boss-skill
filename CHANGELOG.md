@@ -61,6 +61,15 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **`/boss:extend` 教用户写的 pack 配置大半不生效**：`skill/references/extending-boss.md`
+  列出的九个 `config` 字段里，`agents`、`gates`、`stages`、`agentStages`、`skipFrontend`
+  都没有任何读取方——照文档写了自定义 pack，跑起来完全没有效果，也没有任何报错。内置的
+  `api-only` pack（"无 UI、无前端"）正好设了 `skipFrontend: true`，而那个开关是空的。
+  现在：`agents` 与 `skipFrontend` 通过 `filterAgentsByPack()` 收窄产物的 agent 列表
+  （`code` 由前后端共同产出，故按 agent 收窄而非按产物跳过；收窄后无人可产出的产物按跳过
+  处理）；`gates` 约束内置门禁的启用集合（插件门禁来自 `.boss/plugins`，不受该列表约束）；
+  `stages` 与 `agentStages` 从文档、内置 pack、状态与 schema 中移除——阶段由
+  `config.artifactDag` 决定，仍声明它们的 pack 会收到明确告警，而不是被静默忽略。
 - **反馈循环上限是终身的**：`feedbackLoops.currentRound` 只增不减、全仓没有任何重置路径，
   而 `maxRounds` 是 2。于是一个 feature 一生只能接受两次修订请求，第三次
   `boss runtime record-feedback` 直接抛错——feature 活得越久，越早失去记录反馈的能力，

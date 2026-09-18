@@ -86,7 +86,6 @@ export function projectPipelineLifecycle(
       const derived = {
         pipelinePack: eventData.pack ?? 'default',
         pipelinePackVersion: eventData.version ?? '',
-        enabledStages: Array.isArray(config.stages) ? clone(config.stages) : [],
         enabledGates: Array.isArray(config.gates) ? clone(config.gates) : [],
         activeAgents: Array.isArray(config.agents) ? clone(config.agents) : [],
         packConfig: clone(config),
