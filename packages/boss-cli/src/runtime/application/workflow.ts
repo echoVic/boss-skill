@@ -136,15 +136,23 @@ function sha256Hex(value: string | Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
+/**
+ * 与 JSON.stringify 语义一致的稳定序列化（键按字典序）。
+ *
+ * 必须与 JSON.stringify 对 undefined 的处理保持一致：对象里值为 undefined 的键会被丢弃，
+ * 数组里的 undefined 会变成 null。否则「内存中对象的哈希」与「写进文件的字节的哈希」
+ * 会在缺少可选字段时不相等，落盘的 workflowHash 也就无法证明计划文件没被改过。
+ */
 function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? 'null';
   }
   if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+    return `[${value.map((item) => (item === undefined ? 'null' : stableStringify(item))).join(',')}]`;
   }
   const object = value as UnknownRecord;
   return `{${Object.keys(object)
+    .filter((key) => object[key] !== undefined)
     .sort()
     .map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`)
     .join(',')}}`;
@@ -420,6 +428,36 @@ export function createWorkflowExecutionState({
   });
 }
 
+/**
+ * 校验计划文件与它落盘时的 workflowHash 一致，返回当前哈希。
+ *
+ * 计划在 `persistWorkflowPlan` 时被哈希并把哈希记进 `execution.parameters`。恢复时若不
+ * 复算比对，被改过的计划会被当作原计划继续调度：节点集合、依赖边、门禁都可能已经不同，
+ * 而恢复结果看起来完全正常。这类错误不会报错，只会让后续每一步都建立在错误的依据上，
+ * 所以这里选择拒绝恢复而非告警继续。
+ *
+ * 旧版本创建的 run 没有记录哈希，无从比对：放行，并以当前计划的哈希为准。
+ */
+function verifyWorkflowPlanIntegrity(
+  plan: WorkflowPlan,
+  persistedHash: string,
+  workflowPlanPath: string,
+): string {
+  const currentHash = hashWorkflowValue(plan).value;
+  if (!persistedHash) return currentHash;
+  if (currentHash !== persistedHash) {
+    throw new Error(
+      [
+        `workflow-plan.json 与落盘时的 workflowHash 不一致，拒绝恢复：${workflowPlanPath}`,
+        `  落盘哈希：${persistedHash}`,
+        `  当前哈希：${currentHash}`,
+        '  计划文件可能被修改或损坏。恢复该文件，或重新初始化流水线后再试。',
+      ].join('\n'),
+    );
+  }
+  return currentHash;
+}
+
 function readWorkflowPlan(cwd: string, workflowPlanPath: string): WorkflowPlan {
   const absolutePath = path.isAbsolute(workflowPlanPath)
     ? workflowPlanPath
@@ -513,9 +551,10 @@ export function resumeWorkflow(
     typeof execution.parameters?.workflowPlanPath === 'string'
       ? execution.parameters.workflowPlanPath
       : `.boss/${feature}/.meta/workflow-plan.json`;
-  const workflowHash =
+  const persistedHash =
     typeof execution.parameters?.workflowHash === 'string' ? execution.parameters.workflowHash : '';
   const plan = readWorkflowPlan(cwd, workflowPlanPath);
+  const workflowHash = verifyWorkflowPlanIntegrity(plan, persistedHash, workflowPlanPath);
   const nodes = plan.nodes.map((node) => resumeDecisionForNode(feature, node, cwd));
   const projectedWorkflow = refreshWorkflowSchedule({
     planPath: workflowPlanPath,
