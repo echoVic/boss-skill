@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -45,11 +45,11 @@ function readJson(relativePath) {
 }
 
 function git(args) {
-  return execSync(`git ${args}`, { cwd: ROOT, encoding: 'utf8' }).trim();
+  return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
 }
 
 function repositoryCommit() {
-  return process.env.GITHUB_SHA || git('rev-parse HEAD');
+  return process.env.GITHUB_SHA || git(['rev-parse', 'HEAD']);
 }
 
 function repositoryUrl(packageJson) {
