@@ -388,7 +388,7 @@ Task({
 
 ### 6.3 质量门禁
 
-阶段 3 门禁（必须全部通过才能进入阶段 4）：
+阶段 3 门禁（必须全部通过；未通过会被记录，并让 `boss gate final` 与 `boss doctor` 判定失败）：
 
 | 门禁检查 | 要求 |
 |----------|------|
@@ -605,7 +605,7 @@ Harness Engineer 是 Boss Skill 的**流水线工程化层**，负责将 Agent �
 | 组件 | 职责 | 核心文件 | 说明 |
 |------|------|----------|------|
 | **Pipeline** | 流水线模板定义 | `pipeline.json` | 声明阶段编排、Agent 组合、Gate 绑定，按场景选择不同模板 |
-| **Gate** | 质量门禁检查 | 内置 TS gate + `plugin.json` | 阶段间卡点，执行安全审计/质量检查，通过才允许进入下一阶段 |
+| **Gate** | 质量门禁检查 | 内置 TS gate + `plugin.json` | 阶段间检查点，执行安全审计/质量检查；结果进入事件流与最终门禁，未通过会让 `boss gate final` 与 `boss doctor` 判定失败 |
 | **Metrics** | 运行时度量采集 | `execution.json` | 记录阶段计时、重试次数、产物列表、门禁结果 |
 | **Runner** | 阶段级执行控制 | `boss runtime <command>` | 状态机驱动，管理阶段生命周期和状态转换 |
 
