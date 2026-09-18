@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createCliContext, describeCommand, runMain, writeOutput } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/registry.js';
 import { readJsonlTolerant } from '../infrastructure/fs.js';
+import { findFailedGates } from '../runtime/application/final-gate.js';
 import { AGENTS, PKG_ROOT } from './install/index.js';
 
 type CheckStatus = 'ok' | 'warn' | 'error';
@@ -157,6 +158,22 @@ function checkFeatures(cwd: string): DoctorCheck[] {
         status: 'error',
         detail: `事件流中间行损坏（篡改或磁盘错误，无法投影）：${(err as Error).message}`,
       });
+    }
+
+    // 门禁失败却把阶段标记为完成：阶段推进没有门禁前置条件，这两条事实可以同时成立。
+    // 这里不追溯改写历史，只保证矛盾在体检时显形，而不是让 feature 看起来是健康的。
+    try {
+      const failedGates = findFailedGates(feature, cwd);
+      if (failedGates.length > 0) {
+        const first = failedGates[0]!;
+        checks.push({
+          name: `gates:${feature}`,
+          status: 'error',
+          detail: `${failedGates.length} 个门禁未通过但所在阶段已标记完成：${first.gate}（阶段 ${first.stage}）`,
+        });
+      }
+    } catch {
+      // 状态尚不可投影时跳过：事件流本身的问题已由上面的检查覆盖
     }
 
     // 孤儿 lock：knowledge worker lock 早已废弃；任何残留 *.lock 都提示可清理

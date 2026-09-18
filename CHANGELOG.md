@@ -61,6 +61,17 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **门禁失败却把阶段标记为完成，此前无人反对**：阶段推进的唯一前置校验是状态机表，
+  `running:completed` 无条件合法；门禁结果经同一次 `updateStage` 调用的可选参数在阶段完成
+  事件之后追加。于是一次调用可以同时写下「门禁未通过」与「阶段已完成」，而
+  `qualityGates[].passed` 与 `stages[].gateResults` 的全部读取方都只是报表渲染与指标计算，
+  没有一处在推进阶段前读它们。现新增 `findFailedGates()`：以每个门禁的最新一次评估为准，
+  找出「阶段已完成但门禁未通过」的矛盾，`boss gate final` 增加 `no-failed-gates` 检查，
+  `boss doctor` 对该 feature 报 error。写入仍然允许（不改动行为契约），但矛盾不再隐形。
+- **文档把门禁说成能阻止阶段推进**：`DESIGN.md`、`skill/references/quality-gate.md` 称
+  「通过才允许进入下一阶段」；`skill/references/no-cli-fallback.md` 更把安装 CLI 描述为
+  让门禁从「协议约束」升级为「CLI 强制」「不可绕过门禁」。运行时从未有过该前置条件。
+  四处措辞已改为与代码一致：CLI 提供的是可验证的判定与记录，门禁的执行依赖编排器遵守协议。
 - **返工与人工介入从不呈现**：`RevisionRequested` 与 `UserChoiceRecorded` 被完整记进事件流与
   `execution.json`，却既不参与判断，也不出现在任何面向人的输出里。摘要报告现新增「返工记录」
   与「人工介入」两节：谁要求谁返工、因为什么、人在哪几步介入过。对一份以可审计性为卖点的
