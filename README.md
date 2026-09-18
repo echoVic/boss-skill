@@ -1,180 +1,418 @@
 # boss-skill
 
+[![npm version](https://img.shields.io/npm/v/@blade-ai/boss-skill)](https://www.npmjs.com/package/@blade-ai/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![G-Star Incubation](https://img.shields.io/badge/G--Star-Incubation-C71D23)](https://atomgit.com/echoVic/boss-skill)
 [![AtomGit Mirror](https://img.shields.io/badge/AtomGit-Mirror-1F6FEB)](https://atomgit.com/echoVic/boss-skill)
+[![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
-BMAD 全自动项目编排 Skill，适用于所有支持 Skill 的 Coding Agent（Claude Code、OpenClaw、Cursor、Windsurf 等）。
+**Languages / 语言 / 言語 / 언어 / Idiomas / Langues:** [English](./README.md) · [中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md) · [Español](./README.es.md) · [Français](./README.fr.md) · [Português](./README.pt-BR.md)
 
-从需求到部署的完整研发流水线，编排 9 个专业 Agent 自动完成完整研发周期。
+![boss-skill promo](https://raw.githubusercontent.com/echoVic/boss-skill/main/boss-skill-promo.png)
 
-> 本项目已加入 AtomGit G-Star 孵化计划。GitHub 是唯一主仓，AtomGit 提供自动同步镜像与国内访问入口；Issue 和 Pull Request 请提交到 [GitHub](https://github.com/echoVic/boss-skill)。
+> This project is part of the AtomGit G-Star Incubation Program. GitHub is the canonical repository; AtomGit provides an automatically synchronized mirror for faster access in China. Please submit issues and pull requests on [GitHub](https://github.com/echoVic/boss-skill).
+>
+> GitHub: <https://github.com/echoVic/boss-skill> · AtomGit mirror: <https://atomgit.com/echoVic/boss-skill>
 
-- GitHub 主仓：<https://github.com/echoVic/boss-skill>
-- AtomGit 镜像：<https://atomgit.com/echoVic/boss-skill>
+**Boss is an auditable agent-team workflow for coding agents.** It turns one coding agent into a structured engineering team: PM, Architect, UI Designer, Tech Lead, Scrum Master, Frontend, Backend, QA, and DevOps. Unlike prompt-only agent teams, Boss adds runtime state, append-only events, quality gates, deterministic evals, hooks, and replayable artifacts.
 
-## 安装
+Boss works with Claude Code, Codex, OpenClaw, Antigravity, and Hermes.
 
-**方式一：克隆到 Coding Agent 的 Skills 目录**
+## Why Boss
 
-| 工具 | Skills 目录 |
-|------|------------|
-| Claude Code | `~/.claude/skills/` |
-| Cursor | `~/.cursor/skills/` |
-| Windsurf | `~/.windsurf/skills/` |
-| Trae | `~/.trae/skills/` |
-| OpenAI Codex | `~/.codex/skills/` |
+Prompt-only orchestration can sound organized, but it usually cannot prove that the plan was followed, tests were run, gates passed, or state was not hallucinated. Boss is built around evidence:
+
+- **Event-sourced runtime**: pipeline state is appended to `.boss/<feature>/.meta/events.jsonl` and projected into read-only execution state.
+- **Non-bypassable gates**: QA, deployment, and final checks are modeled as runtime stages instead of loose instructions.
+- **Replayable artifacts**: PRDs, architecture docs, task lists, QA reports, deploy reports, and summaries live under `.boss/<feature>/`.
+- **Deterministic evals**: captured transcripts can be scored without calling a real LLM.
+- **Agent-friendly CLI**: commands support JSON output, `--describe`, dry runs, bounded fields, and structured errors.
+
+## Use One Role Or The Whole Team
+
+Boss is not a single monolithic command. You can run one role against an existing project, or run the full pipeline from idea to delivery.
+
+| Command | What it does | Use when |
+| --- | --- | --- |
+| `/boss` | Full 4-stage pipeline | You want to go from idea to shippable work |
+| `/boss:plan` | PM + Architect planning | You want PRD and architecture before implementation |
+| `/boss:review` | Tech Lead review | You need a read-only code, PR, or design review |
+| `/boss:qa` | QA plus gates | You need verifiable test evidence |
+| `/boss:ship` | DevOps build and deployment checks | You are ready to ship |
+| `/boss:extend` | Custom agent, pack, or gate | You want to adapt Boss for your team |
+| `/boss:upgrade` | Upgrade Boss Skill and reinstall hooks | You want the latest npm package and hook config |
+
+## When To Use Boss
+
+| Good fit | Poor fit |
+| --- | --- |
+| New features that need requirements, design, implementation, tests, and delivery evidence | One-line fixes or tiny local edits |
+| API, full-stack, UI, or medium-sized product work | Pure code reading or explanation |
+| Work where `.boss/<feature>/` artifacts are valuable | Tasks with a complete existing spec where you only need a quick patch |
+| Teams that want repeatable gates and audit trails | Work that does not need coordination or review evidence |
+
+Rule of thumb: if you do not need a traceable `.boss/` folder, you probably do not need the full `/boss` pipeline. Use a single role or let your coding agent edit directly.
+
+## No CLI? Still Works
+
+Boss detects the `boss` CLI at runtime. Without it, the workflow can degrade to Markdown artifacts under `.boss/<feature>/` instead of the event stream. The CLI is the auditability upgrade: event sourcing, replayable resume, deterministic evals, runtime gates, and structured diagnostics.
+
+Boss does not mean "install once and get guaranteed autonomous delivery." It provides a runtime workflow and evidence gates; the active coding agent still has to follow the Boss protocol.
+
+## Quick Start
+
+### 1. Install
+
+Boss is a skill you install into your coding agent — not a tool that installs other skills.
+
+**Recommended — via the `skills` CLI ([vercel-labs/skills](https://github.com/vercel-labs/skills), skills.sh):**
 
 ```bash
-# 以 Claude Code 为例
-git clone https://github.com/echoVic/boss-skill.git ~/.claude/skills/boss
-# 以 OpenAI Codex 为例
-git clone https://github.com/echoVic/boss-skill.git ~/.codex/skills/boss
+npx skills add echoVic/boss-skill
 ```
 
-**方式二：适配 Google Antigravity (Beta)**
+This is the standard, agent-agnostic way to install a skill: it discovers `boss` from the repo, prompts for target agent / scope (project vs global) / install method, and records a `skills-lock.json` you can commit. Boss ships a single skill root, so the picker shows just `boss` — its internal methodologies travel with it.
 
-Google Antigravity 要求技能存放在项目的 `.agent/skills/` 目录下。我们提供了一个适配脚本，可以将 Boss Skill 快速集成到你的 Antigravity 环境中：
+**Alternative — Boss's own multi-agent installer** (auto-detects Claude Code, Codex, OpenClaw, Antigravity, Hermes and installs into all of them, plus merges Codex hooks):
 
 ```bash
-# 在你的项目根目录下运行 (假设你已经在项目外克隆了 boss-skill)
-/path/to/boss-skill/scripts/adapt-antigravity.sh
+# One-shot, no global install
+npx @blade-ai/boss-skill
+
+# Or install globally, then run the self-install wizard
+npm install -g @blade-ai/boss-skill
+boss-skill
 ```
 
-**方式三：适配 OpenAI Codex (Beta)**
-
-OpenAI Codex 建议将项目相关的技能存放在 `.agents/skills/` 目录下（注意是 `agents` 复数）。
+For Claude Code plugin mode:
 
 ```bash
-# 在你的项目根目录下运行
-/path/to/boss-skill/scripts/adapt-codex.sh
+claude --plugin-dir "$(boss-skill path)"
 ```
 
-**方式四：集成到 OpenCode**
+### 2. Run A Lightweight Pipeline
 
-OpenCode (sst/opencode) 识别技能的默认路径为项目根目录下的 `.opencode/skills/`。
+Inside your coding agent:
+
+```text
+/boss Build a local personal todo app --roles core --skip-deploy
+```
+
+- `--roles core` uses PM, Architect, Dev, and QA.
+- `--skip-deploy` stops after implementation and test evidence.
+
+### 3. Inspect Results
 
 ```bash
-# 在你的项目根目录下运行
-mkdir -p .opencode/skills/boss
-git clone https://github.com/echoVic/boss-skill.git .opencode/skills/boss
+boss status todo-app --json
+boss runtime inspect-pipeline todo-app
 ```
 
-**方式五：手动复制 SKILL.md**
+Expected artifact layout:
 
-将 `SKILL.md` 复制到你的 Coding Agent 支持的 Slash Command 目录，然后根据需要将 `agents/`、`references/`、`templates/` 目录一起放入同一位置。
-
----
-
-## 工作原理
-
-Boss Agent 不直接写代码，而是编排专业 Agent 按四阶段流水线执行：
-
-```
-需求 → [PM → Architect → UI] → [Tech Lead → Scrum Master] → [Dev → QA] → [DevOps] → 交付
-         阶段 1: 规划              阶段 2: 评审+拆解          阶段 3: 开发    阶段 4: 部署
-```
-
-每个阶段产出文档，下一阶段基于前一阶段产物，测试不通过不能部署。
-
-## 9 个专业 Agent
-
-| Agent | 职责 |
-|-------|------|
-| PM | 需求穿透 — 显性、隐性、潜在、惊喜需求 |
-| Architect | 架构设计、技术选型、API 设计 |
-| UI Designer | UI/UX 设计规范 |
-| Tech Lead | 技术评审、风险评估 |
-| Scrum Master | 任务分解、测试用例定义 |
-| Frontend | UI 组件、状态管理、前端测试 |
-| Backend | API、数据库、后端测试 |
-| QA | 测试执行、Bug 报告 |
-| DevOps | 构建部署、健康检查 |
-
-## 使用方式
-
-触发词：`boss mode`、`/boss`、`全自动开发`、`从需求到部署`
-
-```
-/boss 做一个 Todo 应用
-/boss 给现有项目加用户认证 --skip-ui
-/boss 快速搭建 API 服务 --skip-deploy --quick
-/boss 继续上次中断的任务 --continue-from 3
-/boss 轻量模式 --roles core --hitl-level off
-```
-
-| 参数 | 说明 |
-|------|------|
-| `--skip-ui` | 跳过 UI 设计（纯 API/CLI） |
-| `--skip-deploy` | 跳过部署阶段 |
-| `--quick` | 跳过确认节点，全自动 |
-| `--continue-from <1-4>` | 从指定阶段继续，跳过已完成阶段 |
-| `--hitl-level <level>` | 人机协作：`auto`（默认）/ `interactive` / `off` |
-| `--roles <preset>` | 角色预设：`full`（默认，9 个）/ `core`（PM/Architect/Dev/QA） |
-
-## 产物
-
-所有产物保存在 `.boss/<feature>/` 目录：
-
-```
-.boss/<feature>/
-├── prd.md              # 产品需求文档
-├── architecture.md     # 系统架构
-├── ui-spec.md          # UI 规范（可选）
-├── tech-review.md      # 技术评审
-├── tasks.md            # 开发任务
-├── qa-report.md        # QA 报告
-├── deploy-report.md    # 部署报告
+```text
+.boss/todo-app/
+├── design-brief.md
+├── prd.md
+├── architecture.md
+├── tasks.md
+├── qa-report.md
 └── .meta/
-    └── execution.json  # 执行追踪（阶段状态、Token、质量门禁）
+    ├── events.jsonl
+    ├── execution.json
+    └── workflow-plan.json
 ```
 
-## 质量门禁
+## Installation Details
 
-三层门禁，不可绕过：
-
-| 门禁 | 时机 | 检查内容 |
-|------|------|---------|
-| Gate 0 | 开发后、测试前 | TypeScript 编译、Lint |
-| Gate 1 | QA 后、部署前 | 测试覆盖率 ≥ 70%、无 P0/P1 Bug、E2E 通过 |
-| Gate 2 | 部署前（Web） | Lighthouse ≥ 80、API P99 < 500ms |
-
-## 文件结构
-
+```bash
+npm install -g @blade-ai/boss-skill
+boss-skill install
 ```
+
+Useful install commands:
+
+```bash
+boss-skill install --dry-run
+boss-skill uninstall
+boss-skill path
+boss-skill --version
+```
+
+Auto-detected targets:
+
+| Agent | Detection | Install method |
+| --- | --- | --- |
+| OpenClaw | `~/.openclaw/` | Copy to `~/.openclaw/skills/boss/` and inject metadata |
+| Codex | `~/.codex/` | Copy to `~/.codex/skills/boss/`, inject metadata, merge hooks |
+| Antigravity | `~/.gemini/antigravity/` | Copy to Antigravity skills directory and inject metadata |
+| Hermes | `~/.hermes/` | Copy to `~/.hermes/skills/boss/` and inject metadata |
+| Claude Code | Always available | Plugin mode with `--plugin-dir` |
+
+## Platform Support
+
+Boss targets Node.js `>=20` and runs on Linux, macOS, and Windows. The CLI shells out
+only through `spawnSync` with explicit argument arrays (never `shell: true`), and resolves
+`npm`/`npx` to their `.cmd` variants on Windows, so there is no POSIX-only assumption in
+the core pipeline.
+
+Two capabilities depend on optional external tools and degrade gracefully when they are
+absent:
+
+- **WIP checkpoints** (stash/commit/branch) require `git` and a git working tree. Outside a
+  repository, or without `git` on `PATH`, checkpointing is silently skipped — the pipeline
+  is unaffected.
+- **Legacy hand-written `gate.sh` plugins** are executed via `bash`. On Windows without a
+  bash in `PATH` these will fail to launch; prefer the cross-platform Node gate entry
+  (`gate.js` / `gate.mjs`) for portable plugins.
+
+Run `boss doctor` to see the resolved runtime environment (Node version, platform, and
+whether `git` is available) alongside install and event-stream health.
+
+## Commands
+
+Common slash commands:
+
+```text
+/boss Build a todo app
+/boss Add authentication to this existing project --skip-ui
+/boss Build an API service --skip-deploy --quick
+/boss Continue the previous task --continue-from 3
+/boss Lightweight mode --roles core --hitl-level off
+/boss:upgrade
+```
+
+Common options:
+
+| Option | Meaning |
+| --- | --- |
+| `--roles <preset>` | `full` for all 9 roles, or `core` for PM/Architect/Dev/QA |
+| `--skip-ui` | Skip UI design |
+| `--skip-deploy` | Skip deployment |
+| `--quick` | Skip confirmation and requirement clarification nodes |
+| `--template` | Initialize `.boss/templates/` and pause |
+| `--continue-from <1-4>` | Resume from a pipeline stage |
+| `--hitl-level <level>` | Human-in-the-loop mode: `auto`, `interactive`, or `off` |
+
+Boss CLI commands:
+
+```bash
+boss --help
+boss status FEATURE
+boss continue FEATURE
+boss gate FEATURE
+boss qa attack FEATURE
+boss project init FEATURE
+boss design preview FEATURE
+boss packs detect
+boss runtime inspect-pipeline FEATURE
+boss runtime generate-summary FEATURE
+```
+
+Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
+
+- `--json`: structured output; non-TTY stdout defaults to JSON
+- `--describe`: JSON command schema
+- `--dry-run`: structured action plan for writes or risky operations
+- `--json-input=<json|->`: JSON input payload
+- `--fields=<a,b>` and `--limit=<n>`: bounded output
+- `--yes`: required only for high-risk non-interactive commands that need an extra confirmation
+
+Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`.
+
+## Workflow
+
+Boss follows a four-stage workflow:
+
+```text
+User request
+  -> requirement clarification
+  -> Stage 1: PM, Architect, UI Designer
+  -> Stage 2: Tech Lead, Scrum Master
+  -> Stage 3: Frontend, Backend, QA, gates
+  -> Stage 4: DevOps, deployment checks, summary
+```
+
+The full role set:
+
+| Role | Responsibility |
+| --- | --- |
+| PM | Requirement discovery, PRD, hidden needs, edge cases |
+| Architect | System architecture, technical design, APIs |
+| UI Designer | UI/UX spec plus renderable design JSON |
+| Tech Lead | Technical review, risk assessment |
+| Scrum Master | Task breakdown and acceptance criteria |
+| Frontend | UI implementation and frontend tests |
+| Backend | API, storage, backend tests |
+| QA | Test execution, bug reports, verification evidence |
+| DevOps | Build, deployment, health checks |
+
+## Runtime And Quality Gates
+
+Boss has two layers of quality control:
+
+- **Hard constraints** verified by code and CI: runtime events, protected `execution.json`, hooks, install matrix tests, harness scenarios, and Vitest coverage.
+- **Agent protocol constraints** guided by the skill bundle: DAG dispatch, progressive reference loading, test evidence, and gate discipline.
+
+Built-in gates:
+
+| Gate | Timing | Checks |
+| --- | --- | --- |
+| Gate 0 | After development, before QA | TypeScript, lint, basic compile checks |
+| Gate 1 | After QA, before deployment | Test evidence, no P0/P1 bugs, E2E expectations |
+| Gate 2 | Before web deployment | Lighthouse and API latency targets when applicable |
+
+Hooks are controlled by environment variables:
+
+| Variable | Values |
+| --- | --- |
+| `BOSS_HOOK_PROFILE` | `minimal`, `standard`, `strict` |
+| `BOSS_DISABLED_HOOKS` | Comma-separated hook IDs |
+
+Runtime state is backed by `.boss/<feature>/.meta/workflow-plan.json` and `.boss/<feature>/.meta/execution.json`. The workflow definition records `workflowHash`, `packHash`, and artifact DAG hashes. Runtime resume uses `boss runtime resume <feature> --from-run <run-id>` to reload the plan, compare node inputs, and materialize `execution.workflow.nextNodeIds` for the next schedulable nodes. `GateEvaluated` / `WaveVerified` events update workflow node status when gates and evidence waves complete.
+
+## Security-Sensitive Surfaces
+
+Boss intentionally keeps the published plugin manifest small: it declares only bundled skills and omits MCP servers, app manifests, and asset references unless those companion files exist. Codex hooks are installed by the `boss-skill install` flow, not by the marketplace manifest.
+
+The npm package excludes local development agent settings such as `.claude/settings.json` and `.claude/settings.local.json`. Publishable plugin metadata lives under `.claude-plugin/`, `.codex-plugin/`, and `.agents/plugins/marketplace.json`.
+
+Release provenance lives in `.agents/plugins/provenance.json`. It pins the repository HTTPS URL, immutable source commit SHA, publisher identity, and SHA-256 digests for plugin manifests and security-sensitive components. Verify it with:
+
+```bash
+npm run provenance:verify
+```
+
+Publisher verification is external to the package. For the HOL registry, claim the plugin with the repository owner's GitHub account at `https://hol.org/guard/plugins`. The public trust card is available at `https://hol.org/registry/plugins/echovic%2Fboss/embed`.
+
+Security-sensitive behavior to review before publishing or installing:
+
+- `boss-skill install` may write to agent configuration directories such as `~/.codex/skills/boss/` and merge Boss-managed entries into `~/.codex/hooks.json`.
+- Hook entries execute `boss hooks run ...`, which dispatches scripts from `scripts/hooks/`.
+- Runtime plugins under `.boss/plugins/<name>/plugin.json` can register gate or reporter hooks; review project-local plugins before enabling them.
+- Use `BOSS_HOOK_PROFILE=minimal` or `BOSS_DISABLED_HOOKS=<ids>` when you need to reduce hook behavior in a sensitive environment.
+
+Boss is local-first and makes no outbound network requests by default; the only network
+surface is the opt-in, loopback-only `boss design preview` server. See [PRIVACY.md](PRIVACY.md)
+for the full data and network boundary.
+
+## Pipeline Artifacts
+
+```text
+.boss/<feature>/
+├── design-brief.md
+├── prd.md
+├── architecture.md
+├── ui-spec.md
+├── ui-design.json
+├── tech-review.md
+├── tasks.md
+├── qa-report.md
+├── deploy-report.md
+├── summary-report.md
+└── .meta/
+    ├── events.jsonl
+    ├── execution.json
+    └── workflow-plan.json
+```
+
+Run this in an interactive environment to preview a generated UI design:
+
+```bash
+boss design preview <feature>
+```
+
+## Evals
+
+Boss evals score captured fixtures without starting a real LLM:
+
+```bash
+npm run evals
+npm run evals:release
+```
+
+The release eval includes release-evidence and pipeline-compliance checks. It verifies runtime command usage, artifact recording, avoidance of direct `execution.json` edits, and workflow scheduling fields.
+
+See [test/evals/README.md](./test/evals/README.md).
+
+## Development
+
+Requirements:
+
+- Node.js >= 20
+- `jq` for shell-based test helpers
+
+Setup:
+
+```bash
+git clone https://github.com/echoVic/boss-skill.git
+cd boss-skill
+npm install
+npm run build
+npm run typecheck
+npm test
+```
+
+Useful scripts:
+
+```bash
+npm run build
+npm run typecheck
+npm test
+npm run test:skills
+npm run test:harness
+npm run test:install-matrix
+npm run evals
+```
+
+## Repository Layout
+
+```text
 boss-skill/
-├── SKILL.md                          # 工作流 checklist
-├── DESIGN.md                         # 设计文档
-├── agents/                           # 9 个 Agent Prompt（按需加载）
-│   ├── boss-pm.md
-│   ├── boss-architect.md
-│   ├── boss-ui-designer.md
-│   ├── boss-tech-lead.md
-│   ├── boss-scrum-master.md
-│   ├── boss-frontend.md
-│   ├── boss-backend.md
-│   ├── boss-qa.md
-│   └── boss-devops.md
-├── references/                       # 按需加载的规范文档
-│   ├── bmad-methodology.md           # BMAD 方法论
-│   ├── artifact-guide.md             # 产物保存规范
-│   ├── testing-standards.md          # 测试标准
-│   └── quality-gate.md               # 质量门禁
-├── templates/                        # 产物模板
-│   ├── prd.md.template
-│   ├── architecture.md.template
-│   ├── ui-spec.md.template
-│   ├── tech-review.md.template
-│   ├── tasks.md.template
-│   ├── qa-report.md.template
-│   └── deploy-report.md.template
-└── scripts/
-    └── init-project.sh               # 项目初始化脚本
+├── packages/boss-cli/          # TypeScript CLI and runtime
+├── skill/                      # Skill bundle installed into coding agents
+├── scripts/hooks/              # Node.js hook scripts
+├── scripts/lib/                # Hook helpers
+├── test/                       # Vitest, harness, eval, hook, and install tests
+├── docs/superpowers/           # Historical specs, plans, and reports
+├── examples/                   # Example projects
+├── .claude-plugin/             # Claude Code plugin manifest
+├── .codex-plugin/              # Codex plugin manifest
+└── package.json
 ```
 
-## 设计理念
+Important source areas:
 
-基于 BMAD（Breakthrough Method of Agile AI-Driven Development）方法论，详见 `references/bmad-methodology.md` 和 `DESIGN.md`。
+- `packages/boss-cli/src/` contains CLI and runtime TypeScript source.
+- `packages/boss-cli/dist/` contains generated CLI output used by the published npm bin; do not edit it by hand.
+- `packages/boss-cli/assets/` contains built-in DAGs, pipeline packs, plugin schema, and plugins.
+- `skill/SKILL.md` is the main agent-facing orchestration entry.
+- `skill/agents/` contains the role prompts.
+- `skill/commands/` contains slash commands.
+- `skill/templates/` contains artifact templates.
+
+## Release
+
+Use the release script so version numbers stay synchronized across package metadata and skill/plugin manifests:
+
+```bash
+npm run release -- patch
+npm run release -- minor
+npm run release -- major
+npm run release -- 3.11.0
+npm run release -- 3.11.0 --dry-run
+npm run release -- 3.11.0 --no-publish
+```
+
+The release script checks for a clean worktree, runs tests, syncs versions, verifies consistency, creates a commit and tag, and publishes unless `--no-publish` is used.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Design
+
+Boss is inspired by BMAD: Breakthrough Method of Agile AI-Driven Development. The project adapts that idea into an auditable runtime for agentic software work.
+
+Read more in [DESIGN.md](./DESIGN.md) and `skill/references/bmad-methodology.md`.
 
 ## Star History
 

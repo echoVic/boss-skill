@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"usage":{"input_tokens":2000,"output_tokens":900,"cache_read_input_tokens":100},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"boss"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm test"}},{"type":"tool_use","name":"Bash","input":{"command":"npm run test:harness"}}]}}

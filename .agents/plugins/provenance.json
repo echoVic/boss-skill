@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "plugin": {
+    "name": "boss",
+    "version": "3.10.1",
+    "npmPackage": "@blade-ai/boss-skill"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/echoVic/boss-skill",
+    "commit": "eecf17ad1461a808a36dc556d873c57894a640ee",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/eecf17ad1461a808a36dc556d873c57894a640ee"
+  },
+  "publisher": {
+    "name": "echoVic",
+    "email": "137844255@qq.com",
+    "url": "https://github.com/echoVic",
+    "packageRegistry": "https://registry.npmjs.org/"
+  },
+  "support": {
+    "url": "https://github.com/echoVic/boss-skill/issues",
+    "security": "https://github.com/echoVic/boss-skill/security/advisories/new"
+  },
+  "marketplace": {
+    "name": "boss-skill",
+    "plugin": "boss"
+  },
+  "manifests": [
+    {
+      "path": ".codex-plugin/plugin.json",
+      "sha256": "fc5c1f2c29377e8e2df9b694744955d7ea2544be2ce1e43742833b7f7d0042bb",
+      "bytes": 1592
+    },
+    {
+      "path": ".codex-plugin/marketplace.json",
+      "sha256": "e8f0d60738ab9273764cdb58b65c473b05fbd6fa820fefb123f7897942f7a76f",
+      "bytes": 1113
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "sha256": "e37ee96e26d9f6828abd3633cb7f074e3534a4dc3162a0d1734f1602bb8cbba7",
+      "bytes": 1778
+    },
+    {
+      "path": ".claude-plugin/marketplace.json",
+      "sha256": "7bc0f0addcafdc88a228f7f4a9af584f13c8dea0dd11ae3fa046a8594aff43e0",
+      "bytes": 1119
+    },
+    {
+      "path": ".agents/plugins/marketplace.json",
+      "sha256": "8e2bcaa6157cd198a08f8a409673c6040695aeed50fed37d04e76c78800b8c1b",
+      "bytes": 804
+    }
+  ],
+  "components": [
+    {
+      "path": "skill/SKILL.md",
+      "sha256": "0ec3df1b11c6641a0b67cdfa5dacedaa2bec27f1db1ea53a4cff4c8fb745e095",
+      "bytes": 8763
+    },
+    {
+      "path": "skill/commands/boss.md",
+      "sha256": "e30b9acdc1df47deccbfddffa39c59c6c87af4b54e1cb5e201bb6594f4509890",
+      "bytes": 2921
+    },
+    {
+      "path": "skill/commands/boss-plan.md",
+      "sha256": "4d8ed916cee91ed8c3a797595cd3cc7b11ca736738281d4a43854b54d2dd94ad",
+      "bytes": 2389
+    },
+    {
+      "path": "skill/commands/boss-review.md",
+      "sha256": "2d8bade4ed1f53e6276b3259c2198ce9a73da8eda6afa0dd75d0740262fec699",
+      "bytes": 2290
+    },
+    {
+      "path": "skill/commands/boss-qa.md",
+      "sha256": "42a6063220bf466ae9a950553a9b69efe585a7d3fad8f8f8b92bb350c1ebea85",
+      "bytes": 2159
+    },
+    {
+      "path": "skill/commands/boss-ship.md",
+      "sha256": "2098701c0f92083f48cef2d5318c92d81a4254671853f9011409ca36cf875bc5",
+      "bytes": 1882
+    },
+    {
+      "path": "skill/commands/boss-extend.md",
+      "sha256": "5ed6426d35882d489ff2323fe42bc797c802b5b063596d1fa6c6cf7e690b8d88",
+      "bytes": 2877
+    },
+    {
+      "path": "skill/commands/boss-upgrade.md",
+      "sha256": "c4989396ed4d62669b88149f92e51b27484a3bd74359ef35cbdd2b46ca9ae8d4",
+      "bytes": 1391
+    },
+    {
+      "path": "skill/hooks/codex/hooks.json",
+      "sha256": "06bd509c531a1e0dbd053a23aba61835a60ec6f09636c3c82c5ed18313e0f779",
+      "bytes": 2879
+    },
+    {
+      "path": "skill/hooks/claude/hooks.json",
+      "sha256": "5f3416b9c74c83afae2d3fd5fbf34d4c8bc02bb715f6057285cbb94961c09846",
+      "bytes": 4653
+    },
+    {
+      "path": "scripts/hooks/pre-tool-bash.js",
+      "sha256": "01e6ec7816343ca97a720d4e6f39b2b00498660e340d39664e373ed4a2c1e7ba",
+      "bytes": 1397
+    },
+    {
+      "path": "scripts/hooks/pre-tool-write.js",
+      "sha256": "f499f373286e04ac6848926293735a1a394b1049b1403534fb0ec0866dbd7537",
+      "bytes": 3517
+    },
+    {
+      "path": "scripts/hooks/post-tool-bash.js",
+      "sha256": "89d20a8ed1fe6694da7b6502710dea56a3116ab33a4980df40f8fefb186e97fd",
+      "bytes": 1995
+    },
+    {
+      "path": "scripts/hooks/post-tool-write.js",
+      "sha256": "97f4b179dc2f8245e7ebdc673fd35419473a993978fa475c71bcb15e1932bca6",
+      "bytes": 2860
+    },
+    {
+      "path": "scripts/hooks/on-stop.js",
+      "sha256": "71a8a79f3d74db0eaccfd8d7f1c2f79101054d28a0634c92e426c91f90a6608a",
+      "bytes": 1287
+    },
+    {
+      "path": "scripts/hooks/session-start.js",
+      "sha256": "bfdadd8813949799d4efdf69256e038280be9794a3717488689b921cdb32125f",
+      "bytes": 2559
+    },
+    {
+      "path": "scripts/hooks/session-end.js",
+      "sha256": "13394c58c9bf1aecdae6dbbe3662591a17611d216e375eb151d3d27ab3e73621",
+      "bytes": 2496
+    },
+    {
+      "path": "packages/boss-cli/assets/artifact-dag.json",
+      "sha256": "7abbf1e47e6cbd2bfd61bcfe169aed63fe4db166ce34d743f4580ad2eb80986f",
+      "bytes": 3881
+    },
+    {
+      "path": "packages/boss-cli/assets/plugin-schema.json",
+      "sha256": "087738733ec929b456dd41b1c29865e0cb0bed4d44066b6380b2376df3d31266",
+      "bytes": 3549
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "gate-harness",
+  "version": "1.0.0",
+  "type": "gate",
+  "description": "测试用门禁：缺少 .meta/allow-gate 时失败，存在时通过（用于验证门禁失败→恢复链路）",
+  "author": "Boss Harness Team",
+  "license": "MIT",
+  "hooks": {
+    "gate": "gate.js"
+  },
+  "stages": [3],
+  "enabled": true
+}

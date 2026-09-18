@@ -21,5 +21,30 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Node
+node_modules/
+packages/*/dist/
+
+# Biome
+.biome/
+
+# Test coverage
+coverage/
+
+# Playwright test results
+test-results/
+
 # Boss generated artifacts
 .boss/
+# ...except committed test fixtures, which intentionally ship a .boss workspace
+!test/evals/fixtures/**/workspace/.boss/
+!test/evals/fixtures/**/workspace/.boss/**
+!test/harness/scenarios/**/fixture/.boss/
+!test/harness/scenarios/**/fixture/.boss/**
+
+# Superpowers local browser companion artifacts
+.superpowers/
+/dist
+
+# Local agent settings
+.claude/settings.local.json

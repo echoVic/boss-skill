@@ -1,0 +1,3 @@
+{"type":"user","message":{"content":"Use boss to build a task board."}}
+{"type":"assistant","message":{"usage":{"input_tokens":20,"output_tokens":5,"cache_creation_input_tokens":3,"cache_read_input_tokens":7},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"boss"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"pm/requirement-penetration"}},{"type":"tool_use","name":"Write","input":{"file_path":".boss/task-board/prd.md"}}]}}

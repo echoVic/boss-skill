@@ -1,0 +1,10 @@
+.git
+.DS_Store
+.boss/
+*.log
+*.tmp
+*.temp
+.idea/
+.vscode/
+.coderabbit.yaml
+node_modules/

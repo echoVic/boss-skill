@@ -1,0 +1,43 @@
+{
+  "name": "boss",
+  "version": "3.10.1",
+  "description": "BMAD 全自动项目编排插件。从需求到部署的完整研发流水线，编排 9 个专业 Agent（PM、架构师、UI 设计师、Tech Lead、Scrum Master、开发者、QA、DevOps）自动完成完整研发周期。",
+  "author": {
+    "name": "echoVic",
+    "email": "137844255@qq.com",
+    "url": "https://github.com/echoVic"
+  },
+  "homepage": "https://github.com/echoVic/boss-skill",
+  "repository": "https://github.com/echoVic/boss-skill",
+  "license": "MIT",
+  "keywords": [
+    "bmad",
+    "pipeline",
+    "agent-orchestration",
+    "full-stack",
+    "automation",
+    "devops",
+    "project-management"
+  ],
+  "skills": ["./skill/"],
+  "interface": {
+    "displayName": "Boss",
+    "shortDescription": "Auditable multi-agent engineering workflow.",
+    "longDescription": "Boss turns a coding agent into a structured engineering team with PM, architecture, implementation, QA, DevOps, runtime state, hooks, quality gates, and replayable delivery artifacts.",
+    "developerName": "echoVic",
+    "category": "Productivity",
+    "capabilities": ["Planning", "Code Review", "Testing"],
+    "websiteURL": "https://github.com/echoVic/boss-skill",
+    "privacyPolicyURL": "https://github.com/echoVic/boss-skill/blob/main/docs/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/echoVic/boss-skill/blob/main/docs/TERMS.md",
+    "composerIcon": "./assets/boss-composer-icon.svg",
+    "logo": "./assets/boss-logo.svg",
+    "screenshots": ["./boss-skill-promo.png"],
+    "defaultPrompt": [
+      "Use Boss to plan and implement this feature.",
+      "Run Boss QA on this project.",
+      "Review this code with Boss."
+    ],
+    "brandColor": "#171717"
+  }
+}

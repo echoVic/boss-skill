@@ -1,0 +1,1 @@
+Use Boss QA to attack this mocked checkout flow. If the critical path has not been replayed with evidence, mark it unverified instead of passed.

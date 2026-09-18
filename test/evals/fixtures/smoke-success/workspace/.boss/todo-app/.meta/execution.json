@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "0.2.0",
+  "feature": "todo-app",
+  "status": "completed",
+  "metrics": { "totalDuration": 120 },
+  "workflow": { "nextNodeIds": [], "nodes": {} }
+}

@@ -1,0 +1,8 @@
+{"type":"assistant","message":{"usage":{"input_tokens":1200,"output_tokens":550},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"boss"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss project init todo-app"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss packs detect . --json"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss runtime record-artifact todo-app prd.md 1"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss runtime record-artifact todo-app architecture.md 1"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss runtime record-artifact todo-app tasks.md 1"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"boss runtime record-artifact todo-app qa-report.md 1"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm test"}}]}}

@@ -1,0 +1,7 @@
+{
+  "name": "fail-once",
+  "version": "1.0.0",
+  "type": "gate",
+  "hooks": { "gate": "gate.js" },
+  "enabled": true
+}

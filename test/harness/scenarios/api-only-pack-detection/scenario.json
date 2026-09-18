@@ -1,0 +1,21 @@
+{
+  "name": "api-only-pack-detection",
+  "description": "Detects the api-only pipeline pack in a small Node API fixture.",
+  "feature": "api-only-harness",
+  "fixture": "fixture",
+  "commands": [
+    { "run": ["boss", "project", "init", "api-only-harness", "--json"] },
+    { "run": ["boss", "packs", "detect", ".", "--json"] }
+  ],
+  "expect": {
+    "artifacts": [
+      ".boss/api-only-harness/.meta/execution.json",
+      ".boss/api-only-harness/.meta/events.jsonl"
+    ],
+    "events": ["PipelineInitialized"],
+    "state": {
+      "feature": "api-only-harness"
+    },
+    "forbidPaths": ["node_modules"]
+  }
+}

@@ -1,0 +1,1 @@
+Use boss to plan and implement a small API authentication feature. Load the boss skill before making code changes.

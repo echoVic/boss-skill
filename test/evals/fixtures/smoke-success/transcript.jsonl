@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"usage":{"input_tokens":1000,"output_tokens":500},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"boss"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm test"}}]}}
