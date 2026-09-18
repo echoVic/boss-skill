@@ -3,7 +3,6 @@ import type {
   ConversationResolution,
   ConversationThread,
   DerivedTodo,
-  ResolutionTodo,
 } from '../domain/conversation-types.js';
 import type { AgentStatus, PipelineStatus, StageStatus } from '../domain/state-constants.js';
 

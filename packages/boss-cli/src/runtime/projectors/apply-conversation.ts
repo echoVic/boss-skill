@@ -2,7 +2,7 @@
  * Conversation lifecycle projector — handles conversation opened, message appended,
  * resolved, and todo materialized events.
  */
-import { EVENT_TYPES } from '../domain/event-types.js';
+
 import type {
   ConversationMessage,
   ConversationResolution,
@@ -10,13 +10,9 @@ import type {
   DerivedTodo,
   ResolutionTodo,
 } from '../domain/conversation-types.js';
+import { EVENT_TYPES } from '../domain/event-types.js';
+import { clone, closeThread, ensureConversationSections, upsertThread } from './helpers.js';
 import type { ExecutionState, RuntimeEvent } from './types.js';
-import {
-  clone,
-  closeThread,
-  ensureConversationSections,
-  upsertThread,
-} from './helpers.js';
 
 export function projectConversationLifecycle(
   state: ExecutionState,

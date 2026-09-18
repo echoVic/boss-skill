@@ -2,13 +2,18 @@
  * Pipeline state transitions — stage and agent status updates,
  * feedback recording, retry logic.
  */
-import { EVENT_TYPES, type EventType } from '../domain/event-types.js';
+
 import { emitProgress } from '../../infrastructure/process.js';
-import type { PipelineExecutionState } from './state.js';
-import { appendRuntimeEvent, ensureFeatureName, readExecutionView, refreshMemory } from './state.js';
+import { EVENT_TYPES, type EventType } from '../domain/event-types.js';
 import { materializeState } from '../projectors/materialize-state.js';
-import type { RuntimeHashDescriptor } from './pipeline-types.js';
 import { buildAgentFingerprints } from './pipeline-reuse.js';
+import type { PipelineExecutionState } from './state.js';
+import {
+  appendRuntimeEvent,
+  ensureFeatureName,
+  readExecutionView,
+  refreshMemory,
+} from './state.js';
 
 export function buildStageState(name: string): import('../projectors/types.js').StageState {
   return {

@@ -2,8 +2,8 @@
  * Wave lifecycle projector — handles wave verified events.
  */
 import { EVENT_TYPES } from '../domain/event-types.js';
-import type { ExecutionState, RuntimeEvent } from './types.js';
 import { refreshWorkflowSchedule } from './helpers.js';
+import type { ExecutionState, RuntimeEvent } from './types.js';
 
 function upsertWorkflowWaveNode(state: ExecutionState, event: RuntimeEvent): void {
   if (!state.workflow) return;

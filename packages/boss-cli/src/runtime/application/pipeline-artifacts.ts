@@ -6,14 +6,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { appendLineSync } from '../../infrastructure/fs.js';
 import { EVENT_TYPES } from '../domain/event-types.js';
-import type { RuntimeEvent } from '../projectors/types.js';
 import { materializeState } from '../projectors/materialize-state.js';
+import type { RuntimeEvent } from '../projectors/types.js';
+import { collectCompletedArtifacts, loadDagForFeature } from './pipeline-dag.js';
 import type { PipelineExecutionState } from './state.js';
 import { appendEvent, ensureFeatureName, readExecutionView, refreshMemory } from './state.js';
-import {
-  collectCompletedArtifacts,
-  loadDagForFeature,
-} from './pipeline-dag.js';
 
 export function getArtifactVersion(
   feature: string,

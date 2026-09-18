@@ -3,7 +3,6 @@
  */
 import { EVENT_TYPES } from '../domain/event-types.js';
 import { PIPELINE_STATUS } from '../domain/state-constants.js';
-import type { ExecutionState, RuntimeEvent } from './types.js';
 import {
   clone,
   defaultExecutionState,
@@ -13,6 +12,7 @@ import {
   refreshWorkflowSchedule,
   updateWorkflowNode,
 } from './helpers.js';
+import type { ExecutionState, RuntimeEvent } from './types.js';
 
 function applyPipelineResumedWorkflow(state: ExecutionState, event: RuntimeEvent): void {
   if (!state.workflow) return;
