@@ -189,6 +189,20 @@ describe('projector edge cases: metrics finalization', () => {
     const state = projectState(events, 'edge-feature');
     expect(state.status).toBe('completed');
   });
+
+  it('records per-stage durations in metrics.stageTimings', () => {
+    const events: RuntimeEvent[] = [
+      initEvent(),
+      makeEvent(2, EVENT_TYPES.STAGE_STARTED, { stage: 1 }),
+      makeEvent(5, EVENT_TYPES.STAGE_COMPLETED, { stage: 1 }),
+      makeEvent(6, EVENT_TYPES.STAGE_STARTED, { stage: 2 }),
+    ];
+
+    const state = projectState(events, 'edge-feature');
+    // stage 1 ran from :02 to :05 (3s); stage 2 has no endTime yet, so no timing entry
+    expect(state.metrics.stageTimings).toEqual({ '1': 3 });
+    expect(state.metrics.totalDuration).toBe(3);
+  });
 });
 
 describe('projector edge cases: revision requests', () => {

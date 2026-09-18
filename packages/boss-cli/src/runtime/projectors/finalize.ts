@@ -3,12 +3,12 @@
  * and normalizes state after all events have been projected.
  */
 import { PIPELINE_STATUS, STAGE_STATUS } from '../domain/state-constants.js';
-import type { ExecutionState } from './types.js';
 import {
   ensureConversationSections,
   normalizePlugins,
   refreshWorkflowSchedule,
 } from './helpers.js';
+import type { ExecutionState } from './types.js';
 
 function computeDurationSeconds(start: string | null, end: string | null): number | null {
   if (!start || !end) return null;
@@ -19,43 +19,46 @@ export function finalizeState(state: ExecutionState): ExecutionState {
   if (!state.createdAt) state.createdAt = state.updatedAt || new Date().toISOString();
 
   // Aggregate metrics from stages
-  const stages = Object.values(state.stages ?? {});
+  const stageEntries = Object.entries(state.stages ?? {});
+  const stages = stageEntries.map(([, stage]) => stage);
   const stageCount = stages.length;
 
-  if (stages.length > 0) {
-    let totalSeconds = 0;
-    for (const stage of stages) {
-      const duration = computeDurationSeconds(stage.startTime, stage.endTime);
-      totalSeconds += duration ?? 0;
+  const stageTimings: Record<string, number> = {};
+  let totalSeconds = 0;
+  for (const [stageId, stage] of stageEntries) {
+    const duration = computeDurationSeconds(stage.startTime, stage.endTime);
+    if (duration != null) {
+      stageTimings[stageId] = duration;
+      totalSeconds += duration;
     }
-    state.metrics.totalDuration = totalSeconds > 0 ? totalSeconds : null;
-  } else {
-    state.metrics.totalDuration = null;
   }
+  state.metrics.stageTimings = stageTimings;
+  state.metrics.totalDuration = stageCount > 0 && totalSeconds > 0 ? totalSeconds : null;
 
-  stageCount > 0
-    ? (state.metrics.meanRetriesPerStage = Number(
-        (state.metrics.retryTotal / stageCount).toFixed(2),
-      ))
-    : (state.metrics.meanRetriesPerStage = 0);
+  if (stageCount > 0) {
+    state.metrics.meanRetriesPerStage = Number((state.metrics.retryTotal / stageCount).toFixed(2));
+  } else {
+    state.metrics.meanRetriesPerStage = 0;
+  }
+  state.metrics.revisionLoopCount = Number(
+    state.feedbackLoops && Number.isFinite(Number(state.feedbackLoops.currentRound))
+      ? state.feedbackLoops.currentRound
+      : 0,
+  );
 
   let completedCount = 0;
-  let runningCount = 0;
   let failedCount = 0;
   for (const stage of stages) {
     if (!stage.agents) continue;
     for (const agent of Object.values(stage.agents)) {
       if (agent.status === 'completed') completedCount += 1;
-      else if (agent.status === 'running') runningCount += 1;
       else if (agent.status === 'failed') failedCount += 1;
     }
   }
   state.metrics.agentSuccessCount = completedCount;
   state.metrics.agentFailureCount = failedCount;
 
-  const gateStates = Object.values(state.qualityGates ?? {}).filter(
-    (gate) => gate.passed !== null,
-  );
+  const gateStates = Object.values(state.qualityGates ?? {}).filter((gate) => gate.passed !== null);
   if (gateStates.length > 0) {
     const passedCount = gateStates.filter((gate) => gate.passed).length;
     state.metrics.gatePassRate = Number(((passedCount / gateStates.length) * 100).toFixed(2));
