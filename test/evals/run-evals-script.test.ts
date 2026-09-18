@@ -1,8 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const SCRIPT = path.resolve(import.meta.dirname, 'run-evals.sh');
 const README = path.resolve(import.meta.dirname, 'README.md');
 const BAD_CASE = path.resolve(import.meta.dirname, 'fixtures', 'missing-qa', 'case.json');
@@ -67,6 +69,24 @@ describe('Boss eval shell runner', () => {
     };
     expect(payload.passed).toBe(false);
     expect(payload.reports[0].failures).toContain('missing artifact: qa-report.md');
+  });
+
+  it('runs the smoke eval when invoked through a symlinked checkout path', () => {
+    const linkRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-evals-symlink-'));
+    const repoLink = path.join(linkRoot, 'repo');
+    fs.symlinkSync(ROOT, repoLink, 'dir');
+    try {
+      const result = spawnSync('bash', [path.join(repoLink, 'test', 'evals', 'run-evals.sh')], {
+        encoding: 'utf8',
+      });
+
+      expect(result.status, result.stderr).toBe(0);
+      const payload = JSON.parse(result.stdout) as { passed: boolean };
+      expect(payload.passed).toBe(true);
+    } finally {
+      fs.unlinkSync(repoLink);
+      fs.rmSync(linkRoot, { recursive: true, force: true });
+    }
   });
 
   it('uses repository-local vite-node and the deterministic eval runner', () => {

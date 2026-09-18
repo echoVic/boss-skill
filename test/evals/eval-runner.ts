@@ -263,10 +263,17 @@ function parseCliArgs(argv: string[]): string[] {
   return casePaths.filter(Boolean);
 }
 
-const currentFile = fileURLToPath(import.meta.url);
-const isCliExecution = process.argv.some(
-  (arg) => arg.endsWith('eval-runner.ts') && path.resolve(arg) === currentFile,
-);
+// Node's ESM loader resolves symlinks in import.meta.url, but process.argv keeps the
+// caller's path (e.g. macOS /tmp -> /private/tmp), so compare real paths on both sides.
+const currentFile = fs.realpathSync(fileURLToPath(import.meta.url));
+const isCliExecution = process.argv.some((arg) => {
+  if (!arg.endsWith('eval-runner.ts')) return false;
+  try {
+    return fs.realpathSync(path.resolve(arg)) === currentFile;
+  } catch {
+    return false;
+  }
+});
 if (isCliExecution) {
   try {
     const casePaths = parseCliArgs(process.argv.slice(2));
