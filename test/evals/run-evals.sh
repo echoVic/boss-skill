@@ -52,4 +52,4 @@ else
   done
 fi
 
-"$ROOT_DIR/node_modules/.bin/vite-node" --script "$ROOT_DIR/test/evals/eval-runner.ts" "${ARGS[@]}"
+"$ROOT_DIR/node_modules/.bin/tsx" "$ROOT_DIR/test/evals/eval-runner.ts" "${ARGS[@]}"

@@ -79,10 +79,12 @@ describe('Boss skill behavior shell runner', () => {
     }
   });
 
-  it('uses the repository-local vite-node runner', () => {
+  it('uses the repository-local tsx runner', () => {
     const source = fs.readFileSync(SCRIPT, 'utf8');
 
-    expect(source).toContain('node_modules/.bin/vite-node');
+    expect(source).toContain('node_modules/.bin/tsx');
+    expect(source).toContain('skill-test-runner.ts');
+    expect(source).not.toContain('vite-node');
     expect(source).not.toContain('ts-node');
   });
 });
