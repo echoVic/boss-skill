@@ -1,10 +1,17 @@
 # boss-skill
 
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
+[![G-Star Incubation](https://img.shields.io/badge/G--Star-Incubation-C71D23)](https://atomgit.com/echoVic/boss-skill)
+[![AtomGit Mirror](https://img.shields.io/badge/AtomGit-Mirror-1F6FEB)](https://atomgit.com/echoVic/boss-skill)
 
 BMAD 全自动项目编排 Skill，适用于所有支持 Skill 的 Coding Agent（Claude Code、OpenClaw、Cursor、Windsurf 等）。
 
 从需求到部署的完整研发流水线，编排 9 个专业 Agent 自动完成完整研发周期。
+
+> 本项目已加入 AtomGit G-Star 孵化计划。GitHub 是唯一主仓，AtomGit 提供自动同步镜像与国内访问入口；Issue 和 Pull Request 请提交到 [GitHub](https://github.com/echoVic/boss-skill)。
+
+- GitHub 主仓：<https://github.com/echoVic/boss-skill>
+- AtomGit 镜像：<https://atomgit.com/echoVic/boss-skill>
 
 ## 安装
 
