@@ -395,6 +395,23 @@ export function errorPayload(err: unknown): { error: CliErrorData } {
       },
     };
   }
+  // 计划文件与落盘哈希不一致：恢复被拒。这不是内部故障，调用方有明确的处置动作，
+  // 因此单列错误码而不是落到 internal_error。
+  const planMismatchMatch = message.match(
+    /^workflow-plan\.json 与落盘时的 workflowHash 不一致，拒绝恢复：(.+)$/m,
+  );
+  if (planMismatchMatch) {
+    return {
+      error: {
+        code: 'workflow_plan_mismatch',
+        message,
+        input: { path: planMismatchMatch[1] },
+        retryable: false,
+        suggestion:
+          '计划文件已被修改或损坏；从版本控制恢复 workflow-plan.json，或用 `boss runtime init-pipeline <feature>` 重新编译计划后再恢复',
+      },
+    };
+  }
   return {
     error: {
       code: 'internal_error',
