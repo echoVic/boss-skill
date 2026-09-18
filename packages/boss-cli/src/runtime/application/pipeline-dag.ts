@@ -223,6 +223,38 @@ function isInputSatisfied(
   return false;
 }
 
+/**
+ * 按 pack 配置收窄某个产物的 agent 列表。
+ *
+ * `config.agents` 声明参与本流水线的 agent；`config.skipFrontend` 单独摘掉前端。
+ * 两者此前都没有读取方——照文档写了 pack 也没有任何效果。
+ *
+ * 之所以在这里收窄而不是按产物跳过：`code` 由 frontend 与 backend 共同产出，
+ * 摘掉前端不等于不产出 code。若收窄后没有任何 agent 可用，该产物无人能产出，
+ * 返回 null 由调用方当作跳过处理，否则流水线会永远等一个不会到来的产物。
+ */
+export function filterAgentsByPack(
+  agent: string | string[],
+  params: PipelineParameters,
+): string | string[] | null {
+  const candidates = (Array.isArray(agent) ? agent : [agent]).filter(
+    (name): name is string => typeof name === 'string' && name.length > 0,
+  );
+  if (candidates.length === 0) return null;
+
+  const active = Array.isArray(params.activeAgents)
+    ? params.activeAgents.filter((name): name is string => typeof name === 'string')
+    : [];
+  const excluded = new Set<string>();
+  if (params.skipFrontend === true) excluded.add('boss-frontend');
+
+  const kept = candidates.filter(
+    (name) => !excluded.has(name) && (active.length === 0 || active.includes(name)),
+  );
+  if (kept.length === 0) return null;
+  return Array.isArray(agent) ? kept : (kept[0] as string);
+}
+
 export function resolveReadyArtifacts(context: {
   cwd: string;
   feature: string;
@@ -240,6 +272,11 @@ export function resolveReadyArtifacts(context: {
     if (isArtifactSkipped(name, context)) continue;
     if (def.optional === true && OPT_IN_OPTIONAL_ARTIFACTS.has(name)) continue;
     if (def.agent == null) continue;
+    const agent = filterAgentsByPack(
+      def.agent,
+      context.execution.parameters || ({} as PipelineParameters),
+    );
+    if (agent == null) continue;
 
     const inputs = Array.isArray(def.inputs) ? def.inputs : [];
     let allReady = true;
@@ -252,7 +289,7 @@ export function resolveReadyArtifacts(context: {
     if (allReady) {
       results.push({
         artifact: name,
-        agent: def.agent,
+        agent,
         stage: def.stage,
       });
     }

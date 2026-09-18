@@ -114,7 +114,6 @@ export function initPipeline(
     parameters: {
       pipelinePack: 'default',
       pipelinePackVersion: '',
-      enabledStages: [],
       enabledGates: [],
       activeAgents: [],
       packConfig: {},

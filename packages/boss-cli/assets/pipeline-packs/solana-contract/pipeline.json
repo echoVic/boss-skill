@@ -10,7 +10,6 @@
   },
   "priority": 10,
   "config": {
-    "stages": [1, 2, 3, 4],
     "roles": "custom",
     "agents": ["boss-pm", "boss-architect", "boss-backend", "boss-qa", "boss-devops"],
     "gates": ["gate0", "gate1", "security-audit"],

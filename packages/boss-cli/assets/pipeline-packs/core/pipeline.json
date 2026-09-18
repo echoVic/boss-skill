@@ -6,7 +6,6 @@
   "author": "Boss Harness Team",
   "license": "MIT",
   "config": {
-    "stages": [1, 3, 4],
     "roles": "core",
     "agents": ["boss-pm", "boss-architect", "boss-frontend", "boss-backend", "boss-qa"],
     "gates": ["gate0", "gate1"],
