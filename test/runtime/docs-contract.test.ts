@@ -91,11 +91,11 @@ const evidenceGatesDesign = fs.readFileSync(
   'utf8',
 );
 const evidenceGatesPlan = fs.readFileSync(
-  path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-evidence-gates.md'),
+  path.join(REPO_ROOT, 'docs', 'archive', 'plans', '2026-05-12-boss-evidence-gates.md'),
   'utf8',
 );
 const multiDriverRuntimePlan = fs.readFileSync(
-  path.join(REPO_ROOT, 'docs', 'superpowers', 'plans', '2026-05-12-boss-multi-driver-runtime.md'),
+  path.join(REPO_ROOT, 'docs', 'archive', 'plans', '2026-05-12-boss-multi-driver-runtime.md'),
   'utf8',
 );
 const orchestrationLoop = fs.readFileSync(

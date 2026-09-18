@@ -3,13 +3,13 @@
  */
 import { EVENT_TYPES } from '../domain/event-types.js';
 import { AGENT_STATUS } from '../domain/state-constants.js';
-import type { AgentState, ExecutionState, RuntimeEvent } from './types.js';
 import {
   ensureAgent,
   ensureStage,
   refreshWorkflowSchedule,
   updateWorkflowAgentNodes,
 } from './helpers.js';
+import type { AgentState, ExecutionState, RuntimeEvent } from './types.js';
 
 export function projectAgentLifecycle(
   state: ExecutionState,

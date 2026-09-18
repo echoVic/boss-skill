@@ -3,7 +3,6 @@
  */
 import { EVENT_TYPES } from '../domain/event-types.js';
 import { PIPELINE_STATUS, STAGE_STATUS } from '../domain/state-constants.js';
-import type { ExecutionState, RuntimeEvent } from './types.js';
 import {
   clone,
   ensureGate,
@@ -13,6 +12,7 @@ import {
   updateWorkflowArtifactNode,
   updateWorkflowNode,
 } from './helpers.js';
+import type { ExecutionState, RuntimeEvent } from './types.js';
 
 export function projectStageLifecycle(
   state: ExecutionState,

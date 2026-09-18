@@ -5,8 +5,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { EVENT_TYPES } from '../domain/event-types.js';
-import { ensureFeatureName, readExecutionView } from './state.js';
-import type { AgentReuseDecision, AgentReuseInput } from './pipeline-types.js';
 import {
   hashFile,
   hashRuntimeValue,
@@ -14,6 +12,8 @@ import {
   readRuntimeEvents,
   sha256Hex,
 } from './pipeline-dag.js';
+import type { AgentReuseDecision, AgentReuseInput } from './pipeline-types.js';
+import { ensureFeatureName, readExecutionView } from './state.js';
 
 function readArtifactDigest(
   cwd: string,
@@ -36,7 +36,10 @@ export function buildAgentFingerprints(
     dependencyArtifacts = [],
     opts = {},
   }: AgentReuseInput & { cwd: string },
-): { promptFingerprint: ReturnType<typeof hashRuntimeValue>; inputDigest: ReturnType<typeof hashRuntimeValue> } {
+): {
+  promptFingerprint: ReturnType<typeof hashRuntimeValue>;
+  inputDigest: ReturnType<typeof hashRuntimeValue>;
+} {
   const promptHash = {
     algorithm: 'sha256' as const,
     value: promptFingerprint || sha256Hex(prompt || ''),

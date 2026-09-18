@@ -3,9 +3,8 @@
  * and plugins registered events.
  */
 import { EVENT_TYPES } from '../domain/event-types.js';
-import type { PluginSummary } from './types.js';
-import type { ExecutionState, RuntimeEvent } from './types.js';
 import { clone, normalizePlugins } from './helpers.js';
+import type { ExecutionState, PluginSummary, RuntimeEvent } from './types.js';
 
 export function projectPluginLifecycle(
   state: ExecutionState,

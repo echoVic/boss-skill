@@ -6,8 +6,19 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { EVENT_TYPES } from '../domain/event-types.js';
-import type { RuntimeEvent } from '../projectors/types.js';
 import { materializeState } from '../projectors/materialize-state.js';
+import type { RuntimeEvent } from '../projectors/types.js';
+import { getPackStateParameters, resolvePipelinePack } from './packs.js';
+import {
+  collectCompletedArtifacts,
+  describeArtifactDag,
+  hashRuntimeValue,
+  loadDagForFeature,
+  resolveReadyArtifacts,
+} from './pipeline-dag.js';
+import { buildGateState, buildStageState } from './pipeline-transitions.js';
+import type { CheckStallResult, ReadyArtifact, StalledAgent } from './pipeline-types.js';
+import { registerPlugins as registerPluginsRuntime } from './plugins.js';
 import {
   type ArtifactDag,
   appendRuntimeEvent,
@@ -19,69 +30,57 @@ import {
   refreshMemory,
   writeJson,
 } from './state.js';
-import { getPackStateParameters, resolvePipelinePack } from './packs.js';
-import { registerPlugins as registerPluginsRuntime } from './plugins.js';
-import { compileWorkflowPlan, createWorkflowExecutionState, persistWorkflowPlan } from './workflow.js';
 import {
-  collectCompletedArtifacts,
-  describeArtifactDag,
-  hashRuntimeValue,
-  loadDagForFeature,
-  resolveReadyArtifacts,
-} from './pipeline-dag.js';
-import { buildStageState, buildGateState } from './pipeline-transitions.js';
-import type {
-  CheckStallResult,
-  ReadyArtifact,
-  StalledAgent,
-} from './pipeline-types.js';
+  compileWorkflowPlan,
+  createWorkflowExecutionState,
+  persistWorkflowPlan,
+} from './workflow.js';
 
 // ── Re-exports ─────────────────────────────────────────────────
 
-// Types
-export type {
-  ReadyArtifact,
-  ArtifactStatus,
-  RuntimeHashDescriptor,
-  ArtifactDagFingerprint,
-  AgentReuseInput,
-  AgentReuseDecision,
-  StalledAgent,
-  CheckStallResult,
-} from './pipeline-types.js';
-export { FORMAL_SOURCE_OF_TRUTH_ARTIFACTS, isFormalSourceOfTruthArtifact } from './pipeline-types.js';
-
-// DAG
-export {
-  getArtifactDagFingerprint,
-  getArtifactStatus,
-  listArtifactStatuses,
-  hashRuntimeValue,
-} from './pipeline-dag.js';
-
 // Artifacts
 export {
-  getArtifactVersion,
   collectCompletedArtifactsVersioned,
+  getArtifactVersion,
   recordArtifact,
   recordArtifacts,
   skipUpTo,
 } from './pipeline-artifacts.js';
-
+// DAG
+export {
+  getArtifactDagFingerprint,
+  getArtifactStatus,
+  hashRuntimeValue,
+  listArtifactStatuses,
+} from './pipeline-dag.js';
+// Agent reuse
+export { evaluateAgentReuse } from './pipeline-reuse.js';
 // Transitions
 export {
-  buildStageState,
   buildGateState,
-  updateStage,
-  updateAgent,
+  buildStageState,
   recordFeedback,
   recordUserChoice,
   retryAgent,
   retryStage,
+  updateAgent,
+  updateStage,
 } from './pipeline-transitions.js';
-
-// Agent reuse
-export { evaluateAgentReuse } from './pipeline-reuse.js';
+// Types
+export type {
+  AgentReuseDecision,
+  AgentReuseInput,
+  ArtifactDagFingerprint,
+  ArtifactStatus,
+  CheckStallResult,
+  ReadyArtifact,
+  RuntimeHashDescriptor,
+  StalledAgent,
+} from './pipeline-types.js';
+export {
+  FORMAL_SOURCE_OF_TRUTH_ARTIFACTS,
+  isFormalSourceOfTruthArtifact,
+} from './pipeline-types.js';
 
 // ── initPipeline ───────────────────────────────────────────────
 

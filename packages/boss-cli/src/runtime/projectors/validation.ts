@@ -1,11 +1,6 @@
 import { EVENT_TYPE_VALUES, EVENT_TYPES, type EventType } from '../domain/event-types.js';
 import { PIPELINE_STATUS, type PipelineStatus } from '../domain/state-constants.js';
-import {
-  isBoolean,
-  isNonEmptyString,
-  isObject,
-  isPositiveInteger,
-} from './helpers.js';
+import { isBoolean, isNonEmptyString, isObject, isPositiveInteger } from './helpers.js';
 import type { ExecutionState, PluginSummary, RuntimeEvent } from './types.js';
 
 function failValidation(message: string, context = ''): never {
@@ -249,7 +244,10 @@ export function validateEvent(event: unknown): asserts event is RuntimeEvent {
   }
 }
 
-export function validateExecutionState(state: unknown, feature: string): asserts state is ExecutionState {
+export function validateExecutionState(
+  state: unknown,
+  feature: string,
+): asserts state is ExecutionState {
   if (!isObject(state)) {
     failValidation('execution state 必须是对象');
   }

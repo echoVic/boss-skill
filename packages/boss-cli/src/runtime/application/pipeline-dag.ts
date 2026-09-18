@@ -6,8 +6,6 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { resolveArtifactDagPath } from '../assets.js';
-import type { ArtifactDag, PipelineExecutionState, PipelineParameters } from './state.js';
-import { ensureFeatureName, readExecutionView, readJson } from './state.js';
 import type { RuntimeEvent } from '../projectors/types.js';
 import type {
   ArtifactDagFingerprint,
@@ -16,6 +14,8 @@ import type {
   RuntimeHashDescriptor,
 } from './pipeline-types.js';
 import { OPT_IN_OPTIONAL_ARTIFACTS } from './pipeline-types.js';
+import type { ArtifactDag, PipelineExecutionState, PipelineParameters } from './state.js';
+import { ensureFeatureName, readExecutionView, readJson } from './state.js';
 
 // ── Hash utilities ──────────────────────────────────────────────
 

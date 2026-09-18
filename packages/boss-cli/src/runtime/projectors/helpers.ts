@@ -1,6 +1,4 @@
-import type {
-  ConversationThread,
-} from '../domain/conversation-types.js';
+import type { ConversationThread } from '../domain/conversation-types.js';
 import { computeNextNodeIds } from '../domain/scheduling.js';
 import {
   AGENT_STATUS,
@@ -8,15 +6,15 @@ import {
   PIPELINE_STATUS,
   STAGE_STATUS,
 } from '../domain/state-constants.js';
-import {
-  type AgentState,
-  type ExecutionState,
-  type GateResult,
-  type GateState,
-  type PluginSummary,
-  type StageState,
-  type WorkflowExecutionNode,
-  type WorkflowExecutionState,
+import type {
+  AgentState,
+  ExecutionState,
+  GateResult,
+  GateState,
+  PluginSummary,
+  StageState,
+  WorkflowExecutionNode,
+  WorkflowExecutionState,
 } from './types.js';
 
 type UnknownRecord = Record<string, unknown>;
