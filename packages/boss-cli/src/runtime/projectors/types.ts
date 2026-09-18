@@ -85,6 +85,13 @@ export interface WorkflowExecutionNode {
   writes?: string[];
   optional: boolean;
   status: WorkflowExecutionNodeStatus;
+  /**
+   * 计划编译时经 spread 带入，写集分组取代它之后已无人读取。
+   * 保留声明是为了让本类型如实描述 execution.json 的落盘内容：
+   * 类型漏掉真实存在的字段，会让任何从类型出发的审计得出错误结论。
+   */
+  parallelGroup?: string;
+  description?: string;
   decision?: string;
   reason?: string;
   updatedAt?: string;

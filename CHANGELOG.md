@@ -61,6 +61,16 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **返工与人工介入从不呈现**：`RevisionRequested` 与 `UserChoiceRecorded` 被完整记进事件流与
+  `execution.json`，却既不参与判断，也不出现在任何面向人的输出里。摘要报告现新增「返工记录」
+  与「人工介入」两节：谁要求谁返工、因为什么、人在哪几步介入过。对一份以可审计性为卖点的
+  产物，这比任何聚合指标都更能说明一次运行到底发生了什么。
+- **事件创建的阶段恒为空名**：初始化只给阶段 1-4 命名，任何由事件首次创建的阶段（自定义
+  pack 的阶段 0 或 5+、init 之前到达的阶段事件）拿到的是空字符串，并一路出现在报表里。
+  现按阶段号回退到与初始化一致的默认名，未知阶段为 `stage-N`。
+- **类型没有如实描述落盘内容**：`parallelGroup` 与 `description` 经 spread 落进
+  `execution.json`，但 `WorkflowExecutionNode` 没有声明它们，`satisfies` 也不做多余属性检查。
+  从类型出发的审计会因此漏掉真实存在的字段。现已补上声明，并加测试比对落盘键与类型声明。
 - **`packHash` 被记录、被文档描述，却没有任何一处读它做判断**：pipeline pack 的指纹在初始化
   时写进 `execution.parameters.packHash`，README 也把它与 `workflowHash`、artifact DAG hash
   并列。但 artifact DAG 有 `isArtifactDagStale` 守卫，pack 没有——改掉 pack 的 stages /

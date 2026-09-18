@@ -172,5 +172,37 @@ export function renderMarkdown(model: SummaryModel): string {
     lines.push('');
   }
 
+  // 返工与人工介入：事件流里一直有，此前从未出现在报告里。对一份以可审计性为卖点的
+  // 产物，「谁要求谁返工、人在哪几步介入过」比任何聚合指标都更能说明这次跑了什么。
+  if (model.revisionRequests.length > 0) {
+    lines.push(
+      '',
+      '## 返工记录',
+      '',
+      '| 发起方 | 接收方 | 产物 | 优先级 | 原因 | 时间 |',
+      '|--------|--------|------|--------|------|------|',
+    );
+    for (const request of model.revisionRequests) {
+      lines.push(
+        `| ${request.from} | ${request.to} | \`${request.artifact}\` | ${request.priority} | ${request.reason} | ${request.timestamp} |`,
+      );
+    }
+  }
+
+  if (model.humanInterventions.length > 0) {
+    lines.push(
+      '',
+      '## 人工介入',
+      '',
+      '| 类型 | 选择 | Agent | 阶段 | 时间 |',
+      '|------|------|-------|------|------|',
+    );
+    for (const entry of model.humanInterventions) {
+      lines.push(
+        `| ${entry.choiceType} | ${entry.selected} | ${entry.agent ?? '-'} | ${entry.stage ?? '-'} | ${entry.timestamp} |`,
+      );
+    }
+  }
+
   return `${lines.join('\n')}\n`;
 }

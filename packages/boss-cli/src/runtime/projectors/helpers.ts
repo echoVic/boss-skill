@@ -53,6 +53,17 @@ export function mergeDeep(base: unknown, override: unknown): unknown {
   return result;
 }
 
+const STAGE_NAMES: Record<string, string> = {
+  '1': 'planning',
+  '2': 'review',
+  '3': 'development',
+  '4': 'deployment',
+};
+
+export function defaultStageName(stageId: string | number): string {
+  return STAGE_NAMES[String(stageId)] ?? `stage-${stageId}`;
+}
+
 export function defaultStageState(name = ''): StageState {
   return {
     name,
@@ -174,7 +185,9 @@ export function ensureConversationSections(state: ExecutionState): void {
 export function ensureStage(state: ExecutionState, stageId: unknown): StageState {
   const key = String(stageId);
   if (!state.stages[key]) {
-    state.stages[key] = defaultStageState();
+    // 事件首次创建的阶段此前恒为空名，并一路出现在报表里。按阶段号给出与
+    // 初始化一致的默认名，未知阶段回退到 stage-N 而不是空字符串。
+    state.stages[key] = defaultStageState(defaultStageName(key));
   }
   const stage = state.stages[key] as StageState;
   stage.artifacts = Array.isArray(stage.artifacts) ? stage.artifacts : [];

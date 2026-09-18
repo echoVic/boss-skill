@@ -51,6 +51,26 @@ export interface SummaryModel {
   plugins: PluginSummary[];
   conversationMetrics: ConversationMetrics;
   derivedTodos: DerivedTodoSummary[];
+  /** 修订请求与人工介入：此前完整记进事件流却从不呈现，报告里看不到返工与人工干预。 */
+  revisionRequests: RevisionRequestSummary[];
+  humanInterventions: HumanInterventionSummary[];
+}
+
+export interface RevisionRequestSummary {
+  from: string;
+  to: string;
+  artifact: string;
+  reason: string;
+  priority: string;
+  timestamp: string;
+}
+
+export interface HumanInterventionSummary {
+  choiceType: string;
+  selected: string;
+  agent?: string;
+  stage?: number;
+  timestamp: string;
 }
 
 function readExecution(feature: string, cwd = process.cwd()): ExecutionState {
@@ -143,6 +163,25 @@ export function buildSummaryModel(
           owner: String(todo.owner),
           status: String(todo.status),
           title: String(todo.title),
+        }))
+      : [],
+    revisionRequests: Array.isArray(execution.revisionRequests)
+      ? execution.revisionRequests.map((request) => ({
+          from: String(request.from ?? ''),
+          to: String(request.to ?? ''),
+          artifact: String(request.artifact ?? ''),
+          reason: String(request.reason ?? ''),
+          priority: String(request.priority ?? 'recommended'),
+          timestamp: String(request.timestamp ?? ''),
+        }))
+      : [],
+    humanInterventions: Array.isArray(execution.humanInterventions)
+      ? (execution.humanInterventions as Array<Record<string, unknown>>).map((entry) => ({
+          choiceType: String(entry.choiceType ?? ''),
+          selected: String(entry.selected ?? ''),
+          agent: entry.agent == null ? undefined : String(entry.agent),
+          stage: entry.stage == null ? undefined : Number(entry.stage),
+          timestamp: String(entry.timestamp ?? ''),
         }))
       : [],
   };
