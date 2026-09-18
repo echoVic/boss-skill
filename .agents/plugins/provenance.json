@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "eecf17ad1461a808a36dc556d873c57894a640ee",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/eecf17ad1461a808a36dc556d873c57894a640ee"
+    "commit": "daf9d1310ee0e4f3d6b684100449a8932e02ad52",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/daf9d1310ee0e4f3d6b684100449a8932e02ad52"
   },
   "publisher": {
     "name": "echoVic",
@@ -28,23 +28,23 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "fc5c1f2c29377e8e2df9b694744955d7ea2544be2ce1e43742833b7f7d0042bb",
-      "bytes": 1592
+      "sha256": "63f5fc68a973f3283972f6170b643787981064af52646c11766428e41626f648",
+      "bytes": 1532
     },
     {
       "path": ".codex-plugin/marketplace.json",
-      "sha256": "e8f0d60738ab9273764cdb58b65c473b05fbd6fa820fefb123f7897942f7a76f",
-      "bytes": 1113
+      "sha256": "7d367284b4300dba8101d101d0204545c5af026ad0868f8a33339944218cc9e3",
+      "bytes": 1065
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "e37ee96e26d9f6828abd3633cb7f074e3534a4dc3162a0d1734f1602bb8cbba7",
-      "bytes": 1778
+      "sha256": "8c05dd8ec33223c25be85f53b4de507b38dbc97723e5025f8836e76056b266b2",
+      "bytes": 1734
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "7bc0f0addcafdc88a228f7f4a9af584f13c8dea0dd11ae3fa046a8594aff43e0",
-      "bytes": 1119
+      "sha256": "3b84290a045e621d4142d6a4a5b600d39c211b02772357253c69502fdefa1738",
+      "bytes": 1071
     },
     {
       "path": ".agents/plugins/marketplace.json",
@@ -105,38 +105,38 @@
     },
     {
       "path": "scripts/hooks/pre-tool-bash.js",
-      "sha256": "01e6ec7816343ca97a720d4e6f39b2b00498660e340d39664e373ed4a2c1e7ba",
-      "bytes": 1397
+      "sha256": "08af3f94468de0b406bade84ba9e278c0b44ec2e4ea11627189d6c37e0d7784f",
+      "bytes": 1411
     },
     {
       "path": "scripts/hooks/pre-tool-write.js",
-      "sha256": "f499f373286e04ac6848926293735a1a394b1049b1403534fb0ec0866dbd7537",
-      "bytes": 3517
+      "sha256": "ca1492f7749ec424636bdff836b2f1cfd912ea4b3e8ad023361bf249d9cc5218",
+      "bytes": 3552
     },
     {
       "path": "scripts/hooks/post-tool-bash.js",
-      "sha256": "89d20a8ed1fe6694da7b6502710dea56a3116ab33a4980df40f8fefb186e97fd",
-      "bytes": 1995
+      "sha256": "a5c2f12af69b1f7033e65a36b55b497bc33831adbe62d67845476869a035275a",
+      "bytes": 2025
     },
     {
       "path": "scripts/hooks/post-tool-write.js",
-      "sha256": "97f4b179dc2f8245e7ebdc673fd35419473a993978fa475c71bcb15e1932bca6",
-      "bytes": 2860
+      "sha256": "77cffa433045de2698d3a0f114f61106ee1374b9449c8e43459d53873803dc8d",
+      "bytes": 2886
     },
     {
       "path": "scripts/hooks/on-stop.js",
-      "sha256": "71a8a79f3d74db0eaccfd8d7f1c2f79101054d28a0634c92e426c91f90a6608a",
-      "bytes": 1287
+      "sha256": "c30ebc7406a6e7eaeffc1f50eabce7642276313f0474424a87a5aad904d0e98c",
+      "bytes": 1288
     },
     {
       "path": "scripts/hooks/session-start.js",
-      "sha256": "bfdadd8813949799d4efdf69256e038280be9794a3717488689b921cdb32125f",
-      "bytes": 2559
+      "sha256": "a0a63859f5e7435b00822d1252ec29276a3cfc74290951609dc77c5c5ab52d25",
+      "bytes": 2592
     },
     {
       "path": "scripts/hooks/session-end.js",
-      "sha256": "13394c58c9bf1aecdae6dbbe3662591a17611d216e375eb151d3d27ab3e73621",
-      "bytes": 2496
+      "sha256": "077e6475dbb384730db54126b9a506030cd8d817ea06ec202590e3ddc2b2632c",
+      "bytes": 2497
     },
     {
       "path": "packages/boss-cli/assets/artifact-dag.json",
