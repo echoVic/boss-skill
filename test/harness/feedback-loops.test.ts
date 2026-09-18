@@ -78,10 +78,11 @@ describe('feedback-loops', () => {
   });
 
   it('rejects when max rounds reached', () => {
+    // 上限按产物计数：两轮必须落在同一个产物上才会触顶
     recordFeedback('test-feat', {
-      from: 'boss-tech-lead',
-      to: 'boss-architect',
-      artifact: 'architecture.md',
+      from: 'boss-qa',
+      to: 'boss-backend',
+      artifact: 'code',
       reason: 'round 1',
       cwd: tmpDir,
     });

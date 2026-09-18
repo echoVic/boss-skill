@@ -61,6 +61,12 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **反馈循环上限是终身的**：`feedbackLoops.currentRound` 只增不减、全仓没有任何重置路径，
+  而 `maxRounds` 是 2。于是一个 feature 一生只能接受两次修订请求，第三次
+  `boss runtime record-feedback` 直接抛错——feature 活得越久，越早失去记录反馈的能力，
+  与长期迭代的用法正面冲突。现按产物分别计数（`feedbackLoops.rounds`）：防死循环的原意
+  保留（同一产物仍最多返工 `maxRounds` 轮），不同产物互不影响。`currentRound` 作为总轮次
+  保留，报表与既有消费方不受影响。旧 run 没有 `rounds` 字段，从 0 起算。
 - **门禁失败却把阶段标记为完成，此前无人反对**：阶段推进的唯一前置校验是状态机表，
   `running:completed` 无条件合法；门禁结果经同一次 `updateStage` 调用的可选参数在阶段完成
   事件之后追加。于是一次调用可以同时写下「门禁未通过」与「阶段已完成」，而

@@ -143,7 +143,7 @@ export function defaultExecutionState(feature = ''): ExecutionState {
     },
     humanInterventions: [],
     revisionRequests: [],
-    feedbackLoops: { maxRounds: 2, currentRound: 0 },
+    feedbackLoops: { maxRounds: 2, currentRound: 0, rounds: {} },
     workflow: undefined,
     pause: null,
   };
