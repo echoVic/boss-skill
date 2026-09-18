@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { readJsonlTolerant } from '../../infrastructure/fs.js';
 import { extractFeatureMemories } from '../memory/extractor.js';
 import { extractPreferenceMemories } from '../memory/preferences.js';
 import { queryAgentMemories } from '../memory/query.js';
@@ -51,15 +52,7 @@ function readEvents(
     return [];
   }
 
-  const raw = fs.readFileSync(filePath, 'utf8').trim();
-  if (!raw) {
-    return [];
-  }
-
-  return raw
-    .split('\n')
-    .filter(Boolean)
-    .map((line: string) => JSON.parse(line) as RuntimeEvent);
+  return readJsonlTolerant<RuntimeEvent>(filePath).records;
 }
 
 export function readFeatureMemory(

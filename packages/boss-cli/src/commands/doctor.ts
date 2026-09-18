@@ -137,12 +137,12 @@ function checkFeatures(cwd: string): DoctorCheck[] {
     }
 
     try {
-      const { records, corruptTail } = readJsonlTolerant(eventsFile);
-      if (corruptTail !== undefined) {
+      const { records, corruptLines } = readJsonlTolerant(eventsFile);
+      if (corruptLines.length > 0) {
         checks.push({
           name: `feature:${feature}`,
           status: 'warn',
-          detail: `事件流末尾有损坏行（疑似写入中途崩溃，将被跳过）：${corruptTail.slice(0, 60)}`,
+          detail: `事件流有 ${corruptLines.length} 条损坏行（疑似写入中途崩溃，将被跳过）：第 ${corruptLines[0]!.line} 行 ${corruptLines[0]!.text.slice(0, 60)}`,
         });
       } else {
         checks.push({

@@ -4,7 +4,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { appendLineSync } from '../../infrastructure/fs.js';
+import { appendLineSync, readJsonlTolerant } from '../../infrastructure/fs.js';
 import { EVENT_TYPES } from '../domain/event-types.js';
 import { materializeState } from '../projectors/materialize-state.js';
 import type { RuntimeEvent } from '../projectors/types.js';
@@ -20,14 +20,9 @@ export function getArtifactVersion(
   ensureFeatureName(feature);
   const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
   if (!fs.existsSync(eventsFile)) return 0;
-  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
-  if (!raw) return 0;
-  return raw
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as RuntimeEvent)
-    .filter((e) => e.type === EVENT_TYPES.ARTIFACT_RECORDED && e.data.artifact === artifactName)
-    .length;
+  return readJsonlTolerant<RuntimeEvent>(eventsFile).records.filter(
+    (e) => e.type === EVENT_TYPES.ARTIFACT_RECORDED && e.data.artifact === artifactName,
+  ).length;
 }
 
 export function collectCompletedArtifactsVersioned(
@@ -37,11 +32,8 @@ export function collectCompletedArtifactsVersioned(
   ensureFeatureName(feature);
   const eventsFile = path.join(cwd, '.boss', feature, '.meta', 'events.jsonl');
   if (!fs.existsSync(eventsFile)) return new Map();
-  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
-  if (!raw) return new Map();
   const map = new Map<string, number>();
-  for (const line of raw.split('\n').filter(Boolean)) {
-    const event = JSON.parse(line) as RuntimeEvent;
+  for (const event of readJsonlTolerant<RuntimeEvent>(eventsFile).records) {
     if (event.type === EVENT_TYPES.ARTIFACT_RECORDED) {
       const name = String(event.data.artifact);
       map.set(name, (map.get(name) ?? 0) + 1);
@@ -64,8 +56,8 @@ function backupArtifactVersion(
 }
 
 function readNextEventId(eventsFile: string): number {
-  const raw = fs.readFileSync(eventsFile, 'utf8').trim();
-  return raw ? raw.split('\n').length + 1 : 1;
+  // 与 state.appendEvent 一致：只数可解析的记录，损坏行不占用 id，避免 id 撞车
+  return readJsonlTolerant(eventsFile).records.length + 1;
 }
 
 function assertSafeArtifactName(artifact: string): void {

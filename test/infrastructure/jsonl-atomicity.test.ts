@@ -61,22 +61,26 @@ describe('readJsonlTolerant', () => {
   it('returns empty for an empty file', () => {
     const file = tmpFile();
     fs.writeFileSync(file, '');
-    expect(readJsonlTolerant(file)).toEqual({ records: [] });
+    expect(readJsonlTolerant(file)).toEqual({ records: [], corruptLines: [] });
   });
 
   it('tolerates a corrupt trailing line (crash mid-write) and reports it', () => {
     // 模拟原子追加中途崩溃：最后一行是半条 JSON
     const file = tmpFile();
     fs.writeFileSync(file, '{"id":1}\n{"id":2}\n{"id":3'); // 末行截断
-    const { records, corruptTail } = readJsonlTolerant<{ id: number }>(file);
+    const { records, corruptLines } = readJsonlTolerant<{ id: number }>(file);
     expect(records.map((r) => r.id)).toEqual([1, 2]);
-    expect(corruptTail).toBe('{"id":3');
+    expect(corruptLines).toEqual([{ line: 3, text: '{"id":3' }]);
   });
 
-  it('throws when a NON-tail line is corrupt (tampering, not a crash)', () => {
+  it('reports a corrupt line in the middle instead of throwing', () => {
+    // 崩溃残留被下一次追加补换行隔离后就停在中间：抛错会让一次崩溃永久毁掉事件流，
+    // 而事件流没有完整性校验链，抛错也拦不住真正的篡改。跳过并上报即可。
     const file = tmpFile();
     fs.writeFileSync(file, '{"id":1}\n{bad}\n{"id":3}\n');
-    expect(() => readJsonlTolerant(file)).toThrow(/非末行/);
+    const { records, corruptLines } = readJsonlTolerant<{ id: number }>(file);
+    expect(records.map((r) => r.id)).toEqual([1, 3]);
+    expect(corruptLines).toEqual([{ line: 2, text: '{bad}' }]);
   });
 
   it('append-then-read round-trips and a truncated tail is recoverable', () => {

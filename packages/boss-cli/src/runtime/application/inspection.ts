@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { readJsonlTolerant } from '../../infrastructure/fs.js';
 import type { FeatureMemorySummary } from '../memory/store.js';
 import {
   type ExecutionState,
@@ -85,14 +86,7 @@ export function readEvents(feature: string, cwd = process.cwd()): RuntimeEvent[]
   if (!fs.existsSync(eventsPath)) {
     throw new Error(`未找到事件文件: ${path.relative(cwd, eventsPath)}`);
   }
-  const raw = fs.readFileSync(eventsPath, 'utf8').trim();
-  if (!raw) {
-    return [];
-  }
-  return raw
-    .split('\n')
-    .filter(Boolean)
-    .map((line: string) => JSON.parse(line) as RuntimeEvent);
+  return readJsonlTolerant<RuntimeEvent>(eventsPath).records;
 }
 
 export function readProgress(feature: string, cwd = process.cwd()): Array<Record<string, unknown>> {
@@ -100,14 +94,7 @@ export function readProgress(feature: string, cwd = process.cwd()): Array<Record
   if (!fs.existsSync(progressPath)) {
     return [];
   }
-  const raw = fs.readFileSync(progressPath, 'utf8').trim();
-  if (!raw) {
-    return [];
-  }
-  return raw
-    .split('\n')
-    .filter(Boolean)
-    .map((line: string) => JSON.parse(line) as Record<string, unknown>);
+  return readJsonlTolerant<Record<string, unknown>>(progressPath).records;
 }
 
 function sortedStageEntries(

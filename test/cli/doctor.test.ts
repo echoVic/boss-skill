@@ -97,7 +97,7 @@ describe('boss doctor', () => {
     expect(report.checks.find((c) => c.name === 'feature:demo')?.status).toBe('warn');
   });
 
-  it('errors (exit 1) on a corrupt non-trailing event line', () => {
+  it('warns (exit 0) on a corrupt non-trailing event line', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-doctor-'));
     initFeature(tmpDir);
     const eventsFile = path.join(tmpDir, '.boss', 'demo', '.meta', 'events.jsonl');
@@ -108,9 +108,15 @@ describe('boss doctor', () => {
     fs.writeFileSync(eventsFile, lines.join('\n') + '\n', 'utf8');
 
     const result = runDoctor(['--json'], tmpDir);
-    expect(result.status).toBe(1);
-    const report = JSON.parse(result.stdout) as { status: string };
-    expect(report.status).toBe('error');
+    expect(result.status).toBe(0);
+    const report = JSON.parse(result.stdout) as {
+      status: string;
+      checks: Array<{ name: string; status: string; detail: string }>;
+    };
+    expect(report.status).toBe('warn');
+    const check = report.checks.find((c) => c.name === 'feature:demo');
+    expect(check?.status).toBe('warn');
+    expect(check?.detail).toContain('损坏行');
   });
 
   it('exposes describe metadata', () => {

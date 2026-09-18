@@ -62,10 +62,10 @@ export function applyEvent(
 }
 
 export function readEvents(eventsFile: string): RuntimeEvent[] {
-  const { records, corruptTail } = readJsonlTolerant(eventsFile);
-  if (corruptTail !== undefined) {
+  const { records, corruptLines } = readJsonlTolerant(eventsFile);
+  for (const corrupt of corruptLines) {
     process.stderr.write(
-      `[boss-skill] 跳过 events.jsonl 末尾的损坏行（疑似写入中途崩溃，视作该事件未记录）: ${corruptTail.slice(0, 120)}\n`,
+      `[boss-skill] 跳过 events.jsonl 第 ${corrupt.line} 行的损坏行（疑似写入中途崩溃，视作该事件未记录）: ${corrupt.text.slice(0, 120)}\n`,
     );
   }
   return records.map((event) => {

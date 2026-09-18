@@ -63,16 +63,19 @@ describe('Boss runtime fault injection', () => {
     expect(next.id).toBe(validCount + 1);
   });
 
-  it('rejects a corrupt NON-trailing event line as tampering', () => {
+  it('skips a corrupt NON-trailing event line instead of failing the feature', () => {
     const eventsFile = path.join(tmpDir, '.boss', 'fault-feature', '.meta', 'events.jsonl');
     // 先追加一条真实事件，确保损坏行能落在「中间」而非末尾
     appendRuntimeEvent(tmpDir, 'fault-feature', EVENT_TYPES.STAGE_STARTED, { stage: 1 });
     const lines = eventsText().trim().split('\n');
     expect(lines.length).toBeGreaterThanOrEqual(2);
-    // 在中间插入损坏行（保证其后仍有合法行）——这不是崩溃残留，而是真正的损坏/篡改
+    // 崩溃残留被后续追加补换行隔离后就停在中间，抛错会让整个 feature 永久不可读
     lines.splice(1, 0, '{corrupt}');
     fs.writeFileSync(eventsFile, lines.join('\n') + '\n', 'utf8');
-    expect(() => materializeState('fault-feature', tmpDir)).toThrow(/非末行|not.*JSON/i);
+
+    const { state, eventCount } = materializeState('fault-feature', tmpDir);
+    expect(eventCount).toBe(lines.length - 1);
+    expect(state.feature).toBe('fault-feature');
   });
 
   it('rejects missing Markdown artifact recording without mutating the trace', () => {
