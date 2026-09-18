@@ -7,9 +7,9 @@
     "outDir": "dist",
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": false,
     "skipLibCheck": true,
-    "resolveJsonModule": false
+    "resolveJsonModule": false,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"]
 }

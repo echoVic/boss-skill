@@ -56,7 +56,7 @@
   },
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" --input-type=commonjs && tsc -p packages/boss-cli/tsconfig.json",
-    "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --esModuleInterop false --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
+    "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:faults": "vitest run test/faults",
@@ -87,7 +87,7 @@
     "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^4.1.10",
     "tsx": "^4.23.13",
-    "typescript": "^5.8.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },
   "dependencies": {
