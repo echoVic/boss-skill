@@ -18,4 +18,4 @@ if [[ "$#" -eq 0 ]]; then
   exit 1
 fi
 
-"$ROOT_DIR/node_modules/.bin/vite-node" --script "$ROOT_DIR/test/skills/skill-test-runner.ts" "$@"
+"$ROOT_DIR/node_modules/.bin/tsx" "$ROOT_DIR/test/skills/skill-test-runner.ts" "$@"
