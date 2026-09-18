@@ -7,6 +7,7 @@ import { materializeState } from '../projectors/materialize-state.js';
 import type { PipelinePackDefinition } from './packs.js';
 import type { RuntimeHashDescriptor } from './pipeline.js';
 import { evaluateAgentReuse } from './pipeline.js';
+import { stableStringify } from './pipeline-dag.js';
 import type { ArtifactDag } from './state.js';
 import {
   appendRuntimeEvent,
@@ -15,8 +16,6 @@ import {
   readJson,
   writeJson,
 } from './state.js';
-
-type UnknownRecord = Record<string, unknown>;
 
 export type WorkflowNodeKind = 'input' | 'agent' | 'gate';
 export type WorkflowResumeDecision = 'reuse' | 'run' | 'skip';
@@ -137,25 +136,17 @@ function sha256Hex(value: string | Buffer): string {
 }
 
 /**
- * 与 JSON.stringify 语义一致的稳定序列化（键按字典序）。
- *
- * 必须与 JSON.stringify 对 undefined 的处理保持一致：对象里值为 undefined 的键会被丢弃，
- * 数组里的 undefined 会变成 null。否则「内存中对象的哈希」与「写进文件的字节的哈希」
- * 会在缺少可选字段时不相等，落盘的 workflowHash 也就无法证明计划文件没被改过。
+ * pipeline pack 的指纹。编译计划与检测 pack 漂移必须调用同一个函数：
+ * 若两处各自内联字段列表，其中一处漏掉一个字段，漂移检查就会对该字段的变化视而不见。
  */
-function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value) ?? 'null';
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => (item === undefined ? 'null' : stableStringify(item))).join(',')}]`;
-  }
-  const object = value as UnknownRecord;
-  return `{${Object.keys(object)
-    .filter((key) => object[key] !== undefined)
-    .sort()
-    .map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`)
-    .join(',')}}`;
+export function hashPipelinePack(pack: PipelinePackDefinition): RuntimeHashDescriptor {
+  return hashWorkflowValue({
+    name: pack.name,
+    version: pack.version,
+    type: pack.type,
+    priority: pack.priority,
+    config: pack.config,
+  });
 }
 
 export function hashWorkflowValue(value: unknown): RuntimeHashDescriptor {
@@ -306,13 +297,7 @@ export function compileWorkflowPlan({
       pack: {
         name: pack.name,
         version: pack.version,
-        hash: hashWorkflowValue({
-          name: pack.name,
-          version: pack.version,
-          type: pack.type,
-          priority: pack.priority,
-          config: pack.config,
-        }),
+        hash: hashPipelinePack(pack),
       },
       artifactDag: artifactDagFingerprint,
     },

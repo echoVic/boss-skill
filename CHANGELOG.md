@@ -61,6 +61,16 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **`packHash` 被记录、被文档描述，却没有任何一处读它做判断**：pipeline pack 的指纹在初始化
+  时写进 `execution.parameters.packHash`，README 也把它与 `workflowHash`、artifact DAG hash
+  并列。但 artifact DAG 有 `isArtifactDagStale` 守卫，pack 没有——改掉 pack 的 stages /
+  agents / gates 之后恢复，仍会复用按旧流水线产出的 agent 产物，且无从察觉。现补上与 DAG
+  对称的 `isPipelinePackStale`，结果进入 agent 复用判定（`pipeline-pack-stale`）。pack 指纹
+  的计算收敛到 `hashPipelinePack()`，避免编译与校验两处各自内联字段列表而漏掉某个字段。
+- **第二份 `stableStringify` 仍有同一个 undefined 缺陷**：修 `workflowHash` 时只改了
+  `workflow.ts` 里的那份，`pipeline-dag.ts` 里支撑 `hashRuntimeValue`（agent 复用指纹、
+  `runId`）的那份没动。现已合并为唯一实现，`workflow.ts` 直接复用。副作用同上：升级后
+  首次运行可能不复用上一轮的 agent 产物。
 - **恢复时不校验 workflow-plan.json**：计划在初始化时被编译、落盘，哈希记进
   `execution.parameters.workflowHash`，但 `resumeWorkflow()` 只是把这个哈希透传给调度器，
   从不复算比对。于是被改过或损坏的计划会被当成原计划继续调度——节点集合、依赖边、门禁

@@ -24,15 +24,25 @@ export function sha256Hex(value: string | Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
+/**
+ * 与 JSON.stringify 语义一致的稳定序列化（键按字典序）。
+ *
+ * 必须与 JSON.stringify 对 undefined 的处理保持一致：对象里值为 undefined 的键会被丢弃，
+ * 数组里的 undefined 会变成 null。否则「内存中对象的哈希」与「它写进 JSON 再读回来的哈希」
+ * 在缺少可选字段时不相等，这种哈希就证明不了任何落盘内容。
+ *
+ * 全仓唯一实现：workflow.ts 直接复用本函数，不要再写第二份。
+ */
 export function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? 'null';
   }
   if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+    return `[${value.map((item) => (item === undefined ? 'null' : stableStringify(item))).join(',')}]`;
   }
   const object = value as Record<string, unknown>;
   return `{${Object.keys(object)
+    .filter((key) => object[key] !== undefined)
     .sort()
     .map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`)
     .join(',')}}`;

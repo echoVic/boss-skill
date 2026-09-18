@@ -5,6 +5,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { EVENT_TYPES } from '../domain/event-types.js';
+import { resolvePipelinePack } from './packs.js';
 import {
   hashFile,
   hashRuntimeValue,
@@ -14,6 +15,28 @@ import {
 } from './pipeline-dag.js';
 import type { AgentReuseDecision, AgentReuseInput } from './pipeline-types.js';
 import { ensureFeatureName, readExecutionView } from './state.js';
+import { hashPipelinePack } from './workflow.js';
+
+/**
+ * pipeline pack 是否已与初始化时不同。
+ *
+ * 与 `isArtifactDagStale` 对称：初始化时 pack 的指纹写进 `execution.parameters.packHash`，
+ * 这里重算当前 pack 的指纹并比对。此前这个字段被记录、被文档描述，却没有任何一处读它做判断，
+ * 于是改掉 pack 的 stages / agents / gates 之后恢复，仍会复用按旧流水线产出的 agent 产物。
+ * 取不到当前 pack 时按「已漂移」处理：宁可重跑，不可拿不确定的前提复用。
+ */
+export function isPipelinePackStale(
+  cwd: string,
+  execution = {} as { parameters?: Record<string, unknown> },
+): boolean {
+  const recorded = execution.parameters?.packHash;
+  if (typeof recorded !== 'string' || recorded.length === 0) return false;
+  try {
+    return hashPipelinePack(resolvePipelinePack(cwd)).value !== recorded;
+  } catch {
+    return true;
+  }
+}
 
 function readArtifactDigest(
   cwd: string,
@@ -83,6 +106,7 @@ export function evaluateAgentReuse(
   }
   const execution = readExecutionView(cwd, feature);
   const dagStale = isArtifactDagStale(cwd, feature, execution);
+  const packStale = isPipelinePackStale(cwd, execution);
   const fingerprints = buildAgentFingerprints(feature, agent, stageNumber, {
     cwd,
     prompt,
@@ -106,6 +130,7 @@ export function evaluateAgentReuse(
       reusable: false,
       reason: 'no-completed-agent-event',
       dagStale,
+      packStale,
       ...fingerprints,
     };
   }
@@ -115,6 +140,7 @@ export function evaluateAgentReuse(
       reusable: false,
       reason: 'prompt-fingerprint-changed',
       dagStale,
+      packStale,
       completedEventId: completed.id,
       ...fingerprints,
     };
@@ -125,15 +151,21 @@ export function evaluateAgentReuse(
       reusable: false,
       reason: 'input-digest-changed',
       dagStale,
+      packStale,
       completedEventId: completed.id,
       ...fingerprints,
     };
   }
 
   return {
-    reusable: !dagStale,
-    reason: dagStale ? 'artifact-dag-stale' : 'input-digest-matched',
+    reusable: !dagStale && !packStale,
+    reason: dagStale
+      ? 'artifact-dag-stale'
+      : packStale
+        ? 'pipeline-pack-stale'
+        : 'input-digest-matched',
     dagStale,
+    packStale,
     completedEventId: completed.id,
     ...fingerprints,
   };
