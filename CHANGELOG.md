@@ -61,6 +61,18 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **流水线跑完后各个面仍各说各话**（同一次实跑的后续发现）：全部阶段完成、
+  `nextNodeIds` 为空、workflow 节点为 `completed` 之后，`boss status` 仍打印
+  `Ready artifacts: code`、`CHECKPOINT_REQUIRED` 和 `Continue: boss continue`。三处根因：
+  ① 「code 是否完成」有两套依据——workflow 节点看 `ArtifactRecorded`，而 `isArtifactDone`
+  只看 stage 3 的 agent 状态、完全不看产物是否被记录；编排循环第 7 步明写「记录产物 →
+  artifact node 进入 completed」，故记录本身即完成信号，现两条路径都认。
+  ② `defaultRequiredChecks` 只看 `stage.id >= 3`，不看流水线是否已完成。
+  ③ 已完成的流水线仍回显 `boss continue`，把用户指向一个空操作。
+- **`artifact prepare` 回显的模板路径不可用**：一律取 `path.relative(cwd, templatePath)`，
+  内置模板会变成一条从用户项目指向 boss 安装位置的穿越路径（实跑见到
+  `../boss-sched/skill/templates/prd.md.template`），既打不开也不说明来源。现改为项目模板
+  回显项目内相对路径、内置模板只回显模板名，并新增 `templateSource` 字段区分两者。
 - **两个调度面给出不同的工作集，编排循环的终止条件因此不可达**（实跑一遍完整流水线
   发现）：`orchestration-loop.md` 规定「调度以 `execution.workflow.nextNodeIds` 为准」，
   `get-ready-artifacts` 只是兼容入口。但只有兼容入口排除了 opt-in 可选产物
