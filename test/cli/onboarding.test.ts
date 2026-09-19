@@ -102,3 +102,23 @@ describe('unknown commands suggest the closest real one', () => {
     expect(payload.error.suggestion).toContain('doctor');
   });
 });
+
+/**
+ * help 里给出的每一条命令都必须真的能跑。
+ *
+ * 上一版 help 写的是「gate FEATURE — add `final` for the release gate」，读者自然会敲
+ * `boss gate <feature> final`，而正确写法是 `boss gate final <feature>`（子命令在前）。
+ * 错误的帮助比没有帮助更糟：它让人确信自己敲对了。
+ */
+describe('help only advertises invocations that work', () => {
+  it('shows the release gate with the subcommand first', () => {
+    const { stdout } = run(['--help']);
+    expect(stdout).toContain('gate final FEATURE');
+  });
+
+  it('rejects the transposed form so the help stays honest', () => {
+    const { stderr, status } = run(['gate', 'demo', 'final', '--json']);
+    expect(status).toBe(1);
+    expect(stderr).toContain('多余的参数');
+  });
+});

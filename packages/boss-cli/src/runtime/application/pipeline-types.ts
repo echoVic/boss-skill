@@ -62,16 +62,10 @@ export const FORMAL_SOURCE_OF_TRUTH_ARTIFACTS = Object.freeze([
   'tasks.md',
 ] as const);
 
-const OPT_IN_OPTIONAL_ARTIFACTS = new Set([
-  'strategic-review.md',
-  'ui-design-variants.json',
-  'changelog.md',
-]);
-
 export function isFormalSourceOfTruthArtifact(artifact: string): boolean {
   return FORMAL_SOURCE_OF_TRUTH_ARTIFACTS.includes(
     artifact as (typeof FORMAL_SOURCE_OF_TRUTH_ARTIFACTS)[number],
   );
 }
 
-export { OPT_IN_OPTIONAL_ARTIFACTS };
+export { OPT_IN_OPTIONAL_ARTIFACTS } from '../domain/scheduling.js';
