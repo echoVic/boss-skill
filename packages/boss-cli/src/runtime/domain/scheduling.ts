@@ -8,6 +8,20 @@
  * - 纯函数、无 IO，被 application 与 projectors 两层共用，避免调度语义漂移。
  */
 
+/**
+ * 只在显式要求时才产出的可选产物。
+ *
+ * 它们不进入自动调度：为一个后端 API 产出 UI 变体或市场 ROI 分析是纯粹的浪费。
+ * 此前这份名单只有 `resolveReadyArtifacts`（兼容入口）在用，权威的 workflow 调度
+ * 面不认它——两个面给出不同的工作集，而 `nextNodeIds` 永远不会空，
+ * 编排循环的终止条件因此不可达。常量放在 domain 层，两层共用同一份策略。
+ */
+export const OPT_IN_OPTIONAL_ARTIFACTS: ReadonlySet<string> = new Set([
+  'strategic-review.md',
+  'ui-design-variants.json',
+  'changelog.md',
+]);
+
 /** 参与调度的最小节点形状。两层各自的节点类型都结构兼容这个接口。 */
 export interface SchedulableNode {
   id: string;

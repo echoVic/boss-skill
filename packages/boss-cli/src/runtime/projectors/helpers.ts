@@ -1,5 +1,5 @@
 import type { ConversationThread } from '../domain/conversation-types.js';
-import { computeNextNodeIds } from '../domain/scheduling.js';
+import { computeNextNodeIds, OPT_IN_OPTIONAL_ARTIFACTS } from '../domain/scheduling.js';
 import {
   AGENT_STATUS,
   DEFAULT_SCHEMA_VERSION,
@@ -266,6 +266,25 @@ export function refreshWorkflowSchedule(state: ExecutionState, timestamp?: strin
 
   for (const [id, rawNode] of Object.entries(workflow.nodes)) {
     const node = normalizeWorkflowNode(rawNode);
+    // 只在显式要求时才产出的可选产物不进入调度：留在 ready 会让 nextNodeIds 永不为空，
+    // 编排循环第 13 步「直到 nextNodeIds 为空」因此不可达。真被产出时 ArtifactRecorded
+    // 会把它推到 completed，不受这里影响。
+    if (
+      node.kind !== 'input' &&
+      node.optional === true &&
+      typeof node.artifact === 'string' &&
+      OPT_IN_OPTIONAL_ARTIFACTS.has(node.artifact) &&
+      !isSatisfiedWorkflowStatus(node.status)
+    ) {
+      workflow.nodes[id] = {
+        ...node,
+        status: 'skipped',
+        decision: node.decision ?? 'skip',
+        reason: node.reason ?? 'opt-in-only-artifact',
+        updatedAt: node.updatedAt ?? timestamp,
+      };
+      continue;
+    }
     if (node.kind === 'input') {
       workflow.nodes[id] = {
         ...node,

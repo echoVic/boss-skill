@@ -61,6 +61,17 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **两个调度面给出不同的工作集，编排循环的终止条件因此不可达**（实跑一遍完整流水线
+  发现）：`orchestration-loop.md` 规定「调度以 `execution.workflow.nextNodeIds` 为准」，
+  `get-ready-artifacts` 只是兼容入口。但只有兼容入口排除了 opt-in 可选产物
+  （`strategic-review.md`、`ui-design-variants.json`、`changelog.md`），权威面不排除。
+  实跑时兼容入口返回 `["code"]`，`nextNodeIds` 却多出四项；这些节点永远停在 `ready`，
+  循环第 13 步「直到 nextNodeIds 为空」永不成立。照文档跑的编排器要么死循环，要么被迫
+  为一个后端 API 产出 UI 变体与市场 ROI 分析。现把这份名单下沉到 domain 层由两层共用，
+  投影时把未被显式要求的 opt-in 节点标为 `skipped`（真被产出时仍会正常转入 `completed`）。
+- **`boss --help` 给出的最终门禁写法是错的**：上一版写「add `final` for the release gate」，
+  读者自然敲 `boss gate <feature> final`，而正确写法是 `boss gate final <feature>`。
+  已改为单列一行，并加测试钉住「help 广告的每条调用都真的能跑」。
 - **产物平铺成一堆同等重要的文件**：一次运行会在 `.boss/<feature>/` 顶层留下 14 个文件
   （7 份 Markdown + 5 份 HTML 伴生 + ui-design.json 等），但它们寿命完全不同：
   prd / architecture / ui-spec 跨迭代维护，tasks / qa-report / deploy-report 跑完即过期，
