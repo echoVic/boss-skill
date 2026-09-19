@@ -395,6 +395,83 @@ export function errorPayload(err: unknown): { error: CliErrorData } {
       },
     };
   }
+  // 领域条件不是内部故障：下面每一条调用方都有明确的下一步，归到 internal_error
+  // 会让人以为是工具坏了，而附带的「--describe 确认参数」建议也毫无帮助。
+  const domainErrors: Array<{
+    pattern: RegExp;
+    code: string;
+    suggestion: (match: RegExpMatchArray) => string;
+  }> = [
+    {
+      pattern: /^Agent (\S+) 已达最大重试次数/,
+      code: 'retry_budget_exhausted',
+      suggestion: (m) =>
+        `Agent ${m[1]} 的重试预算已用尽；按编排循环升级到 \`boss runtime retry-stage <feature> <stage>\`，它会重置该阶段所有 agent 的预算`,
+    },
+    {
+      pattern: /^阶段 (\S+) 已达最大重试次数/,
+      code: 'retry_budget_exhausted',
+      suggestion: (m) =>
+        `阶段 ${m[1]} 的重试预算已用尽；需要人工介入排查失败原因，或重新初始化该 feature`,
+    },
+    {
+      pattern: /^无效的状态转换: (\S+) → (\S+)/,
+      code: 'invalid_state_transition',
+      suggestion: (m) =>
+        `当前状态是 ${m[1]}，不能直接转到 ${m[2]}；合法路径见 \`boss runtime update-stage --describe\`（pending→running→completed/failed，failed→retrying→running）`,
+    },
+    {
+      pattern: /^fromRunId does not match active runId: (\S+)/,
+      code: 'run_id_mismatch',
+      suggestion: () =>
+        '该 feature 的当前 runId 不是这个值；用 `boss status <feature> --json` 查看 parameters.runId 后重试',
+    },
+    {
+      pattern: /^产物 (\S+) 的反馈循环已达上限/,
+      code: 'feedback_budget_exhausted',
+      suggestion: (m) =>
+        `产物 ${m[1]} 的返工轮次已用尽；继续返工前应由人判断是否该改需求或架构，而不是再发一轮修订`,
+    },
+    {
+      pattern:
+        /^(?:Expected property name|Unexpected token|Unexpected end of JSON input|Expected ',' or)/,
+      code: 'state_unreadable',
+      suggestion: () =>
+        '某个 JSON 文件无法解析。若是 .boss/<feature>/.meta/execution.json，它只是事件流的投影，可用 `boss runtime rebuild-state <feature>` 从 events.jsonl 重建',
+    },
+    {
+      pattern: /^门禁脚本未找到: (\S+)/,
+      code: 'gate_not_found',
+      suggestion: (m) =>
+        `未找到门禁 ${m[1]}；内置门禁为 gate0 / gate1 / gate2，自定义门禁需放在 .boss/plugins/<name>/ 并先跑 \`boss runtime register-plugins <feature>\``,
+    },
+    {
+      pattern: /^多余的参数: (\S+)/,
+      code: 'invalid_usage',
+      suggestion: (m) =>
+        `多出一个位置参数 ${m[1]}；若想传布尔值，注意本 CLI 用成对旗标（如 --gate-passed / --gate-failed）而不是 --flag <value>。用 --describe 查看该命令支持的选项`,
+    },
+    {
+      pattern: /^阶段 (\S+) 状态为 \S+，只有 failed 状态可以重试/,
+      code: 'invalid_state_transition',
+      suggestion: (m) =>
+        `只有 failed 状态的阶段可以重试；先用 \`boss runtime update-stage <feature> ${m[1]} failed --reason <原因>\` 记录失败`,
+    },
+  ];
+  for (const entry of domainErrors) {
+    const match = message.match(entry.pattern);
+    if (match) {
+      return {
+        error: {
+          code: entry.code,
+          message,
+          retryable: false,
+          suggestion: entry.suggestion(match),
+        },
+      };
+    }
+  }
+
   // 缺少必填参数属于用法错误：调用方有明确的处置动作（照 usage 补参数），
   // 归到 internal_error 会让人以为是工具坏了。
   const usageMatch = message.match(/^Usage:\s*(.+)$/);

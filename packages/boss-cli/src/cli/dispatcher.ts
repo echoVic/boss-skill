@@ -71,6 +71,7 @@ const runtimeCommands: Record<string, () => Promise<RuntimeModule>> = {
   'list-todos': () => import('../commands/runtime/list-todos.js'),
   'register-plugins': () => import('../commands/runtime/register-plugins.js'),
   'render-diagnostics': () => import('../commands/runtime/render-diagnostics.js'),
+  'rebuild-state': () => import('../commands/runtime/rebuild-state.js'),
   'replay-events': () => import('../commands/runtime/replay-events.js'),
   'report-agent-status': () => import('../commands/runtime/report-agent-status.js'),
   'retry-agent': () => import('../commands/runtime/retry-agent.js'),

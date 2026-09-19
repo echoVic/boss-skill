@@ -48,6 +48,11 @@ export function projectStageLifecycle(
       const stage = ensureStage(state, event.data.stage);
       stage.status = STAGE_STATUS.RETRYING;
       stage.retryCount += 1;
+      // 阶段重试是「agent 重试耗尽」之后的升级手段，必须给这一阶段的 agent 重新发预算。
+      // 否则升级之后 retry-agent 仍报「已达最大重试次数」，恢复阶梯最上面一级是空的。
+      for (const agent of Object.values(stage.agents ?? {})) {
+        if (agent) agent.retryCount = 0;
+      }
       state.metrics.retryTotal += 1;
       state.status = PIPELINE_STATUS.RUNNING;
       state.pause = null;

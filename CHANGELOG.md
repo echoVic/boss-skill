@@ -61,6 +61,26 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **投影损坏后无路可走**（10 轮实测第 9 轮）：架构主张是「事件是真相源，
+  `execution.json` 只是只读投影」，但 38 个 runtime 子命令里没有任何一个能重建它
+  （`replay-events` 只读）。投影一旦损坏，事件流完好也没用——每条命令先
+  `readExecutionView`，抛出裸 JSON 解析错误，feature 从此不可用。新增
+  `boss runtime rebuild-state <feature>` 从事件流重建，并把无法解析 JSON 的错误
+  单列为 `state_unreadable`，建议直接指向该命令。
+- **暂停在有阶段运行时无效**（第 6 轮）：`finalize` 先按阶段状态推导 `status`，
+  只在没有 running/retrying 阶段时才回落到 `paused`。于是在唯一值得暂停的时刻，
+  `pause.paused` 记下了 true 而派生的 `status` 仍是 `running`，连带两个守卫一起失效：
+  重复 pause 不再被拒、`update-stage running` 的自动恢复也不再触发。现改为显式暂停
+  压过运行中推断（全部阶段完成时仍报 `completed`）。
+- **阶段重试不重置 agent 的重试预算**（第 2 轮）：编排循环第 8 步规定「Agent 达上限后
+  才用 retry-stage」，但 `retry-stage` 只把阶段推回 running，不动 agent 的 `retryCount`，
+  升级之后 `retry-agent` 仍报「已达最大重试次数」——恢复阶梯最上面一级是空的。
+  现 `StageRetrying` 投影时重置该阶段所有 agent 的预算（其它阶段不受影响）。
+- **八条领域条件被报成 `internal_error`**（第 2、3、4、5、9 轮）：重试预算耗尽、
+  阶段重试耗尽、非法状态转换、runId 不匹配、反馈循环耗尽、门禁未找到、多余位置参数、
+  JSON 无法解析——全部附带同一句无用建议「Re-run with --describe」。现各自单列错误码
+  并给出可执行的下一步（例如重试耗尽指向 `retry-stage`，多余位置参数解释本 CLI 用的是
+  成对旗标 `--gate-passed` / `--gate-failed` 而非 `--flag <value>`）。
 - **流水线跑完后各个面仍各说各话**（同一次实跑的后续发现）：全部阶段完成、
   `nextNodeIds` 为空、workflow 节点为 `completed` 之后，`boss status` 仍打印
   `Ready artifacts: code`、`CHECKPOINT_REQUIRED` 和 `Continue: boss continue`。三处根因：
