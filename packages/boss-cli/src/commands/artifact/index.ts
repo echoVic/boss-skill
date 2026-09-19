@@ -30,6 +30,24 @@ function showHelp(): void {
   );
 }
 
+/**
+ * 模板的可用引用：项目自带模板回显项目内相对路径，内置模板只回显模板名。
+ *
+ * 此前一律用 `path.relative(cwd, templatePath)`，内置模板会变成一条从用户项目指向
+ * boss 安装位置的穿越路径（实跑见到 `../boss-sched/skill/templates/prd.md.template`），
+ * 既打不开也不说明来源。
+ */
+function describeTemplate(
+  cwd: string,
+  templatePath: string,
+): { template: string; templateSource: 'project' | 'bundled' } {
+  const projectRoot = path.join(cwd, '.boss', 'templates');
+  if (templatePath.startsWith(projectRoot + path.sep)) {
+    return { template: path.relative(cwd, templatePath), templateSource: 'project' };
+  }
+  return { template: path.basename(templatePath), templateSource: 'bundled' };
+}
+
 function resolveTemplate(cwd: string, templateName: string): string {
   const projectTemplate = path.join(cwd, '.boss', 'templates', templateName);
   if (fs.existsSync(projectTemplate)) return projectTemplate;
@@ -218,12 +236,13 @@ export function main(
   validateRelativeName(templateName, 'template');
   const templatePath = resolveTemplate(cwd, templateName);
   const targetPath = path.join(targetDir, artifact);
+  const templateRef = describeTemplate(cwd, templatePath);
   const payload = {
     actions: [
       {
         type: 'write_artifact',
         path: path.relative(cwd, targetPath),
-        template: path.relative(cwd, templatePath),
+        ...templateRef,
       },
     ],
     risk_tier: 'medium',
@@ -246,12 +265,12 @@ export function main(
   writeOutput(
     {
       path: path.relative(cwd, targetPath),
-      template: path.relative(cwd, templatePath),
+      ...templateRef,
       written: true,
     },
     context,
     () =>
-      `已按模板优先级准备产物骨架: ${path.relative(cwd, targetPath)} <- ${path.relative(cwd, templatePath)}\n`,
+      `已按模板优先级准备产物骨架: ${path.relative(cwd, targetPath)} <- ${templateRef.template}（${templateRef.templateSource}）\n`,
   );
   return 0;
 }

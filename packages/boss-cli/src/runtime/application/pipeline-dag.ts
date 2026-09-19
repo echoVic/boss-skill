@@ -176,6 +176,11 @@ function isArtifactDone(
   }
 
   if (artifact === 'code') {
+    // 记录产物本身就是完成信号：编排循环第 7 步写的是「record-artifact → artifact node
+    // 进入 completed」，workflow 节点也确实据此转终态。此前这里只看 agent 状态，
+    // 于是流水线跑完后 `boss status` 仍把 code 列为 ready，而 workflow 说它已完成——
+    // 同一个问题两个答案。agent 完成仍是另一条独立成立的路径。
+    if (context.completedArtifacts.has('code')) return true;
     const stage3 = (context.execution.stages || {})['3'];
     const agents = (stage3 && stage3.agents) || {};
     const frontendStatus = agents['boss-frontend'] ? agents['boss-frontend'].status : 'N/A';

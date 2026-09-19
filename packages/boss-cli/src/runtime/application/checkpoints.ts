@@ -60,7 +60,11 @@ export function buildBossStatus(
   const driverCapabilities = resolveDriverCapabilities(driver);
   const requiredChecks = defaultRequiredChecks(inspection.currentStage);
   const blockedReason = inspection.recentFailures[0]?.reason || null;
-  const checkpointRequired = requiredChecks.length > 0 || blockedReason !== null;
+  // 全部阶段完成之后已经没有「下一步」可确认；此前只看 stage.id >= 3，于是收尾之后
+  // 仍打印 CHECKPOINT_REQUIRED 并提示 `boss continue`，把用户指向一个空操作。
+  const pipelineComplete = inspection.status === 'completed';
+  const checkpointRequired =
+    !pipelineComplete && (requiredChecks.length > 0 || blockedReason !== null);
   const currentWave =
     readWaves(feature, { cwd }).find((wave) => wave.status !== 'completed') ?? null;
   const wipCheckpoints = listWipCheckpoints(feature, { cwd });
@@ -95,10 +99,13 @@ export function buildBossStatus(
       checkpointRequired,
       reason: checkpointRequired
         ? 'next-action-requires-explicit-confirmation'
-        : 'next-action-ready',
+        : pipelineComplete
+          ? 'pipeline-complete'
+          : 'next-action-ready',
       changedFiles: [],
       requiredChecks,
-      continueCommand: `boss continue ${feature}`,
+      // 已完成的流水线没有下一步可继续；给出命令会把用户指向一个空操作
+      continueCommand: pipelineComplete ? '' : `boss continue ${feature}`,
       wipCheckpoints,
     },
   };

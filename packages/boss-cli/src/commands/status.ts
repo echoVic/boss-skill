@@ -55,7 +55,9 @@ function renderText(status: BossStatus): string {
       : status.driver.hooks
         ? 'Checkpoint: hooks-managed by Claude Code'
         : 'Checkpoint: ready',
-    `Continue: ${status.checkpoint.continueCommand}`,
+    ...(status.checkpoint.continueCommand
+      ? [`Continue: ${status.checkpoint.continueCommand}`]
+      : ['Pipeline complete: no further action']),
     // 上游产品资产重做之后，上一轮的任务清单 / 测试报告不再对应当前状态。
     // 不提示的话，用户会把过期产物当成当前结论。
     ...(status.staleRunArtifacts.length > 0
