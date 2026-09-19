@@ -1,5 +1,6 @@
+import { artifactLayer, findStaleRunArtifacts, type StaleRunArtifact } from './artifact-layers.js';
 import { type BossDriverCapabilities, resolveDriverCapabilities } from './drivers.js';
-import { type CurrentStageSummary, inspectPipeline } from './inspection.js';
+import { type CurrentStageSummary, inspectPipeline, readExecution } from './inspection.js';
 import { type EvidenceWave, readWaves } from './waves.js';
 import { listWipCheckpoints, type WipCheckpointListItem } from './wip-checkpoint.js';
 
@@ -18,6 +19,12 @@ export interface BossCheckpoint {
   wipCheckpoints: WipCheckpointListItem[];
 }
 
+export interface ArtifactLayerGroups {
+  product: string[];
+  run: string[];
+  derived: string[];
+}
+
 export interface BossStatus {
   feature: string;
   status: string;
@@ -27,6 +34,10 @@ export interface BossStatus {
   currentWave: EvidenceWave | null;
   readyArtifacts: string[];
   blockedReason: string | null;
+  /** 已记录产物按生命周期分组：产品资产 / 本轮记录 / 派生视图。 */
+  artifactLayers: ArtifactLayerGroups;
+  /** 上游产品资产已重做、因而不再对应当前状态的本轮记录。 */
+  staleRunArtifacts: StaleRunArtifact[];
   checkpoint: BossCheckpoint;
 }
 
@@ -54,6 +65,16 @@ export function buildBossStatus(
     readWaves(feature, { cwd }).find((wave) => wave.status !== 'completed') ?? null;
   const wipCheckpoints = listWipCheckpoints(feature, { cwd });
 
+  const artifactLayers: ArtifactLayerGroups = { product: [], run: [], derived: [] };
+  const execution = readExecution(feature, cwd);
+  for (const stage of Object.values(execution.stages ?? {})) {
+    for (const artifact of stage?.artifacts ?? []) {
+      const group = artifactLayers[artifactLayer(artifact)];
+      if (!group.includes(artifact)) group.push(artifact);
+    }
+  }
+  for (const group of Object.values(artifactLayers)) group.sort();
+
   return {
     feature,
     status: inspection.status,
@@ -68,6 +89,8 @@ export function buildBossStatus(
     currentWave,
     readyArtifacts: inspection.readyArtifacts,
     blockedReason,
+    artifactLayers,
+    staleRunArtifacts: findStaleRunArtifacts(feature, { cwd }),
     checkpoint: {
       checkpointRequired,
       reason: checkpointRequired

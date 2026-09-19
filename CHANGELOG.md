@@ -61,6 +61,14 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **产物平铺成一堆同等重要的文件**：一次运行会在 `.boss/<feature>/` 顶层留下 14 个文件
+  （7 份 Markdown + 5 份 HTML 伴生 + ui-design.json 等），但它们寿命完全不同：
+  prd / architecture / ui-spec 跨迭代维护，tasks / qa-report / deploy-report 跑完即过期，
+  `.html` 可随时重建。混在一起时，第二次迭代的人分不清哪些还作数。
+  现按生命周期分三层（产品资产 / 本轮记录 / 派生视图）：摘要报告的产物清单按层分组，
+  `boss status` 暴露 `artifactLayers`，并在上游产品资产被重做后提示哪些本轮记录已过期。
+  **不移动任何文件路径**——产物名写在 50 个文件里（agent 提示词、模板、hook、DAG、文档），
+  挪目录的风险远大于收益；参考 GStack 的做法，给执行痕迹的是「过期提示」而非新目录。
 - **上手路径处处断线索**（实测走了一遍新用户路径）：`boss --help` 先列 `--json` /
   `--fields` 这些给调用方 agent 用的全局选项，再列 15 个没有任何描述的命令，且完全没提
   这个 CLI 是 skill 的运行时、产品入口是 coding agent 里的 `/boss`；README 全文 423 行，
