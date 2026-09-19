@@ -395,6 +395,21 @@ export function errorPayload(err: unknown): { error: CliErrorData } {
       },
     };
   }
+  // 缺少必填参数属于用法错误：调用方有明确的处置动作（照 usage 补参数），
+  // 归到 internal_error 会让人以为是工具坏了。
+  const usageMatch = message.match(/^Usage:\s*(.+)$/);
+  if (usageMatch) {
+    return {
+      error: {
+        code: 'invalid_usage',
+        message,
+        input: { usage: usageMatch[1] },
+        retryable: false,
+        suggestion: `按用法补齐参数：${usageMatch[1]}`,
+      },
+    };
+  }
+
   // 计划文件与落盘哈希不一致：恢复被拒。这不是内部故障，调用方有明确的处置动作，
   // 因此单列错误码而不是落到 internal_error。
   const planMismatchMatch = message.match(

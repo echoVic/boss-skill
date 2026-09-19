@@ -42,23 +42,6 @@ Boss is not a single monolithic command. You can run one role against an existin
 | `/boss:extend` | Custom agent, pack, or gate | You want to adapt Boss for your team |
 | `/boss:upgrade` | Upgrade Boss Skill and reinstall hooks | You want the latest npm package and hook config |
 
-## When To Use Boss
-
-| Good fit | Poor fit |
-| --- | --- |
-| New features that need requirements, design, implementation, tests, and delivery evidence | One-line fixes or tiny local edits |
-| API, full-stack, UI, or medium-sized product work | Pure code reading or explanation |
-| Work where `.boss/<feature>/` artifacts are valuable | Tasks with a complete existing spec where you only need a quick patch |
-| Teams that want repeatable gates and audit trails | Work that does not need coordination or review evidence |
-
-Rule of thumb: if you do not need a traceable `.boss/` folder, you probably do not need the full `/boss` pipeline. Use a single role or let your coding agent edit directly.
-
-## No CLI? Still Works
-
-Boss detects the `boss` CLI at runtime. Without it, the workflow can degrade to Markdown artifacts under `.boss/<feature>/` instead of the event stream. The CLI is the auditability upgrade: event sourcing, replayable resume, deterministic evals, runtime gates, and structured diagnostics.
-
-Boss does not mean "install once and get guaranteed autonomous delivery." It provides a runtime workflow and evidence gates; the active coding agent still has to follow the Boss protocol.
-
 ## Quick Start
 
 ### 1. Install
@@ -90,7 +73,19 @@ For Claude Code plugin mode:
 claude --plugin-dir "$(boss-skill path)"
 ```
 
-### 2. Run A Lightweight Pipeline
+### 2. Try It On A Project You Already Have
+
+The lowest-cost first run is a single role against existing code. It reads, it does not write:
+
+```
+/boss:review
+```
+
+You get `tech-review.md` under `.boss/<feature>/` with risks, findings and severity. Nothing else in your repo is touched.
+
+Want verifiable test evidence instead? `/boss:qa` runs the tests and the gates, and writes `qa-report.md`.
+
+### 3. Run The Full Pipeline
 
 Inside your coding agent:
 
@@ -101,7 +96,7 @@ Inside your coding agent:
 - `--roles core` uses PM, Architect, Dev, and QA.
 - `--skip-deploy` stops after implementation and test evidence.
 
-### 3. Inspect Results
+### 4. Inspect Results
 
 ```bash
 boss status todo-app --json
@@ -122,6 +117,23 @@ Expected artifact layout:
     ├── execution.json
     └── workflow-plan.json
 ```
+
+## When To Use Boss
+
+| Good fit | Poor fit |
+| --- | --- |
+| New features that need requirements, design, implementation, tests, and delivery evidence | One-line fixes or tiny local edits |
+| API, full-stack, UI, or medium-sized product work | Pure code reading or explanation |
+| Work where `.boss/<feature>/` artifacts are valuable | Tasks with a complete existing spec where you only need a quick patch |
+| Teams that want repeatable gates and audit trails | Work that does not need coordination or review evidence |
+
+Rule of thumb: if you do not need a traceable `.boss/` folder, you probably do not need the full `/boss` pipeline. Use a single role or let your coding agent edit directly.
+
+## No CLI? Still Works
+
+Boss detects the `boss` CLI at runtime. Without it, the workflow can degrade to Markdown artifacts under `.boss/<feature>/` instead of the event stream. The CLI is the auditability upgrade: event sourcing, replayable resume, deterministic evals, runtime gates, and structured diagnostics.
+
+Boss does not mean "install once and get guaranteed autonomous delivery." It provides a runtime workflow and evidence gates; the active coding agent still has to follow the Boss protocol.
 
 ## Installation Details
 

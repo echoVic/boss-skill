@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "c010968dedaf8b401d2beae713aab17e8df3561c",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/c010968dedaf8b401d2beae713aab17e8df3561c"
+    "commit": "7fab062f225f3f4177f9db8394e4f6117601742f",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/7fab062f225f3f4177f9db8394e4f6117601742f"
   },
   "publisher": {
     "name": "echoVic",
@@ -55,8 +55,8 @@
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "0ec3df1b11c6641a0b67cdfa5dacedaa2bec27f1db1ea53a4cff4c8fb745e095",
-      "bytes": 8763
+      "sha256": "2790aa0b294d36b9bcce0083e85c5764d44806784783d6b71e951e5aa42e12bb",
+      "bytes": 9364
     },
     {
       "path": "skill/commands/boss.md",
