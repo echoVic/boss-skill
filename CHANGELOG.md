@@ -61,6 +61,16 @@
   断言运行时必拒，作为长期防漂移守卫。
 - **事件流原子性**：追加改用 `O_APPEND` + `fsync`；读取容忍崩溃残留的损坏行
   （跳过并告警）。此前裸 `appendFileSync` + 硬失败会让一次崩溃使整个 feature 不可读。
+- **上手路径处处断线索**（实测走了一遍新用户路径）：`boss --help` 先列 `--json` /
+  `--fields` 这些给调用方 agent 用的全局选项，再列 15 个没有任何描述的命令，且完全没提
+  这个 CLI 是 skill 的运行时、产品入口是 coding agent 里的 `/boss`；README 全文 423 行，
+  第一条可执行命令在第 71 行，在那之前先让读者读到「适用与不适用」对照表；Quick Start 的
+  例子是从零建一个 todo app，而多数读者手上是存量项目；`skill/SKILL.md` 的触发词全是
+  全流水线口吻，最容易被采用的切片入口只有知道它存在的人才能用上；`boss status` 缺参数
+  报 `internal_error`，`boss init`（想开始时的第一直觉）只回一句未知命令。
+  现在：help 带上手指引与逐条描述、agent 专用选项后置；README 把 Quick Start 提到第 45 行
+  并以存量项目上的 `/boss:review` 作为第一个例子；SKILL.md 补四个切片的触发词；
+  用法错误单列 `invalid_usage`；未知命令按意图表与编辑距离给出最接近的真实命令。
 - **`/boss:extend` 教用户写的 pack 配置大半不生效**：`skill/references/extending-boss.md`
   列出的九个 `config` 字段里，`agents`、`gates`、`stages`、`agentStages`、`skipFrontend`
   都没有任何读取方——照文档写了自定义 pack，跑起来完全没有效果，也没有任何报错。内置的

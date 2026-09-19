@@ -12,27 +12,58 @@ import {
   runtimeDescription,
 } from './registry.js';
 
+/**
+ * 根 help 是新用户敲下的第一条命令，必须先回答「我下一步做什么」。
+ *
+ * Boss 的产品入口是 coding agent 里的 `/boss` 系列命令，这个 CLI 是它的运行时。
+ * 因此先给上手指引，再列命令（每条带描述），把 --json / --fields 这些
+ * 给调用方 agent 用的全局选项放到最后。
+ */
+const ROOT_COMMANDS: Array<[string, string]> = [
+  ['install', 'Install the Boss skill into your coding agents'],
+  ['uninstall', 'Remove the Boss skill from your coding agents'],
+  ['path', 'Print where the Boss skill is installed'],
+  ['doctor', 'Diagnose install, runtime and per-feature event streams'],
+  ['status FEATURE', 'Show pipeline state and the next checkpoint'],
+  ['continue FEATURE', 'Advance a pipeline to the next safe checkpoint'],
+  ['gate FEATURE', 'Run a quality gate (add `final` for the release gate)'],
+  ['qa attack FEATURE', 'Generate structured QA findings'],
+  ['runtime COMMAND', 'Low-level runtime commands used by the skill'],
+  ['design preview', 'Preview ui-design.json in a local browser'],
+  ['project init', 'Create a .boss/<feature>/ workspace'],
+  ['artifact prepare', 'Prepare an artifact from its template'],
+  ['packs detect', 'Show which pipeline pack matches this project'],
+  ['hooks run', 'Run a Boss hook (invoked by your agent, not by hand)'],
+];
+
+const GETTING_STARTED = [
+  'Boss is a skill for your coding agent. This CLI is its runtime.',
+  '',
+  'Getting started — type one of these in Claude Code / Codex / OpenClaw:',
+  '  /boss:review    review existing code or a PR (read-only, good first try)',
+  '  /boss:qa        run tests and quality gates on an existing project',
+  '  /boss           the full pipeline, from requirement to delivery',
+  '',
+  'Not installed yet?  npx skills add echoVic/boss-skill',
+  '',
+];
+
+function commandLines(): string[] {
+  const width = Math.max(...ROOT_COMMANDS.map(([name]) => name.length));
+  return ROOT_COMMANDS.map(([name, summary]) => `  ${name.padEnd(width)}  ${summary}`);
+}
+
 export const ROOT_USAGE = [
-  renderHelp(rootDescription, 'boss COMMAND [options]'),
+  'Usage: boss COMMAND [options]',
+  '',
+  ...GETTING_STARTED,
   'Commands:',
-  '  install',
-  '  uninstall',
-  '  path',
-  '  doctor',
-  '  status FEATURE',
-  '  continue FEATURE',
-  '  gate FEATURE',
-  '  qa attack FEATURE',
-  '  runtime COMMAND',
-  '  design preview',
-  '  project init',
-  '  artifact prepare',
-  '  packs detect',
-  '  hooks run',
+  ...commandLines(),
   '',
   'Compatibility:',
   '  boss-skill install',
   '',
+  renderHelp(rootDescription, 'boss COMMAND [options]').split('\n').slice(2).join('\n'),
 ].join('\n');
 
 export const RUNTIME_USAGE = [

@@ -111,13 +111,87 @@ export function removeFirstPositional(argv: string[], positional: string | undef
   return [...argv.slice(0, index), ...argv.slice(index + 1)];
 }
 
+/** 真实命令表，用于给未知命令找最接近的候选。 */
+const KNOWN_COMMANDS = [
+  'install',
+  'uninstall',
+  'path',
+  'doctor',
+  'status',
+  'continue',
+  'gate',
+  'qa attack',
+  'runtime',
+  'design preview',
+  'project init',
+  'artifact prepare',
+  'packs detect',
+  'hooks run',
+];
+
+/** 用户最可能的直觉说法 → 真实命令。`init` 是想开始时的第一直觉。 */
+const COMMAND_INTENTS: Record<string, string> = {
+  init: 'project init',
+  start: 'project init',
+  new: 'project init',
+  create: 'project init',
+  run: '/boss（在你的 coding agent 里输入，而不是这个 CLI）',
+  review: '/boss:review（在你的 coding agent 里输入）',
+  test: 'qa attack',
+  check: 'doctor',
+  diagnose: 'doctor',
+};
+
+function editDistance(left: string, right: string): number {
+  const rows = Array.from({ length: left.length + 1 }, (_, i) => [
+    i,
+    ...Array(right.length).fill(0),
+  ]);
+  for (let j = 0; j <= right.length; j += 1) rows[0]![j] = j;
+  for (let i = 1; i <= left.length; i += 1) {
+    for (let j = 1; j <= right.length; j += 1) {
+      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+      rows[i]![j] = Math.min(
+        rows[i - 1]![j]! + 1,
+        rows[i]![j - 1]! + 1,
+        rows[i - 1]![j - 1]! + cost,
+      );
+    }
+  }
+  return rows[left.length]![right.length]!;
+}
+
+/**
+ * 未知命令时给出最接近的真实命令。
+ *
+ * 「Run --describe to list available commands」把排查成本推回给用户，而 `init` 这类
+ * 直觉说法其实有确定的对应项（`project init`）。先查意图表，再按编辑距离找最近的命令。
+ */
+export function suggestCommand(command: string | undefined): string | null {
+  if (!command) return null;
+  const intent = COMMAND_INTENTS[command.toLowerCase()];
+  if (intent) return intent;
+
+  let best: { name: string; distance: number } | null = null;
+  for (const name of KNOWN_COMMANDS) {
+    const distance = editDistance(command.toLowerCase(), name.split(' ')[0] as string);
+    if (!best || distance < best.distance) best = { name, distance };
+  }
+  // 距离过远时不硬猜，避免给出误导性的建议
+  if (!best || best.distance > Math.max(2, Math.floor(command.length / 2))) return null;
+  return best.name;
+}
+
 export function throwUnknownCommand(scope: string, command: string | undefined): never {
+  const closest = suggestCommand(command);
   throw new CliUserError({
     code: 'unknown_command',
     message: `Unknown command: ${command}`,
     input: { command },
     retryable: false,
-    suggestion: `Run ${scope} --describe to list available commands`,
+    suggestion: closest
+      ? `你是想用 \`${closest}\` 吗？完整列表：${scope} --help`
+      : `Run ${scope} --help to list available commands`,
   });
 }
 
