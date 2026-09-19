@@ -1,3 +1,8 @@
+import {
+  ARTIFACT_LAYERS,
+  type ArtifactLayerId,
+  artifactLayer,
+} from '../application/artifact-layers.js';
 import type { SummaryModel } from './summary-model.js';
 
 type SummaryGate = SummaryModel['qualityGates'][string];
@@ -162,11 +167,23 @@ export function renderMarkdown(model: SummaryModel): string {
     lines.push(gateTableRow(name, gate));
   }
 
+  // 产物按生命周期分层：产品资产跨迭代维护，本轮记录下一轮就会被取代，
+  // 派生视图可随时重建。平铺成一张清单时，第二次迭代的人分不清哪些还作数。
   lines.push('', '## 产物清单', '');
+  const byLayer = new Map<ArtifactLayerId, string[]>();
   for (const stage of model.stages) {
-    if (stage.artifacts.length === 0) continue;
-    lines.push(`### 阶段 ${stage.stage} (${stage.name})`, '');
     for (const artifact of stage.artifacts) {
+      const layer = artifactLayer(artifact);
+      const bucket = byLayer.get(layer) ?? [];
+      if (!bucket.includes(artifact)) bucket.push(artifact);
+      byLayer.set(layer, bucket);
+    }
+  }
+  for (const layer of ARTIFACT_LAYERS) {
+    const artifacts = byLayer.get(layer.id);
+    if (!artifacts || artifacts.length === 0) continue;
+    lines.push(`### ${layer.title}`, '', `> ${layer.hint}`, '');
+    for (const artifact of artifacts.sort()) {
       lines.push(`- \`${artifact}\``);
     }
     lines.push('');

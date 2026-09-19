@@ -56,6 +56,15 @@ function renderText(status: BossStatus): string {
         ? 'Checkpoint: hooks-managed by Claude Code'
         : 'Checkpoint: ready',
     `Continue: ${status.checkpoint.continueCommand}`,
+    // 上游产品资产重做之后，上一轮的任务清单 / 测试报告不再对应当前状态。
+    // 不提示的话，用户会把过期产物当成当前结论。
+    ...(status.staleRunArtifacts.length > 0
+      ? [
+          `Stale from a previous round: ${status.staleRunArtifacts
+            .map((item) => `${item.artifact} (superseded by ${item.supersededBy})`)
+            .join(', ')}`,
+        ]
+      : []),
     '',
   ].join('\n');
 }
