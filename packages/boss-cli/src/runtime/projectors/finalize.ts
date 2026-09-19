@@ -74,14 +74,17 @@ export function finalizeState(state: ExecutionState): ExecutionState {
     )
   ) {
     state.status = PIPELINE_STATUS.COMPLETED;
+  } else if (state.pause?.paused === true) {
+    // 显式暂停压过「有阶段在跑」的推断。此前顺序相反，于是在唯一值得暂停的时刻
+    // （某个阶段正在跑）status 仍被推导为 running，连带两个守卫一起失效：
+    // 重复 pause 不再被拒、`update-stage running` 的自动恢复也不再触发。
+    state.status = PIPELINE_STATUS.PAUSED;
   } else if (
     stageStatuses.some(
       (status) => status === STAGE_STATUS.RUNNING || status === STAGE_STATUS.RETRYING,
     )
   ) {
     state.status = PIPELINE_STATUS.RUNNING;
-  } else if (state.pause?.paused === true) {
-    state.status = PIPELINE_STATUS.PAUSED;
   }
 
   state.plugins = normalizePlugins(state.plugins);

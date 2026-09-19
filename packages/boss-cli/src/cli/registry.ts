@@ -279,6 +279,7 @@ export const runtimeCommandNames = [
   'get-ready-artifacts',
   'evaluate-gates',
   'check-stage',
+  'rebuild-state',
   'replay-events',
   'inspect-progress',
   'inspect-pipeline',
