@@ -17,7 +17,7 @@ Boss fonctionne avec Claude Code, Codex, OpenClaw, Antigravity et Hermes.
 Une orchestration reposant uniquement sur des prompts peut sembler organisée, mais elle ne peut généralement pas prouver que le plan a été suivi, que les tests ont été exécutés, que les gates ont été franchies ou que l'état n'a pas été halluciné. Boss est construit autour de preuves :
 
 - **Runtime à event sourcing** : l'état du pipeline est ajouté à `.boss/<feature>/.meta/events.jsonl` et projeté dans un état d'exécution en lecture seule.
-- **Gates non contournables** : la QA, le déploiement et les vérifications finales sont modélisés comme des étapes du runtime plutôt que comme de simples instructions.
+- **Gates vérifiables** : la QA, le déploiement et les vérifications finales sont de vraies commandes dont les verdicts sont enregistrés comme événements. `boss gate final` et `boss doctor` échouent lorsqu'une étape marquée terminée porte un gate en échec. L'application reste tributaire du respect du protocole par l'agent orchestrateur : la CLI rend le verdict vérifiable, pas inévitable.
 - **Artefacts rejouables** : les PRD, documents d'architecture, listes de tâches, rapports QA, rapports de déploiement et résumés sont stockés sous `.boss/<feature>/`.
 - **Evals déterministes** : les transcriptions capturées peuvent être notées sans appeler un vrai LLM.
 - **CLI adaptée aux agents** : les commandes prennent en charge la sortie JSON, `--describe`, les exécutions à blanc, les champs limités et les erreurs structurées.
@@ -35,23 +35,6 @@ Boss n'est pas une commande monolithique unique. Vous pouvez exécuter un seul r
 | `/boss:ship` | Vérifications de build et de déploiement DevOps | Vous êtes prêt à livrer |
 | `/boss:extend` | Agent, pack ou gate personnalisé | Vous voulez adapter Boss à votre équipe |
 | `/boss:upgrade` | Mettre à niveau Boss Skill et réinstaller les hooks | Vous voulez le dernier package npm et la config des hooks |
-
-## Quand utiliser Boss
-
-| Bien adapté | Peu adapté |
-| --- | --- |
-| Nouvelles fonctionnalités nécessitant exigences, design, implémentation, tests et preuves de livraison | Corrections d'une ligne ou petites modifications locales |
-| Travail sur des API, du full-stack, de l'UI ou des produits de taille moyenne | Simple lecture ou explication de code |
-| Travaux où les artefacts `.boss/<feature>/` ont de la valeur | Tâches avec une spec existante complète où seul un patch rapide est nécessaire |
-| Équipes qui veulent des gates reproductibles et des pistes d'audit | Travaux qui n'ont pas besoin de coordination ni de preuves de revue |
-
-Règle générale : si vous n'avez pas besoin d'un dossier `.boss/` traçable, vous n'avez probablement pas besoin du pipeline `/boss` complet. Utilisez un seul rôle ou laissez votre agent de codage modifier directement.
-
-## Pas de CLI ? Ça marche quand même
-
-Boss détecte la CLI `boss` au runtime. Sans elle, le workflow peut se replier sur des artefacts Markdown sous `.boss/<feature>/` au lieu du flux d'événements. La CLI est la mise à niveau en matière d'auditabilité : event sourcing, reprise rejouable, evals déterministes, gates de runtime et diagnostics structurés.
-
-Boss ne signifie pas « installez une fois et obtenez une livraison autonome garantie ». Il fournit un workflow de runtime et des gates de preuve ; l'agent de codage actif doit toujours suivre le protocole Boss.
 
 ## Démarrage rapide
 
@@ -116,6 +99,23 @@ Structure des artefacts attendue :
     ├── execution.json
     └── workflow-plan.json
 ```
+
+## Quand utiliser Boss
+
+| Bien adapté | Peu adapté |
+| --- | --- |
+| Nouvelles fonctionnalités nécessitant exigences, design, implémentation, tests et preuves de livraison | Corrections d'une ligne ou petites modifications locales |
+| Travail sur des API, du full-stack, de l'UI ou des produits de taille moyenne | Simple lecture ou explication de code |
+| Travaux où les artefacts `.boss/<feature>/` ont de la valeur | Tâches avec une spec existante complète où seul un patch rapide est nécessaire |
+| Équipes qui veulent des gates reproductibles et des pistes d'audit | Travaux qui n'ont pas besoin de coordination ni de preuves de revue |
+
+Règle générale : si vous n'avez pas besoin d'un dossier `.boss/` traçable, vous n'avez probablement pas besoin du pipeline `/boss` complet. Utilisez un seul rôle ou laissez votre agent de codage modifier directement.
+
+## Pas de CLI ? Ça marche quand même
+
+Boss détecte la CLI `boss` au runtime. Sans elle, le workflow peut se replier sur des artefacts Markdown sous `.boss/<feature>/` au lieu du flux d'événements. La CLI est la mise à niveau en matière d'auditabilité : event sourcing, reprise rejouable, evals déterministes, gates de runtime et diagnostics structurés.
+
+Boss ne signifie pas « installez une fois et obtenez une livraison autonome garantie ». Il fournit un workflow de runtime et des gates de preuve ; l'agent de codage actif doit toujours suivre le protocole Boss.
 
 ## Détails d'installation
 

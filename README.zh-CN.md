@@ -17,10 +17,10 @@ Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 只靠 prompt 的编排经常“看起来很像团队”，但很难证明计划真的被执行、测试真的跑过、门禁真的通过、状态不是 Agent 自己编出来的。Boss 的核心是证据：
 
 - **事件溯源 runtime**：流水线状态追加到 `.boss/<feature>/.meta/events.jsonl`，再投影成只读执行状态。
-- **不可绕过门禁**：QA、部署、最终检查都作为 runtime 阶段建模，不只是口头约束。
+- **门禁判定可核对**：QA、部署、最终检查是真实执行的命令，判定结果作为事件落盘。阶段被标记完成但门禁未通过时，`boss gate final` 与 `boss doctor` 会判定失败。门禁的执行仍依赖编排器遵守协议——CLI 提供的是可验证的判定与记录，不是阻止越过门禁的机制。
 - **可回放产物**：PRD、架构、任务、QA、部署报告和总结都落在 `.boss/<feature>/`。
 - **确定性 eval**：可以用已捕获 transcript 做评分，不需要真实 LLM。
-- **Agent 友好的 CLI**：支持 JSON 输出、`--describe`、dry run、字段裁剪和结构化错误。
+- **Agent 友好的 CLI**：支持 JSON 输出、`--describe`、dry run、字段裁剪和结构化错误。领域条件各有错误码（如 `retry_budget_exhausted`、`invalid_state_transition`、`state_unreadable`），每条 `suggestion` 都指明下一步该跑什么命令。
 
 ## 可以只用一个角色，也可以跑完整团队
 
@@ -35,23 +35,6 @@ Boss 不是一个巨大的单体命令。你可以在已有项目里只调用一
 | `/boss:ship` | DevOps 构建与部署检查 | 准备发布，需要交付记录 |
 | `/boss:extend` | 自定义 Agent、Pack 或 Gate | 为自己的团队扩展 Boss |
 | `/boss:upgrade` | 升级 Boss Skill 并重新安装 hooks | 需要最新 npm 包和 hook 配置 |
-
-## 什么时候适合用
-
-| 适合 | 不适合 |
-| --- | --- |
-| 新 feature，需要需求、设计、开发、测试和交付证据 | 一行修复、很小的局部修改 |
-| API、全栈、UI、中等规模产品功能 | 单纯读代码或解释实现 |
-| 需要 `.boss/<feature>/` 产物留痕 | 已有完整 spec，只想快速 patch |
-| 团队希望有可重复门禁和审计轨迹 | 不需要协作或评审证据的小任务 |
-
-经验法则：如果你不需要一个可追踪的 `.boss/` 目录，就不一定要开完整 `/boss` 流水线。可以只用单个角色，或者直接让 Coding Agent 修改。
-
-## 没有 CLI 也能用
-
-Boss 会在运行时检测 `boss` CLI。没有 CLI 时，工作流可以降级成 `.boss/<feature>/` 下的 Markdown 产物，而不是事件流。CLI 是“可审计能力升级”：事件溯源、可回放恢复、确定性 eval、runtime 门禁和结构化诊断都依赖它。
-
-Boss 不等于“安装后 100% 自动交付”。它提供 runtime 工作流和证据门禁；当前 Coding Agent 仍然需要遵守 Boss 协议。
 
 ## 5 分钟快速上手
 
@@ -116,6 +99,23 @@ boss runtime inspect-pipeline todo-app
     ├── execution.json
     └── workflow-plan.json
 ```
+
+## 什么时候适合用
+
+| 适合 | 不适合 |
+| --- | --- |
+| 新 feature，需要需求、设计、开发、测试和交付证据 | 一行修复、很小的局部修改 |
+| API、全栈、UI、中等规模产品功能 | 单纯读代码或解释实现 |
+| 需要 `.boss/<feature>/` 产物留痕 | 已有完整 spec，只想快速 patch |
+| 团队希望有可重复门禁和审计轨迹 | 不需要协作或评审证据的小任务 |
+
+经验法则：如果你不需要一个可追踪的 `.boss/` 目录，就不一定要开完整 `/boss` 流水线。可以只用单个角色，或者直接让 Coding Agent 修改。
+
+## 没有 CLI 也能用
+
+Boss 会在运行时检测 `boss` CLI。没有 CLI 时，工作流可以降级成 `.boss/<feature>/` 下的 Markdown 产物，而不是事件流。CLI 是“可审计能力升级”：事件溯源、可回放恢复、确定性 eval、runtime 门禁和结构化诊断都依赖它。
+
+Boss 不等于“安装后 100% 自动交付”。它提供 runtime 工作流和证据门禁；当前 Coding Agent 仍然需要遵守 Boss 协议。
 
 ## 安装细节
 
@@ -183,16 +183,21 @@ Boss CLI 常用命令：
 
 ```bash
 boss --help
+boss doctor                              # 安装、运行时与各 feature 的体检
 boss status FEATURE
 boss continue FEATURE
-boss gate FEATURE
+boss gate FEATURE                        # 跑单个门禁
+boss gate final FEATURE                  # 最终门禁（子命令在前）
 boss qa attack FEATURE
 boss project init FEATURE
 boss design preview FEATURE
 boss packs detect
 boss runtime inspect-pipeline FEATURE
 boss runtime generate-summary FEATURE
+boss runtime rebuild-state FEATURE       # 从 events.jsonl 重建 execution.json
 ```
+
+`execution.json` 是投影而不是真相源：它一旦无法读取，用 `boss runtime rebuild-state` 从事件流重建即可。
 
 面向 Agent 的 `boss` 命令在适用场景下使用这些通用参数（where applicable）；可用 `--describe` 查看单个命令的精确 JSON schema：
 

@@ -23,7 +23,7 @@ Boss works with Claude Code, Codex, OpenClaw, Antigravity, and Hermes.
 Prompt-only orchestration can sound organized, but it usually cannot prove that the plan was followed, tests were run, gates passed, or state was not hallucinated. Boss is built around evidence:
 
 - **Event-sourced runtime**: pipeline state is appended to `.boss/<feature>/.meta/events.jsonl` and projected into read-only execution state.
-- **Non-bypassable gates**: QA, deployment, and final checks are modeled as runtime stages instead of loose instructions.
+- **Verifiable gates**: QA, deployment, and final checks run as real commands whose verdicts are recorded as events. `boss gate final` and `boss doctor` fail when a completed stage carries a failed gate. Enforcement still relies on the orchestrating agent honoring the protocol; the CLI makes the verdict checkable, not unavoidable.
 - **Replayable artifacts**: PRDs, architecture docs, task lists, QA reports, deploy reports, and summaries live under `.boss/<feature>/`.
 - **Deterministic evals**: captured transcripts can be scored without calling a real LLM.
 - **Agent-friendly CLI**: commands support JSON output, `--describe`, dry runs, bounded fields, and structured errors.
@@ -210,16 +210,21 @@ Boss CLI commands:
 
 ```bash
 boss --help
+boss doctor                              # install, runtime and per-feature health
 boss status FEATURE
 boss continue FEATURE
-boss gate FEATURE
+boss gate FEATURE                        # one quality gate
+boss gate final FEATURE                  # release gate (subcommand comes first)
 boss qa attack FEATURE
 boss project init FEATURE
 boss design preview FEATURE
 boss packs detect
 boss runtime inspect-pipeline FEATURE
 boss runtime generate-summary FEATURE
+boss runtime rebuild-state FEATURE       # rebuild execution.json from events.jsonl
 ```
+
+`execution.json` is a projection, not a source of truth: if it is ever unreadable, `boss runtime rebuild-state` regenerates it from the event stream.
 
 Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
 
@@ -230,7 +235,7 @@ Agent-facing `boss` commands use these common options where applicable; run `--d
 - `--fields=<a,b>` and `--limit=<n>`: bounded output
 - `--yes`: required only for high-risk non-interactive commands that need an extra confirmation
 
-Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`.
+Structured errors are written to stderr as `{"error":{...}}` and include `code`, `message`, `input`, `retryable`, and `suggestion`. Domain conditions carry their own codes rather than a generic failure — `retry_budget_exhausted`, `invalid_state_transition`, `run_id_mismatch`, `feedback_budget_exhausted`, `gate_not_found`, `workflow_plan_mismatch`, `state_unreadable`, `pipeline_not_initialized`, `invalid_usage` — and each `suggestion` names the next command to run.
 
 ## Workflow
 
@@ -333,6 +338,8 @@ Run this in an interactive environment to preview a generated UI design:
 ```bash
 boss design preview <feature>
 ```
+
+Artifacts are grouped by lifetime rather than listed flat. The summary report and `boss status` separate **product assets** (`prd.md`, `architecture.md`, `ui-spec.md`, `ui-design.json` — maintained across iterations) from **run records** (`tech-review.md`, `tasks.md`, `qa-report.md`, `deploy-report.md` — superseded by the next round) and **derived views** (the `.html` companions). When an upstream product asset is regenerated, `boss status` names the run records that no longer match it.
 
 ## Evals
 
