@@ -7,8 +7,20 @@
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-27
+
 现代化编排层，使其与事件溯源底座相称：卸掉负债（组织架构式编排残留、文本状态协议、
 外挂 LLM、自建 skill 管理器），补齐生产级基础（CI、原子性、诊断、发布纪律）。
+
+### 从 3.x 升级
+
+- `boss skills add/list/update/remove` → 改用 `boss install` 或
+  `npx skills add echoVic/boss-skill`（vercel-labs/skills 主流工具）安装本 skill。
+- `BOSS_KNOWLEDGE_API_KEY` / `BOSS_KNOWLEDGE_BASE_URL` / `BOSS_KNOWLEDGE_MODEL`
+  可以从环境中删除。`boss doctor` 会在这些变量残留时报 warn。
+- 自定义门禁的 wave 验证：从 `tasks.md` 的 Markdown 表格迁移到 `waves.json` 的
+  argv 数组（结构化命令，不经 shell）。不支持管道、重定向、`&&` 串联的旧脚本
+  需要拆成独立命令或改成 Node 脚本再由 argv 调用。
 
 ### 破坏性变更（Breaking）
 
@@ -30,7 +42,9 @@
   `[BOSS_STATUS]` 散文块的正则解析。
 - **`boss runtime record-user-choice`**：把用户选择写入事件流，驱动确定性偏好聚合。
 - **`boss doctor`**：诊断安装位置、hook 注册、事件流完整性、孤儿 lock、版本一致性，
-  并报出运行环境边界（Node 版本、平台、`git` 是否可用——WIP checkpoint 依赖它）。
+  并报出运行环境边界（Node 版本、平台、`git` 是否可用——WIP checkpoint 依赖它）与
+  网络边界（boss 自身零出网、废弃 knowledge 环境变量残留、源码级守卫存在性；不覆盖
+  宿主 agent 的出网行为）。
 - 安装文档主推 `npx skills add echoVic/boss-skill`（vercel-labs/skills 主流工具）。
 - README 新增 Platform Support 一节，显式声明跨平台边界：核心管线无 POSIX-only 假设、
   `git` 与 `bash gate.sh` 为可选并优雅降级。
