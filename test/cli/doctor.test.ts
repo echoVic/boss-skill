@@ -68,6 +68,34 @@ describe('boss doctor', () => {
     expect(git?.status).toBe('ok');
   });
 
+  it('reports the network boundary and clarifies scope', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-doctor-'));
+    const report = JSON.parse(runDoctor(['--json'], tmpDir).stdout) as {
+      checks: Array<{ name: string; status: string; detail: string }>;
+    };
+    const scope = report.checks.find((c) => c.name === 'network:scope');
+    expect(scope).toBeDefined();
+    // 必须点明宿主 agent 不在自检范围内，避免用户误读
+    expect(scope!.detail).toContain('宿主');
+    expect(report.checks.some((c) => c.name === 'network:legacy-knowledge-env')).toBe(true);
+  });
+
+  it('warns when a deprecated knowledge env var is still set', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-doctor-'));
+    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    const r = spawnSync(process.execPath, [BOSS_BIN, 'doctor', '--json'], {
+      cwd: tmpDir,
+      encoding: 'utf8',
+      env: { ...process.env, BOSS_KNOWLEDGE_API_KEY: 'legacy-value' },
+    });
+    const report = JSON.parse(r.stdout) as {
+      checks: Array<{ name: string; status: string; detail: string }>;
+    };
+    const legacy = report.checks.find((c) => c.name === 'network:legacy-knowledge-env');
+    expect(legacy?.status).toBe('warn');
+    expect(legacy?.detail).toContain('BOSS_KNOWLEDGE_API_KEY');
+  });
+
   it('reports an intact feature event stream as ok', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-doctor-'));
     initFeature(tmpDir);

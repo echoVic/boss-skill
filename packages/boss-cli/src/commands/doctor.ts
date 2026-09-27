@@ -67,6 +67,56 @@ function readSkillVersion(skillMd: string): string | undefined {
   return match ? match[1]!.trim() : undefined;
 }
 
+/**
+ * 网络边界自检：把 network-boundary 源码守卫的清单在运行时可视化。
+ * 本函数只报告 boss 自身管辖范围（依赖树里没有 http/fetch 客户端、preview server 只绑
+ * 127.0.0.1、已移除 knowledge 外挂环境变量），不能证明宿主 agent 不出网。
+ */
+function checkNetworkBoundary(): DoctorCheck[] {
+  const checks: DoctorCheck[] = [];
+
+  // 1. 声明 boss 自身范围（避免用户误读为「宿主也零出网」）
+  checks.push({
+    name: 'network:scope',
+    status: 'ok',
+    detail: 'boss 自身零出网；宿主 agent 的出网行为不在本自检范围内',
+  });
+
+  // 2. 已移除的 knowledge 外挂配置：任一环境变量仍被设置，就提示用户可以清理
+  const knowledgeEnvs = [
+    'BOSS_KNOWLEDGE_API_KEY',
+    'BOSS_KNOWLEDGE_BASE_URL',
+    'BOSS_KNOWLEDGE_MODEL',
+  ];
+  const stillSet = knowledgeEnvs.filter((name) => process.env[name] !== undefined);
+  checks.push({
+    name: 'network:legacy-knowledge-env',
+    status: stillSet.length > 0 ? 'warn' : 'ok',
+    detail:
+      stillSet.length > 0
+        ? `检测到已废弃的 knowledge 环境变量：${stillSet.join(', ')}（boss 4.0 起不再读取，可从环境中删除）`
+        : '未检测到已废弃的 knowledge 环境变量',
+  });
+
+  // 3. 源码级守卫存在性：network-boundary 测试与 PRIVACY.md 都在
+  const guards = [
+    { rel: 'test/runtime/network-boundary.test.ts', name: 'network-boundary test' },
+    { rel: 'PRIVACY.md', name: 'PRIVACY.md' },
+  ];
+  for (const guard of guards) {
+    const abs = path.join(PKG_ROOT, guard.rel);
+    checks.push({
+      name: `network:guard:${guard.name}`,
+      status: fs.existsSync(abs) ? 'ok' : 'warn',
+      detail: fs.existsSync(abs)
+        ? `${guard.rel} 存在（CI 会在源码引入出站客户端时变红）`
+        : `${guard.rel} 未随安装分发，无法从本地文件复核；可到 GitHub 查看源码`,
+    });
+  }
+
+  return checks;
+}
+
 /** 运行环境边界：Node 版本、平台、git 是否可用（WIP checkpoint 依赖 git，缺失则静默降级）。 */
 function checkEnvironment(): DoctorCheck[] {
   const checks: DoctorCheck[] = [];
@@ -194,7 +244,7 @@ function checkFeatures(cwd: string): DoctorCheck[] {
 
 function showHelp(): void {
   process.stdout.write(
-    'boss doctor [--json]\n  诊断安装位置、版本一致性、事件流完整性、孤儿 lock。\n',
+    'boss doctor [--json]\n  诊断安装位置、版本一致性、事件流完整性、孤儿 lock、网络边界（boss 自身）。\n',
   );
 }
 
@@ -219,6 +269,7 @@ export function main(
   const checks: DoctorCheck[] = [
     { name: 'version', status: 'ok', detail: `boss-skill v${pkg.version}` },
     ...checkEnvironment(),
+    ...checkNetworkBoundary(),
     ...checkInstalls(),
     ...checkFeatures(cwd),
   ];

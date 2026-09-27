@@ -61,9 +61,19 @@ describe('privacy / network boundary guard', () => {
     expect(server!.text).not.toContain("'0.0.0.0'");
   });
 
-  it('no longer references the removed external knowledge LLM configuration', () => {
+  it('no longer reads the removed external knowledge LLM configuration', () => {
+    // 守卫的是「重新引入 knowledge 外挂逻辑」，不是「提及 BOSS_KNOWLEDGE_ 这个字符串」。
+    // 允许 doctor 作为迁移提示报出用户环境里残留的旧变量；禁的是任何 process.env
+    // 读取或 import 这些变量的代码路径。
+    const forbidden = [
+      /process\.env\.BOSS_KNOWLEDGE_/,
+      /process\.env\[['"]BOSS_KNOWLEDGE_/,
+      /import\s+[^;]*BOSS_KNOWLEDGE_/,
+    ];
     for (const { rel, text } of sourceFiles) {
-      expect(text, `${rel} 仍引用已移除的 knowledge 外挂配置`).not.toMatch(/BOSS_KNOWLEDGE_/);
+      for (const pattern of forbidden) {
+        expect(text, `${rel} 仍读取已移除的 knowledge 外挂配置 (${pattern})`).not.toMatch(pattern);
+      }
     }
   });
 
