@@ -22,11 +22,14 @@ Boss works with Claude Code, Codex, OpenClaw, Antigravity, and Hermes.
 
 Prompt-only orchestration can sound organized, but it usually cannot prove that the plan was followed, tests were run, gates passed, or state was not hallucinated. Boss is built around evidence:
 
+- **Zero-network by default**: no telemetry, no phone-home, no remote LLM proxy. The only network surface is an opt-in loopback preview server bound to `127.0.0.1`. A source-level [network-boundary test](./test/runtime/network-boundary.test.ts) fails CI if anyone reintroduces an outbound client. See [PRIVACY.md](./PRIVACY.md).
+- **No shell injection**: wave verification runs through structured `argv` (`waves.json`), never through a shell. Cloning a malicious repository cannot smuggle commands via `tasks.md`.
 - **Event-sourced runtime**: pipeline state is appended to `.boss/<feature>/.meta/events.jsonl` and projected into read-only execution state.
 - **Verifiable gates**: QA, deployment, and final checks run as real commands whose verdicts are recorded as events. `boss gate final` and `boss doctor` fail when a completed stage carries a failed gate. Enforcement still relies on the orchestrating agent honoring the protocol; the CLI makes the verdict checkable, not unavoidable.
 - **Replayable artifacts**: PRDs, architecture docs, task lists, QA reports, deploy reports, and summaries live under `.boss/<feature>/`.
 - **Deterministic evals**: captured transcripts can be scored without calling a real LLM.
 - **Agent-friendly CLI**: commands support JSON output, `--describe`, dry runs, bounded fields, and structured errors.
+- **Self-verifiable**: run `boss doctor` to confirm the resolved runtime, install locations, event-stream health, and network boundary — the zero-network claim is auditable, not just asserted.
 
 ## Use One Role Or The Whole Team
 

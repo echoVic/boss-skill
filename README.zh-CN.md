@@ -16,11 +16,14 @@ Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 
 只靠 prompt 的编排经常“看起来很像团队”，但很难证明计划真的被执行、测试真的跑过、门禁真的通过、状态不是 Agent 自己编出来的。Boss 的核心是证据：
 
+- **默认零出网**：不上报遥测、不回连、不做远端 LLM 代理。唯一网络面是可选的、绑定 `127.0.0.1` 的回环预览服务器。源码层 [network-boundary 测试](./test/runtime/network-boundary.test.ts) 会在有人重新引入出站客户端时让 CI 变红。详见 [PRIVACY.md](./PRIVACY.md)。
+- **杜绝命令注入**：wave 验证走结构化 `argv`（`waves.json`），不经过 shell。clone 恶意仓库无法通过 `tasks.md` 夹带命令。
 - **事件溯源 runtime**：流水线状态追加到 `.boss/<feature>/.meta/events.jsonl`，再投影成只读执行状态。
 - **门禁判定可核对**：QA、部署、最终检查是真实执行的命令，判定结果作为事件落盘。阶段被标记完成但门禁未通过时，`boss gate final` 与 `boss doctor` 会判定失败。门禁的执行仍依赖编排器遵守协议——CLI 提供的是可验证的判定与记录，不是阻止越过门禁的机制。
 - **可回放产物**：PRD、架构、任务、QA、部署报告和总结都落在 `.boss/<feature>/`。
 - **确定性 eval**：可以用已捕获 transcript 做评分，不需要真实 LLM。
 - **Agent 友好的 CLI**：支持 JSON 输出、`--describe`、dry run、字段裁剪和结构化错误。领域条件各有错误码（如 `retry_budget_exhausted`、`invalid_state_transition`、`state_unreadable`），每条 `suggestion` 都指明下一步该跑什么命令。
+- **可自我验证**：`boss doctor` 会输出运行环境、安装位置、事件流健康度和网络边界——「零出网」是可审计的，不是口头声明。
 
 ## 可以只用一个角色，也可以跑完整团队
 

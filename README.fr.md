@@ -16,11 +16,14 @@ Boss fonctionne avec Claude Code, Codex, OpenClaw, Antigravity et Hermes.
 
 Une orchestration reposant uniquement sur des prompts peut sembler organisée, mais elle ne peut généralement pas prouver que le plan a été suivi, que les tests ont été exécutés, que les gates ont été franchies ou que l'état n'a pas été halluciné. Boss est construit autour de preuves :
 
+- **Zéro réseau par défaut** : aucune télémétrie, aucun phone-home, aucun proxy LLM distant. La seule surface réseau est un serveur d'aperçu opt-in lié à `127.0.0.1`. Un [test network-boundary](./test/runtime/network-boundary.test.ts) au niveau du code source fait échouer la CI si quelqu'un réintroduit un client sortant. Voir [PRIVACY.md](./PRIVACY.md).
+- **Pas d'injection shell** : la vérification des waves s'exécute via un `argv` structuré (`waves.json`), jamais via une shell. Cloner un dépôt malveillant ne peut pas glisser de commandes via `tasks.md`.
 - **Runtime à event sourcing** : l'état du pipeline est ajouté à `.boss/<feature>/.meta/events.jsonl` et projeté dans un état d'exécution en lecture seule.
 - **Gates vérifiables** : la QA, le déploiement et les vérifications finales sont de vraies commandes dont les verdicts sont enregistrés comme événements. `boss gate final` et `boss doctor` échouent lorsqu'une étape marquée terminée porte un gate en échec. L'application reste tributaire du respect du protocole par l'agent orchestrateur : la CLI rend le verdict vérifiable, pas inévitable.
 - **Artefacts rejouables** : les PRD, documents d'architecture, listes de tâches, rapports QA, rapports de déploiement et résumés sont stockés sous `.boss/<feature>/`.
 - **Evals déterministes** : les transcriptions capturées peuvent être notées sans appeler un vrai LLM.
 - **CLI adaptée aux agents** : les commandes prennent en charge la sortie JSON, `--describe`, les exécutions à blanc, les champs limités et les erreurs structurées.
+- **Auto-vérifiable** : lancez `boss doctor` pour confirmer le runtime résolu, les emplacements d'installation, l'intégrité du flux d'événements et la limite réseau — l'affirmation « zéro réseau » est auditable, pas seulement déclarée.
 
 ## Utiliser un seul rôle ou toute l'équipe
 

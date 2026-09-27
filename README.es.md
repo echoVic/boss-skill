@@ -16,11 +16,14 @@ Boss funciona con Claude Code, Codex, OpenClaw, Antigravity y Hermes.
 
 La orquestación basada solo en prompts puede parecer organizada, pero normalmente no puede demostrar que se siguió el plan, que se ejecutaron las pruebas, que se superaron las puertas o que el estado no fue alucinado. Boss se construye en torno a la evidencia:
 
+- **Cero red por defecto**: sin telemetría, sin phone-home, sin proxy remoto de LLM. La única superficie de red es un servidor de vista previa opt-in enlazado a `127.0.0.1`. Un [test de network-boundary](./test/runtime/network-boundary.test.ts) a nivel de código fuente falla la CI si alguien reintroduce un cliente saliente. Ver [PRIVACY.md](./PRIVACY.md).
+- **Sin inyección de shell**: la verificación de waves se ejecuta con `argv` estructurado (`waves.json`), nunca a través de una shell. Clonar un repositorio malicioso no puede colar comandos vía `tasks.md`.
 - **Runtime con event sourcing**: el estado del pipeline se agrega a `.boss/<feature>/.meta/events.jsonl` y se proyecta en un estado de ejecución de solo lectura.
 - **Puertas verificables**: QA, el despliegue y las comprobaciones finales se ejecutan como comandos reales cuyos veredictos quedan registrados como eventos. `boss gate final` y `boss doctor` fallan cuando una etapa marcada como completada arrastra una puerta fallida. La aplicación sigue dependiendo de que el agente orquestador respete el protocolo: la CLI hace que el veredicto sea comprobable, no inevitable.
 - **Artefactos reproducibles**: los PRD, los documentos de arquitectura, las listas de tareas, los informes de QA, los informes de despliegue y los resúmenes viven bajo `.boss/<feature>/`.
 - **Evaluaciones deterministas**: las transcripciones capturadas se pueden puntuar sin llamar a un LLM real.
 - **CLI amigable para agentes**: los comandos admiten salida JSON, `--describe`, ejecuciones en seco, campos acotados y errores estructurados.
+- **Autoverificable**: ejecuta `boss doctor` para confirmar el runtime resuelto, las ubicaciones de instalación, la salud del flujo de eventos y el límite de red — la afirmación de "cero red" es auditable, no solo declarada.
 
 ## Usa un rol o todo el equipo
 
