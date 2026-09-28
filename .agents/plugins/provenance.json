@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "1f6a043af315749355ba248012d9d86ebf98c4f5",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/1f6a043af315749355ba248012d9d86ebf98c4f5"
+    "commit": "bf0d1a56572acdeaebbf3a6d3a6b4dedefb404ee",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/bf0d1a56572acdeaebbf3a6d3a6b4dedefb404ee"
   },
   "publisher": {
     "name": "echoVic",
@@ -27,23 +27,23 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "a3e3c905449936efc41247013fc62136a8acc57fdd5d6b5bd6685158810061fd",
-      "bytes": 1636
+      "sha256": "66faaa3b896e42d0394cf43868c9049db80e5e410668ae437879d5b12d5e6969",
+      "bytes": 1576
     },
     {
       "path": ".codex-plugin/marketplace.json",
-      "sha256": "f6ce159940643bf1a66ae66052bb655c19d1476fdc2207d57cfad02a2f0d4356",
-      "bytes": 1111
+      "sha256": "e89de2f23f05f0811579b435465489863deef19886551a16f07b5ca9a8480402",
+      "bytes": 1063
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "0aee2336848735975607021a3e4c98efae964c6e8d2d3167d51aacb444606a58",
-      "bytes": 1833
+      "sha256": "948eea58e46d0024fdf6f78b27eebe4c4b61854b3bdab723d81bd8eacd221a4f",
+      "bytes": 1781
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "431676625ce0efdb7c47fe8cacb7b23c2a7f2557f736de63c5ef805a5d9dfcb3",
-      "bytes": 1064
+      "sha256": "44e3daf4b7fbffd53893b18e59594e505531c1946df781da32ccfa0f7ffbc4f9",
+      "bytes": 1016
     },
     {
       "path": ".agents/plugins/marketplace.json",
