@@ -12,7 +12,7 @@
  *   node scripts/build-skill-cli.js --check  # CI 用：构建后校验产物已提交（有漂移则退出 1）
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,7 @@ const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'packages', 'boss-cli', 'dist');
 const DEST = path.join(ROOT, 'skill', 'cli');
 const CHECK = process.argv.includes('--check');
+const NPM_CMD = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const BUNDLE_PACKAGE_JSON = {
   name: 'boss-cli-skill-bundle',
@@ -33,7 +34,8 @@ const BUNDLE_PACKAGE_JSON = {
 
 function build() {
   console.log('🔨 构建 CLI (tsc)...');
-  execSync('npm run build', { cwd: ROOT, stdio: 'inherit' });
+  // execFileSync + argv：不经 shell，避免把路径插值进 shell 命令。
+  execFileSync(NPM_CMD, ['run', 'build'], { cwd: ROOT, stdio: 'inherit' });
 }
 
 function sync() {
@@ -51,7 +53,7 @@ function sync() {
 }
 
 function checkClean() {
-  const status = execSync(`git status --porcelain -- ${path.relative(ROOT, DEST)}`, {
+  const status = execFileSync('git', ['status', '--porcelain', '--', path.relative(ROOT, DEST)], {
     cwd: ROOT,
     encoding: 'utf8',
   }).trim();

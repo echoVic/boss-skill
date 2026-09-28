@@ -86,7 +86,7 @@ describe('boss doctor', () => {
     const r = spawnSync(process.execPath, [BOSS_BIN, 'doctor', '--json'], {
       cwd: tmpDir,
       encoding: 'utf8',
-      env: { ...process.env, BOSS_KNOWLEDGE_API_KEY: 'legacy-value' },
+      env: { ...process.env, BOSS_KNOWLEDGE_API_KEY: 'example-legacy-value' },
     });
     const report = JSON.parse(r.stdout) as {
       checks: Array<{ name: string; status: string; detail: string }>;
