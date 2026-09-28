@@ -11,6 +11,9 @@
 
 - 发布脚本在版本回写后恢复 biome 格式（版本同步会重排 JSON 数组），并把
   `npm run lint` 纳入发布前验证链，避免 release 提交本身触发 CI lint 失败。
+- 清除 HOL 插件扫描器高危误报：测试示例环境变量值改为 `example-` 前缀的
+  占位形式（4.0.0 起 `HARDCODED_SECRET` 一直让扫描任务变红）；
+  `build-skill-cli.js` 改用 `execFileSync` + argv，不再把路径插值进 shell 命令。
 
 ## [5.0.0] - 2026-09-28
 
