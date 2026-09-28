@@ -30,13 +30,7 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Productivity",
-      "keywords": [
-        "bmad",
-        "pipeline",
-        "agent-orchestration",
-        "full-stack",
-        "automation"
-      ]
+      "keywords": ["bmad", "pipeline", "agent-orchestration", "full-stack", "automation"]
     }
   ]
 }

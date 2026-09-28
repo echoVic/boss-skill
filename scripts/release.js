@@ -248,6 +248,7 @@ function main() {
   console.log('🧪 运行完整验证...');
   run('npm run build:skill');
   run('npm run typecheck');
+  run('npm run lint');
   run('npm test');
   run('npm run test:install-matrix');
 
@@ -269,6 +270,9 @@ function main() {
   if (dryRun) {
     console.log(`  [dry-run] 将更新 ${PROVENANCE_FILE}`);
   } else {
+    // 版本回写会重排 JSON（JSON.stringify 展开数组），先恢复 biome 格式再生成 provenance，
+    // 保证 release 提交本身通过 CI 的 lint 门禁。
+    run('npm run format');
     run('npm run provenance:generate');
   }
 

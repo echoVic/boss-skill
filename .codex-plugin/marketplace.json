@@ -33,13 +33,7 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Productivity",
-      "keywords": [
-        "bmad",
-        "pipeline",
-        "codex",
-        "agent-orchestration",
-        "automation"
-      ]
+      "keywords": ["bmad", "pipeline", "codex", "agent-orchestration", "automation"]
     }
   ]
 }

@@ -19,31 +19,21 @@
     "devops",
     "project-management"
   ],
-  "skills": [
-    "./skill/"
-  ],
-  "hooks": [
-    "./skill/hooks/claude/hooks.json"
-  ],
+  "skills": ["./skill/"],
+  "hooks": ["./skill/hooks/claude/hooks.json"],
   "interface": {
     "displayName": "Boss",
     "shortDescription": "Auditable multi-agent engineering workflow.",
     "longDescription": "Boss turns a coding agent into a structured engineering team with PM, architecture, implementation, QA, DevOps, runtime state, hooks, quality gates, and replayable delivery artifacts.",
     "developerName": "echoVic",
     "category": "Productivity",
-    "capabilities": [
-      "Planning",
-      "Code Review",
-      "Testing"
-    ],
+    "capabilities": ["Planning", "Code Review", "Testing"],
     "websiteURL": "https://github.com/echoVic/boss-skill",
     "privacyPolicyURL": "https://github.com/echoVic/boss-skill/blob/main/docs/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/echoVic/boss-skill/blob/main/docs/TERMS.md",
     "composerIcon": "./assets/boss-composer-icon.svg",
     "logo": "./assets/boss-logo.svg",
-    "screenshots": [
-      "./boss-skill-promo.png"
-    ],
+    "screenshots": ["./boss-skill-promo.png"],
     "defaultPrompt": [
       "Use Boss to plan and implement this feature.",
       "Run Boss QA on this project.",

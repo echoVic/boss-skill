@@ -23,15 +23,28 @@ describe('release script contract', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
     const buildIndex = source.indexOf("run('npm run build:skill')");
     const typecheckIndex = source.indexOf("run('npm run typecheck')");
+    const lintIndex = source.indexOf("run('npm run lint')");
     const testIndex = source.indexOf("run('npm test')");
     const installMatrixIndex = source.indexOf("run('npm run test:install-matrix')");
     const bundleCheckIndex = source.indexOf('skill/cli/bin/boss.js --version');
 
     expect(buildIndex).toBeGreaterThan(-1);
     expect(typecheckIndex).toBeGreaterThan(buildIndex);
-    expect(testIndex).toBeGreaterThan(typecheckIndex);
+    expect(lintIndex).toBeGreaterThan(typecheckIndex);
+    expect(testIndex).toBeGreaterThan(lintIndex);
     expect(installMatrixIndex).toBeGreaterThan(testIndex);
     expect(bundleCheckIndex).toBeGreaterThan(installMatrixIndex);
+  });
+
+  it('reformats version files after syncing so the release commit stays biome-clean', () => {
+    const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
+    const syncIndex = source.indexOf('同步版本号');
+    const formatIndex = source.indexOf("run('npm run format')");
+    const provenanceIndex = source.indexOf("run('npm run provenance:generate')");
+
+    expect(syncIndex).toBeGreaterThan(-1);
+    expect(formatIndex).toBeGreaterThan(syncIndex);
+    expect(provenanceIndex).toBeGreaterThan(formatIndex);
   });
 
   it('never publishes to npm anymore', () => {

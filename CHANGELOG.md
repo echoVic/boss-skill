@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 修复（Fixed）
+
+- 发布脚本在版本回写后恢复 biome 格式（版本同步会重排 JSON 数组），并把
+  `npm run lint` 纳入发布前验证链，避免 release 提交本身触发 CI lint 失败。
+
 ## [5.0.0] - 2026-09-28
 
 ### 破坏性变更（Breaking）
