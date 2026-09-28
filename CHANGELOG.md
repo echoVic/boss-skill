@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-09-28
+
 ### 破坏性变更（Breaking）
 
 - **停发 npm：分发只走 skill 市场。** `@blade-ai/boss-skill` 不再发布到 npm，仓库改为
