@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "plugin": {
     "name": "boss",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "distribution": "skill-marketplace"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "7c298e8fd34c109cf0e1bce8bbfdd1b2ad22fde4",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/7c298e8fd34c109cf0e1bce8bbfdd1b2ad22fde4"
+    "commit": "1f6a043af315749355ba248012d9d86ebf98c4f5",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/1f6a043af315749355ba248012d9d86ebf98c4f5"
   },
   "publisher": {
     "name": "echoVic",
@@ -27,34 +27,34 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "25e1afc37294e2da2ef58fdb29ae8c7309a2e8d652e69559cc9381aac090ec7f",
-      "bytes": 1576
+      "sha256": "a3e3c905449936efc41247013fc62136a8acc57fdd5d6b5bd6685158810061fd",
+      "bytes": 1636
     },
     {
       "path": ".codex-plugin/marketplace.json",
-      "sha256": "b68bc0d202643aa17105428412cb67c6238474ff5eb335b75f224dc5d602c280",
-      "bytes": 1063
+      "sha256": "f6ce159940643bf1a66ae66052bb655c19d1476fdc2207d57cfad02a2f0d4356",
+      "bytes": 1111
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "cb25ce18f918dca9d498dfcd36584b0cb10e03702fd606087ac2074ae3456ff4",
-      "bytes": 1781
+      "sha256": "0aee2336848735975607021a3e4c98efae964c6e8d2d3167d51aacb444606a58",
+      "bytes": 1833
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "f6e2e1ed274ea837ec1c0eb891782ecff67fa457a9f3307c5f18718fc01504d9",
-      "bytes": 1016
+      "sha256": "431676625ce0efdb7c47fe8cacb7b23c2a7f2557f736de63c5ef805a5d9dfcb3",
+      "bytes": 1064
     },
     {
       "path": ".agents/plugins/marketplace.json",
-      "sha256": "e9412bbac6052b63a6ed3d63c756ce37192f6ec6dc94353b9e49e06e6f4b92df",
+      "sha256": "fe289bd3022ba8fca74e519266e7822f88eafa530f4b31f7ecf4f83262ef50a4",
       "bytes": 802
     }
   ],
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "c042c3f8de6c3f31734d3f88452cf0664e15da222cd015b6b3507524ed642ca7",
+      "sha256": "2714540f6e318210fe322e751be0974c6adf7c19f6793a264a4062c1f5ad9376",
       "bytes": 9765
     },
     {

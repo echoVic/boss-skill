@@ -1,7 +1,7 @@
 {
   "name": "boss-skill",
   "description": "BMAD Codex plugin marketplace metadata",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "interface": {
     "displayName": "Boss Skill"
   },
@@ -22,7 +22,7 @@
         "path": "./"
       },
       "description": "BMAD pipeline plugin for Codex with installer-managed hooks and shared runtime enforcement.",
-      "version": "4.0.0",
+      "version": "5.0.0",
       "author": {
         "name": "echoVic",
         "email": "137844255@qq.com",
@@ -33,7 +33,13 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Productivity",
-      "keywords": ["bmad", "pipeline", "codex", "agent-orchestration", "automation"]
+      "keywords": [
+        "bmad",
+        "pipeline",
+        "codex",
+        "agent-orchestration",
+        "automation"
+      ]
     }
   ]
 }
