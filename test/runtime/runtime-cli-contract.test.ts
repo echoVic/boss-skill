@@ -17,7 +17,7 @@ import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
-const RUN_WITH_FLAGS = path.join(REPO_ROOT, 'scripts', 'lib', 'run-with-flags.js');
+const RUN_WITH_FLAGS = path.join(REPO_ROOT, 'skill', 'scripts', 'lib', 'run-with-flags.js');
 
 describe('runtime CLI contract', () => {
   let tmpDir: string;

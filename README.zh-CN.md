@@ -1,6 +1,5 @@
 # boss-skill
 
-[![npm version](https://img.shields.io/npm/v/@blade-ai/boss-skill)](https://www.npmjs.com/package/@blade-ai/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
@@ -37,37 +36,41 @@ Boss 不是一个巨大的单体命令。你可以在已有项目里只调用一
 | `/boss:qa` | QA + 门禁 | 需要可验证测试证据 |
 | `/boss:ship` | DevOps 构建与部署检查 | 准备发布，需要交付记录 |
 | `/boss:extend` | 自定义 Agent、Pack 或 Gate | 为自己的团队扩展 Boss |
-| `/boss:upgrade` | 升级 Boss Skill 并重新安装 hooks | 需要最新 npm 包和 hook 配置 |
+| `/boss:upgrade` | 更新 Boss Skill 并重新合并 hooks | 需要最新市场版本和 hook 配置 |
 
 ## 5 分钟快速上手
 
 ### 1. 安装
 
-Boss 是一个「被安装进 coding agent」的 skill，而不是用来安装其它 skill 的工具。
+Boss 是一个「被安装进 coding agent」的 skill，而不是用来安装其它 skill 的工具。分发只走 skill 市场：没有 npm 包，也没有全局二进制。skill 自带 CLI（`skill/cli/`），hooks 与 Agent 都用 `node` 直接调用它。
 
-**推荐 —— 通过 `skills` CLI（[vercel-labs/skills](https://github.com/vercel-labs/skills)，skills.sh）：**
+**Claude Code —— 插件市场（推荐，hooks 自动接好）：**
+
+```text
+/plugin marketplace add echoVic/boss-skill
+/plugin install boss@boss-skill
+```
+
+**Codex —— 插件市场：**
+
+```bash
+codex plugin marketplace add echoVic/boss-skill
+```
+
+然后在插件浏览器（`/plugins`）里安装 **boss**。
+
+**任意 Agent —— 通过 `skills` CLI（[vercel-labs/skills](https://github.com/vercel-labs/skills)，skills.sh）：**
 
 ```bash
 npx skills add echoVic/boss-skill
 ```
 
-这是安装 skill 的标准、跨 agent 的主流方式：它从仓库发现 `boss`，交互式询问目标 Agent / 安装范围（项目 vs 全局）/ 安装方式，并生成可提交的 `skills-lock.json`。Boss 只暴露一个 skill 根，所以选择列表只出现 `boss` 一项——其内部方法论随它一起安装。
+它从仓库发现 `boss`，交互式询问目标 Agent / 安装范围（项目 vs 全局）/ 安装方式，并生成可提交的 `skills-lock.json`。Boss 只暴露一个 skill 根，所以选择列表只出现 `boss` 一项——其内部方法论随它一起安装。
 
-**备选 —— Boss 自带的多宿主安装器**（自动检测 Claude Code、Codex、OpenClaw、Antigravity、Hermes 并全部安装，同时合并 Codex hooks）：
-
-```bash
-# 一次性运行，无需全局安装
-npx @blade-ai/boss-skill
-
-# 或全局安装后运行自安装向导
-npm install -g @blade-ai/boss-skill
-boss-skill
-```
-
-Claude Code plugin 模式：
+Codex 等复制式安装可再用自带 CLI 合并 hooks：
 
 ```bash
-claude --plugin-dir "$(boss-skill path)"
+node <已安装的 skill>/cli/bin/boss.js install
 ```
 
 ### 2. 跑一条轻量流水线
@@ -83,9 +86,11 @@ claude --plugin-dir "$(boss-skill path)"
 
 ### 3. 查看结果
 
+Boss 自带 CLI（随 skill 分发，无需 npm、无需配置 PATH）。下面命令里的 `<skill>` 指包含 `SKILL.md` 的目录（Claude Code 插件安装为 `<插件根>/skill`；复制式安装如 `~/.codex/skills/boss`）。
+
 ```bash
-boss status todo-app --json
-boss runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.js status todo-app --json
+node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
 ```
 
 预期产物结构：
@@ -116,27 +121,24 @@ boss runtime inspect-pipeline todo-app
 
 ## 没有 CLI 也能用
 
-Boss 会在运行时检测 `boss` CLI。没有 CLI 时，工作流可以降级成 `.boss/<feature>/` 下的 Markdown 产物，而不是事件流。CLI 是“可审计能力升级”：事件溯源、可回放恢复、确定性 eval、runtime 门禁和结构化诊断都依赖它。
+CLI 随 skill 分发，市场安装必然自带。只有当环境里没有 `node`、或 CLI 无法定位时，工作流才会降级成 `.boss/<feature>/` 下的 Markdown 产物，而不是事件流。CLI 是“可审计能力升级”：事件溯源、可回放恢复、确定性 eval、runtime 门禁和结构化诊断都依赖它。
 
 Boss 不等于“安装后 100% 自动交付”。它提供 runtime 工作流和证据门禁；当前 Coding Agent 仍然需要遵守 Boss 协议。
 
 ## 安装细节
 
-```bash
-npm install -g @blade-ai/boss-skill
-boss-skill install
-```
+市场安装会把整个 `skill/` 目录复制（或软链）过去。自带 CLI 位于 `<skill>/cli/bin/boss.js`，只要求 Node.js `>=20`；hooks 用完整路径引用它，因此不依赖 npm，也不依赖 PATH 上的 `boss` 二进制。
 
-常用安装命令：
+常用命令（通过自带 CLI 运行）：
 
 ```bash
-boss-skill install --dry-run
-boss-skill uninstall
-boss-skill path
-boss-skill --version
+node <skill>/cli/bin/boss.js install --dry-run
+node <skill>/cli/bin/boss.js uninstall
+node <skill>/cli/bin/boss.js path
+node <skill>/cli/bin/boss.js --version
 ```
 
-自动检测目标：
+`boss install` 自动检测目标：
 
 | Agent | 检测条件 | 安装方式 |
 | --- | --- | --- |
@@ -144,11 +146,11 @@ boss-skill --version
 | Codex | `~/.codex/` | 复制到 `~/.codex/skills/boss/`、注入 metadata、合并 hooks |
 | Antigravity | `~/.gemini/antigravity/` | 复制到 Antigravity skills 目录并注入 metadata |
 | Hermes | `~/.hermes/` | 复制到 `~/.hermes/skills/boss/` 并注入 metadata |
-| Claude Code | 始终可用 | 通过 `--plugin-dir` 使用 Plugin 模式 |
+| Claude Code | 始终可用 | 插件市场（见快速上手） |
 
 ## 平台支持
 
-Boss 面向 Node.js `>=20`，支持 Linux、macOS 和 Windows。CLI 只通过 `spawnSync` 加显式参数数组调用外部命令（从不使用 `shell: true`），并在 Windows 上把 `npm`/`npx` 解析为对应的 `.cmd` 变体，因此核心流水线没有任何 POSIX-only 假设。
+Boss 面向 Node.js `>=20`，支持 Linux、macOS 和 Windows。CLI 随 skill 分发，只通过 `spawnSync` 加显式参数数组调用外部命令（从不使用 `shell: true`），并在 Windows 上把 `npm`/`npx` 解析为对应的 `.cmd` 变体，因此核心流水线没有任何 POSIX-only 假设。
 
 有两项能力依赖可选外部工具，缺失时会优雅降级：
 
@@ -345,7 +347,7 @@ npm test
 常用脚本：
 
 ```bash
-npm run build
+npm run build:skill   # 构建并同步 skill/cli（改 CLI 源码时连同产物一起提交）
 npm run typecheck
 npm test
 npm run test:skills
@@ -358,23 +360,26 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI 和 runtime
-├── skill/                      # 安装到 Coding Agent 的 skill bundle
-├── scripts/hooks/              # Node.js hook 脚本
-├── scripts/lib/                # Hook 辅助函数
+├── packages/boss-cli/          # TypeScript CLI 和 runtime 源码
+├── skill/                      # 安装到 Coding Agent 的 skill bundle（自包含）
+│   ├── cli/                    # 生成的 CLI 产物（node 直接运行，无需 npm）
+│   ├── scripts/                # hook 运行时（调度器 + hook 脚本）
+│   └── assets/                 # 内置 DAG、pipeline packs、plugin schema
 ├── test/                       # Vitest、harness、eval、hook、install 测试
 ├── docs/superpowers/           # 历史 specs、plans、reports
 ├── examples/                   # 示例项目
-├── .claude-plugin/             # Claude Code plugin manifest
-├── .codex-plugin/              # Codex plugin manifest
-└── package.json
+├── .claude-plugin/             # Claude Code plugin manifest + marketplace
+├── .codex-plugin/              # Codex plugin manifest + marketplace
+├── .agents/plugins/            # 仓库级 plugin marketplace + provenance
+└── package.json                # 私有开发工作区（不发布）
 ```
 
 关键源码位置：
 
 - `packages/boss-cli/src/` 是 CLI 和 runtime 的 TypeScript 源码。
-- `packages/boss-cli/dist/` 是发布到 npm bin 的生成产物，不要手工修改。
-- `packages/boss-cli/assets/` 保存内置 DAG、pipeline packs、plugin schema 和插件。
+- `skill/cli/` 是随 skill 分发的 CLI 产物；`packages/boss-cli/dist/` 是开发中间产物。两者都由 `npm run build:skill` 生成，不要手工修改。
+- `skill/assets/` 保存内置 DAG、pipeline packs、plugin schema 和插件。
+- `skill/scripts/` 保存 hook 运行时（`lib/run-with-flags.js`）和 hook 脚本。
 - `skill/SKILL.md` 是面向 Agent 的主编排入口。
 - `skill/agents/` 保存角色 prompts。
 - `skill/commands/` 保存 slash commands。
@@ -388,12 +393,11 @@ boss-skill/
 npm run release -- patch
 npm run release -- minor
 npm run release -- major
-npm run release -- 3.11.0
-npm run release -- 3.11.0 --dry-run
-npm run release -- 3.11.0 --no-publish
+npm run release -- 4.1.0
+npm run release -- 4.1.0 --dry-run
 ```
 
-发布脚本会检查工作区干净、运行测试、同步版本、验证一致性、创建 commit 和 tag；除非使用 `--no-publish`，否则会发布到 npm。
+发布脚本会检查工作区干净、重建随 skill 分发的 CLI 产物（`skill/cli/`）、运行测试、同步版本、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——不再有 npm publish 步骤。
 
 详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 

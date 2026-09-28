@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { resolvePackagePath } from '../infrastructure/paths.js';
+import { skillRootFromImportMeta } from '../infrastructure/paths.js';
 
-const ASSETS_ROOT = resolvePackagePath(import.meta.url, 2, 'assets');
+const ASSETS_ROOT = path.join(skillRootFromImportMeta(import.meta.url), 'assets');
 
 export interface AssetOptions {
   cwd?: string;

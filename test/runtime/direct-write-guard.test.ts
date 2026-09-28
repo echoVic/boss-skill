@@ -13,7 +13,7 @@ function read(relativePath: string) {
 describe('phase-1 direct-write guard', () => {
   it('keeps critical writer paths free of direct execution.json mutations', () => {
     const criticalFiles = [
-      'scripts/hooks/post-tool-write.js',
+      'skill/scripts/hooks/post-tool-write.js',
       'packages/boss-cli/src/commands/runtime/evaluate-gates.ts',
       'packages/boss-cli/src/runtime/application/pipeline.ts',
       'packages/boss-cli/src/commands/runtime/register-plugins.ts',
@@ -40,10 +40,10 @@ describe('phase-1 direct-write guard', () => {
 
   it('keeps runtime-first writer paths free of shell wrapper orchestration', () => {
     const runtimeFirstFiles = [
-      'scripts/hooks/post-tool-write.js',
+      'skill/scripts/hooks/post-tool-write.js',
       'packages/boss-cli/src/runtime/application/pipeline.ts',
-      'scripts/hooks/subagent-start.js',
-      'scripts/hooks/subagent-stop.js',
+      'skill/scripts/hooks/subagent-start.js',
+      'skill/scripts/hooks/subagent-stop.js',
     ];
 
     const wrapperPatterns = [

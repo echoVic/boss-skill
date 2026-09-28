@@ -1,6 +1,5 @@
 # boss-skill
 
-[![npm version](https://img.shields.io/npm/v/@blade-ai/boss-skill)](https://www.npmjs.com/package/@blade-ai/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
@@ -37,15 +36,30 @@ Boss は単一のモノリシックなコマンドではありません。既存
 | `/boss:qa` | QA とゲート | 検証可能なテストエビデンスが必要な場合 |
 | `/boss:ship` | DevOps によるビルド・デプロイチェック | リリースの準備ができている場合 |
 | `/boss:extend` | カスタムエージェント、パック、ゲート | Boss を自チームに合わせて拡張したい場合 |
-| `/boss:upgrade` | Boss スキルのアップグレードとフックの再インストール | 最新の npm パッケージとフック設定が欲しい場合 |
+| `/boss:upgrade` | Boss スキルの更新とフックの再マージ | 最新のマーケットプレイス版とフック設定が欲しい場合 |
 
 ## クイックスタート
 
 ### 1. インストール
 
-Boss はコーディングエージェントにインストールするスキルであり、他のスキルをインストールするためのツールではありません。
+Boss はコーディングエージェントにインストールするスキルであり、他のスキルをインストールするためのツールではありません。配布はマーケットプレイスのみです。npm パッケージもグローバルバイナリもありません。スキルには専用 CLI(`skill/cli/`)が同梱されており、フックとエージェントは `node` 経由でそれを呼び出します。
 
-**推奨 — `skills` CLI([vercel-labs/skills](https://github.com/vercel-labs/skills)、skills.sh)を使用:**
+**Claude Code — プラグインマーケットプレイス(推奨、フックも自動で設定されます):**
+
+```text
+/plugin marketplace add echoVic/boss-skill
+/plugin install boss@boss-skill
+```
+
+**Codex — プラグインマーケットプレイス:**
+
+```bash
+codex plugin marketplace add echoVic/boss-skill
+```
+
+次にプラグインブラウザ(`/plugins`)を開き、**boss** をインストールします。
+
+**任意のエージェント — `skills` CLI 経由([vercel-labs/skills](https://github.com/vercel-labs/skills)、skills.sh):**
 
 ```bash
 npx skills add echoVic/boss-skill
@@ -53,21 +67,10 @@ npx skills add echoVic/boss-skill
 
 これはスキルをインストールする標準的でエージェント非依存の方法です。リポジトリから `boss` を検出し、対象エージェント / スコープ(プロジェクトかグローバルか)/ インストール方法を尋ね、コミット可能な `skills-lock.json` を記録します。Boss は単一のスキルルートとして配布されるため、ピッカーには `boss` だけが表示され、その内部方法論も一緒に引き継がれます。
 
-**代替案 — Boss 独自のマルチエージェントインストーラー**(Claude Code、Codex、OpenClaw、Antigravity、Hermes を自動検出してすべてにインストールし、Codex のフックもマージします):
+Codex などのコピー式インストールでは、同梱 CLI で Boss のフックをマージします:
 
 ```bash
-# One-shot, no global install
-npx @blade-ai/boss-skill
-
-# Or install globally, then run the self-install wizard
-npm install -g @blade-ai/boss-skill
-boss-skill
-```
-
-Claude Code のプラグインモードの場合:
-
-```bash
-claude --plugin-dir "$(boss-skill path)"
+node <installed-skill>/cli/bin/boss.js install
 ```
 
 ### 2. 軽量パイプラインを実行する
@@ -83,9 +86,11 @@ claude --plugin-dir "$(boss-skill path)"
 
 ### 3. 結果を確認する
 
+Boss は専用 CLI をスキル内に同梱しています。npm install も PATH の設定も不要です。以下のスニペットで、`<skill>` は `SKILL.md` を含むディレクトリを指します(Claude Code のプラグインインストールでは `<plugin-root>/skill`、コピー式インストールでは例えば `~/.codex/skills/boss`)。
+
 ```bash
-boss status todo-app --json
-boss runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.js status todo-app --json
+node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
 ```
 
 想定されるアーティファクト構成:
@@ -116,24 +121,21 @@ boss runtime inspect-pipeline todo-app
 
 ## CLI がなくても動作します
 
-Boss は実行時に `boss` CLI を検出します。CLI がない場合、ワークフローはイベントストリームではなく `.boss/<feature>/` 配下の Markdown アーティファクトへ縮退します。CLI は監査可能性を強化するものです。イベントソーシング、再生可能な再開、決定的な eval、ランタイムゲート、構造化診断を提供します。
+CLI はスキルに同梱されているため、マーケットプレイスからのインストールには必ず含まれます。`node` が利用できない、または CLI を見つけられない場合、ワークフローはイベントストリームではなく `.boss/<feature>/` 配下の Markdown アーティファクトへ縮退します。CLI は監査可能性を強化するものです。イベントソーシング、再生可能な再開、決定的な eval、ランタイムゲート、構造化診断を提供します。
 
 Boss は「一度インストールすれば自律的な納品が保証される」という意味ではありません。ランタイムワークフローとエビデンスゲートを提供するものであり、アクティブなコーディングエージェントが Boss プロトコルに従う必要は依然としてあります。
 
 ## インストールの詳細
 
-```bash
-npm install -g @blade-ai/boss-skill
-boss-skill install
-```
+マーケットプレイスからのインストールでは、`skill/` ディレクトリ全体がコピー(またはリンク)されます。同梱 CLI は `<skill>/cli/bin/boss.js` にあり、必要なのは Node.js `>=20` のみです。フックはフルパスでこれを参照するため、npm にもグローバルな `boss` バイナリにも依存しません。
 
-便利なインストールコマンド:
+便利なコマンド(同梱 CLI 経由で実行):
 
 ```bash
-boss-skill install --dry-run
-boss-skill uninstall
-boss-skill path
-boss-skill --version
+node <skill>/cli/bin/boss.js install --dry-run
+node <skill>/cli/bin/boss.js uninstall
+node <skill>/cli/bin/boss.js path
+node <skill>/cli/bin/boss.js --version
 ```
 
 自動検出されるターゲット:
@@ -144,11 +146,11 @@ boss-skill --version
 | Codex | `~/.codex/` | `~/.codex/skills/boss/` にコピーし、メタデータを注入してフックをマージ |
 | Antigravity | `~/.gemini/antigravity/` | Antigravity のスキルディレクトリにコピーし、メタデータを注入 |
 | Hermes | `~/.hermes/` | `~/.hermes/skills/boss/` にコピーし、メタデータを注入 |
-| Claude Code | 常に利用可能 | `--plugin-dir` によるプラグインモード |
+| Claude Code | 常に利用可能 | プラグインマーケットプレイス(クイックスタート参照) |
 
 ## プラットフォームサポート
 
-Boss は Node.js `>=20` を対象とし、Linux、macOS、Windows で動作します。CLI は明示的な引数配列を伴う `spawnSync` 経由でのみ外部コマンドを呼び出し(`shell: true` は使いません)、Windows では `npm`/`npx` をそれぞれの `.cmd` 版に解決するため、コアパイプラインに POSIX 限定の前提はありません。
+Boss は Node.js `>=20` を対象とし、Linux、macOS、Windows で動作します。CLI はスキルに同梱されており、明示的な引数配列を伴う `spawnSync` 経由でのみ外部コマンドを呼び出し(`shell: true` は使いません)、Windows では `npm`/`npx` をそれぞれの `.cmd` 版に解決するため、コアパイプラインに POSIX 限定の前提はありません。
 
 2つの機能はオプションの外部ツールに依存しており、それらがない場合は穏やかに縮退します:
 
@@ -342,7 +344,7 @@ npm test
 便利なスクリプト:
 
 ```bash
-npm run build
+npm run build:skill   # skill/cli をビルドして同期(変更と一緒にバンドルをコミット)
 npm run typecheck
 npm test
 npm run test:skills
@@ -355,23 +357,26 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI and runtime
-├── skill/                      # Skill bundle installed into coding agents
-├── scripts/hooks/              # Node.js hook scripts
-├── scripts/lib/                # Hook helpers
-├── test/                       # Vitest, harness, eval, hook, and install tests
-├── docs/superpowers/           # Historical specs, plans, and reports
-├── examples/                   # Example projects
-├── .claude-plugin/             # Claude Code plugin manifest
-├── .codex-plugin/              # Codex plugin manifest
-└── package.json
+├── packages/boss-cli/          # TypeScript CLI とランタイムのソース
+├── skill/                      # コーディングエージェントにインストールされるスキルバンドル(自己完結型)
+│   ├── cli/                    # 生成された CLI バンドル(node で実行、npm 不要)
+│   ├── scripts/                # フックランタイム(ディスパッチャー + フックスクリプト)
+│   └── assets/                 # 組み込み DAG、パイプラインパック、プラグインスキーマ
+├── test/                       # Vitest、ハーネス、eval、フック、インストールのテスト
+├── docs/superpowers/           # 過去の仕様書、プラン、レポート
+├── examples/                   # サンプルプロジェクト
+├── .claude-plugin/             # Claude Code プラグインマニフェスト + マーケットプレイス
+├── .codex-plugin/              # Codex プラグインマニフェスト + マーケットプレイス
+├── .agents/plugins/            # リポジトリ単位のプラグインマーケットプレイス + 来歴
+└── package.json                # プライベートな開発ワークスペース(公開されません)
 ```
 
 重要なソース領域:
 
 - `packages/boss-cli/src/` には CLI とランタイムの TypeScript ソースが含まれます。
-- `packages/boss-cli/dist/` には公開 npm bin が使用する生成済み CLI 出力が含まれます。手動で編集しないでください。
-- `packages/boss-cli/assets/` には組み込みの DAG、パイプラインパック、プラグインスキーマ、プラグインが含まれます。
+- `skill/cli/` はスキルに同梱される生成済み CLI バンドルです。`packages/boss-cli/dist/` は開発用の中間ビルドです。どちらも `npm run build:skill` から生成されるため、手動で編集しないでください。
+- `skill/assets/` には組み込みの DAG、パイプラインパック、プラグインスキーマ、プラグインが含まれます。
+- `skill/scripts/` にはフックランタイム(`lib/run-with-flags.js`)とフックスクリプトが含まれます。
 - `skill/SKILL.md` はエージェント向けオーケストレーションのメインエントリです。
 - `skill/agents/` にはロールプロンプトが含まれます。
 - `skill/commands/` にはスラッシュコマンドが含まれます。
@@ -385,12 +390,11 @@ boss-skill/
 npm run release -- patch
 npm run release -- minor
 npm run release -- major
-npm run release -- 3.11.0
-npm run release -- 3.11.0 --dry-run
-npm run release -- 3.11.0 --no-publish
+npm run release -- 4.1.0
+npm run release -- 4.1.0 --dry-run
 ```
 
-リリーススクリプトは、作業ツリーがクリーンであることを確認し、テストを実行し、バージョンを同期し、整合性を検証し、コミットとタグを作成し、`--no-publish` が指定されていない限り公開します。
+リリーススクリプトは、作業ツリーがクリーンであることを確認し、スキルに同梱される CLI バンドル(`skill/cli/`)を再ビルドし、テストを実行し、バージョンを同期し、整合性を検証し、コミットとタグを作成してプッシュします。リリースは git タグそのもので、マーケットプレイスはリポジトリを読み取ります。npm publish の手順はありません。
 
 [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 

@@ -3,12 +3,16 @@
 /**
  * release.js - 发布脚本
  *
+ * 分发只走 skill 市场（Claude 插件市场 / Codex 插件市场 / skills.sh）：
+ * 发布 = 构建随 skill 分发的 CLI 产物 + 同步版本号 + 打 git tag + push。
+ * 市场从仓库拉取，不发布 npm 包。
+ *
  * 用法:
- *   node scripts/release.js <version> [--dry-run] [--no-publish]
+ *   node scripts/release.js <version> [--dry-run]
  *
  * 示例:
- *   node scripts/release.js 3.3.0
- *   node scripts/release.js 3.3.0 --dry-run
+ *   node scripts/release.js 4.1.0
+ *   node scripts/release.js 4.1.0 --dry-run
  *   node scripts/release.js patch
  *   node scripts/release.js minor
  */
@@ -210,13 +214,10 @@ function isValidSemver(v) {
 function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
-  const noPublish = args.includes('--no-publish');
   const versionArg = args.find((a) => !a.startsWith('--'));
 
   if (!versionArg) {
-    console.error(
-      '用法: node scripts/release.js <version|major|minor|patch> [--dry-run] [--no-publish]',
-    );
+    console.error('用法: node scripts/release.js <version|major|minor|patch> [--dry-run]');
     process.exit(1);
   }
 
@@ -233,7 +234,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`\n📦 发布 @blade-ai/boss-skill`);
+  console.log(`\n📦 发布 Boss Skill`);
   console.log(`   ${current} → ${next}${dryRun ? ' (dry-run)' : ''}\n`);
 
   // 1. 检查工作区干净
@@ -245,7 +246,7 @@ function main() {
 
   // 2. 跑完整验证
   console.log('🧪 运行完整验证...');
-  run('npm run build');
+  run('npm run build:skill');
   run('npm run typecheck');
   run('npm test');
   run('npm run test:install-matrix');
@@ -285,9 +286,17 @@ function main() {
     console.log('  ✅ 所有文件版本一致');
   }
 
-  // 5. 验证 npm 包内容。dist 不进 Git，但必须进入 npm tarball。
-  console.log('\n📦 验证 npm 包内容...');
-  run('npm pack --dry-run');
+  // 5. 验证随 skill 分发的 CLI 产物可用（marketplace 安装不跑构建，产物必须已提交）。
+  console.log('\n📦 验证 skill/cli 产物...');
+  const bundleVersion = execSync('node skill/cli/bin/boss.js --version', {
+    cwd: ROOT,
+    encoding: 'utf8',
+  }).trim();
+  if (bundleVersion !== next) {
+    console.error(`❌ skill/cli 版本 ${bundleVersion} 与目标版本 ${next} 不一致`);
+    process.exit(1);
+  }
+  console.log(`  ✅ skill/cli/bin/boss.js --version → ${bundleVersion}`);
 
   if (dryRun) {
     console.log('\n🏁 dry-run 完成，未做任何修改。');
@@ -296,30 +305,13 @@ function main() {
 
   // 6. Git commit + tag
   console.log('\n📝 提交版本更新...');
-  run(`git add ${VERSION_FILES.map((f) => f.path).join(' ')}`);
+  const commitPaths = [...VERSION_FILES.map((f) => f.path), 'skill/cli'];
+  run(`git add ${commitPaths.join(' ')}`);
   run(`git commit -m "chore: release v${next}"`);
   run(`git tag v${next}`);
 
-  // 7. 发布
-  if (noPublish) {
-    console.log('\n⏭️  跳过 npm publish (--no-publish)');
-  } else {
-    console.log('\n🚀 发布到 npm...');
-    const npmToken = process.env.NPM_TOKEN;
-    const npmrcPath = path.join(ROOT, '.npmrc');
-    let npmrcCreated = false;
-    if (npmToken) {
-      fs.writeFileSync(npmrcPath, `//registry.npmjs.org/:_authToken=${npmToken}\n`, 'utf8');
-      npmrcCreated = true;
-    }
-    try {
-      run('npm publish');
-    } finally {
-      if (npmrcCreated) {
-        fs.unlinkSync(npmrcPath);
-      }
-    }
-  }
+  // 7. 分发：市场从仓库拉取，git tag + push 即发布
+  console.log('\n🚀 分发通过 git tag：Claude/Codex 插件市场与 skills.sh 从仓库读取');
 
   // 8. Push
   console.log('\n📤 推送到远程...');

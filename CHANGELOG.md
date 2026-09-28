@@ -7,6 +7,31 @@
 
 ## [Unreleased]
 
+### 破坏性变更（Breaking）
+
+- **停发 npm：分发只走 skill 市场。** `@blade-ai/boss-skill` 不再发布到 npm，仓库改为
+  `private`，不再提供 `boss` / `boss-skill` 全局二进制。安装方式：
+  - Claude Code：`/plugin marketplace add echoVic/boss-skill` → `/plugin install boss@boss-skill`
+    （hooks 随插件声明自动接好）
+  - Codex：`codex plugin marketplace add echoVic/boss-skill`，再在 `/plugins` 中安装
+  - 任意 Agent：`npx skills add echoVic/boss-skill`（复制式安装；可选
+    `node <skill>/cli/bin/boss.js install` 合并 Codex hooks）
+- **CLI 随 skill 分发（`skill/cli/`）。** 构建产物提交进仓库，marketplace 安装不跑构建；
+  hooks 改为 `node ${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js hooks run ...`（Codex 用
+  `${PLUGIN_ROOT}`，复制式安装由 installer 物化为绝对路径），不再依赖 PATH 上的 `boss`。
+  版本真相源为 `skill/SKILL.md` frontmatter；`boss path` 输出 skill 根目录。
+- **`/boss:upgrade` 改为市场更新**：`/plugin marketplace update boss-skill` /
+  `codex plugin marketplace upgrade boss-skill` / `npx skills update boss`。
+- 发布脚本移除 npm pack/publish 与 `--no-publish`；发布物 = git tag，市场从仓库拉取。
+
+### 变更（Changed）
+
+- 运行时资产与 hooks 迁入 skill：`packages/boss-cli/assets/` → `skill/assets/`，
+  `scripts/hooks/`、`scripts/lib/` → `skill/scripts/`；CLI 路径解析统一走 skill root
+  （`findSkillRoot`，同时兼容仓库布局与安装副本布局）。
+- `hook-flags` 调度器 `run-with-flags.js` 自定位 skill 根，不再读取宿主项目环境变量
+  （避免把脚本相对路径解析到用户项目）。
+
 ## [4.0.0] - 2026-09-27
 
 现代化编排层，使其与事件溯源底座相称：卸掉负债（组织架构式编排残留、文本状态协议、

@@ -38,7 +38,7 @@ describe('wip-checkpoint hook', () => {
     fs.writeFileSync(path.join(tmpDir, 'untracked.txt'), 'new\n', 'utf8');
     process.chdir(tmpDir);
 
-    const result = spawnSync('node', [path.join(cwd, 'scripts/hooks/wip-checkpoint.js')], {
+    const result = spawnSync('node', [path.join(cwd, 'skill/scripts/hooks/wip-checkpoint.js')], {
       cwd: tmpDir,
       encoding: 'utf8',
     });

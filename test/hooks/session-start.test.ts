@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { run } from '../../scripts/hooks/session-start.js';
+import { run } from '../../skill/scripts/hooks/session-start.js';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 function createTempBossDir(feature: string, execData?: Record<string, unknown>) {

@@ -16,15 +16,7 @@ const BOSS_BIN = path.join(
   'bin',
   'boss.js',
 );
-const DAG_PATH = path.join(
-  import.meta.dirname,
-  '..',
-  '..',
-  'packages',
-  'boss-cli',
-  'assets',
-  'artifact-dag.json',
-);
+const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'skill', 'assets', 'artifact-dag.json');
 
 function getExecFileError(error: unknown) {
   return error as Error & { status?: number; stdout?: string; stderr?: string };

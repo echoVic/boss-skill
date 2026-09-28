@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CliUserError, createCliContext, describeCommand, runMain } from '../cli/contract.js';
 import {
@@ -23,14 +22,11 @@ import { main as continueMain } from '../commands/continue.js';
 import { main as doctorMain } from '../commands/doctor.js';
 import { installMain } from '../commands/install/index.js';
 import { main as statusMain } from '../commands/status.js';
-import { readJsonFile } from '../infrastructure/fs.js';
-import { packageRootFromImportMeta } from '../infrastructure/paths.js';
+import { readSkillVersion, skillRootFromImportMeta } from '../infrastructure/paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 4);
-const pkg = readJsonFile<{
-  version: string;
-}>(path.join(PKG_ROOT, 'package.json'));
+const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
+const version = readSkillVersion(SKILL_ROOT);
 
 export function showHelp(): void {
   showRootHelp();
@@ -39,7 +35,7 @@ export function showHelp(): void {
 function describeRoot() {
   return {
     ...describeCommand(rootDescription),
-    version: pkg.version,
+    version,
     commands: [
       'install',
       'uninstall',
@@ -77,7 +73,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   switch (cmd) {
     case undefined:
       if (argv.includes('--version') || argv.includes('-v')) {
-        console.log(pkg.version);
+        console.log(version);
         return 0;
       }
       if (argv.includes('--help') || argv.includes('-h')) {
@@ -100,13 +96,13 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case 'skills':
       // `boss skills`（管理他人 skill 的通用管理器）已移除：boss 是被安装的 skill，
-      // 不再充当安装别的 skill 的工具。安装 boss 自身用 `boss install` / `npx @blade-ai/boss-skill`。
+      // 不再充当安装别的 skill 的工具。安装 boss 自身走 skill 市场。
       throw new CliUserError({
         code: 'command_removed',
         message: 'boss skills 命令组已移除',
         retryable: false,
         suggestion:
-          '安装 boss 自身请用 `boss install`（或 `npx @blade-ai/boss-skill`）；boss 不再管理其它 skill',
+          '安装 boss 自身请用 skill 市场（/plugin marketplace add echoVic/boss-skill，或 npx skills add echoVic/boss-skill）；boss 不再管理其它 skill',
       });
 
     case 'doctor':
@@ -160,7 +156,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
     case '--version':
     case '-v':
-      console.log(pkg.version);
+      console.log(version);
       return 0;
 
     case '--help':

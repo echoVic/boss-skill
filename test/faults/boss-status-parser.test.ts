@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readReportedStatus } from '../../scripts/hooks/subagent-stop.js';
+import { readReportedStatus } from '../../skill/scripts/hooks/subagent-stop.js';
 
 describe('Boss agent status intake fault handling', () => {
   it('accepts a known status from the structured field', () => {

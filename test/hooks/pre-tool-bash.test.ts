@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('pre-tool-bash hook', () => {
-  let hook: typeof import('../../scripts/hooks/pre-tool-bash.js');
+  let hook: typeof import('../../skill/scripts/hooks/pre-tool-bash.js');
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/pre-tool-bash.js');
+    hook = await import('../../skill/scripts/hooks/pre-tool-bash.js');
   });
 
   it('returns empty string for empty command', () => {

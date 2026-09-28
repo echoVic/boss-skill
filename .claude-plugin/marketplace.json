@@ -17,10 +17,7 @@
   "plugins": [
     {
       "name": "boss",
-      "source": {
-        "source": "local",
-        "path": "./"
-      },
+      "source": "./",
       "description": "BMAD 全自动研发流水线。编排 9 个专业 Agent，从需求到部署一键完成。",
       "version": "4.0.0",
       "author": {
@@ -33,13 +30,7 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Productivity",
-      "keywords": [
-        "bmad",
-        "pipeline",
-        "agent-orchestration",
-        "full-stack",
-        "automation"
-      ]
+      "keywords": ["bmad", "pipeline", "agent-orchestration", "full-stack", "automation"]
     }
   ]
 }

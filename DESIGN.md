@@ -746,7 +746,7 @@ Harness 支持通过插件扩展流水线能力。每个插件必须包含一个
 ### 9.6 新增目录结构
 
 ```
-packages/boss-cli/assets/
+skill/assets/
 ├── artifact-dag.json                 # 内置产物依赖 DAG
 ├── pipeline-packs/                  # 流水线模板包
 │   ├── default/
@@ -826,20 +826,23 @@ Hooks 配置采用**两级分层**，实现"项目全局配置"与"Skill 级声�
 ```json
 {
   "hooks": {
-    "SessionStart": [{ "command": "boss hooks run session-start scripts/hooks/session-start.js" }],
-    "PreToolUse": [{ "command": "boss hooks run pre-tool-write scripts/hooks/pre-tool-write.js", "tool": "Write" }],
+    "SessionStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"session:start\" \"scripts/hooks/session-start.js\"" }],
+    "PreToolUse": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"", "matcher": "Write|Edit" }],
     "PostToolUse": [
-      { "command": "boss hooks run post-tool-write scripts/hooks/post-tool-write.js", "tool": "Write" },
-      { "command": "boss hooks run post-tool-bash scripts/hooks/post-tool-bash.js", "tool": "Bash" }
+      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\"", "matcher": "Write" },
+      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\"", "matcher": "Bash" }
     ],
-    "SubagentStart": [{ "command": "boss hooks run subagent-start scripts/hooks/subagent-start.js" }],
-    "SubagentStop": [{ "command": "boss hooks run subagent-stop scripts/hooks/subagent-stop.js" }],
-    "Stop": [{ "command": "boss hooks run on-stop scripts/hooks/on-stop.js" }],
-    "Notification": [{ "command": "boss hooks run on-notification scripts/hooks/on-notification.js" }],
-    "SessionEnd": [{ "command": "boss hooks run session-end scripts/hooks/session-end.js" }]
+    "SubagentStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"" }],
+    "SubagentStop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"" }],
+    "Stop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"" }],
+    "Notification": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"" }],
+    "SessionEnd": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"session:end\" \"scripts/hooks/session-end.js\"" }]
   }
 }
 ```
+
+hook 命令通过插件根占位符（`${CLAUDE_PLUGIN_ROOT}` / Codex 的 `${PLUGIN_ROOT}`）指向 skill 自带的 CLI；
+分发只走 skill 市场，不依赖 npm 提供的 `boss` 二进制。
 
 #### Hook 脚本说明
 

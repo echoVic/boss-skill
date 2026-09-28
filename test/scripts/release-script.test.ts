@@ -19,30 +19,38 @@ describe('release script contract', () => {
     }
   });
 
-  it('runs the full verification chain before npm publish', () => {
+  it('runs the full verification chain and rebuilds the bundled skill CLI', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
-    const buildIndex = source.indexOf("run('npm run build')");
+    const buildIndex = source.indexOf("run('npm run build:skill')");
     const typecheckIndex = source.indexOf("run('npm run typecheck')");
     const testIndex = source.indexOf("run('npm test')");
     const installMatrixIndex = source.indexOf("run('npm run test:install-matrix')");
-    const packIndex = source.indexOf("run('npm pack --dry-run')");
-    const publishIndex = source.indexOf("run('npm publish')");
+    const bundleCheckIndex = source.indexOf('skill/cli/bin/boss.js --version');
 
     expect(buildIndex).toBeGreaterThan(-1);
     expect(typecheckIndex).toBeGreaterThan(buildIndex);
     expect(testIndex).toBeGreaterThan(typecheckIndex);
     expect(installMatrixIndex).toBeGreaterThan(testIndex);
-    expect(packIndex).toBeGreaterThan(installMatrixIndex);
-    expect(publishIndex).toBeGreaterThan(packIndex);
+    expect(bundleCheckIndex).toBeGreaterThan(installMatrixIndex);
   });
 
-  it('commits only source release metadata and never commits generated dist', () => {
+  it('never publishes to npm anymore', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
-    const gitAddLine = source
-      .split('\n')
-      .find((line) => line.includes('git add') && line.includes('VERSION_FILES'));
+    expect(source).not.toContain('npm publish');
+    expect(source).not.toContain('NPM_TOKEN');
+    expect(source).not.toContain('npm pack');
+    expect(source).not.toContain('--no-publish');
+  });
 
-    expect(gitAddLine).toBeTruthy();
+  it('commits source release metadata plus the generated skill CLI bundle', () => {
+    const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
+    const commitPathsLine = source
+      .split('\n')
+      .find((line) => line.includes('commitPaths') && line.includes('VERSION_FILES'));
+
+    expect(commitPathsLine).toBeTruthy();
+    expect(commitPathsLine).toContain("'skill/cli'");
+    expect(source).toContain('git add ${commitPaths.join');
     expect(source).not.toMatch(/git add[^'\n]*packages\/boss-cli\/dist/);
   });
 

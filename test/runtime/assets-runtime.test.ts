@@ -25,9 +25,9 @@ describe('runtime asset resolver', () => {
     cleanupTempDir(tmpDir);
   });
 
-  it('resolves built-in assets under packages/boss-cli/assets', () => {
-    const dagPath = path.join(REPO_ROOT, 'packages', 'boss-cli', 'assets', 'artifact-dag.json');
-    const schemaPath = path.join(REPO_ROOT, 'packages', 'boss-cli', 'assets', 'plugin-schema.json');
+  it('resolves built-in assets under skill/assets (bundled with the skill)', () => {
+    const dagPath = path.join(REPO_ROOT, 'skill', 'assets', 'artifact-dag.json');
+    const schemaPath = path.join(REPO_ROOT, 'skill', 'assets', 'plugin-schema.json');
 
     expect(resolveBuiltInAssetPath('artifact-dag.json')).toBe(dagPath);
     expect(resolvePluginSchemaPath()).toBe(schemaPath);

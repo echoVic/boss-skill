@@ -1,7 +1,8 @@
 {
   "name": "@blade-ai/boss-skill",
   "version": "4.0.0",
-  "description": "BMAD Harness Engineer — pluggable pipeline skill for coding agents. Compatible with Claude Code, OpenClaw, Codex & Antigravity. Auto-detect install.",
+  "private": true,
+  "description": "BMAD Harness Engineer — auditable multi-agent pipeline skill for coding agents. Distributed via skill marketplaces (Claude Code, Codex, skills.sh) — no npm install required.",
   "author": {
     "name": "echoVic",
     "email": "137844255@qq.com",
@@ -34,28 +35,14 @@
     "devops",
     "automation"
   ],
-  "files": [
-    "assets/",
-    "packages/boss-cli/dist/",
-    "packages/boss-cli/assets/",
-    "packages/boss-cli/src/runtime/schema/",
-    "skill/",
-    "scripts/",
-    ".agents/",
-    ".claude-plugin/",
-    ".codex-plugin/",
-    "DESIGN.md"
-  ],
   "workspaces": [
     "packages/*"
   ],
   "type": "module",
-  "bin": {
-    "boss": "packages/boss-cli/dist/bin/boss.js",
-    "boss-skill": "packages/boss-cli/dist/bin/boss.js"
-  },
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('packages/boss-cli/dist',{recursive:true,force:true})\" --input-type=commonjs && tsc -p packages/boss-cli/tsconfig.json",
+    "build:skill": "node scripts/build-skill-cli.js",
+    "build:skill:check": "node scripts/build-skill-cli.js --check",
     "typecheck": "tsc --noEmit -p packages/boss-cli/tsconfig.json && tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --skipLibCheck --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -71,12 +58,7 @@
     "test:watch": "vitest",
     "provenance:generate": "node scripts/provenance.js generate",
     "provenance:verify": "node scripts/provenance.js verify",
-    "release": "node scripts/release.js",
-    "prepublishOnly": "npm run build && node packages/boss-cli/dist/bin/boss.js --version"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "release": "node scripts/release.js"
   },
   "engines": {
     "node": ">=20"

@@ -16,16 +16,15 @@ import {
 } from '../../cli/contract.js';
 import { commandDescriptions } from '../../cli/registry.js';
 import { copyDirectory, readJsonFile, writeJsonFile } from '../../infrastructure/fs.js';
-import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
+import { readSkillVersion, skillRootFromImportMeta } from '../../infrastructure/paths.js';
 
-export const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
-const SKILL_ROOT = path.join(PKG_ROOT, 'skill');
+export const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
+export const PLUGIN_ROOT = path.dirname(SKILL_ROOT);
+export const VERSION = readSkillVersion(SKILL_ROOT);
+export const REPO_SLUG = 'echoVic/boss-skill';
 const CODEX_HOOKS_SOURCE = path.join(SKILL_ROOT, 'hooks', 'codex', 'hooks.json');
 const CODEX_HOOKS_STATE = '.boss-hooks-state.json';
 const __filename = fileURLToPath(import.meta.url);
-const pkg = readJsonFile<{
-  version: string;
-}>(path.join(PKG_ROOT, 'package.json'));
 const HOME = os.homedir();
 
 export interface Agent {
@@ -47,8 +46,15 @@ type UninstallAction = {
   path: string;
 };
 
+type HookHandler = {
+  type?: string;
+  command?: string;
+  [key: string]: unknown;
+};
+
 type HookEntry = {
   id?: string;
+  hooks?: HookHandler[];
   [key: string]: unknown;
 };
 
@@ -93,14 +99,7 @@ const METADATA: Record<string, string> = {
     requires:
       bins:
         - node
-        - bash
-    install:
-      - id: node-boss-skill
-        kind: node
-        package: "@blade-ai/boss-skill"
-        bins:
-          - boss-skill
-        label: "Install Boss Skill (npm)"`,
+        - bash`,
 
   Codex: `metadata:
   codex:
@@ -155,31 +154,36 @@ export const AGENTS: Agent[] = [
   {
     name: 'Claude Code',
     detect: () => true,
-    dest: () => PKG_ROOT,
+    dest: () => PLUGIN_ROOT,
     method: 'plugin',
   },
 ];
 
 const USAGE = `
-@blade-ai/boss-skill v${pkg.version}
+Boss Skill v${VERSION}
 BMAD Harness Engineer — pluggable pipeline skill for coding agents.
 Compatible with Claude Code, OpenClaw, Codex, Antigravity & Hermes.
 
+Marketplace install (recommended, no npm):
+  Claude Code:  /plugin marketplace add ${REPO_SLUG}
+                /plugin install boss@boss-skill
+  Codex:        codex plugin marketplace add ${REPO_SLUG}
+  Any agent:    npx skills add ${REPO_SLUG}
+
 Usage:
-  boss-skill                Auto-detect all agents and install
-  boss-skill install        Same as above
-  boss-skill install --dry-run   Preview install actions without writing
-  boss-skill uninstall      Remove boss-skill from all detected agents
-  boss-skill path           Print the installed skill root directory
-  boss-skill --version      Print version
-  boss-skill --help         Show this help
+  boss install              Copy skill + merge Codex hooks into detected agents
+  boss install --dry-run    Preview install actions without writing
+  boss uninstall            Remove boss from all detected agents
+  boss path                 Print the skill root directory
+  boss --version            Print version
+  boss --help               Show this help
 
 Auto-detect logic (checks all, installs to every detected agent):
   ~/.openclaw/                →  ~/.openclaw/skills/boss/     (copy + inject metadata)
   ~/.codex/                   →  ~/.codex/skills/boss/        (copy + inject metadata + hooks merge)
   ~/.gemini/antigravity/      →  ~/.gemini/.../skills/boss/   (copy + inject metadata)
   ~/.hermes/                  →  ~/.hermes/skills/boss/       (copy + inject metadata)
-  Claude Code                 →  plugin mode (--plugin-dir)
+  Claude Code                 →  plugin marketplace (see above)
 `;
 
 const installDescription = commandDescriptions['boss install']!;
@@ -305,10 +309,46 @@ function findDuplicateMatcherWarnings(
   return warnings;
 }
 
+/**
+ * Codex 插件 hooks 用 ${PLUGIN_ROOT} 指向插件根（仓库布局下 skill 位于 <plugin>/skill）。
+ * 复制安装没有插件根，合并进 ~/.codex/hooks.json 时把占位符物化为实际 skill 目录，
+ * 这样 hooks 里引用的 node <skill>/cli/bin/boss.js 不依赖 PATH 上的 boss 二进制。
+ */
+function materializeHookRoots(config: HooksConfig, skillDest: string): HooksConfig {
+  const substitute = (command: string): string =>
+    command
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+      .replaceAll('${PLUGIN_ROOT}/skill', skillDest)
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+      .replaceAll('${CLAUDE_PLUGIN_ROOT}/skill', skillDest)
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+      .replaceAll('${PLUGIN_ROOT}', skillDest)
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+      .replaceAll('${CLAUDE_PLUGIN_ROOT}', skillDest);
+
+  const result: HooksConfig = { hooks: {} };
+  for (const [eventName, entries] of Object.entries(config.hooks || {})) {
+    result.hooks![eventName] = (entries || []).map((entry) => {
+      const handlers = Array.isArray(entry.hooks) ? entry.hooks : undefined;
+      if (!handlers) return entry;
+      return {
+        ...entry,
+        hooks: handlers.map((handler) =>
+          typeof handler.command === 'string'
+            ? { ...handler, command: substitute(handler.command) }
+            : handler,
+        ),
+      };
+    });
+  }
+  return result;
+}
+
 function installCodexHooks(dryRun: boolean, silent = false): void {
   const codexHome = path.join(HOME, '.codex');
   const hooksPath = path.join(codexHome, 'hooks.json');
   const statePath = path.join(codexHome, CODEX_HOOKS_STATE);
+  const skillDest = path.join(codexHome, 'skills', 'boss');
 
   if (dryRun) {
     if (!silent) console.log(`  [dry-run] Codex: would merge hooks into ${hooksPath}`);
@@ -316,16 +356,17 @@ function installCodexHooks(dryRun: boolean, silent = false): void {
   }
 
   const existingConfig = readHooksConfig(hooksPath);
-  const bossConfig = readJsonFile<HooksConfig>(CODEX_HOOKS_SOURCE);
+  const sourceConfig = readJsonFile<HooksConfig>(CODEX_HOOKS_SOURCE);
+  const bossConfig = materializeHookRoots(sourceConfig, skillDest);
   const currentChecksum = fileSha256(CODEX_HOOKS_SOURCE);
   const previousState = fs.existsSync(statePath) ? readJsonFile<CodexHooksState>(statePath) : null;
   const duplicateWarnings = findDuplicateMatcherWarnings(existingConfig, bossConfig);
   const mergedConfig = mergeHooksConfig(existingConfig, bossConfig);
   writeJsonFile(hooksPath, mergedConfig);
   writeJsonFile(statePath, {
-    version: pkg.version,
+    version: VERSION,
     installMode: 'hooks-json',
-    hookIds: getBossHookIds(bossConfig),
+    hookIds: getBossHookIds(sourceConfig),
     manifestChecksum: currentChecksum,
   } satisfies CodexHooksState);
 
@@ -370,15 +411,21 @@ function codexInstall(agent: Agent, dryRun: boolean, silent = false): void {
 }
 
 function pluginInstall(dryRun: boolean, silent = false): void {
+  const pluginRootReady = fs.existsSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'));
+
   if (dryRun) {
-    if (!silent) console.log(`  [dry-run] Claude Code: would register plugin at ${PKG_ROOT}`);
+    if (!silent)
+      console.log('  [dry-run] Claude Code: would print plugin marketplace install steps');
     return;
   }
 
   if (silent) return;
-  console.log(`  ✅ Claude Code: plugin ready at ${PKG_ROOT}`);
-  console.log(`     Use:  claude --plugin-dir "${PKG_ROOT}"`);
-  console.log(`     Or:   claude --plugin-dir "$(boss-skill path)"`);
+  console.log('  ✅ Claude Code: 用插件市场安装（skill 随插件分发，无需 npm）：');
+  console.log(`     /plugin marketplace add ${REPO_SLUG}`);
+  console.log('     /plugin install boss@boss-skill');
+  if (pluginRootReady) {
+    console.log(`     本地开发可用: claude --plugin-dir "${PLUGIN_ROOT}"`);
+  }
 }
 
 export function buildInstallPlan(): InstallAction[] {
@@ -390,9 +437,18 @@ export function buildInstallPlan(): InstallAction[] {
 }
 
 async function runInteractiveInstall(): Promise<number> {
-  const { runInstallWizard } = await import('../../skills/self-install-wizard.js');
+  // 交互向导依赖 @clack/prompts（仓库 devDependency 链）。marketplace 安装副本没有
+  // node_modules，动态导入失败时退回非交互安装，保证 boss install 始终可用。
+  let runInstallWizard: typeof import('../../skills/self-install-wizard.js').runInstallWizard;
+  try {
+    ({ runInstallWizard } = await import('../../skills/self-install-wizard.js'));
+  } catch {
+    console.log('ℹ️  交互向导不可用（未安装 @clack/prompts），改用非交互安装。\n');
+    autoInstall(false);
+    return 0;
+  }
   return runInstallWizard({
-    version: pkg.version,
+    version: VERSION,
     agents: AGENTS.map((agent) => {
       const dest = agent.dest();
       const sideEffects: string[] = [];
@@ -400,7 +456,7 @@ async function runInteractiveInstall(): Promise<number> {
         sideEffects.push(`merge Boss hooks into ${path.join(HOME, '.codex', 'hooks.json')}`);
       }
       if (agent.method === 'plugin') {
-        sideEffects.push('no files copied — loaded via claude --plugin-dir');
+        sideEffects.push('no files copied — install via plugin marketplace');
       }
       return {
         name: agent.name,
@@ -410,10 +466,7 @@ async function runInteractiveInstall(): Promise<number> {
         sideEffects,
         postInstallNote:
           agent.method === 'plugin'
-            ? [
-                `Use:  claude --plugin-dir "${PKG_ROOT}"`,
-                `Or:   claude --plugin-dir "$(boss-skill path)"`,
-              ]
+            ? [`/plugin marketplace add ${REPO_SLUG}`, '/plugin install boss@boss-skill']
             : undefined,
         install: () => {
           if (agent.method === 'copy') {
@@ -451,7 +504,7 @@ export function buildUninstallPlan(): UninstallAction[] {
 }
 
 function autoInstall(dryRun: boolean, silent = false): void {
-  if (!silent) console.log(`@blade-ai/boss-skill v${pkg.version}${dryRun ? ' (dry-run)' : ''}\n`);
+  if (!silent) console.log(`Boss Skill v${VERSION}${dryRun ? ' (dry-run)' : ''}\n`);
 
   const detected = AGENTS.filter((a) => a.detect());
   if (!silent) console.log(`Detected ${detected.length} agent(s):\n`);
@@ -475,7 +528,7 @@ function autoInstall(dryRun: boolean, silent = false): void {
 }
 
 function uninstall(silent = false): void {
-  if (!silent) console.log(`@blade-ai/boss-skill v${pkg.version} — uninstall\n`);
+  if (!silent) console.log(`Boss Skill v${VERSION} — uninstall\n`);
 
   const copyAgents = AGENTS.filter((a) => a.method !== 'plugin' && a.detect());
 
@@ -494,8 +547,7 @@ function uninstall(silent = false): void {
   }
 
   if (silent) return;
-  console.log(`  ℹ️  Claude Code: plugin mode — no files to clean up.`);
-  console.log(`     If loaded via --plugin-dir, simply stop passing the flag.`);
+  console.log('  ℹ️  Claude Code: 插件由市场管理 — 卸载请用 /plugin uninstall boss@boss-skill。');
 
   console.log('\nUninstall complete.');
 }
@@ -590,15 +642,15 @@ export function installMain(argv: string[] = process.argv.slice(2)): number | Pr
         return 0;
       }
       if (context.values.json) {
-        writeOutput({ path: PKG_ROOT }, context, () => `${PKG_ROOT}\n`);
+        writeOutput({ path: SKILL_ROOT }, context, () => `${SKILL_ROOT}\n`);
       } else {
-        process.stdout.write(`${PKG_ROOT}\n`);
+        process.stdout.write(`${SKILL_ROOT}\n`);
       }
       return 0;
 
     case '--version':
     case '-v':
-      console.log(pkg.version);
+      console.log(VERSION);
       return 0;
 
     case '--help':

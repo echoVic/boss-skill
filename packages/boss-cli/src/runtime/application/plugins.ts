@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { appendLineSync, readJsonlTolerant } from '../../infrastructure/fs.js';
-import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
+import { skillRootFromImportMeta } from '../../infrastructure/paths.js';
 import { listPluginManifestPaths, resolveBuiltInAssetPath } from '../assets.js';
 import { EVENT_TYPES } from '../domain/event-types.js';
 import {
@@ -11,7 +11,7 @@ import {
   type PluginSummary,
 } from '../projectors/materialize-state.js';
 
-const REPO_ROOT = packageRootFromImportMeta(import.meta.url, 5);
+const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
 const PLUGIN_TYPES = new Set(['gate', 'agent', 'pipeline-pack', 'reporter']);
 const PLUGIN_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PLUGIN_VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]+)?$/;
@@ -73,7 +73,7 @@ function ensureFeatureMeta(cwd: string, feature: string): string {
 
 export function resolvePluginRoot({
   cwd = process.cwd(),
-  repoRoot = REPO_ROOT,
+  repoRoot = SKILL_ROOT,
 }: {
   cwd?: string;
   repoRoot?: string;
@@ -292,7 +292,7 @@ export function sortPluginsByDependencies(
 
 export function discoverPlugins({
   cwd = process.cwd(),
-  repoRoot = REPO_ROOT,
+  repoRoot = SKILL_ROOT,
   type,
   strict = true,
   externalDependencyNames = new Set<string>(),
@@ -464,7 +464,7 @@ export function registerPlugins(
   feature: string,
   {
     cwd = process.cwd(),
-    repoRoot = REPO_ROOT,
+    repoRoot = SKILL_ROOT,
     type,
   }: { cwd?: string; repoRoot?: string; type?: string } = {},
 ): { plugins: PluginSummary[]; execution: ExecutionState } {
@@ -516,7 +516,7 @@ export function runHook(
   feature: string,
   {
     cwd = process.cwd(),
-    repoRoot = REPO_ROOT,
+    repoRoot = SKILL_ROOT,
     stage,
   }: { cwd?: string; repoRoot?: string; stage?: string | number | null } = {},
 ): RunHookResult {

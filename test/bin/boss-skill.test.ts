@@ -12,21 +12,14 @@ const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 const distEntry = resolve(root, 'packages/boss-cli/dist/bin/boss.js');
 
 describe('boss-skill dist bin', () => {
-  it('uses the workspace boss CLI as the published entrypoint', () => {
+  it('keeps the workspace boss CLI as a private dev build for the bundled skill CLI', () => {
     expect(pkg.type).toBe('module');
     expect(pkg.workspaces).toEqual(['packages/*']);
-    expect(pkg.bin.boss).toBe('packages/boss-cli/dist/bin/boss.js');
-    expect(pkg.bin['boss-skill']).toBe('packages/boss-cli/dist/bin/boss.js');
+    // npm 不再是分发通道：仓库私有，不由 npm 提供 bin。
+    expect(pkg.private).toBe(true);
+    expect(pkg.bin).toBeUndefined();
+    expect(pkg.files).toBeUndefined();
     expect(pkg.engines.node).toBe('>=20');
-    expect(pkg.files).toContain('packages/boss-cli/dist/');
-    expect(pkg.files).toContain('packages/boss-cli/assets/');
-    expect(pkg.files).toContain('skill/');
-    expect(pkg.files).not.toContain('agents/');
-    expect(pkg.files).not.toContain('commands/');
-    expect(pkg.files).not.toContain('harness/');
-    expect(pkg.files).not.toContain('hooks/');
-    expect(pkg.files).not.toContain('templates/');
-    expect(pkg.files).not.toContain('SKILL.md');
   });
 
   it('prints help from the built dist entrypoint', () => {
@@ -161,15 +154,16 @@ describe('boss-skill dist bin', () => {
     expect(payload.command).toBe('boss install');
   });
 
-  it('prints raw path by default and structured path with --json', () => {
+  it('prints the skill root by default and structured path with --json', () => {
+    const skillRoot = resolve(root, 'skill');
     const plain = runCli(['packages/boss-cli/dist/bin/boss.js', 'path']);
     expect(plain.status).toBe(0);
-    expect(plain.stdout).toBe(`${root}\n`);
+    expect(plain.stdout).toBe(`${skillRoot}\n`);
     expect(() => JSON.parse(plain.stdout)).toThrow();
 
     const json = runCli(['packages/boss-cli/dist/bin/boss.js', 'path', '--json']);
     expect(json.status).toBe(0);
-    expect(JSON.parse(json.stdout)).toEqual({ path: root });
+    expect(JSON.parse(json.stdout)).toEqual({ path: skillRoot });
   });
 
   it('returns structured project group metadata with --describe', () => {
@@ -209,7 +203,7 @@ describe('boss-skill dist bin', () => {
     expect(existsSync(distEntry)).toBe(true);
   });
 
-  it('copy-installs only the thin skill bundle for Codex', () => {
+  it('copy-installs the self-contained skill bundle for Codex', () => {
     const home = mkdtempSync(resolve(tmpdir(), 'boss-skill-install-'));
     mkdirSync(resolve(home, '.codex'), { recursive: true });
     mkdirSync(resolve(home, '.hermes'), { recursive: true });
@@ -241,9 +235,14 @@ describe('boss-skill dist bin', () => {
       ).toBe(true);
       expect(existsSync(resolve(installed, 'skills', 'README.md'))).toBe(true);
 
+      // skill 自包含：CLI、hooks 运行时、运行时资产都随安装副本分发。
+      expect(existsSync(resolve(installed, 'cli', 'bin', 'boss.js'))).toBe(true);
+      expect(existsSync(resolve(installed, 'scripts', 'lib', 'run-with-flags.js'))).toBe(true);
+      expect(existsSync(resolve(installed, 'scripts', 'hooks', 'session-start.js'))).toBe(true);
+      expect(existsSync(resolve(installed, 'assets', 'artifact-dag.json'))).toBe(true);
+
       expect(existsSync(resolve(installed, 'package.json'))).toBe(false);
       expect(existsSync(resolve(installed, 'packages'))).toBe(false);
-      expect(existsSync(resolve(installed, 'scripts'))).toBe(false);
       expect(existsSync(resolve(installed, 'test'))).toBe(false);
       expect(existsSync(resolve(installed, '.claude-plugin'))).toBe(false);
 

@@ -8,7 +8,7 @@ describe('hook-flags', () => {
 
   async function loadFlags() {
     vi.resetModules();
-    return import('../../scripts/lib/hook-flags.js');
+    return import('../../skill/scripts/lib/hook-flags.js');
   }
 
   beforeEach(() => {

@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('session-resume hook', () => {
-  let hook: typeof import('../../scripts/hooks/session-resume.js');
+  let hook: typeof import('../../skill/scripts/hooks/session-resume.js');
   let tmpDir: string | null = null;
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/session-resume.js');
+    hook = await import('../../skill/scripts/hooks/session-resume.js');
   });
 
   afterEach(() => {

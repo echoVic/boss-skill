@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
+import { skillRootFromImportMeta } from '../../infrastructure/paths.js';
 
 export interface ArtifactHtmlTocItem {
   id: string;
@@ -29,8 +29,8 @@ export interface ArtifactHtmlInput {
   generatedAt?: string;
 }
 
-const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
-const DEFAULT_TEMPLATE = path.join(PKG_ROOT, 'skill', 'templates', 'artifact.html.template');
+const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
+const DEFAULT_TEMPLATE = path.join(SKILL_ROOT, 'templates', 'artifact.html.template');
 
 function escapeHtml(value: unknown): string {
   return String(value)

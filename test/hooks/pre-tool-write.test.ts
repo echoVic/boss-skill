@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('pre-tool-write hook', () => {
-  let hook: typeof import('../../scripts/hooks/pre-tool-write.js');
+  let hook: typeof import('../../skill/scripts/hooks/pre-tool-write.js');
   let tmpDir: string | null = null;
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/pre-tool-write.js');
+    hook = await import('../../skill/scripts/hooks/pre-tool-write.js');
   });
 
   afterEach(() => {
@@ -202,7 +202,7 @@ broken patch references /tmp/project/src/app.ts but has no file header
     it('resolves the built-in artifact DAG when no project override exists', async () => {
       // 回归防护：此处曾查 `harness/artifact-dag.json`，而该目录在迁移后已不存在，
       // 导致 DAG 永远加载失败、ready 逃生门永久失效，合法产物写入被误拦。
-      const utils = await import('../../scripts/lib/boss-utils.js');
+      const utils = await import('../../skill/scripts/lib/boss-utils.js');
       const dagPath = utils.resolveArtifactDagPath('/tmp/no-such-project-xyz');
 
       expect(dagPath).toBeTruthy();
@@ -220,7 +220,7 @@ broken patch references /tmp/project/src/app.ts but has no file header
       const override = path.join(tmpDir, '.boss', 'artifact-dag.json');
       fs.writeFileSync(override, JSON.stringify({ artifacts: { 'custom.md': { inputs: [] } } }));
 
-      const utils = await import('../../scripts/lib/boss-utils.js');
+      const utils = await import('../../skill/scripts/lib/boss-utils.js');
       expect(utils.resolveArtifactDagPath(tmpDir)).toBe(override);
     });
 

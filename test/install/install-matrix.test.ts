@@ -52,19 +52,31 @@ const REPRESENTATIVE_BUNDLE_FILES = [
   'skills/frontend/testing-guide/SKILL.md',
   'skills/qa/test-strategy/SKILL.md',
   'skills/shared/tech-stack-detection/SKILL.md',
+  'assets/artifact-dag.json',
+  'assets/plugin-schema.json',
+  'scripts/hooks/session-start.js',
+  'scripts/lib/run-with-flags.js',
+  'cli/bin/boss.js',
+  'cli/package.json',
 ] as const;
 
-const REQUIRED_PACKED_FILES = [
-  'package.json',
-  'packages/boss-cli/dist/bin/boss.js',
-  'packages/boss-cli/assets/artifact-dag.json',
-  'packages/boss-cli/src/runtime/schema/execution-schema.json',
-  'skill/SKILL.md',
-  'skill/skills/README.md',
-  'skill/skills/pm/requirement-penetration/SKILL.md',
-  'skill/skills/qa/test-strategy/SKILL.md',
-  'skill/hooks/claude/hooks.json',
-  'skill/hooks/codex/hooks.json',
+const REQUIRED_SKILL_BUNDLE_FILES = [
+  'SKILL.md',
+  'cli/bin/boss.js',
+  'cli/package.json',
+  'assets/artifact-dag.json',
+  'assets/plugin-schema.json',
+  'scripts/hooks/session-start.js',
+  'scripts/lib/run-with-flags.js',
+  'hooks/claude/hooks.json',
+  'hooks/codex/hooks.json',
+  'agents/boss-pm.md',
+  'commands/boss.md',
+  'templates/prd.md.template',
+  'skills/qa/test-strategy/SKILL.md',
+] as const;
+
+const REQUIRED_REPO_FILES = [
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
   '.codex-plugin/plugin.json',
@@ -73,9 +85,8 @@ const REQUIRED_PACKED_FILES = [
   '.agents/plugins/provenance.json',
   'assets/boss-composer-icon.svg',
   'assets/boss-logo.svg',
+  'scripts/build-skill-cli.js',
   'scripts/provenance.js',
-  'scripts/hooks/lib/normalize-input.js',
-  'scripts/hooks/subagent-stop.js',
 ] as const;
 
 describe('Boss install matrix', () => {
@@ -125,6 +136,15 @@ describe('Boss install matrix', () => {
     expect(fs.existsSync(path.join(installed, 'package.json'))).toBe(false);
     expect(fs.existsSync(path.join(installed, 'packages'))).toBe(false);
     expect(fs.existsSync(path.join(installed, '.claude-plugin'))).toBe(false);
+
+    // 安装副本自带的 CLI 必须能脱离仓库/ npm 直接运行。
+    const cliResult = spawnSync(
+      process.execPath,
+      [path.join(installed, 'cli', 'bin', 'boss.js'), '--version'],
+      { cwd: REPO_ROOT, env: { ...process.env, HOME: home }, encoding: 'utf8' },
+    );
+    expect(cliResult.status, cliResult.stderr).toBe(0);
+    expect(cliResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/);
   });
 
   it('merges Codex hooks into ~/.codex/hooks.json without overwriting user hooks', () => {
@@ -164,13 +184,24 @@ describe('Boss install matrix', () => {
     expect(result.status, result.stderr).toBe(0);
 
     const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8')) as {
-      hooks: Record<string, Array<{ id: string }>>;
+      hooks: Record<string, Array<{ id: string; hooks?: Array<{ command?: string }> }>>;
     };
     expect(hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'user:pre:bash')).toBe(true);
     expect(hooksJson.hooks.SessionStart?.some((entry) => entry.id === 'session:start')).toBe(true);
     expect(
       hooksJson.hooks.PreToolUse?.some((entry) => entry.id === 'pre:write:artifact-guard'),
     ).toBe(true);
+
+    // 复制安装没有插件根：hooks 中的 ${PLUGIN_ROOT}/skill 必须物化为实际安装目录，
+    // 且命令指向安装副本自带的 CLI（不依赖 PATH 上的 boss 二进制）。
+    const installedCli = path.join(codexHome, 'skills', 'boss', 'cli', 'bin', 'boss.js');
+    const sessionStart = hooksJson.hooks.SessionStart?.find(
+      (entry) => entry.id === 'session:start',
+    );
+    expect(JSON.stringify(sessionStart)).toContain(installedCli);
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+    expect(JSON.stringify(hooksJson)).not.toContain('${PLUGIN_ROOT}');
+    expect(fs.existsSync(installedCli)).toBe(true);
     const state = JSON.parse(
       fs.readFileSync(path.join(codexHome, '.boss-hooks-state.json'), 'utf8'),
     ) as {
@@ -389,29 +420,42 @@ describe('Boss install matrix', () => {
     };
 
     expect(plugin.skills).toBe('./skill/');
-    expect(plugin.hooks).toBeUndefined();
+    // Codex 支持插件内自带 hooks：声明文件路径，安装后无需 npm 提供的 boss 二进制。
+    expect(plugin.hooks).toBe('./skill/hooks/codex/hooks.json');
     expect(plugin.mcpServers).toBeUndefined();
     expect(plugin.apps).toBeUndefined();
     expect(plugin.interface?.displayName).toBe('Boss');
     expect(plugin.interface?.defaultPrompt?.length).toBeGreaterThan(0);
   });
 
+  it('Claude plugin declares the skill hooks manifest for plugin-mode enforcement', () => {
+    const plugin = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'),
+    ) as {
+      hooks?: string[];
+    };
+
+    expect(plugin.hooks).toContain('./skill/hooks/claude/hooks.json');
+  });
+
   it.each([
     '.agents/plugins/marketplace.json',
     '.codex-plugin/marketplace.json',
     '.claude-plugin/marketplace.json',
-  ])('%s declares install policy and structured local source', (relativePath) => {
+  ])('%s declares install policy and local plugin source', (relativePath) => {
     const marketplace = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, relativePath), 'utf8')) as {
       plugins?: Array<{
         name?: string;
-        source?: { source?: string; path?: string };
+        source?: string | { source?: string; path?: string };
         policy?: { installation?: string; authentication?: string };
         category?: string;
       }>;
     };
 
     const boss = marketplace.plugins?.find((plugin) => plugin.name === 'boss');
-    expect(boss?.source).toEqual({ source: 'local', path: './' });
+    // Claude 市场用相对路径字符串；Codex 市场用 { source: 'local', path } 结构。
+    const sourcePath = typeof boss?.source === 'string' ? boss.source : boss?.source?.path;
+    expect(sourcePath).toBe('./');
     expect(boss?.policy).toEqual({ installation: 'AVAILABLE', authentication: 'ON_INSTALL' });
     expect(boss?.category).toBe('Productivity');
   });
@@ -450,24 +494,54 @@ describe('Boss install matrix', () => {
     }
   });
 
-  it('npm dry-run pack includes release-critical runtime, skill, and plugin files', () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
-
-    const result = spawnSync('npm', ['pack', '--json', '--dry-run'], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-    });
-
-    expect(result.status, result.stderr).toBe(0);
-    const payload = JSON.parse(result.stdout) as Array<{ files: Array<{ path: string }> }>;
-    const packedFiles = new Set(payload[0]?.files.map((file) => file.path) ?? []);
-
-    for (const file of REQUIRED_PACKED_FILES) {
-      expect(packedFiles.has(file), `npm package missing ${file}`).toBe(true);
+  it('skill bundle ships its own CLI, hooks runtime, and assets for marketplace installs', () => {
+    const skillRoot = path.join(REPO_ROOT, 'skill');
+    for (const file of REQUIRED_SKILL_BUNDLE_FILES) {
+      expect(fs.existsSync(path.join(skillRoot, file)), `skill bundle missing ${file}`).toBe(true);
+    }
+    for (const file of REQUIRED_REPO_FILES) {
+      expect(fs.existsSync(path.join(REPO_ROOT, file)), `repo missing ${file}`).toBe(true);
     }
     expect(
-      packedFiles.has('skill/hooks/hooks.json'),
-      'npm package should not include legacy hook manifest',
+      fs.existsSync(path.join(skillRoot, 'hooks', 'hooks.json')),
+      'skill should not include legacy hook manifest',
     ).toBe(false);
+  });
+
+  it('bundled CLI runs from a marketplace-style copy without npm or PATH shims', () => {
+    const home = makeHome();
+    const copy = path.join(home, 'skills', 'boss');
+    fs.cpSync(path.join(REPO_ROOT, 'skill'), copy, { recursive: true });
+
+    // 模拟 marketplace 安装：只复制 skill 目录，没有 node_modules、没有 PATH 里的 boss。
+    const version = spawnSync(
+      process.execPath,
+      [path.join(copy, 'cli', 'bin', 'boss.js'), '--version'],
+      { cwd: home, encoding: 'utf8', env: { PATH: '/nonexistent', HOME: home } },
+    );
+    expect(version.status, version.stderr).toBe(0);
+    const skillVersion = /^version:\s*(.+)$/m.exec(
+      fs.readFileSync(path.join(copy, 'SKILL.md'), 'utf8'),
+    )?.[1];
+    expect(version.stdout.trim()).toBe(skillVersion);
+
+    // hooks 链路同样自包含：CLI → skill/scripts/lib/run-with-flags.js → hook 脚本。
+    const hook = spawnSync(
+      process.execPath,
+      [
+        path.join(copy, 'cli', 'bin', 'boss.js'),
+        'hooks',
+        'run',
+        'session:start',
+        'scripts/hooks/session-start.js',
+      ],
+      {
+        cwd: home,
+        encoding: 'utf8',
+        env: { PATH: '/nonexistent', HOME: home },
+        input: `{"cwd":"${home}"}`,
+      },
+    );
+    expect(hook.status, hook.stderr).toBe(0);
   });
 });

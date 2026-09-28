@@ -6,12 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('on-stop hook', () => {
-  let hook: typeof import('../../scripts/hooks/on-stop.js');
+  let hook: typeof import('../../skill/scripts/hooks/on-stop.js');
   let tmpDir: string | null = null;
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/on-stop.js');
+    hook = await import('../../skill/scripts/hooks/on-stop.js');
   });
 
   afterEach(() => {

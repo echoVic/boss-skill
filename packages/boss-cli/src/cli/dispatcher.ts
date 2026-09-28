@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import * as path from 'node:path';
-import { packageRootFromImportMeta } from '../infrastructure/paths.js';
+import { skillRootFromImportMeta } from '../infrastructure/paths.js';
 import {
   CliUserError,
   createCliContext,
@@ -32,7 +32,7 @@ import {
   runtimeDescription,
 } from './registry.js';
 
-const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 4);
+const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
 
 type RuntimeModule = {
   main: (argv: string[], options?: { cwd?: string }) => number | Promise<number>;
@@ -197,8 +197,8 @@ export function throwUnknownCommand(scope: string, command: string | undefined):
 }
 
 function ensureHookScriptInsideScripts(scriptRelativePath: string): void {
-  const scriptAbs = validatePathInside(scriptRelativePath, PKG_ROOT, 'hook script');
-  const scriptsRoot = path.join(PKG_ROOT, 'scripts');
+  const scriptAbs = validatePathInside(scriptRelativePath, SKILL_ROOT, 'hook script');
+  const scriptsRoot = path.join(SKILL_ROOT, 'scripts');
   const relativeToScripts = path.relative(scriptsRoot, scriptAbs);
   if (
     relativeToScripts === '..' ||
@@ -229,7 +229,7 @@ function runHookScript(argv: string[], context: ReturnType<typeof createCliConte
   }
 
   ensureHookScriptInsideScripts(script);
-  const scriptPath = path.join(PKG_ROOT, 'scripts', 'lib', 'run-with-flags.js');
+  const scriptPath = path.join(SKILL_ROOT, 'scripts', 'lib', 'run-with-flags.js');
   const result = spawnSync(process.execPath, [scriptPath, ...argv], {
     cwd: process.cwd(),
     env: process.env,

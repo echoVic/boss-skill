@@ -5,14 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('session-end hook', () => {
-  let hook: typeof import('../../scripts/hooks/session-end.js');
+  let hook: typeof import('../../skill/scripts/hooks/session-end.js');
   let tmpDir: string | null = null;
   const originalSkillDir = process.env.SKILL_DIR;
   const originalClaudeProjectDir = process.env.CLAUDE_PROJECT_DIR;
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/session-end.js');
+    hook = await import('../../skill/scripts/hooks/session-end.js');
   });
 
   afterEach(() => {

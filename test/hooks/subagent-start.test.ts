@@ -6,7 +6,7 @@ import {
   buildFeatureSummary,
   writeFeatureMemory,
 } from '../../packages/boss-cli/src/runtime/application/memory.js';
-import { run } from '../../scripts/hooks/subagent-start.js';
+import { run } from '../../skill/scripts/hooks/subagent-start.js';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 function createTempBossDir(feature: string, execData?: Record<string, unknown>) {

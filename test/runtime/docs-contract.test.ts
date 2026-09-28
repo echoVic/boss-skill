@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
-  files?: string[];
+  private?: boolean;
+  bin?: unknown;
+  files?: unknown;
 };
 const claudePlugin = JSON.parse(
   fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'),
@@ -162,16 +164,17 @@ describe('tech-detection.md contract', () => {
 });
 
 describe('package metadata', () => {
-  it('publishes the boss CLI workspace dist and keeps script assets during migration', () => {
-    expect(pkg.files).toContain('packages/boss-cli/dist/');
-    expect(pkg.files).toContain('packages/boss-cli/assets/');
-    expect(pkg.files).toContain('skill/');
-    expect(pkg.files).toContain('scripts/');
-    expect(pkg.files).not.toContain('agents/');
-    expect(pkg.files).not.toContain('commands/');
-    expect(pkg.files).not.toContain('harness/');
-    expect(pkg.files).not.toContain('templates/');
-    expect(pkg.files).not.toContain('SKILL.md');
+  it('distributes through skill marketplaces instead of publishing to npm', () => {
+    // npm 不再是分发通道：仓库私有，产物随 skill 走市场。
+    expect(pkg.private).toBe(true);
+    expect(pkg.bin).toBeUndefined();
+    expect(pkg.files).toBeUndefined();
+    // skill 自包含三件套：CLI 产物、hooks 运行时、运行时资产。
+    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.js'))).toBe(true);
+    expect(
+      fs.existsSync(path.join(REPO_ROOT, 'skill', 'scripts', 'lib', 'run-with-flags.js')),
+    ).toBe(true);
+    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'assets', 'artifact-dag.json'))).toBe(true);
   });
 
   it('declares a single skill root so external skill CLIs discover only boss', () => {
@@ -194,23 +197,23 @@ describe('package metadata', () => {
     expect(contributing).toContain('Vitest');
   });
 
-  it('documents Boss CLI assets instead of a root harness directory', () => {
+  it('documents bundled skill assets instead of a root harness directory', () => {
     const rootHarnessPathPattern =
       /(?:^|[\s`([{])(?:\.\/)?harness\/(?:plugins|pipeline-packs|artifact-dag|plugin-schema)?/;
 
-    expect(readme).toContain('packages/boss-cli/assets/');
+    expect(readme).toContain('skill/assets/');
     expect(readme).not.toMatch(rootHarnessPathPattern);
-    expect(contributing).toContain('packages/boss-cli/assets/');
+    expect(contributing).toContain('skill/assets/');
     expect(contributing).not.toMatch(rootHarnessPathPattern);
     expect(skill).not.toMatch(rootHarnessPathPattern);
   });
 
-  it('documents .boss project extensions and built-in CLI assets', () => {
-    expect(readme).toContain('packages/boss-cli/assets/');
+  it('documents .boss project extensions and bundled skill assets', () => {
+    expect(readme).toContain('skill/assets/');
     expect(readme).toContain('.boss/plugins/');
     expect(skill).toContain('.boss/plugins/');
     expect(skill).not.toContain('harness/plugins/');
-    expect(contributing).toContain('packages/boss-cli/assets/');
+    expect(contributing).toContain('skill/assets/');
   });
 });
 
@@ -639,13 +642,18 @@ describe('thin skill CLI contract', () => {
     expect(runtimeSurface).not.toContain('update-stage <feature> <N> completed --artifact');
   });
 
-  it('routes hook config through the boss hooks dispatcher', () => {
-    expect(claudeHooksConfig).toContain('boss hooks run');
-    expect(codexHooksConfig).toContain('boss hooks run');
+  it('routes hook config through the boss hooks dispatcher without npm/PATH binaries', () => {
+    // 插件模式：hook 命令用插件根占位符指向 skill 自带的 CLI。
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js');
+    expect(claudeHooksConfig).toContain('"session:start"');
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+    expect(codexHooksConfig).toContain('${PLUGIN_ROOT}/skill/cli/bin/boss.js');
     expect(codexHooksConfig).toContain('"matcher": "apply_patch"');
     expect(codexHooksConfig).not.toContain('SessionEnd');
     expect(codexHooksConfig).not.toContain('Notification');
-    expect(claudeSettings).toContain('boss hooks run');
+    // 仓库 dogfood：settings.json 指向仓库内 skill/cli。
+    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.js');
     expect(claudeSettings).not.toContain('scripts/lib/run-with-flags.js');
     expect(bmadMethodology).toContain('boss hooks run');
     expect(bmadMethodology).toContain('hooks/claude/hooks.json');
@@ -665,8 +673,14 @@ describe('thin skill CLI contract', () => {
       const manifestHook = claudeManifest.hooks.PreToolUse?.find((hook) => hook.id === hookId);
       const settingsHook = repositorySettings.hooks.PreToolUse?.find((hook) => hook.id === hookId);
 
-      expect(settingsHook).toEqual(manifestHook);
+      expect(settingsHook?.matcher).toBe(manifestHook?.matcher);
+      expect(settingsHook?.id).toBe(manifestHook?.id);
     }
+
+    // 两处都指向 skill 自带 CLI：manifest 用插件根占位符，settings 用项目目录。
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
+    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js');
+    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.js');
   });
 });
 

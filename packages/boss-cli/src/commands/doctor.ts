@@ -7,8 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { createCliContext, describeCommand, runMain, writeOutput } from '../cli/contract.js';
 import { commandDescriptions } from '../cli/registry.js';
 import { readJsonlTolerant } from '../infrastructure/fs.js';
+import { readSkillVersion } from '../infrastructure/paths.js';
 import { findFailedGates } from '../runtime/application/final-gate.js';
-import { AGENTS, PKG_ROOT } from './install/index.js';
+import { AGENTS, PLUGIN_ROOT, SKILL_ROOT, VERSION } from './install/index.js';
 
 type CheckStatus = 'ok' | 'warn' | 'error';
 
@@ -17,10 +18,6 @@ interface DoctorCheck {
   status: CheckStatus;
   detail: string;
 }
-
-const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')) as {
-  version: string;
-};
 
 /** boss 装到哪些 agent、版本是否与当前包一致。 */
 function checkInstalls(): DoctorCheck[] {
@@ -41,30 +38,24 @@ function checkInstalls(): DoctorCheck[] {
         name: `install:${agent.name}`,
         status: detected ? 'warn' : 'ok',
         detail: detected
-          ? `已检测到 ${agent.name} 但未安装 boss（运行 boss install 安装）`
+          ? `已检测到 ${agent.name} 但未安装 boss（用 skill 市场安装，或运行 boss install）`
           : `未检测到 ${agent.name}，跳过`,
       });
       continue;
     }
-    const skillMd = path.join(dest, 'SKILL.md');
-    const installedVersion = readSkillVersion(skillMd);
-    const versionMatch = installedVersion === pkg.version;
+    const installedVersion = fs.existsSync(path.join(dest, 'SKILL.md'))
+      ? readSkillVersion(dest)
+      : undefined;
+    const versionMatch = installedVersion === VERSION;
     checks.push({
       name: `install:${agent.name}`,
       status: versionMatch ? 'ok' : 'warn',
       detail: versionMatch
-        ? `已安装 v${installedVersion}（与当前包一致）`
-        : `已安装 v${installedVersion ?? '未知'}，当前包为 v${pkg.version}（建议重装）`,
+        ? `已安装 v${installedVersion}（与当前 skill 一致）`
+        : `已安装 v${installedVersion ?? '未知'}，当前 skill 为 v${VERSION}（建议重装）`,
     });
   }
   return checks;
-}
-
-function readSkillVersion(skillMd: string): string | undefined {
-  if (!fs.existsSync(skillMd)) return undefined;
-  const content = fs.readFileSync(skillMd, 'utf8');
-  const match = content.match(/^version:\s*(.+)$/m);
-  return match ? match[1]!.trim() : undefined;
 }
 
 /**
@@ -98,17 +89,20 @@ function checkNetworkBoundary(): DoctorCheck[] {
         : '未检测到已废弃的 knowledge 环境变量',
   });
 
-  // 3. 源码级守卫存在性：network-boundary 测试与 PRIVACY.md 都在
+  // 3. 源码级守卫存在性：network-boundary 测试与 PRIVACY.md 都在。
+  //    插件安装保留完整仓库（plugin root = 仓库根），复制安装只有 skill/ 目录；
+  //    两处都查，缺失时如实报 warn。
   const guards = [
     { rel: 'test/runtime/network-boundary.test.ts', name: 'network-boundary test' },
     { rel: 'PRIVACY.md', name: 'PRIVACY.md' },
   ];
   for (const guard of guards) {
-    const abs = path.join(PKG_ROOT, guard.rel);
+    const candidates = [path.join(PLUGIN_ROOT, guard.rel), path.join(SKILL_ROOT, guard.rel)];
+    const found = candidates.find((candidate) => fs.existsSync(candidate));
     checks.push({
       name: `network:guard:${guard.name}`,
-      status: fs.existsSync(abs) ? 'ok' : 'warn',
-      detail: fs.existsSync(abs)
+      status: found ? 'ok' : 'warn',
+      detail: found
         ? `${guard.rel} 存在（CI 会在源码引入出站客户端时变红）`
         : `${guard.rel} 未随安装分发，无法从本地文件复核；可到 GitHub 查看源码`,
     });
@@ -267,7 +261,7 @@ export function main(
   }
 
   const checks: DoctorCheck[] = [
-    { name: 'version', status: 'ok', detail: `boss-skill v${pkg.version}` },
+    { name: 'version', status: 'ok', detail: `boss-skill v${VERSION}` },
     ...checkEnvironment(),
     ...checkNetworkBoundary(),
     ...checkInstalls(),

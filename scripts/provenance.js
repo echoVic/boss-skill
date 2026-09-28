@@ -29,15 +29,17 @@ const COMPONENT_REFERENCES = [
   'skill/commands/boss-upgrade.md',
   'skill/hooks/codex/hooks.json',
   'skill/hooks/claude/hooks.json',
-  'scripts/hooks/pre-tool-bash.js',
-  'scripts/hooks/pre-tool-write.js',
-  'scripts/hooks/post-tool-bash.js',
-  'scripts/hooks/post-tool-write.js',
-  'scripts/hooks/on-stop.js',
-  'scripts/hooks/session-start.js',
-  'scripts/hooks/session-end.js',
-  'packages/boss-cli/assets/artifact-dag.json',
-  'packages/boss-cli/assets/plugin-schema.json',
+  'skill/scripts/lib/run-with-flags.js',
+  'skill/scripts/hooks/pre-tool-bash.js',
+  'skill/scripts/hooks/pre-tool-write.js',
+  'skill/scripts/hooks/post-tool-bash.js',
+  'skill/scripts/hooks/post-tool-write.js',
+  'skill/scripts/hooks/on-stop.js',
+  'skill/scripts/hooks/session-start.js',
+  'skill/scripts/hooks/session-end.js',
+  'skill/cli/bin/boss.js',
+  'skill/assets/artifact-dag.json',
+  'skill/assets/plugin-schema.json',
 ];
 
 function readJson(relativePath) {
@@ -84,7 +86,7 @@ function buildProvenance(options = {}) {
     plugin: {
       name: codexPlugin.name,
       version: packageJson.version,
-      npmPackage: packageJson.name,
+      distribution: 'skill-marketplace',
     },
     repository: {
       type: 'git',
@@ -96,7 +98,6 @@ function buildProvenance(options = {}) {
       name: codexPlugin.author?.name || packageJson.author?.name,
       email: codexPlugin.author?.email || packageJson.author?.email,
       url: codexPlugin.author?.url || packageJson.homepage,
-      packageRegistry: packageJson.publishConfig?.registry || 'https://registry.npmjs.org/',
     },
     support: {
       url: packageJson.bugs?.url || packageJson.homepage,

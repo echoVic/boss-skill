@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 describe('post-tool-write hook', () => {
-  let hook: typeof import('../../scripts/hooks/post-tool-write.js');
+  let hook: typeof import('../../skill/scripts/hooks/post-tool-write.js');
   let tmpDir: string | null = null;
 
   beforeEach(async () => {
     vi.resetModules();
-    hook = await import('../../scripts/hooks/post-tool-write.js');
+    hook = await import('../../skill/scripts/hooks/post-tool-write.js');
   });
 
   afterEach(() => {

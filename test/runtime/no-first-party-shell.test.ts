@@ -46,16 +46,21 @@ describe('TypeScript CLI architecture', () => {
     expect(dispatcherSource).toContain("import('../commands/packs/index.js')");
   });
 
-  it('keeps harness as a runtime pattern instead of a root directory', () => {
+  it('keeps harness as a runtime pattern and bundles runtime assets inside the skill', () => {
     expect(fs.existsSync(path.join(REPO_ROOT, 'harness'))).toBe(false);
+    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'assets', 'artifact-dag.json'))).toBe(true);
 
+    // npm 不再是分发通道：仓库不发包，产物随 skill 走市场。
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'),
     ) as {
-      files?: string[];
+      private?: boolean;
+      bin?: unknown;
+      files?: unknown;
     };
-    expect(packageJson.files).toContain('packages/boss-cli/assets/');
-    expect(packageJson.files).not.toContain('harness/');
+    expect(packageJson.private).toBe(true);
+    expect(packageJson.bin).toBeUndefined();
+    expect(packageJson.files).toBeUndefined();
   });
 
   it('does not hard-code root harness asset paths in runtime source', () => {

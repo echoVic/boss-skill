@@ -1,6 +1,5 @@
 # boss-skill
 
-[![npm version](https://img.shields.io/npm/v/@blade-ai/boss-skill)](https://www.npmjs.com/package/@blade-ai/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
@@ -37,37 +36,41 @@ Boss no es un único comando monolítico. Puedes ejecutar un rol sobre un proyec
 | `/boss:qa` | QA más puertas | Necesitas evidencia de pruebas verificable |
 | `/boss:ship` | Comprobaciones de build y despliegue de DevOps | Estás listo para entregar |
 | `/boss:extend` | Agente, pack o puerta personalizados | Quieres adaptar Boss a tu equipo |
-| `/boss:upgrade` | Actualiza Boss Skill y reinstala los hooks | Quieres el paquete npm y la configuración de hooks más recientes |
+| `/boss:upgrade` | Actualiza Boss Skill y vuelve a fusionar los hooks | Quieres la versión más reciente del marketplace y la configuración de hooks |
 
 ## Inicio rápido
 
 ### 1. Instalación
 
-Boss es una skill que instalas en tu agente de programación — no una herramienta que instala otras skills.
+Boss es una skill que instalas en tu agente de programación — no una herramienta que instala otras skills. La distribución es exclusiva de marketplaces: sin paquete npm, sin binario global. La skill incluye su propia CLI (`skill/cli/`), que los hooks y el agente invocan mediante `node`.
 
-**Recomendado — mediante la CLI `skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills), skills.sh):**
+**Claude Code — marketplace de plugins (recomendado; los hooks ya vienen conectados):**
+
+```text
+/plugin marketplace add echoVic/boss-skill
+/plugin install boss@boss-skill
+```
+
+**Codex — marketplace de plugins:**
+
+```bash
+codex plugin marketplace add echoVic/boss-skill
+```
+
+Luego abre el navegador de plugins (`/plugins`) e instala **boss**.
+
+**Cualquier agente — mediante la CLI `skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills), skills.sh):**
 
 ```bash
 npx skills add echoVic/boss-skill
 ```
 
-Esta es la forma estándar e independiente del agente de instalar una skill: descubre `boss` en el repositorio, pregunta por el agente de destino, el alcance (proyecto o global) y el método de instalación, y registra un `skills-lock.json` que puedes commitear. Boss distribuye una única raíz de skill, por lo que el selector muestra solo `boss` — sus metodologías internas viajan con ella.
+Descubre `boss` en el repositorio, pregunta por el agente de destino, el alcance (proyecto o global) y el método de instalación, y registra un `skills-lock.json` que puedes commitear. Boss distribuye una única raíz de skill, por lo que el selector muestra solo `boss` — sus metodologías internas viajan con ella.
 
-**Alternativa — el instalador multiagente propio de Boss** (detecta automáticamente Claude Code, Codex, OpenClaw, Antigravity y Hermes e instala en todos ellos, y además fusiona los hooks de Codex):
-
-```bash
-# One-shot, no global install
-npx @blade-ai/boss-skill
-
-# Or install globally, then run the self-install wizard
-npm install -g @blade-ai/boss-skill
-boss-skill
-```
-
-Para el modo plugin de Claude Code:
+Para Codex y otras instalaciones basadas en copia, conecta los hooks de Boss con la CLI incluida:
 
 ```bash
-claude --plugin-dir "$(boss-skill path)"
+node <installed-skill>/cli/bin/boss.js install
 ```
 
 ### 2. Ejecuta un pipeline ligero
@@ -83,9 +86,11 @@ Dentro de tu agente de programación:
 
 ### 3. Inspecciona los resultados
 
+Boss incluye su propia CLI dentro de la skill — sin instalación npm, sin configurar el PATH. En los siguientes fragmentos, `<skill>` es el directorio que contiene `SKILL.md` (para instalaciones como plugin de Claude Code: `<plugin-root>/skill`; para instalaciones copiadas, p. ej. `~/.codex/skills/boss`).
+
 ```bash
-boss status todo-app --json
-boss runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.js status todo-app --json
+node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
 ```
 
 Distribución esperada de artefactos:
@@ -116,24 +121,21 @@ Regla general: si no necesitas una carpeta `.boss/` rastreable, probablemente no
 
 ## ¿Sin CLI? Sigue funcionando
 
-Boss detecta la CLI `boss` en tiempo de ejecución. Sin ella, el flujo de trabajo puede degradarse a artefactos Markdown bajo `.boss/<feature>/` en lugar del flujo de eventos. La CLI es la mejora de auditabilidad: event sourcing, reanudación reproducible, evaluaciones deterministas, puertas del runtime y diagnósticos estructurados.
+La CLI se distribuye dentro de la skill, así que una instalación desde el marketplace siempre la incluye. Cuando `node` no está disponible o no se puede localizar la CLI, el flujo de trabajo se degrada a artefactos Markdown bajo `.boss/<feature>/` en lugar del flujo de eventos. La CLI es la mejora de auditabilidad: event sourcing, reanudación reproducible, evaluaciones deterministas, puertas del runtime y diagnósticos estructurados.
 
 Boss no significa «instálalo una vez y obtén una entrega autónoma garantizada». Proporciona un flujo de trabajo en tiempo de ejecución y puertas de evidencia; el agente de programación activo todavía tiene que seguir el protocolo de Boss.
 
 ## Detalles de la instalación
 
-```bash
-npm install -g @blade-ai/boss-skill
-boss-skill install
-```
+Las instalaciones desde el marketplace copian (o enlazan) todo el directorio `skill/`. La CLI incluida vive en `<skill>/cli/bin/boss.js` y solo necesita Node.js `>=20`; los hooks la referencian por ruta completa, así que nada depende de npm ni de un binario global `boss`.
 
-Comandos de instalación útiles:
+Comandos útiles (ejecutados mediante la CLI incluida):
 
 ```bash
-boss-skill install --dry-run
-boss-skill uninstall
-boss-skill path
-boss-skill --version
+node <skill>/cli/bin/boss.js install --dry-run
+node <skill>/cli/bin/boss.js uninstall
+node <skill>/cli/bin/boss.js path
+node <skill>/cli/bin/boss.js --version
 ```
 
 Destinos detectados automáticamente:
@@ -144,11 +146,11 @@ Destinos detectados automáticamente:
 | Codex | `~/.codex/` | Copia a `~/.codex/skills/boss/`, inyecta metadatos y fusiona hooks |
 | Antigravity | `~/.gemini/antigravity/` | Copia al directorio de skills de Antigravity e inyecta metadatos |
 | Hermes | `~/.hermes/` | Copia a `~/.hermes/skills/boss/` e inyecta metadatos |
-| Claude Code | Siempre disponible | Modo plugin con `--plugin-dir` |
+| Claude Code | Siempre disponible | Marketplace de plugins (ver Inicio rápido) |
 
 ## Soporte de plataformas
 
-Boss está orientado a Node.js `>=20` y funciona en Linux, macOS y Windows. La CLI invoca procesos externos solo mediante `spawnSync` con arrays de argumentos explícitos (nunca `shell: true`) y resuelve `npm`/`npx` a sus variantes `.cmd` en Windows, de modo que no hay ninguna suposición exclusiva de POSIX en el pipeline principal.
+Boss está orientado a Node.js `>=20` y funciona en Linux, macOS y Windows. La CLI se distribuye dentro de la skill e invoca procesos externos solo mediante `spawnSync` con arrays de argumentos explícitos (nunca `shell: true`) y resuelve `npm`/`npx` a sus variantes `.cmd` en Windows, de modo que no hay ninguna suposición exclusiva de POSIX en el pipeline principal.
 
 Dos capacidades dependen de herramientas externas opcionales y se degradan de forma elegante cuando no están presentes:
 
@@ -342,7 +344,7 @@ npm test
 Scripts útiles:
 
 ```bash
-npm run build
+npm run build:skill   # compila + sincroniza skill/cli (commitea el bundle junto con tu cambio)
 npm run typecheck
 npm test
 npm run test:skills
@@ -355,23 +357,26 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI and runtime
-├── skill/                      # Skill bundle installed into coding agents
-├── scripts/hooks/              # Node.js hook scripts
-├── scripts/lib/                # Hook helpers
+├── packages/boss-cli/          # TypeScript CLI and runtime source
+├── skill/                      # Skill bundle installed into coding agents (self-contained)
+│   ├── cli/                    # Generated CLI bundle (runs with node, no npm)
+│   ├── scripts/                # Hook runtime (dispatcher + hook scripts)
+│   └── assets/                 # Built-in DAGs, pipeline packs, plugin schema
 ├── test/                       # Vitest, harness, eval, hook, and install tests
 ├── docs/superpowers/           # Historical specs, plans, and reports
 ├── examples/                   # Example projects
-├── .claude-plugin/             # Claude Code plugin manifest
-├── .codex-plugin/              # Codex plugin manifest
-└── package.json
+├── .claude-plugin/             # Claude Code plugin manifest + marketplace
+├── .codex-plugin/              # Codex plugin manifest + marketplace
+├── .agents/plugins/            # Repo-scoped plugin marketplace + provenance
+└── package.json                # Private dev workspace (never published)
 ```
 
 Áreas importantes del código fuente:
 
 - `packages/boss-cli/src/` contiene el código fuente TypeScript de la CLI y del runtime.
-- `packages/boss-cli/dist/` contiene la salida generada de la CLI que usa el binario npm publicado; no la edites a mano.
-- `packages/boss-cli/assets/` contiene los DAG integrados, los packs de pipeline, el esquema de plugins y los plugins.
+- `skill/cli/` es el bundle generado de la CLI que se distribuye con la skill; `packages/boss-cli/dist/` es la compilación intermedia de desarrollo. Ambos provienen de `npm run build:skill` — no edites ninguno a mano.
+- `skill/assets/` contiene los DAG integrados, los packs de pipeline, el esquema de plugins y los plugins.
+- `skill/scripts/` contiene el runtime de hooks (`lib/run-with-flags.js`) y los scripts de hooks.
 - `skill/SKILL.md` es el punto de entrada principal de orquestación orientado al agente.
 - `skill/agents/` contiene los prompts de los roles.
 - `skill/commands/` contiene los comandos slash.
@@ -385,12 +390,11 @@ Usa el script de release para que los números de versión permanezcan sincroniz
 npm run release -- patch
 npm run release -- minor
 npm run release -- major
-npm run release -- 3.11.0
-npm run release -- 3.11.0 --dry-run
-npm run release -- 3.11.0 --no-publish
+npm run release -- 4.1.0
+npm run release -- 4.1.0 --dry-run
 ```
 
-El script de release comprueba que el árbol de trabajo esté limpio, ejecuta las pruebas, sincroniza las versiones, verifica la coherencia, crea un commit y una etiqueta, y publica salvo que se use `--no-publish`.
+El script de release comprueba que el árbol de trabajo esté limpio, reconstruye la CLI incluida de la skill (`skill/cli/`), ejecuta las pruebas, sincroniza las versiones, verifica la coherencia, crea un commit y una etiqueta, y hace push. El release es la etiqueta de git: los marketplaces leen el repositorio — no hay paso de publicación en npm.
 
 Consulta [CONTRIBUTING.md](./CONTRIBUTING.md).
 

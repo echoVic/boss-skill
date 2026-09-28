@@ -6,21 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupTempDir, createExecData, createTempBossDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BUILT_IN_DAG_PATH = path.join(
-  REPO_ROOT,
-  'packages',
-  'boss-cli',
-  'assets',
-  'artifact-dag.json',
-);
+const BUILT_IN_DAG_PATH = path.join(REPO_ROOT, 'skill', 'assets', 'artifact-dag.json');
 
 describe('boss-utils', () => {
-  let bossUtils: typeof import('../../scripts/lib/boss-utils.js');
+  let bossUtils: typeof import('../../skill/scripts/lib/boss-utils.js');
   let tmpDir: string | null = null;
 
   beforeEach(async () => {
     vi.resetModules();
-    bossUtils = await import('../../scripts/lib/boss-utils.js');
+    bossUtils = await import('../../skill/scripts/lib/boss-utils.js');
   });
 
   afterEach(() => {

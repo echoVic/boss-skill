@@ -33,8 +33,15 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
-      - name: Build
-        run: npm run build
+      - name: Build (incl. skill CLI bundle)
+        run: npm run build:skill
+      - name: Verify skill CLI bundle is committed
+        run: |
+          if [ -n "$(git status --porcelain -- skill/cli)" ]; then
+            echo "skill/cli is out of date. Run npm run build:skill and commit the result."
+            git status --porcelain -- skill/cli
+            exit 1
+          fi
       - name: Doctor (version consistency)
         run: node packages/boss-cli/dist/bin/boss.js doctor --json
       - name: Test

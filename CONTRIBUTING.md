@@ -18,7 +18,7 @@ sudo apt install jq    # Ubuntu/Debian
 
 # 安装依赖并验证
 npm install
-npm run build
+npm run build:skill   # 构建 + 同步随 skill 分发的 CLI 产物（skill/cli）
 npm run typecheck
 npm test
 ```
@@ -29,16 +29,16 @@ npm test
 
 | 目录 | 职责 |
 |------|------|
-| `skill/` | 安装到 Coding Agent 的薄 Skill bundle（`SKILL.md`、agents、commands、templates、hooks、子 skills） |
+| `skill/` | 安装到 Coding Agent 的 skill bundle（自包含：`SKILL.md`、agents、commands、templates、hooks、子 skills、CLI、资产） |
+| `skill/cli/` | 随 skill 分发的 CLI 产物（`npm run build:skill` 生成，提交进仓库，marketplace 安装不跑构建） |
+| `skill/scripts/` | Hook 运行时（`lib/run-with-flags.js`）与 10 个 Hook 脚本（由 `boss hooks run` 调度） |
+| `skill/assets/` | 内置 DAG、packs、plugin schema、内置插件 |
 | `packages/boss-cli/src/runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
 | `packages/boss-cli/src/commands/` | `boss project`、`boss artifact`、`boss packs` 等 TypeScript 命令 |
-| `scripts/hooks/` | 10 个 Claude Code Hook 脚本（由 `boss hooks run` 调度） |
-| `scripts/lib/` | Hook 运行辅助 JS（无 first-party shell 编排） |
-| `packages/boss-cli/assets/` | Boss CLI 内置 DAG、packs、plugin schema、内置插件 |
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
 | `test/` | 自动化测试 |
 | `packages/boss-cli/src/` | Boss CLI/runtime 的 TypeScript/ESM 源码 |
-| `packages/boss-cli/dist/` | 构建后的发布产物 |
+| `packages/boss-cli/dist/` | 本地开发构建中间产物（`skill/cli/` 的来源） |
 
 ## 开发规范
 
@@ -92,7 +92,7 @@ try {
 ### 运行测试
 
 ```bash
-npm run build
+npm run build:skill
 npm run typecheck
 npm test
 ```
@@ -119,7 +119,7 @@ describe('my-hook', () => {
   it('handles normal input', async () => {
     const execData = createExecData({ feature: 'test', status: 'running' });
     tmpDir = createTempBossDir('test', execData);
-    const hook = await import('../../scripts/hooks/my-hook.js');
+    const hook = await import('../../skill/scripts/hooks/my-hook.js');
     const result = hook.run(JSON.stringify({ cwd: tmpDir }));
     expect(result).toBeTruthy();
   });
@@ -131,8 +131,9 @@ describe('my-hook', () => {
 提交 PR 时，请确保：
 
 - 新增的 Hook 脚本有对应的测试
-- 新增的 `scripts/lib/` 工具函数有对应的测试
+- 新增的 `skill/scripts/lib/` 工具函数有对应的测试
 - CLI 功能变更在 `test/bin/boss-skill.test.ts` 中覆盖
+- 改动 CLI 源码后运行 `npm run build:skill` 并一起提交 `skill/cli/`（CI 会校验产物无漂移）
 
 ## 版本号
 
@@ -148,7 +149,7 @@ describe('my-hook', () => {
 **不要手动修改版本号**，使用发布脚本自动同步：
 
 ```bash
-npm run release -- <version|major|minor|patch> [--dry-run] [--no-publish]
+npm run release -- <version|major|minor|patch> [--dry-run]
 ```
 
 测试套件中包含版本一致性检查，CI 会自动拦截版本不同步的问题。
@@ -196,14 +197,15 @@ docs: 更新 README 安装说明
 - [ ] 新增代码有对应测试
 - [ ] 未新增 first-party `.sh` 实现面
 - [ ] Hook 脚本无空 `catch {}` 块
+- [ ] 改动 CLI 源码已运行 `npm run build:skill` 并提交 `skill/cli/`
 - [ ] 版本号未手动修改（由发布脚本管理）
 
 ## 插件开发
 
 如需开发自定义插件，请参考：
 
-- 插件 Schema：`packages/boss-cli/assets/plugin-schema.json`
-- 内置插件示例：`packages/boss-cli/assets/plugins/security-audit/`
+- 插件 Schema：`skill/assets/plugin-schema.json`
+- 内置插件示例：`skill/assets/plugins/security-audit/`
 - 插件注册入口：`boss runtime register-plugins <feature>`
 
 插件目录结构：

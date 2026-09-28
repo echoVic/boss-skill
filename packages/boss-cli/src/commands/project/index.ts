@@ -12,11 +12,11 @@ import {
   writeOutput,
 } from '../../cli/contract.js';
 import { commandDescriptions } from '../../cli/registry.js';
-import { packageRootFromImportMeta } from '../../infrastructure/paths.js';
+import { skillRootFromImportMeta } from '../../infrastructure/paths.js';
 import { initPipeline } from '../../runtime/application/pipeline.js';
 
-const PKG_ROOT = packageRootFromImportMeta(import.meta.url, 5);
-const DEFAULT_TEMPLATE_DIR = path.join(PKG_ROOT, 'skill', 'templates');
+const SKILL_ROOT = skillRootFromImportMeta(import.meta.url);
+const DEFAULT_TEMPLATE_DIR = path.join(SKILL_ROOT, 'templates');
 const PROJECT_TEMPLATE_DIR = path.join('.boss', 'templates');
 const projectInitDescription = commandDescriptions['boss project init']!;
 
