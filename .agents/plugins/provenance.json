@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "plugin": {
     "name": "boss",
-    "version": "5.0.0",
+    "version": "5.0.1",
     "distribution": "skill-marketplace"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "bf0d1a56572acdeaebbf3a6d3a6b4dedefb404ee",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/bf0d1a56572acdeaebbf3a6d3a6b4dedefb404ee"
+    "commit": "f7556d8550abee46a0b3f59f436eb95dc8424897",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/f7556d8550abee46a0b3f59f436eb95dc8424897"
   },
   "publisher": {
     "name": "echoVic",
@@ -27,34 +27,34 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "66faaa3b896e42d0394cf43868c9049db80e5e410668ae437879d5b12d5e6969",
+      "sha256": "7357252164cefe6de805e14a07e5e1880360ca31e8232921acd6700d58b47db8",
       "bytes": 1576
     },
     {
       "path": ".codex-plugin/marketplace.json",
-      "sha256": "e89de2f23f05f0811579b435465489863deef19886551a16f07b5ca9a8480402",
+      "sha256": "30d7f6b33ebebbc9f49a9324f9e0fb4ec9a5b8b79484430681fe4e6ba68dee33",
       "bytes": 1063
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "948eea58e46d0024fdf6f78b27eebe4c4b61854b3bdab723d81bd8eacd221a4f",
+      "sha256": "f5895a20052cf2573fd6eeefcc438c5fda33c9d820aeebbf1db4292b528aae57",
       "bytes": 1781
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "44e3daf4b7fbffd53893b18e59594e505531c1946df781da32ccfa0f7ffbc4f9",
+      "sha256": "54b5fe984fc3471b24d180c194126a7de59bf4a9aadba121c9778f6b908f68d0",
       "bytes": 1016
     },
     {
       "path": ".agents/plugins/marketplace.json",
-      "sha256": "fe289bd3022ba8fca74e519266e7822f88eafa530f4b31f7ecf4f83262ef50a4",
+      "sha256": "7d3a0f7899368ce0ded0edcf47ffb929c885bde06d7287b97c87e947cbc4fdc2",
       "bytes": 802
     }
   ],
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "2714540f6e318210fe322e751be0974c6adf7c19f6793a264a4062c1f5ad9376",
+      "sha256": "95a06c33c56b205a15cd89093b173f4f2c6bb3e6eaf96268cf469a51d6dd70e5",
       "bytes": 9765
     },
     {
