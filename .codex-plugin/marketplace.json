@@ -1,7 +1,7 @@
 {
   "name": "boss-skill",
   "description": "BMAD Codex plugin marketplace metadata",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "interface": {
     "displayName": "Boss Skill"
   },
@@ -22,7 +22,7 @@
         "path": "./"
       },
       "description": "BMAD pipeline plugin for Codex with installer-managed hooks and shared runtime enforcement.",
-      "version": "5.0.1",
+      "version": "5.0.2",
       "author": {
         "name": "echoVic",
         "email": "137844255@qq.com",
