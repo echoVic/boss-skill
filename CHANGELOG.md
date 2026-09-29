@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [5.0.3] - 2026-09-29
+
 ### 破坏性变更（Breaking）
 
 - **CLI 源码即产物，彻底取消构建步骤。** 移除 `packages/` 工作区，CLI/runtime 源码迁入
