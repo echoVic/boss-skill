@@ -4,8 +4,8 @@
  * release.js - 发布脚本
  *
  * 分发只走 skill 市场（Claude 插件市场 / Codex 插件市场 / skills.sh）：
- * 发布 = 构建随 skill 分发的 CLI 产物 + 同步版本号 + 打 git tag + push。
- * 市场从仓库拉取，不发布 npm 包。
+ * 发布 = 同步版本号 + 打 git tag + push。CLI 源码即产物（skill/cli 下直接运行 .mts），
+ * 无构建步骤；市场从仓库拉取，不发布 npm 包。
  *
  * 用法:
  *   node scripts/release.js <version> [--dry-run]
@@ -31,15 +31,6 @@ const PROVENANCE_FILE = '.agents/plugins/provenance.json';
 const VERSION_FILES = [
   {
     path: 'package.json',
-    kind: 'json',
-    update(content, version) {
-      const obj = JSON.parse(content);
-      obj.version = version;
-      return JSON.stringify(obj, null, 2) + '\n';
-    },
-  },
-  {
-    path: 'packages/boss-cli/package.json',
     kind: 'json',
     update(content, version) {
       const obj = JSON.parse(content);
@@ -246,7 +237,6 @@ function main() {
 
   // 2. 跑完整验证
   console.log('🧪 运行完整验证...');
-  run('npm run build:skill');
   run('npm run typecheck');
   run('npm run lint');
   run('npm test');
@@ -290,9 +280,9 @@ function main() {
     console.log('  ✅ 所有文件版本一致');
   }
 
-  // 5. 验证随 skill 分发的 CLI 产物可用（marketplace 安装不跑构建，产物必须已提交）。
-  console.log('\n📦 验证 skill/cli 产物...');
-  const bundleVersion = execSync('node skill/cli/bin/boss.js --version', {
+  // 5. 验证随 skill 分发的 CLI 可直接运行（源码即产物，需 Node >=22.18）。
+  console.log('\n📦 验证 skill/cli 可直接运行...');
+  const bundleVersion = execSync('node skill/cli/bin/boss.mts --version', {
     cwd: ROOT,
     encoding: 'utf8',
   }).trim();
@@ -300,7 +290,7 @@ function main() {
     console.error(`❌ skill/cli 版本 ${bundleVersion} 与目标版本 ${next} 不一致`);
     process.exit(1);
   }
-  console.log(`  ✅ skill/cli/bin/boss.js --version → ${bundleVersion}`);
+  console.log(`  ✅ skill/cli/bin/boss.mts --version → ${bundleVersion}`);
 
   if (dryRun) {
     console.log('\n🏁 dry-run 完成，未做任何修改。');
@@ -309,7 +299,7 @@ function main() {
 
   // 6. Git commit + tag
   console.log('\n📝 提交版本更新...');
-  const commitPaths = [...VERSION_FILES.map((f) => f.path), 'skill/cli'];
+  const commitPaths = VERSION_FILES.map((f) => f.path);
   run(`git add ${commitPaths.join(' ')}`);
   run(`git commit -m "chore: release v${next}"`);
   run(`git tag v${next}`);

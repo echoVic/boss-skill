@@ -4,10 +4,7 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import {
-  appendLineSync,
-  readJsonlTolerant,
-} from '../../packages/boss-cli/src/infrastructure/fs.js';
+import { appendLineSync, readJsonlTolerant } from '../../skill/cli/infrastructure/fs.mts';
 
 let tmpDir: string | null = null;
 

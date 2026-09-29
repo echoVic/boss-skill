@@ -8,10 +8,10 @@ import {
   retryAgent,
   updateAgent,
   updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { appendRuntimeEvent } from '../../packages/boss-cli/src/runtime/application/state.js';
-import { EVENT_TYPES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
+import { appendRuntimeEvent } from '../../skill/cli/runtime/application/state.mts';
+import { EVENT_TYPES } from '../../skill/cli/runtime/domain/event-types.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 import { runCli } from '../helpers/run-cli.js';
 
@@ -83,7 +83,7 @@ describe('Boss runtime fault injection', () => {
 
     const result = runCli(
       [
-        'packages/boss-cli/dist/bin/boss.js',
+        'skill/cli/bin/boss.mts',
         'runtime',
         'record-artifact',
         'fault-feature',
@@ -112,13 +112,7 @@ describe('Boss runtime fault injection', () => {
     const before = eventsText();
 
     const result = runCli(
-      [
-        'packages/boss-cli/dist/bin/boss.js',
-        'runtime',
-        'register-plugins',
-        'fault-feature',
-        '--json',
-      ],
+      ['skill/cli/bin/boss.mts', 'runtime', 'register-plugins', 'fault-feature', '--json'],
       { cwd: tmpDir },
     );
 
@@ -134,7 +128,7 @@ describe('Boss runtime fault injection', () => {
 
     const result = runCli(
       [
-        'packages/boss-cli/dist/bin/boss.js',
+        'skill/cli/bin/boss.mts',
         'runtime',
         'update-agent',
         'fault-feature',
@@ -160,7 +154,7 @@ describe('Boss runtime fault injection', () => {
 
     const result = runCli(
       [
-        'packages/boss-cli/dist/bin/boss.js',
+        'skill/cli/bin/boss.mts',
         'runtime',
         'retry-agent',
         'fault-feature',
@@ -190,7 +184,7 @@ describe('Boss runtime fault injection', () => {
 
     const result = runCli(
       [
-        'packages/boss-cli/dist/bin/boss.js',
+        'skill/cli/bin/boss.mts',
         'runtime',
         'retry-agent',
         'fault-feature',

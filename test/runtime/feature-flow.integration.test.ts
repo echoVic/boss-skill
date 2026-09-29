@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 describe('feature flow integration (runtime commands only)', () => {
   let tmpDir: string;

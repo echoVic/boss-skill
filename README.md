@@ -77,7 +77,7 @@ It discovers `boss` from the repo, prompts for target agent / scope (project vs 
 For Codex and other copy-based installs, wire up the Boss hooks with the bundled CLI:
 
 ```bash
-node <installed-skill>/cli/bin/boss.js install
+node <installed-skill>/cli/bin/boss.mts install
 ```
 
 ### 2. Try It On A Project You Already Have
@@ -108,8 +108,8 @@ Inside your coding agent:
 Boss ships its own CLI inside the skill — no npm install, no PATH setup. In the snippets below, `<skill>` is the directory that contains `SKILL.md` (for Claude Code plugin installs: `<plugin-root>/skill`; for copied installs, e.g. `~/.codex/skills/boss`).
 
 ```bash
-node <skill>/cli/bin/boss.js status todo-app --json
-node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.mts status todo-app --json
+node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
 ```
 
 Expected artifact layout:
@@ -146,15 +146,15 @@ Boss does not mean "install once and get guaranteed autonomous delivery." It pro
 
 ## Installation Details
 
-Marketplace installs copy (or link) the whole `skill/` directory. The bundled CLI lives at `<skill>/cli/bin/boss.js` and needs only Node.js `>=20`; hooks reference it by full path, so nothing depends on npm or a global `boss` binary.
+Marketplace installs copy (or link) the whole `skill/` directory. The CLI ships as TypeScript source at `<skill>/cli/bin/boss.mts` and is executed directly by Node.js `>=22.18` (native type stripping) — there is no build step, no npm package, and no global `boss` binary. Hooks reference it by full path.
 
 Useful commands (run through the bundled CLI):
 
 ```bash
-node <skill>/cli/bin/boss.js install --dry-run
-node <skill>/cli/bin/boss.js uninstall
-node <skill>/cli/bin/boss.js path
-node <skill>/cli/bin/boss.js --version
+node <skill>/cli/bin/boss.mts install --dry-run
+node <skill>/cli/bin/boss.mts uninstall
+node <skill>/cli/bin/boss.mts path
+node <skill>/cli/bin/boss.mts --version
 ```
 
 Auto-detected targets for `boss install`:
@@ -169,8 +169,9 @@ Auto-detected targets for `boss install`:
 
 ## Platform Support
 
-Boss targets Node.js `>=20` and runs on Linux, macOS, and Windows. The CLI ships inside
-the skill and shells out only through `spawnSync` with explicit argument arrays (never
+Boss targets Node.js `>=22.18` and runs on Linux, macOS, and Windows. The CLI ships inside
+the skill as TypeScript source that Node executes directly (native type stripping — no build
+step), shells out only through `spawnSync` with explicit argument arrays (never
 `shell: true`), and resolves `npm`/`npx` to their `.cmd` variants on Windows, so there is
 no POSIX-only assumption in the core pipeline.
 
@@ -364,7 +365,7 @@ See [test/evals/README.md](./test/evals/README.md).
 
 Requirements:
 
-- Node.js >= 20
+- Node.js >= 22.18 (runs the `.mts` CLI source directly)
 - `jq` for shell-based test helpers
 
 Setup:
@@ -373,7 +374,6 @@ Setup:
 git clone https://github.com/echoVic/boss-skill.git
 cd boss-skill
 npm install
-npm run build
 npm run typecheck
 npm test
 ```
@@ -381,8 +381,7 @@ npm test
 Useful scripts:
 
 ```bash
-npm run build:skill   # build + sync skill/cli (commit the bundle with your change)
-npm run typecheck
+npm run typecheck   # tsc only checks the .mts source — there is no build output
 npm test
 npm run test:skills
 npm run test:harness
@@ -394,9 +393,8 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI and runtime source
 ├── skill/                      # Skill bundle installed into coding agents (self-contained)
-│   ├── cli/                    # Generated CLI bundle (runs with node, no npm)
+│   ├── cli/                    # CLI + runtime source (.mts, run directly — no build)
 │   ├── scripts/                # Hook runtime (dispatcher + hook scripts)
 │   └── assets/                 # Built-in DAGs, pipeline packs, plugin schema
 ├── test/                       # Vitest, harness, eval, hook, and install tests
@@ -405,13 +403,13 @@ boss-skill/
 ├── .claude-plugin/             # Claude Code plugin manifest + marketplace
 ├── .codex-plugin/              # Codex plugin manifest + marketplace
 ├── .agents/plugins/            # Repo-scoped plugin marketplace + provenance
+├── tsconfig.json               # Typecheck-only config (no emit)
 └── package.json                # Private dev workspace (never published)
 ```
 
 Important source areas:
 
-- `packages/boss-cli/src/` contains CLI and runtime TypeScript source.
-- `skill/cli/` is the generated CLI bundle that ships with the skill; `packages/boss-cli/dist/` is the intermediate dev build. Both come from `npm run build:skill` — do not edit either by hand.
+- `skill/cli/` contains the CLI and runtime TypeScript source (`.mts`), executed directly by Node `>=22.18`. Edit these files directly — there is no build step and no generated copy.
 - `skill/assets/` contains built-in DAGs, pipeline packs, plugin schema, and plugins.
 - `skill/scripts/` contains the hook runtime (`lib/run-with-flags.js`) and hook scripts.
 - `skill/SKILL.md` is the main agent-facing orchestration entry.
@@ -431,7 +429,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-The release script checks for a clean worktree, rebuilds the bundled skill CLI (`skill/cli/`), runs tests, syncs versions, verifies consistency, creates a commit and tag, and pushes. Release is the git tag: marketplaces read the repository — there is no npm publish step.
+The release script checks for a clean worktree, runs the full verification chain, syncs versions, verifies consistency, creates a commit and tag, and pushes. Release is the git tag: marketplaces read the repository — there is no npm publish step and no build step.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

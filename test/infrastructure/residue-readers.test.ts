@@ -4,16 +4,13 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { readEvents as inspectEvents } from '../../packages/boss-cli/src/runtime/application/inspection.js';
-import { rebuildFeatureMemory } from '../../packages/boss-cli/src/runtime/application/memory.js';
-import {
-  initPipeline,
-  recordArtifact,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { getArtifactVersion } from '../../packages/boss-cli/src/runtime/application/pipeline-artifacts.js';
-import { readRuntimeEvents } from '../../packages/boss-cli/src/runtime/application/pipeline-dag.js';
-import { appendRuntimeEvent } from '../../packages/boss-cli/src/runtime/application/state.js';
-import { EVENT_TYPES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
+import { readEvents as inspectEvents } from '../../skill/cli/runtime/application/inspection.mts';
+import { rebuildFeatureMemory } from '../../skill/cli/runtime/application/memory.mts';
+import { initPipeline, recordArtifact } from '../../skill/cli/runtime/application/pipeline.mts';
+import { getArtifactVersion } from '../../skill/cli/runtime/application/pipeline-artifacts.mts';
+import { readRuntimeEvents } from '../../skill/cli/runtime/application/pipeline-dag.mts';
+import { appendRuntimeEvent } from '../../skill/cli/runtime/application/state.mts';
+import { EVENT_TYPES } from '../../skill/cli/runtime/domain/event-types.mts';
 
 /**
  * 崩溃残留的半行被封口后会**永久停留在事件流中间**。凡是自己 split('\n') 再

@@ -6,7 +6,7 @@ import {
   getReadyArtifacts,
   initPipeline,
   skipUpTo,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('skipUpTo (continue-from artifact)', () => {

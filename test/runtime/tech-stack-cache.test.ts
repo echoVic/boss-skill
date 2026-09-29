@@ -6,10 +6,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 // Dynamic import of pipeline (ESM)
-let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline.js');
+let pipelineRuntime: typeof import('../../skill/cli/runtime/application/pipeline.mts');
 
 beforeEach(async () => {
-  pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
+  pipelineRuntime = await import('../../skill/cli/runtime/application/pipeline.mts');
 });
 
 describe('tech stack caching', () => {

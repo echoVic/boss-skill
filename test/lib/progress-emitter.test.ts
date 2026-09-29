@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { emitProgress } from '../../packages/boss-cli/src/infrastructure/process.js';
+import { emitProgress } from '../../skill/cli/infrastructure/process.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('progress emitter runtime', () => {

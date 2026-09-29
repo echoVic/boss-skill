@@ -37,7 +37,7 @@ const COMPONENT_REFERENCES = [
   'skill/scripts/hooks/on-stop.js',
   'skill/scripts/hooks/session-start.js',
   'skill/scripts/hooks/session-end.js',
-  'skill/cli/bin/boss.js',
+  'skill/cli/bin/boss.mts',
   'skill/assets/artifact-dag.json',
   'skill/assets/plugin-schema.json',
 ];

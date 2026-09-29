@@ -22,7 +22,7 @@ The only network surface Boss can open is an **opt-in, loopback-only** preview s
 You can verify there is no other network code:
 
 ```bash
-grep -rn "fetch(\|node:https\|https.request\|net.connect" packages/boss-cli/src
+grep -rn "fetch(\|node:https\|https.request\|net.connect" skill/cli
 # → only runtime/design/server.ts (the loopback preview server)
 ```
 

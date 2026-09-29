@@ -5,12 +5,12 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { evaluateFinalGate } from '../../packages/boss-cli/src/runtime/application/final-gate.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { evaluateFinalGate } from '../../skill/cli/runtime/application/final-gate.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 /**
@@ -110,7 +110,7 @@ describe('boss doctor reports the same contradiction', () => {
       gatePassed: 'false',
     });
 
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     const result = spawnSync(
       process.execPath,
       [path.join(REPO_ROOT, BOSS_ENTRYPOINT), 'doctor', '--json'],

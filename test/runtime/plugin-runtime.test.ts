@@ -4,14 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  discoverPlugins,
-  registerPlugins,
-} from '../../packages/boss-cli/src/runtime/application/plugins.js';
+import { discoverPlugins, registerPlugins } from '../../skill/cli/runtime/application/plugins.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 describe('plugin runtime registration', () => {
   let tmpDir: string;

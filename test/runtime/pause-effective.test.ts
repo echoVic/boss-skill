@@ -4,8 +4,8 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 /**
  * 暂停必须在「有阶段正在跑」时也生效——那恰恰是唯一想暂停的时刻。

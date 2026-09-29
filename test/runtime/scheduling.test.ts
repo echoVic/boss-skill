@@ -5,7 +5,7 @@ import {
   resolveWriteSet,
   type SchedulableNode,
   selectParallelSafeBatch,
-} from '../../packages/boss-cli/src/runtime/domain/scheduling.js';
+} from '../../skill/cli/runtime/domain/scheduling.mts';
 
 function node(partial: Partial<SchedulableNode> & { id: string }): SchedulableNode {
   return {

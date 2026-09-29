@@ -4,13 +4,13 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
-let pipelineRuntime: typeof import('../../packages/boss-cli/src/runtime/application/pipeline.js');
+let pipelineRuntime: typeof import('../../skill/cli/runtime/application/pipeline.mts');
 
 describe('checkStall', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    pipelineRuntime = await import('../../packages/boss-cli/src/runtime/application/pipeline.js');
+    pipelineRuntime = await import('../../skill/cli/runtime/application/pipeline.mts');
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-stall-'));
     // Initialize a pipeline
     pipelineRuntime.initPipeline('test-feat', { cwd: tmpDir });

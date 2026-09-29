@@ -3,9 +3,9 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { getReadyArtifacts } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { getReadyArtifacts } from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 /**
  * 两个调度面必须给出一致的工作集，否则编排器按哪个都不对。

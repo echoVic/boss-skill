@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const SRC_ROOT = path.join(REPO_ROOT, 'packages', 'boss-cli', 'src');
+const SRC_ROOT = path.join(REPO_ROOT, 'skill', 'cli');
 
 function walkTsFiles(dir: string, result: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -11,7 +11,7 @@ function walkTsFiles(dir: string, result: string[] = []): string[] {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       walkTsFiles(fullPath, result);
-    } else if (entry.name.endsWith('.ts')) {
+    } else if (entry.name.endsWith('.mts')) {
       result.push(fullPath);
     }
   }
@@ -50,11 +50,11 @@ describe('privacy / network boundary guard', () => {
 
   it('only opens node:http in the loopback design-preview server', () => {
     const httpUsers = sourceFiles.filter(({ text }) => /from\s+['"]node:http['"]/.test(text));
-    expect(httpUsers.map((f) => f.rel)).toEqual(['packages/boss-cli/src/runtime/design/server.ts']);
+    expect(httpUsers.map((f) => f.rel)).toEqual(['skill/cli/runtime/design/server.mts']);
   });
 
   it('binds the preview server to loopback only', () => {
-    const server = sourceFiles.find((f) => f.rel.endsWith('runtime/design/server.ts'));
+    const server = sourceFiles.find((f) => f.rel.endsWith('runtime/design/server.mts'));
     expect(server).toBeDefined();
     expect(server!.text).toContain("server.listen(port, '127.0.0.1'");
     // 不得绑定通配地址暴露到外网

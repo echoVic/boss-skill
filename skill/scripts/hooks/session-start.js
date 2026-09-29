@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { inspectPipeline } from '../../cli/runtime/application/inspection.js';
+import { inspectPipeline } from '../../cli/runtime/application/inspection.mts';
 import { findActiveFeature, readExecJson } from '../lib/boss-utils.js';
 import { normalizeHookInput } from './lib/normalize-input.js';
 

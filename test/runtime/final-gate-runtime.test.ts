@@ -3,12 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { evaluateFinalGate } from '../../packages/boss-cli/src/runtime/application/final-gate.js';
+import { evaluateFinalGate } from '../../skill/cli/runtime/application/final-gate.mts';
 import {
   initPipeline,
   recordArtifact,
   updateAgent,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('final gate runtime', () => {

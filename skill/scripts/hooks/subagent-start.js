@@ -1,5 +1,5 @@
-import * as memoryRuntime from '../../cli/runtime/application/memory.js';
-import * as runtime from '../../cli/runtime/application/pipeline.js';
+import * as memoryRuntime from '../../cli/runtime/application/memory.mts';
+import * as runtime from '../../cli/runtime/application/pipeline.mts';
 import { AGENT_STAGE_MAP, findActiveFeature, readExecJson } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
 

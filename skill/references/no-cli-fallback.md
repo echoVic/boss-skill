@@ -7,7 +7,7 @@
 派发流水线前先探测 CLI：
 
 ```bash
-boss --version 2>/dev/null || node <skill>/cli/bin/boss.js --version 2>/dev/null
+boss --version 2>/dev/null || node <skill>/cli/bin/boss.mts --version 2>/dev/null
 ```
 
 - 任一命令成功 → **完整模式**：状态真相源是 runtime 事件流（`references/runtime-surface.md`），本文件不适用。
@@ -15,7 +15,7 @@ boss --version 2>/dev/null || node <skill>/cli/bin/boss.js --version 2>/dev/null
 
 在降级模式下必须**明确告知用户**：
 
-> ⚠️ 未检测到 boss CLI，进入纯 Markdown 降级模式。流水线仍会运行，但状态记录在 `.boss/<feature>/STATE.md` 而非可审计事件流；门禁判定不落进可审计事件流。CLI 随 skill 分发（`<skill>/cli/bin/boss.js`），确认 `node` 可用后优先运行它启用事件溯源 + 门禁结果记录与最终门禁判定 + 确定性 eval；门禁的执行始终依赖编排器遵守协议，CLI 提供的是可验证的判定与记录，而非阻止越过门禁的机制。
+> ⚠️ 未检测到 boss CLI，进入纯 Markdown 降级模式。流水线仍会运行，但状态记录在 `.boss/<feature>/STATE.md` 而非可审计事件流；门禁判定不落进可审计事件流。CLI 随 skill 分发（`<skill>/cli/bin/boss.mts`，需 Node >=22.18），确认 `node` 可用后优先运行它启用事件溯源 + 门禁结果记录与最终门禁判定 + 确定性 eval；门禁的执行始终依赖编排器遵守协议，CLI 提供的是可验证的判定与记录，而非阻止越过门禁的机制。
 
 ## 状态承载：STATE.md 取代事件流
 

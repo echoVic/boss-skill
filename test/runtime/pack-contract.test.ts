@@ -4,9 +4,9 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { evaluateGates } from '../../packages/boss-cli/src/runtime/application/gates.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { filterAgentsByPack } from '../../packages/boss-cli/src/runtime/application/pipeline-dag.js';
+import { evaluateGates } from '../../skill/cli/runtime/application/gates.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { filterAgentsByPack } from '../../skill/cli/runtime/application/pipeline-dag.mts';
 
 /**
  * `/boss:extend` 教用户写的 pack 配置必须真的生效。

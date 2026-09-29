@@ -5,13 +5,13 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { createCliContext } from '../../packages/boss-cli/src/cli/contract.js';
+import { createCliContext } from '../../skill/cli/cli/contract.mts';
 import {
   previewSignalExitCode,
   shouldKeepPreviewAlive,
-} from '../../packages/boss-cli/src/commands/design/preview.js';
+} from '../../skill/cli/commands/design/preview.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
-import { ensureBuilt, runCli } from '../helpers/run-cli.js';
+import { ensureCli, runCli } from '../helpers/run-cli.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 
@@ -46,7 +46,7 @@ function minimalUiDesign(feature: string) {
 }
 
 function runPreview(args: string[], cwd: string) {
-  return runCli(['packages/boss-cli/dist/bin/boss.js', ...args], { cwd });
+  return runCli(['skill/cli/bin/boss.mts', ...args], { cwd });
 }
 
 async function waitForExit(
@@ -86,8 +86,8 @@ async function waitForPreviewUrl(child: ReturnType<typeof spawn>): Promise<strin
 }
 
 function spawnPreview(args: string[], cwd: string) {
-  ensureBuilt('packages/boss-cli/dist/bin/boss.js');
-  return spawn(process.execPath, [resolve(root, 'packages/boss-cli/dist/bin/boss.js'), ...args], {
+  ensureCli('skill/cli/bin/boss.mts');
+  return spawn(process.execPath, [resolve(root, 'skill/cli/bin/boss.mts'), ...args], {
     cwd,
     env: {
       ...process.env,
@@ -99,12 +99,7 @@ function spawnPreview(args: string[], cwd: string) {
 
 describe('boss design preview CLI', () => {
   it('returns structured metadata with --describe', () => {
-    const result = runCli([
-      'packages/boss-cli/dist/bin/boss.js',
-      'design',
-      'preview',
-      '--describe',
-    ]);
+    const result = runCli(['skill/cli/bin/boss.mts', 'design', 'preview', '--describe']);
 
     expect(result.status).toBe(0);
     const payload = JSON.parse(result.stdout) as {

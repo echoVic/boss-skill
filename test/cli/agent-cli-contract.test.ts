@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 function runBoss(args: string[], cwd: string, input?: string) {
   return spawnSync(process.execPath, [BOSS_BIN, ...args], {

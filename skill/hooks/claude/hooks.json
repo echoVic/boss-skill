@@ -8,7 +8,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "session:start",
@@ -27,7 +27,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "session:resume",
@@ -48,7 +48,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "pre:write:artifact-guard",
@@ -68,7 +68,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "pre:bash:dangerous-cmd-guard",
@@ -90,7 +90,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "post:write:artifact-track",
@@ -110,7 +110,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "post:bash:context",
@@ -131,7 +131,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "subagent:start",
@@ -151,7 +151,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "subagent:stop",
@@ -169,7 +169,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "post:stage:wip-checkpoint",
@@ -189,7 +189,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "stop:pipeline-guard",
@@ -210,7 +210,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "notification:log",
@@ -231,7 +231,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js",
+              "${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts",
               "hooks",
               "run",
               "session:end",

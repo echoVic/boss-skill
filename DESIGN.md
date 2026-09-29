@@ -335,7 +335,7 @@ skills/boss/
 │   └── deploy-report.md.template
 ├── references/                 # 参考资料
 │   └── bmad-methodology.md
-└── packages/boss-cli/src/      # Boss CLI + runtime TypeScript 源码
+└── skill/cli/                  # Boss CLI + runtime TypeScript 源码（.mts 直接运行）
     ├── commands/               # project/artifact/packs 等薄命令
     └── runtime/                # 状态机、门禁、插件、报告、projector
 ```
@@ -768,7 +768,7 @@ skill/assets/
 ├── pipeline-packs/                   # 项目级流水线模板包（可选）
 └── plugins/                          # 项目级插件目录（可选）
 
-packages/boss-cli/src/runtime/       # Harness Runtime TypeScript 源码
+skill/cli/runtime/                   # Harness Runtime TypeScript 源码
 ├── cli/                             # runtime CLI entrypoints
 ├── projectors/                      # 事件流物化
 └── report/                          # 报告与诊断渲染
@@ -826,17 +826,17 @@ Hooks 配置采用**两级分层**，实现"项目全局配置"与"Skill 级声�
 ```json
 {
   "hooks": {
-    "SessionStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"session:start\" \"scripts/hooks/session-start.js\"" }],
-    "PreToolUse": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"", "matcher": "Write|Edit" }],
+    "SessionStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:start\" \"scripts/hooks/session-start.js\"" }],
+    "PreToolUse": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"", "matcher": "Write|Edit" }],
     "PostToolUse": [
-      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\"", "matcher": "Write" },
-      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\"", "matcher": "Bash" }
+      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\"", "matcher": "Write" },
+      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\"", "matcher": "Bash" }
     ],
-    "SubagentStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"" }],
-    "SubagentStop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"" }],
-    "Stop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"" }],
-    "Notification": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"" }],
-    "SessionEnd": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js\" hooks run \"session:end\" \"scripts/hooks/session-end.js\"" }]
+    "SubagentStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"" }],
+    "SubagentStop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"" }],
+    "Stop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"" }],
+    "Notification": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"" }],
+    "SessionEnd": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:end\" \"scripts/hooks/session-end.js\"" }]
   }
 }
 ```

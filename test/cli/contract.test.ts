@@ -12,7 +12,7 @@ import {
   readJsonInputText,
   validatePathInside,
   writeOutput,
-} from '../../packages/boss-cli/src/cli/contract.js';
+} from '../../skill/cli/cli/contract.mts';
 
 describe('CLI contract utilities', () => {
   it('defaults to json when stdout is not a TTY', () => {

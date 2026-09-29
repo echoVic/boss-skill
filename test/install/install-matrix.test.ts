@@ -4,10 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanupTempDir } from '../helpers/fixtures.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { ensureCli } from '../helpers/run-cli.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 const COPY_TARGETS = [
   {
@@ -56,14 +56,12 @@ const REPRESENTATIVE_BUNDLE_FILES = [
   'assets/plugin-schema.json',
   'scripts/hooks/session-start.js',
   'scripts/lib/run-with-flags.js',
-  'cli/bin/boss.js',
-  'cli/package.json',
+  'cli/bin/boss.mts',
 ] as const;
 
 const REQUIRED_SKILL_BUNDLE_FILES = [
   'SKILL.md',
-  'cli/bin/boss.js',
-  'cli/package.json',
+  'cli/bin/boss.mts',
   'assets/artifact-dag.json',
   'assets/plugin-schema.json',
   'scripts/hooks/session-start.js',
@@ -85,7 +83,7 @@ const REQUIRED_REPO_FILES = [
   '.agents/plugins/provenance.json',
   'assets/boss-composer-icon.svg',
   'assets/boss-logo.svg',
-  'scripts/build-skill-cli.js',
+  'skill/cli/bin/boss.mts',
   'scripts/provenance.js',
 ] as const;
 
@@ -105,7 +103,7 @@ describe('Boss install matrix', () => {
   }
 
   it.each(COPY_TARGETS)('copy-installs the full skill bundle for $agent', (target) => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     fs.mkdirSync(path.join(home, ...target.marker), { recursive: true });
 
@@ -140,7 +138,7 @@ describe('Boss install matrix', () => {
     // 安装副本自带的 CLI 必须能脱离仓库/ npm 直接运行。
     const cliResult = spawnSync(
       process.execPath,
-      [path.join(installed, 'cli', 'bin', 'boss.js'), '--version'],
+      [path.join(installed, 'cli', 'bin', 'boss.mts'), '--version'],
       { cwd: REPO_ROOT, env: { ...process.env, HOME: home }, encoding: 'utf8' },
     );
     expect(cliResult.status, cliResult.stderr).toBe(0);
@@ -148,7 +146,7 @@ describe('Boss install matrix', () => {
   });
 
   it('merges Codex hooks into ~/.codex/hooks.json without overwriting user hooks', () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     const codexHome = path.join(home, '.codex');
     fs.mkdirSync(codexHome, { recursive: true });
@@ -194,7 +192,7 @@ describe('Boss install matrix', () => {
 
     // 复制安装没有插件根：hooks 中的 ${PLUGIN_ROOT}/skill 必须物化为实际安装目录，
     // 且命令指向安装副本自带的 CLI（不依赖 PATH 上的 boss 二进制）。
-    const installedCli = path.join(codexHome, 'skills', 'boss', 'cli', 'bin', 'boss.js');
+    const installedCli = path.join(codexHome, 'skills', 'boss', 'cli', 'bin', 'boss.mts');
     const sessionStart = hooksJson.hooks.SessionStart?.find(
       (entry) => entry.id === 'session:start',
     );
@@ -213,7 +211,7 @@ describe('Boss install matrix', () => {
   });
 
   it('warns when user hooks without ids use Codex write matcher aliases', async () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     const codexHome = path.join(home, '.codex');
     fs.mkdirSync(codexHome, { recursive: true });
@@ -246,7 +244,7 @@ describe('Boss install matrix', () => {
   });
 
   it('dry-run shows both Codex skill copy and hooks merge actions', () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
 
@@ -266,7 +264,7 @@ describe('Boss install matrix', () => {
   });
 
   it('uninstall removes stale Boss-managed Codex hook ids from older installs', () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     const codexHome = path.join(home, '.codex');
     const installed = path.join(codexHome, 'skills', 'boss');
@@ -320,9 +318,7 @@ describe('Boss install matrix', () => {
   });
 
   it('legacy Boss hook id cleanup list covers current Claude and Codex manifests', async () => {
-    const { LEGACY_BOSS_HOOK_IDS } = await import(
-      '../../packages/boss-cli/src/commands/install/index.js'
-    );
+    const { LEGACY_BOSS_HOOK_IDS } = await import('../../skill/cli/commands/install/index.mts');
     const legacyIds = new Set(LEGACY_BOSS_HOOK_IDS);
 
     for (const manifestPath of [
@@ -343,7 +339,7 @@ describe('Boss install matrix', () => {
   });
 
   it('uninstall removes only Boss-managed Codex hook entries', () => {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const home = makeHome();
     const codexHome = path.join(home, '.codex');
     fs.mkdirSync(codexHome, { recursive: true });
@@ -516,7 +512,7 @@ describe('Boss install matrix', () => {
     // 模拟 marketplace 安装：只复制 skill 目录，没有 node_modules、没有 PATH 里的 boss。
     const version = spawnSync(
       process.execPath,
-      [path.join(copy, 'cli', 'bin', 'boss.js'), '--version'],
+      [path.join(copy, 'cli', 'bin', 'boss.mts'), '--version'],
       { cwd: home, encoding: 'utf8', env: { PATH: '/nonexistent', HOME: home } },
     );
     expect(version.status, version.stderr).toBe(0);
@@ -529,7 +525,7 @@ describe('Boss install matrix', () => {
     const hook = spawnSync(
       process.execPath,
       [
-        path.join(copy, 'cli', 'bin', 'boss.js'),
+        path.join(copy, 'cli', 'bin', 'boss.mts'),
         'hooks',
         'run',
         'session:start',

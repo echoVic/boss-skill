@@ -6,16 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
-const BOSS_BIN = path.join(
-  import.meta.dirname,
-  '..',
-  '..',
-  'packages',
-  'boss-cli',
-  'dist',
-  'bin',
-  'boss.js',
-);
+const BOSS_BIN = path.join(import.meta.dirname, '..', '..', 'skill', 'cli', 'bin', 'boss.mts');
 const DAG_PATH = path.join(import.meta.dirname, '..', '..', 'skill', 'assets', 'artifact-dag.json');
 
 function getExecFileError(error: unknown) {

@@ -4,15 +4,14 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { readEvents } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { readEvents } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 const SCHEMA_PATH = path.resolve(
   import.meta.dirname,
   '..',
   '..',
-  'packages',
-  'boss-cli',
-  'src',
+  'skill',
+  'cli',
   'runtime',
   'schema',
   'event-schema.json',

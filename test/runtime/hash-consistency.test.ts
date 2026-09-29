@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { hashRuntimeValue } from '../../packages/boss-cli/src/runtime/application/pipeline-dag.js';
-import { hashWorkflowValue } from '../../packages/boss-cli/src/runtime/application/workflow.js';
+import { hashRuntimeValue } from '../../skill/cli/runtime/application/pipeline-dag.mts';
+import { hashWorkflowValue } from '../../skill/cli/runtime/application/workflow.mts';
 
 /**
  * 所有稳定序列化必须与 JSON.stringify 对 undefined 的处理一致。

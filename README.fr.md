@@ -71,7 +71,7 @@ Elle découvre `boss` depuis le dépôt, demande l'agent cible / la portée (pro
 Pour Codex et les autres installations par copie, câblez les hooks Boss avec la CLI embarquée :
 
 ```bash
-node <installed-skill>/cli/bin/boss.js install
+node <installed-skill>/cli/bin/boss.mts install
 ```
 
 ### 2. Exécuter un pipeline léger
@@ -90,8 +90,8 @@ Dans votre agent de codage :
 Boss embarque sa propre CLI dans le skill — aucune installation npm, aucune configuration du PATH. Dans les extraits ci-dessous, `<skill>` est le répertoire qui contient `SKILL.md` (pour les installations via le marketplace de plugins Claude Code : `<plugin-root>/skill` ; pour les installations par copie, par ex. `~/.codex/skills/boss`).
 
 ```bash
-node <skill>/cli/bin/boss.js status todo-app --json
-node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.mts status todo-app --json
+node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
 ```
 
 Structure des artefacts attendue :
@@ -128,15 +128,15 @@ Boss ne signifie pas « installez une fois et obtenez une livraison autonome gar
 
 ## Détails d'installation
 
-Les installations via un marketplace copient (ou lient) tout le répertoire `skill/`. La CLI embarquée se trouve à `<skill>/cli/bin/boss.js` et ne nécessite que Node.js `>=20` ; les hooks la référencent par chemin complet, donc rien ne dépend de npm ni d'un binaire global `boss`.
+Les installations via un marketplace copient (ou lient) tout le répertoire `skill/`. La CLI est fournie sous forme de source TypeScript à `<skill>/cli/bin/boss.mts` et est exécutée directement par Node.js `>=22.18` (type stripping natif) — aucune étape de build, aucun paquet npm et aucun binaire global `boss`. Les hooks la référencent par chemin complet.
 
 Commandes utiles (exécutées via la CLI embarquée) :
 
 ```bash
-node <skill>/cli/bin/boss.js install --dry-run
-node <skill>/cli/bin/boss.js uninstall
-node <skill>/cli/bin/boss.js path
-node <skill>/cli/bin/boss.js --version
+node <skill>/cli/bin/boss.mts install --dry-run
+node <skill>/cli/bin/boss.mts uninstall
+node <skill>/cli/bin/boss.mts path
+node <skill>/cli/bin/boss.mts --version
 ```
 
 Cibles détectées automatiquement :
@@ -151,7 +151,7 @@ Cibles détectées automatiquement :
 
 ## Support des plateformes
 
-Boss cible Node.js `>=20` et fonctionne sous Linux, macOS et Windows. La CLI est embarquée dans le skill et n'exécute des commandes externes que via `spawnSync` avec des tableaux d'arguments explicites (jamais `shell: true`) et résout `npm`/`npx` vers leurs variantes `.cmd` sous Windows : le pipeline principal ne fait donc aucune supposition propre à POSIX.
+Boss cible Node.js `>=22.18` et fonctionne sous Linux, macOS et Windows. La CLI est fournie dans le skill sous forme de source TypeScript que Node exécute directement (type stripping natif — aucune étape de build), n'exécute des commandes externes que via `spawnSync` avec des tableaux d'arguments explicites (jamais `shell: true`) et résout `npm`/`npx` vers leurs variantes `.cmd` sous Windows : le pipeline principal ne fait donc aucune supposition propre à POSIX.
 
 Deux capacités dépendent d'outils externes optionnels et se dégradent proprement lorsqu'ils sont absents :
 
@@ -328,7 +328,7 @@ Voir [test/evals/README.md](./test/evals/README.md).
 
 Prérequis :
 
-- Node.js >= 20
+- Node.js >= 22.18 (exécute directement la source `.mts` de la CLI)
 - `jq` pour les helpers de test basés sur le shell
 
 Installation :
@@ -337,7 +337,6 @@ Installation :
 git clone https://github.com/echoVic/boss-skill.git
 cd boss-skill
 npm install
-npm run build
 npm run typecheck
 npm test
 ```
@@ -345,8 +344,7 @@ npm test
 Scripts utiles :
 
 ```bash
-npm run build:skill   # build + sync de skill/cli (committez le bundle avec votre modification)
-npm run typecheck
+npm run typecheck   # tsc ne vérifie que la source .mts — aucune sortie de build
 npm test
 npm run test:skills
 npm run test:harness
@@ -358,9 +356,8 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI and runtime source
 ├── skill/                      # Skill bundle installed into coding agents (self-contained)
-│   ├── cli/                    # Generated CLI bundle (runs with node, no npm)
+│   ├── cli/                    # CLI + runtime source (.mts, run directly — no build)
 │   ├── scripts/                # Hook runtime (dispatcher + hook scripts)
 │   └── assets/                 # Built-in DAGs, pipeline packs, plugin schema
 ├── test/                       # Vitest, harness, eval, hook, and install tests
@@ -369,13 +366,13 @@ boss-skill/
 ├── .claude-plugin/             # Claude Code plugin manifest + marketplace
 ├── .codex-plugin/              # Codex plugin manifest + marketplace
 ├── .agents/plugins/            # Repo-scoped plugin marketplace + provenance
+├── tsconfig.json               # Typecheck-only config (no emit)
 └── package.json                # Private dev workspace (never published)
 ```
 
 Zones de source importantes :
 
-- `packages/boss-cli/src/` contient le code source TypeScript de la CLI et du runtime.
-- `skill/cli/` est le bundle CLI généré qui est livré avec le skill ; `packages/boss-cli/dist/` est le build intermédiaire de développement. Les deux proviennent de `npm run build:skill` — ne modifiez ni l'un ni l'autre à la main.
+- `skill/cli/` contient la source TypeScript (`.mts`) de la CLI et du runtime, exécutée directement par Node `>=22.18`. Modifiez ces fichiers directement — il n'y a aucune étape de build ni copie générée.
 - `skill/assets/` contient les DAG intégrés, les packs de pipeline, le schéma de plugin et les plugins.
 - `skill/scripts/` contient le runtime des hooks (`lib/run-with-flags.js`) et les scripts de hooks.
 - `skill/SKILL.md` est le point d'entrée principal d'orchestration destiné aux agents.
@@ -395,7 +392,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-Le script de release vérifie que l'arbre de travail est propre, reconstruit la CLI du skill (`skill/cli/`), exécute les tests, synchronise les versions, vérifie la cohérence, crée un commit et un tag, puis pousse. La release est le tag git : les marketplaces lisent le dépôt — il n'y a aucune étape de publication npm.
+Le script de release vérifie que l'arbre de travail est propre, exécute la chaîne de vérification complète, synchronise les versions, vérifie la cohérence, crée un commit et un tag, puis pousse. La release est le tag git : les marketplaces lisent le dépôt — il n'y a aucune étape de publication npm ni d'étape de build.
 
 Voir [CONTRIBUTING.md](./CONTRIBUTING.md).
 

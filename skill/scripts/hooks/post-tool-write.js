@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as runtime from '../../cli/runtime/application/pipeline.js';
+import * as runtime from '../../cli/runtime/application/pipeline.mts';
 import { STAGE_MAP } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
 import { normalizeHookInput } from './lib/normalize-input.js';

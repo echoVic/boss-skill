@@ -1,15 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/.git",
-      "!**/node_modules",
-      "!**/packages/boss-cli/dist",
-      "!**/skill/cli",
-      "!**/coverage"
-    ]
+    "includes": ["**", "!**/dist", "!**/.git", "!**/node_modules", "!**/coverage"]
   },
   "formatter": {
     "indentStyle": "space",

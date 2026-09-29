@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractFeatureMemories } from '../../packages/boss-cli/src/runtime/memory/extractor.js';
+import { extractFeatureMemories } from '../../skill/cli/runtime/memory/extractor.mts';
 
 describe('memory extractor runtime', () => {
   it('extracts gate failure, agent failure, and retry memories from execution history', () => {

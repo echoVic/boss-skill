@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { evaluateGates } from '../../packages/boss-cli/src/runtime/application/gates.js';
-import { replayEvents } from '../../packages/boss-cli/src/runtime/application/inspection.js';
+import { evaluateGates } from '../../skill/cli/runtime/application/gates.mts';
+import { replayEvents } from '../../skill/cli/runtime/application/inspection.mts';
 import {
   recordArtifact,
   registerPlugins,
   updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('event-sourcing', () => {

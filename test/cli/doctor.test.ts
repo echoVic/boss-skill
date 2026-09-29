@@ -5,28 +5,19 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_BIN = path.resolve(
-  import.meta.dirname,
-  '..',
-  '..',
-  'packages',
-  'boss-cli',
-  'dist',
-  'bin',
-  'boss.js',
-);
+const BOSS_BIN = path.resolve(import.meta.dirname, '..', '..', 'skill', 'cli', 'bin', 'boss.mts');
 
 let tmpDir: string | null = null;
 
 function runDoctor(args: string[], cwd: string) {
-  ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+  ensureCli('skill/cli/bin/boss.mts');
   return spawnSync(process.execPath, [BOSS_BIN, 'doctor', ...args], { cwd, encoding: 'utf8' });
 }
 
 function initFeature(cwd: string, feature = 'demo') {
-  ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+  ensureCli('skill/cli/bin/boss.mts');
   const r = spawnSync(process.execPath, [BOSS_BIN, 'runtime', 'init-pipeline', feature, '--json'], {
     cwd,
     encoding: 'utf8',
@@ -82,7 +73,7 @@ describe('boss doctor', () => {
 
   it('warns when a deprecated knowledge env var is still set', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'boss-doctor-'));
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const r = spawnSync(process.execPath, [BOSS_BIN, 'doctor', '--json'], {
       cwd: tmpDir,
       encoding: 'utf8',

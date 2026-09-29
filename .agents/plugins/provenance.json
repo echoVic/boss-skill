@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "fbac35db0aab5be3a31a15faba36e36656c14808",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/fbac35db0aab5be3a31a15faba36e36656c14808"
+    "commit": "87cebf9ae7c24fd040a236a0e64ae90fe648e241",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/87cebf9ae7c24fd040a236a0e64ae90fe648e241"
   },
   "publisher": {
     "name": "echoVic",
@@ -54,8 +54,8 @@
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "d1fb4707c62ff1d8d83cbd437d3d9d8ce7acc09d2e174966ac09577e4c907fbe",
-      "bytes": 9765
+      "sha256": "24fef35b6885ea9463722b3715294747e1c26e7aea271496db88d96ad71a7921",
+      "bytes": 9786
     },
     {
       "path": "skill/commands/boss.md",
@@ -89,18 +89,18 @@
     },
     {
       "path": "skill/commands/boss-upgrade.md",
-      "sha256": "42e0ce22dfcabb93585653074690fe4498e27fdd16cc28b64b2087eaee44996d",
-      "bytes": 2003
+      "sha256": "d25cde29fab174749e56d8781f1f9b1a7f97dc88bcfee9358806aefba29a5894",
+      "bytes": 2005
     },
     {
       "path": "skill/hooks/codex/hooks.json",
-      "sha256": "90f919053630e89f4565ba5f38e4d8b647f7a300e431c2a15df955222909a55c",
-      "bytes": 3166
+      "sha256": "15366e46f1da5524b9624c67d19f481cdd0fb88dc2ace0ce58d539177946025f",
+      "bytes": 3173
     },
     {
       "path": "skill/hooks/claude/hooks.json",
-      "sha256": "6c49a580341787740bee9e3decd5434f4a166d6aa6edbd05454000bc1f042fa8",
-      "bytes": 6602
+      "sha256": "579d0918adecbdfc772c3b6be9bd755b5b60c78fd040c4683d86e8876a5fe751",
+      "bytes": 6614
     },
     {
       "path": "skill/scripts/lib/run-with-flags.js",
@@ -124,8 +124,8 @@
     },
     {
       "path": "skill/scripts/hooks/post-tool-write.js",
-      "sha256": "5b0c702e5f4687862dae63792dac69babd74694f733edf629859b6e6f7eaeb6a",
-      "bytes": 3056
+      "sha256": "dac5e937bc71e53db39a74b61eaa217cd902cff97dbdd5ef11f698246b4151e6",
+      "bytes": 3057
     },
     {
       "path": "skill/scripts/hooks/on-stop.js",
@@ -134,18 +134,18 @@
     },
     {
       "path": "skill/scripts/hooks/session-start.js",
-      "sha256": "b712686d79d1d80db4bb9a565ef3b5e0f043213ad0eebfb9d4b301ba27a7d066",
-      "bytes": 2573
+      "sha256": "a41509dec023e6d43f2b857f23cf4b92c08bf90b3c1f2e7da7a1a512427e5e15",
+      "bytes": 2574
     },
     {
       "path": "skill/scripts/hooks/session-end.js",
-      "sha256": "49921cc14365f6f6c84245968cce25a406d559442c7d9bf1839e75b1029aeed8",
-      "bytes": 2459
+      "sha256": "4caeb9a5a43e1c5d051d4a006bbec040bb6bcae4219527279d23b3501074ef7d",
+      "bytes": 2461
     },
     {
-      "path": "skill/cli/bin/boss.js",
-      "sha256": "27a7ebb261bd1a9fd0fab53573002e1265a9bae4dee01ff8a2dce66ef7a40e51",
-      "bytes": 5476
+      "path": "skill/cli/bin/boss.mts",
+      "sha256": "808181078bfc7dd5f138f74317e8bdee31b65ee13b1985e9ec3d844b51933c9b",
+      "bytes": 5087
     },
     {
       "path": "skill/assets/artifact-dag.json",

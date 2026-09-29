@@ -4,23 +4,14 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_BIN = path.resolve(
-  import.meta.dirname,
-  '..',
-  '..',
-  'packages',
-  'boss-cli',
-  'dist',
-  'bin',
-  'boss.js',
-);
+const BOSS_BIN = path.resolve(import.meta.dirname, '..', '..', 'skill', 'cli', 'bin', 'boss.mts');
 
 let tmpDir: string | null = null;
 
 function runCli(args: string[], { cwd }: { cwd?: string } = {}) {
-  ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+  ensureCli('skill/cli/bin/boss.mts');
   return spawnSync(process.execPath, [BOSS_BIN, ...args], {
     cwd: cwd ?? process.cwd(),
     encoding: 'utf8',

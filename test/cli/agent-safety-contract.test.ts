@@ -20,8 +20,8 @@ function walkFiles(dir: string): string[] {
 
 describe('agent CLI safety source contract', () => {
   it('does not use console table, colors, or progress UI in boss cli source', () => {
-    const sourceFiles = walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src')).filter(
-      (file) => file.endsWith('.ts'),
+    const sourceFiles = walkFiles(path.join(REPO_ROOT, 'skill', 'cli')).filter((file) =>
+      file.endsWith('.mts'),
     );
 
     for (const file of sourceFiles) {
@@ -35,14 +35,14 @@ describe('agent CLI safety source contract', () => {
 
   it('routes command entrypoint errors through cli contract helpers', () => {
     const cliFiles = [
-      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'bin', 'boss.ts'),
-      ...walkFiles(path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'commands')),
+      path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts'),
+      ...walkFiles(path.join(REPO_ROOT, 'skill', 'cli', 'commands')),
     ].filter(
       (file) =>
-        file.endsWith('.ts') &&
+        file.endsWith('.mts') &&
         !file.includes(`${path.sep}lib${path.sep}`) &&
-        path.basename(file) !== 'agent-command-utils.ts' &&
-        path.basename(file) !== 'conversation-command-utils.ts',
+        path.basename(file) !== 'agent-command-utils.mts' &&
+        path.basename(file) !== 'conversation-command-utils.mts',
     );
 
     for (const file of cliFiles) {

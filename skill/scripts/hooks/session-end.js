@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { renderMarkdown } from '../../cli/runtime/report/render-markdown.js';
-import { buildSummaryModel } from '../../cli/runtime/report/summary-model.js';
+import { renderMarkdown } from '../../cli/runtime/report/render-markdown.mts';
+import { buildSummaryModel } from '../../cli/runtime/report/summary-model.mts';
 import { writeJson } from '../lib/boss-utils.js';
 
 function run(rawInput) {

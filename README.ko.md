@@ -71,7 +71,7 @@ npx skills add echoVic/boss-skill
 Codex 및 기타 복사 기반 설치의 경우, 번들 CLI로 Boss 훅을 연결하세요:
 
 ```bash
-node <installed-skill>/cli/bin/boss.js install
+node <installed-skill>/cli/bin/boss.mts install
 ```
 
 ### 2. 경량 파이프라인 실행
@@ -90,8 +90,8 @@ node <installed-skill>/cli/bin/boss.js install
 Boss는 스킬 안에 자체 CLI를 포함합니다 — npm 설치도, PATH 설정도 필요 없습니다. 아래 스니펫에서 `<skill>`은 `SKILL.md`가 있는 디렉터리입니다(Claude Code 플러그인 설치의 경우 `<plugin-root>/skill`, 복사 설치의 경우 예: `~/.codex/skills/boss`).
 
 ```bash
-node <skill>/cli/bin/boss.js status todo-app --json
-node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.mts status todo-app --json
+node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
 ```
 
 예상되는 산출물 구조:
@@ -128,15 +128,15 @@ Boss가 "한 번 설치하면 자율 전달이 보장된다"는 의미는 아닙
 
 ## 설치 세부 사항
 
-마켓플레이스 설치는 `skill/` 디렉터리 전체를 복사(또는 링크)합니다. 번들 CLI는 `<skill>/cli/bin/boss.js`에 있으며 Node.js `>=20`만 필요합니다. 훅은 전체 경로로 CLI를 참조하므로 npm이나 전역 `boss` 바이너리에 의존하는 것이 없습니다.
+마켓플레이스 설치는 `skill/` 디렉터리 전체를 복사(또는 링크)합니다. CLI는 `<skill>/cli/bin/boss.mts`에 TypeScript 소스로 제공되며 Node.js `>=22.18`(네이티브 타입 스트리핑)이 직접 실행합니다 — 빌드 단계도, npm 패키지도, 전역 `boss` 바이너리도 없습니다. 훅은 전체 경로로 CLI를 참조합니다.
 
 유용한 명령어(번들 CLI를 통해 실행):
 
 ```bash
-node <skill>/cli/bin/boss.js install --dry-run
-node <skill>/cli/bin/boss.js uninstall
-node <skill>/cli/bin/boss.js path
-node <skill>/cli/bin/boss.js --version
+node <skill>/cli/bin/boss.mts install --dry-run
+node <skill>/cli/bin/boss.mts uninstall
+node <skill>/cli/bin/boss.mts path
+node <skill>/cli/bin/boss.mts --version
 ```
 
 자동 감지 대상:
@@ -151,7 +151,7 @@ node <skill>/cli/bin/boss.js --version
 
 ## 플랫폼 지원
 
-Boss는 Node.js `>=20`을 대상으로 하며 Linux, macOS, Windows에서 실행됩니다. CLI는 스킬 안에 포함되며 명시적 인자 배열을 사용하는 `spawnSync`로만 외부 프로세스를 실행하고(`shell: true`는 사용하지 않음), Windows에서는 `npm`/`npx`를 `.cmd` 변형으로 해석하므로 핵심 파이프라인에 POSIX 전용 가정이 없습니다.
+Boss는 Node.js `>=22.18`을 대상으로 하며 Linux, macOS, Windows에서 실행됩니다. CLI는 Node가 직접 실행하는 TypeScript 소스로 스킬 안에 포함되며(네이티브 타입 스트리핑 — 빌드 단계 없음), 명시적 인자 배열을 사용하는 `spawnSync`로만 외부 프로세스를 실행하고(`shell: true`는 사용하지 않음), Windows에서는 `npm`/`npx`를 `.cmd` 변형으로 해석하므로 핵심 파이프라인에 POSIX 전용 가정이 없습니다.
 
 두 가지 기능은 선택적 외부 도구에 의존하며, 도구가 없으면 우아하게 저하됩니다:
 
@@ -328,7 +328,7 @@ npm run evals:release
 
 요구 사항:
 
-- Node.js >= 20
+- Node.js >= 22.18 (`.mts` CLI 소스를 직접 실행)
 - 셸 기반 테스트 헬퍼용 `jq`
 
 설정:
@@ -337,7 +337,6 @@ npm run evals:release
 git clone https://github.com/echoVic/boss-skill.git
 cd boss-skill
 npm install
-npm run build
 npm run typecheck
 npm test
 ```
@@ -345,8 +344,7 @@ npm test
 유용한 스크립트:
 
 ```bash
-npm run build:skill   # skill/cli 빌드 + 동기화 (번들을 변경 사항과 함께 커밋하세요)
-npm run typecheck
+npm run typecheck   # tsc는 .mts 소스만 검사합니다 — 빌드 출력은 없습니다
 npm test
 npm run test:skills
 npm run test:harness
@@ -358,9 +356,8 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI and runtime source
 ├── skill/                      # Skill bundle installed into coding agents (self-contained)
-│   ├── cli/                    # Generated CLI bundle (runs with node, no npm)
+│   ├── cli/                    # CLI + runtime source (.mts, run directly — no build)
 │   ├── scripts/                # Hook runtime (dispatcher + hook scripts)
 │   └── assets/                 # Built-in DAGs, pipeline packs, plugin schema
 ├── test/                       # Vitest, harness, eval, hook, and install tests
@@ -369,13 +366,13 @@ boss-skill/
 ├── .claude-plugin/             # Claude Code plugin manifest + marketplace
 ├── .codex-plugin/              # Codex plugin manifest + marketplace
 ├── .agents/plugins/            # Repo-scoped plugin marketplace + provenance
+├── tsconfig.json               # Typecheck-only config (no emit)
 └── package.json                # Private dev workspace (never published)
 ```
 
 주요 소스 영역:
 
-- `packages/boss-cli/src/`에는 CLI 및 런타임 TypeScript 소스가 있습니다.
-- `skill/cli/`는 스킬과 함께 배포되는 생성된 CLI 번들이고, `packages/boss-cli/dist/`는 개발용 중간 빌드입니다. 둘 다 `npm run build:skill`로 만들어지므로 어느 쪽도 직접 수정하지 마세요.
+- `skill/cli/`에는 CLI 및 런타임 TypeScript 소스(`.mts`)가 있으며 Node `>=22.18`이 직접 실행합니다. 이 파일들을 직접 수정하세요 — 빌드 단계도, 생성된 복사본도 없습니다.
 - `skill/assets/`에는 내장 DAG, 파이프라인 팩, 플러그인 스키마, 플러그인이 있습니다.
 - `skill/scripts/`에는 훅 런타임(`lib/run-with-flags.js`)과 훅 스크립트가 있습니다.
 - `skill/SKILL.md`는 에이전트 대상 오케스트레이션의 주요 진입점입니다.
@@ -395,7 +392,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-릴리스 스크립트는 깨끗한 워킹 트리를 확인하고, 번들 스킬 CLI(`skill/cli/`)를 다시 빌드하고, 테스트를 실행하고, 버전을 동기화하고, 일관성을 검증하고, 커밋과 태그를 생성한 뒤 푸시합니다. 릴리스는 git 태그입니다: 마켓플레이스가 저장소를 읽으므로 npm 게시 단계가 없습니다.
+릴리스 스크립트는 깨끗한 워킹 트리를 확인하고, 전체 검증 체인을 실행하고, 버전을 동기화하고, 일관성을 검증하고, 커밋과 태그를 생성한 뒤 푸시합니다. 릴리스는 git 태그입니다: 마켓플레이스가 저장소를 읽으므로 npm 게시 단계도, 빌드 단계도 없습니다.
 
 자세한 내용은 [CONTRIBUTING.md](./CONTRIBUTING.md)를 참조하세요.
 

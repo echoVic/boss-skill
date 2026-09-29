@@ -5,15 +5,15 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 let tmpDir: string | null = null;
 
 function run(args: string[]): { stdout: string; stderr: string; status: number | null } {
-  ensureBuilt(BOSS_ENTRYPOINT);
+  ensureCli(BOSS_ENTRYPOINT);
   tmpDir ??= fs.mkdtempSync(path.join(os.tmpdir(), 'boss-onboarding-'));
   const result = spawnSync(process.execPath, [path.join(REPO_ROOT, BOSS_ENTRYPOINT), ...args], {
     cwd: tmpDir,

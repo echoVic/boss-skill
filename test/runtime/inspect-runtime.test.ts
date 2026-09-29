@@ -4,21 +4,21 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { emitProgress } from '../../packages/boss-cli/src/infrastructure/process.js';
+import { emitProgress } from '../../skill/cli/infrastructure/process.mts';
 import {
   openConversation,
   resolveConversation,
-} from '../../packages/boss-cli/src/runtime/application/conversations.js';
-import { inspectPipeline } from '../../packages/boss-cli/src/runtime/application/inspection.js';
+} from '../../skill/cli/runtime/application/conversations.mts';
+import { inspectPipeline } from '../../skill/cli/runtime/application/inspection.mts';
 import {
   buildFeatureSummary,
   writeFeatureMemory,
-} from '../../packages/boss-cli/src/runtime/application/memory.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/memory.mts';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 describe('inspection runtime CLIs', () => {
   let tmpDir: string;

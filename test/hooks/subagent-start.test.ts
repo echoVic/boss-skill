@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildFeatureSummary,
   writeFeatureMemory,
-} from '../../packages/boss-cli/src/runtime/application/memory.js';
+} from '../../skill/cli/runtime/application/memory.mts';
 import { run } from '../../skill/scripts/hooks/subagent-start.js';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 

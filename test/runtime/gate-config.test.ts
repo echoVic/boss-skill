@@ -3,11 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  evaluateGates,
-  resolveGateConfig,
-} from '../../packages/boss-cli/src/runtime/application/gates.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { evaluateGates, resolveGateConfig } from '../../skill/cli/runtime/application/gates.mts';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,7 +70,7 @@ describe('configurable gate coverage threshold', () => {
 
   it('built-in gate1 receives the resolved coverage threshold', () => {
     const gatesSource = fs.readFileSync(
-      path.join(REPO_ROOT, 'packages', 'boss-cli', 'src', 'runtime', 'application', 'gates.ts'),
+      path.join(REPO_ROOT, 'skill', 'cli', 'runtime', 'application', 'gates.mts'),
       'utf8',
     );
     expect(gatesSource).toContain('coverageThreshold');

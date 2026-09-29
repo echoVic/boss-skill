@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+### 破坏性变更（Breaking）
+
+- **CLI 源码即产物，彻底取消构建步骤。** 移除 `packages/` 工作区，CLI/runtime 源码迁入
+  `skill/cli/**`（`.ts` → `.mts`），由 Node `>=22.18` 原生类型擦除直接运行：
+  - 删除 `packages/boss-cli/dist`、生成的 `skill/cli` 副本、`npm run build:skill` 与
+    CI 产物漂移检查；发布链只做版本同步 + tag + push。
+  - **Node 门槛从 `>=20` 提升到 `>=22.18`**（低于该版本无法直接运行 `.mts`，进入
+    无 CLI 降级模式）。
+  - CLI 入口从 `skill/cli/bin/boss.js` 改为 `skill/cli/bin/boss.mts`；既有安装的 hooks
+    需重新安装（`node <skill>/cli/bin/boss.mts install`）或从市场更新，旧 `.js` 路径将失效。
+- `tsconfig` 转为纯类型检查（`noEmit` + `allowImportingTsExtensions` +
+  `verbatimModuleSyntax` + `erasableSyntaxOnly`），约束源码始终可被 Node 原生运行。
+
 ## [5.0.2] - 2026-09-29
 
 ### 变更（Changed）

@@ -1,8 +1,8 @@
-import { EVENT_TYPE_VALUES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
+import { EVENT_TYPE_VALUES } from '../../skill/cli/runtime/domain/event-types.mts';
 import {
   projectState,
   type RuntimeEvent,
-} from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 type HarnessEvent =
   | RuntimeEvent

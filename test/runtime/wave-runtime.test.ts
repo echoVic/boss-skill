@@ -3,9 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildBossStatus } from '../../packages/boss-cli/src/runtime/application/checkpoints.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { readWaves } from '../../packages/boss-cli/src/runtime/application/waves.js';
+import { buildBossStatus } from '../../skill/cli/runtime/application/checkpoints.mts';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
+import { readWaves } from '../../skill/cli/runtime/application/waves.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('evidence wave runtime', () => {
@@ -64,7 +64,7 @@ describe('evidence wave runtime', () => {
         '',
         '| Evidence Wave | 范围 | Owner 文件 | 红测 | 绿门禁 | Contract Matrix 行 | Stop Condition |',
         '| --- | --- | --- | --- | --- | --- | --- |',
-        '| Wave 1：Runtime | checkpoints | `packages/boss-cli/src/runtime/application/checkpoints.ts` | `npm test -- test/runtime/wave-runtime.test.ts` | `npm run typecheck` | CM-runtime | Stop on failed gate |',
+        '| Wave 1：Runtime | checkpoints | `skill/cli/runtime/application/checkpoints.mts` | `npm test -- test/runtime/wave-runtime.test.ts` | `npm run typecheck` | CM-runtime | Stop on failed gate |',
       ].join('\n'),
     );
 

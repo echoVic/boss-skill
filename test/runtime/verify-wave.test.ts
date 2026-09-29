@@ -3,11 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import {
-  findWave,
-  verifyWave,
-} from '../../packages/boss-cli/src/runtime/application/wave-verification.js';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
+import { findWave, verifyWave } from '../../skill/cli/runtime/application/wave-verification.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 function writeTasksWithWave(tmpDir: string, feature: string, rows: string[]): void {

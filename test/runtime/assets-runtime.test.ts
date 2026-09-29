@@ -9,7 +9,7 @@ import {
   resolveArtifactDagPath,
   resolveBuiltInAssetPath,
   resolvePluginSchemaPath,
-} from '../../packages/boss-cli/src/runtime/assets.js';
+} from '../../skill/cli/runtime/assets.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');

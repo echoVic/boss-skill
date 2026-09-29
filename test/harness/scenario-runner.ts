@@ -5,8 +5,8 @@ import path from 'node:path';
 import {
   projectState,
   type RuntimeEvent,
-} from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+} from '../../skill/cli/runtime/projectors/materialize-state.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
 export interface ScenarioCommand {
   run: string[];
@@ -43,7 +43,7 @@ export interface ScenarioRunResult {
 }
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const BOSS_BIN = path.join(REPO_ROOT, BOSS_ENTRYPOINT);
 
 export function loadScenario(manifestPath: string): ScenarioManifest {
@@ -78,7 +78,7 @@ function copyDirectory(src: string, dest: string): void {
 
 function resolveCommand(command: string[]): string[] {
   if (command[0] !== 'boss') return command;
-  ensureBuilt(BOSS_ENTRYPOINT);
+  ensureCli(BOSS_ENTRYPOINT);
   return [process.execPath, BOSS_BIN, ...command.slice(1)];
 }
 

@@ -18,8 +18,7 @@ sudo apt install jq    # Ubuntu/Debian
 
 # 安装依赖并验证
 npm install
-npm run build:skill   # 构建 + 同步随 skill 分发的 CLI 产物（skill/cli）
-npm run typecheck
+npm run typecheck   # tsc 只检查，不产出构建物（skill/cli 下的 .mts 即产物）
 npm test
 ```
 
@@ -30,21 +29,17 @@ npm test
 | 目录 | 职责 |
 |------|------|
 | `skill/` | 安装到 Coding Agent 的 skill bundle（自包含：`SKILL.md`、agents、commands、templates、hooks、子 skills、CLI、资产） |
-| `skill/cli/` | 随 skill 分发的 CLI 产物（`npm run build:skill` 生成，提交进仓库，marketplace 安装不跑构建） |
+| `skill/cli/` | CLI 与 runtime 源码（`.mts`，Node `>=22.18` 直接运行；无构建、无生成副本） |
 | `skill/scripts/` | Hook 运行时（`lib/run-with-flags.js`）与 10 个 Hook 脚本（由 `boss hooks run` 调度） |
 | `skill/assets/` | 内置 DAG、packs、plugin schema、内置插件 |
-| `packages/boss-cli/src/runtime/` | Canonical runtime CLI、inspection、report、projector、schema |
-| `packages/boss-cli/src/commands/` | `boss project`、`boss artifact`、`boss packs` 等 TypeScript 命令 |
 | `docs/` | runtime contract、实施计划等设计/迁移文档 |
 | `test/` | 自动化测试 |
-| `packages/boss-cli/src/` | Boss CLI/runtime 的 TypeScript/ESM 源码 |
-| `packages/boss-cli/dist/` | 本地开发构建中间产物（`skill/cli/` 的来源） |
 
 ## 开发规范
 
 ### TypeScript CLI
 
-- First-party 编排入口必须落在 `packages/boss-cli/src/`，并通过 `boss ...` 或 `boss runtime ...` 暴露。
+- First-party 编排入口必须落在 `skill/cli/`，并通过 `boss ...` 或 `boss runtime ...` 暴露。
 - 不新增 `.sh` 作为实现面；需要执行外部项目命令时，在 TypeScript 中用 Node 内置模块封装。
 - 插件仍可通过 `plugin.json` 指向用户自己的可执行文件，但仓库内置能力不依赖 shell wrapper。
 
@@ -83,8 +78,8 @@ try {
 
 ### Runtime 优先原则
 
-- 需要新增或修改编排行为时，优先改 `packages/boss-cli/src/runtime/cli/*`、`packages/boss-cli/src/runtime/cli/lib/*`、`packages/boss-cli/src/runtime/projectors/*`、`packages/boss-cli/src/runtime/report/*`。
-- 新的编排语义必须落在 `packages/boss-cli/src/runtime/*` 或 `packages/boss-cli/src/commands/*` 并通过 `boss <command>` 暴露。
+- 需要新增或修改编排行为时，优先改 `skill/cli/runtime/cli/*`、`skill/cli/runtime/cli/lib/*`、`skill/cli/runtime/projectors/*`、`skill/cli/runtime/report/*`。
+- 新的编排语义必须落在 `skill/cli/runtime/*` 或 `skill/cli/commands/*` 并通过 `boss <command>` 暴露。
 - 不要直接写 `execution.json`；状态变更必须先进入事件流，再由 projector 物化。
 
 ## 测试
@@ -92,7 +87,6 @@ try {
 ### 运行测试
 
 ```bash
-npm run build:skill
 npm run typecheck
 npm test
 ```
@@ -133,7 +127,7 @@ describe('my-hook', () => {
 - 新增的 Hook 脚本有对应的测试
 - 新增的 `skill/scripts/lib/` 工具函数有对应的测试
 - CLI 功能变更在 `test/bin/boss-skill.test.ts` 中覆盖
-- 改动 CLI 源码后运行 `npm run build:skill` 并一起提交 `skill/cli/`（CI 会校验产物无漂移）
+- CLI 源码即产物：直接编辑 `skill/cli/` 下的 `.mts`（没有构建/产物同步步骤）
 
 ## 版本号
 
@@ -197,7 +191,7 @@ docs: 更新 README 安装说明
 - [ ] 新增代码有对应测试
 - [ ] 未新增 first-party `.sh` 实现面
 - [ ] Hook 脚本无空 `catch {}` 块
-- [ ] 改动 CLI 源码已运行 `npm run build:skill` 并提交 `skill/cli/`
+- [ ] 改动 CLI 源码直接编辑 `skill/cli/` 下的 `.mts`（源码即产物，无构建）
 - [ ] 版本号未手动修改（由发布脚本管理）
 
 ## 插件开发

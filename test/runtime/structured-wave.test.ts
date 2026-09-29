@@ -5,7 +5,7 @@ import {
   InvalidCommandError,
   normalizeCommand,
   normalizeCommands,
-} from '../../packages/boss-cli/src/runtime/domain/structured-wave.js';
+} from '../../skill/cli/runtime/domain/structured-wave.mts';
 
 describe('domain/structured-wave command normalization', () => {
   it('accepts an argv array', () => {

@@ -5,11 +5,11 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 /**
@@ -98,7 +98,7 @@ describe('domain conditions get typed error codes', () => {
   let tmpDir: string;
 
   function run(args: string[]): { code: string; suggestion: string } {
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     const result = spawnSync(
       process.execPath,
       [path.join(REPO_ROOT, BOSS_ENTRYPOINT), ...args, '--json'],
@@ -190,7 +190,7 @@ describe('round-five error codes', () => {
   let tmpDir: string;
 
   function run(args: string[]): { code: string; suggestion: string } {
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     const result = spawnSync(
       process.execPath,
       [path.join(REPO_ROOT, BOSS_ENTRYPOINT), ...args, '--json'],

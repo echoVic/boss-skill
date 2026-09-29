@@ -7,7 +7,7 @@ import {
   initPipeline,
   recordArtifact,
   updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('concurrent append to events.jsonl', () => {

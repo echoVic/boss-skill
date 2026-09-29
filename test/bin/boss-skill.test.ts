@@ -3,34 +3,33 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { validateUiDesignArtifact } from '../../packages/boss-cli/src/runtime/design/schema.js';
+import { validateUiDesignArtifact } from '../../skill/cli/runtime/design/schema.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 import { runCli } from '../helpers/run-cli.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
-const distEntry = resolve(root, 'packages/boss-cli/dist/bin/boss.js');
+const distEntry = resolve(root, 'skill/cli/bin/boss.mts');
 
 describe('boss-skill dist bin', () => {
-  it('keeps the workspace boss CLI as a private dev build for the bundled skill CLI', () => {
+  it('ships the CLI as direct source instead of a published package', () => {
     expect(pkg.type).toBe('module');
-    expect(pkg.workspaces).toEqual(['packages/*']);
     // npm 不再是分发通道：仓库私有，不由 npm 提供 bin。
     expect(pkg.private).toBe(true);
     expect(pkg.bin).toBeUndefined();
     expect(pkg.files).toBeUndefined();
-    expect(pkg.engines.node).toBe('>=20');
+    expect(pkg.engines.node).toBe('>=22.18');
   });
 
   it('prints help from the built dist entrypoint', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', '--help']);
+    const result = runCli(['skill/cli/bin/boss.mts', '--help']);
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Usage:');
     expect(result.stdout).toContain('boss-skill install');
   });
 
   it('exposes runtime help through the boss dispatcher', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'runtime', '--help']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'runtime', '--help']);
 
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain('boss runtime');
@@ -48,7 +47,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('exposes design help through the boss dispatcher', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'design', '--help']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'design', '--help']);
 
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain('boss design');
@@ -57,7 +56,7 @@ describe('boss-skill dist bin', () => {
 
   it('exposes thin skill helper commands through the boss dispatcher', () => {
     for (const command of ['project', 'artifact', 'packs', 'hooks', 'qa']) {
-      const result = runCli(['packages/boss-cli/dist/bin/boss.js', command, '--help']);
+      const result = runCli(['skill/cli/bin/boss.mts', command, '--help']);
 
       expect(result.status).toBe(0);
       expect(result.stdout + result.stderr).toContain(`boss ${command}`);
@@ -65,12 +64,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('forwards help to runtime concrete commands', () => {
-    const result = runCli([
-      'packages/boss-cli/dist/bin/boss.js',
-      'runtime',
-      'init-pipeline',
-      '--help',
-    ]);
+    const result = runCli(['skill/cli/bin/boss.mts', 'runtime', 'init-pipeline', '--help']);
 
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain(
@@ -80,7 +74,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('forwards help to thin helper concrete commands', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', 'init', '--help']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'project', 'init', '--help']);
 
     expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).toContain(
@@ -96,7 +90,7 @@ describe('boss-skill dist bin', () => {
 
     try {
       const result = runCli(
-        ['packages/boss-cli/dist/bin/boss.js', 'project', 'init', 'valid-ui-design', '--json'],
+        ['skill/cli/bin/boss.mts', 'project', 'init', 'valid-ui-design', '--json'],
         {
           cwd: workspace,
         },
@@ -114,14 +108,14 @@ describe('boss-skill dist bin', () => {
   });
 
   it('exposes global agent contract flags in command help', () => {
-    const help = runCli(['packages/boss-cli/dist/bin/boss.js', '--help']);
+    const help = runCli(['skill/cli/bin/boss.mts', '--help']);
     expect(help.status).toBe(0);
     expect(help.stdout).toContain('--json');
     expect(help.stdout).toContain('--describe');
     expect(help.stdout).toContain('--json-input');
 
     for (const command of ['project', 'artifact', 'packs', 'hooks', 'runtime']) {
-      const result = runCli(['packages/boss-cli/dist/bin/boss.js', command, '--help']);
+      const result = runCli(['skill/cli/bin/boss.mts', command, '--help']);
       expect(result.status).toBe(0);
       expect(result.stdout + result.stderr).toContain('--json');
       expect(result.stdout + result.stderr).toContain('--describe');
@@ -130,7 +124,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('returns structured root command metadata with --describe', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', '--describe']);
+    const result = runCli(['skill/cli/bin/boss.mts', '--describe']);
     expect(result.status).toBe(0);
     const payload = JSON.parse(result.stdout) as {
       command: string;
@@ -145,7 +139,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('returns structured install metadata with --describe without running install', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'install', '--describe']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'install', '--describe']);
     expect(result.status).toBe(0);
     expect(result.stdout).not.toContain('Detected');
     const payload = JSON.parse(result.stdout) as {
@@ -156,18 +150,18 @@ describe('boss-skill dist bin', () => {
 
   it('prints the skill root by default and structured path with --json', () => {
     const skillRoot = resolve(root, 'skill');
-    const plain = runCli(['packages/boss-cli/dist/bin/boss.js', 'path']);
+    const plain = runCli(['skill/cli/bin/boss.mts', 'path']);
     expect(plain.status).toBe(0);
     expect(plain.stdout).toBe(`${skillRoot}\n`);
     expect(() => JSON.parse(plain.stdout)).toThrow();
 
-    const json = runCli(['packages/boss-cli/dist/bin/boss.js', 'path', '--json']);
+    const json = runCli(['skill/cli/bin/boss.mts', 'path', '--json']);
     expect(json.status).toBe(0);
     expect(JSON.parse(json.stdout)).toEqual({ path: skillRoot });
   });
 
   it('returns structured project group metadata with --describe', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'project', '--describe']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'project', '--describe']);
     expect(result.status).toBe(0);
     const payload = JSON.parse(result.stdout) as {
       command: string;
@@ -178,7 +172,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('returns structured runtime group metadata with --describe', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'runtime', '--describe']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'runtime', '--describe']);
     expect(result.status).toBe(0);
     const payload = JSON.parse(result.stdout) as {
       command: string;
@@ -190,7 +184,7 @@ describe('boss-skill dist bin', () => {
   });
 
   it('returns structured errors for unknown root commands in non-tty mode', () => {
-    const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'unknown-command']);
+    const result = runCli(['skill/cli/bin/boss.mts', 'unknown-command']);
     expect(result.status).toBe(1);
     const payload = JSON.parse(result.stderr) as {
       error: { code: string; input: Record<string, unknown> };
@@ -199,7 +193,7 @@ describe('boss-skill dist bin', () => {
     expect(payload.error.input).toEqual({ command: 'unknown-command' });
   });
 
-  it('builds the dist entrypoint used by both bins', () => {
+  it('ships the CLI source entrypoint (no build step)', () => {
     expect(existsSync(distEntry)).toBe(true);
   });
 
@@ -209,7 +203,7 @@ describe('boss-skill dist bin', () => {
     mkdirSync(resolve(home, '.hermes'), { recursive: true });
 
     try {
-      const result = runCli(['packages/boss-cli/dist/bin/boss.js', 'install'], {
+      const result = runCli(['skill/cli/bin/boss.mts', 'install'], {
         cwd: root,
         env: { ...process.env, HOME: home },
       });
@@ -236,7 +230,7 @@ describe('boss-skill dist bin', () => {
       expect(existsSync(resolve(installed, 'skills', 'README.md'))).toBe(true);
 
       // skill 自包含：CLI、hooks 运行时、运行时资产都随安装副本分发。
-      expect(existsSync(resolve(installed, 'cli', 'bin', 'boss.js'))).toBe(true);
+      expect(existsSync(resolve(installed, 'cli', 'bin', 'boss.mts'))).toBe(true);
       expect(existsSync(resolve(installed, 'scripts', 'lib', 'run-with-flags.js'))).toBe(true);
       expect(existsSync(resolve(installed, 'scripts', 'hooks', 'session-start.js'))).toBe(true);
       expect(existsSync(resolve(installed, 'assets', 'artifact-dag.json'))).toBe(true);
@@ -258,7 +252,7 @@ describe('boss-skill dist bin', () => {
     const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     vi.resetModules();
-    const mod = await import('../../packages/boss-cli/src/bin/boss.js');
+    const mod = await import('../../skill/cli/bin/boss.mts');
 
     expect(writeSpy).not.toHaveBeenCalled();
     expect(typeof mod.main).toBe('function');

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { EVENT_TYPES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
+import { EVENT_TYPES } from '../../skill/cli/runtime/domain/event-types.mts';
 import {
   projectState,
   type RuntimeEvent,
-} from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 function makeEvent(id: number, type: string, data: Record<string, unknown> = {}): RuntimeEvent {
   return {

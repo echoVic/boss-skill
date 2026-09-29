@@ -23,7 +23,6 @@ Thumbs.db
 
 # Node
 node_modules/
-packages/*/dist/
 
 # Biome
 .biome/

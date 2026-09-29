@@ -170,7 +170,7 @@ describe('package metadata', () => {
     expect(pkg.bin).toBeUndefined();
     expect(pkg.files).toBeUndefined();
     // skill 自包含三件套：CLI 产物、hooks 运行时、运行时资产。
-    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.js'))).toBe(true);
+    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts'))).toBe(true);
     expect(
       fs.existsSync(path.join(REPO_ROOT, 'skill', 'scripts', 'lib', 'run-with-flags.js')),
     ).toBe(true);
@@ -185,15 +185,15 @@ describe('package metadata', () => {
     expect(claudePlugin.skills).not.toContain('./skill/skills/');
   });
 
-  it('documents the src to dist layout', () => {
-    expect(readme).toContain('src/');
-    expect(readme).toContain('dist/');
+  it('documents the no-build .mts layout', () => {
+    expect(readme).toContain('skill/cli/');
+    expect(readme).toContain('.mts');
     expect(readme).toContain('Vitest');
   });
 
-  it('documents contributor expectations for authored source and generated output', () => {
-    expect(contributing).toContain('src/');
-    expect(contributing).toContain('dist/');
+  it('documents contributor expectations for source-as-artifact', () => {
+    expect(contributing).toContain('skill/cli/');
+    expect(contributing).toContain('.mts');
     expect(contributing).toContain('Vitest');
   });
 
@@ -645,15 +645,15 @@ describe('thin skill CLI contract', () => {
   it('routes hook config through the boss hooks dispatcher without npm/PATH binaries', () => {
     // 插件模式：hook 命令用插件根占位符指向 skill 自带的 CLI。
     // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
-    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js');
+    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts');
     expect(claudeHooksConfig).toContain('"session:start"');
     // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
-    expect(codexHooksConfig).toContain('${PLUGIN_ROOT}/skill/cli/bin/boss.js');
+    expect(codexHooksConfig).toContain('${PLUGIN_ROOT}/skill/cli/bin/boss.mts');
     expect(codexHooksConfig).toContain('"matcher": "apply_patch"');
     expect(codexHooksConfig).not.toContain('SessionEnd');
     expect(codexHooksConfig).not.toContain('Notification');
     // 仓库 dogfood：settings.json 指向仓库内 skill/cli。
-    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.js');
+    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.mts');
     expect(claudeSettings).not.toContain('scripts/lib/run-with-flags.js');
     expect(bmadMethodology).toContain('boss hooks run');
     expect(bmadMethodology).toContain('hooks/claude/hooks.json');
@@ -679,8 +679,8 @@ describe('thin skill CLI contract', () => {
 
     // 两处都指向 skill 自带 CLI：manifest 用插件根占位符，settings 用项目目录。
     // biome-ignore lint/suspicious/noTemplateCurlyInString: 字面占位符（运行时替换），不是模板插值
-    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.js');
-    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.js');
+    expect(claudeHooksConfig).toContain('${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts');
+    expect(claudeSettings).toContain('$CLAUDE_PROJECT_DIR/skill/cli/bin/boss.mts');
   });
 });
 

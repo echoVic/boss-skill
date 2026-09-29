@@ -7,7 +7,7 @@ import {
   buildArtifactHtmlModel,
   renderArtifactHtml,
   writeArtifactHtmlCompanion,
-} from '../../packages/boss-cli/src/runtime/report/render-artifact-html.js';
+} from '../../skill/cli/runtime/report/render-artifact-html.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('artifact html renderer', () => {

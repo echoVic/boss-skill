@@ -5,14 +5,14 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
 import {
   hashWorkflowValue,
   resumeWorkflow,
-} from '../../packages/boss-cli/src/runtime/application/workflow.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+} from '../../skill/cli/runtime/application/workflow.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 /**
@@ -94,7 +94,7 @@ describe('resumeWorkflow plan integrity', () => {
 
   it('reports the mismatch as a typed CLI error, not internal_error', () => {
     // 面向 agent 的 CLI 契约要求结构化错误码；归到 internal_error 会让调用方无从判断该做什么
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     const runId = readExecution().parameters.runId as string;
     const plan = JSON.parse(fs.readFileSync(planPath(), 'utf8')) as {
       nodes: Array<Record<string, unknown>>;

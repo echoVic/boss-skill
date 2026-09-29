@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   type UiDesignArtifact,
   validateUiDesignArtifact,
-} from '../../packages/boss-cli/src/runtime/design/schema.js';
+} from '../../skill/cli/runtime/design/schema.mts';
 
 function minimalDesign(overrides: Partial<UiDesignArtifact> = {}): UiDesignArtifact {
   return {

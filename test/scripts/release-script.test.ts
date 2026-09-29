@@ -10,7 +10,6 @@ describe('release script contract', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
     for (const expectedPath of [
       'package.json',
-      'packages/boss-cli/package.json',
       '.claude-plugin/plugin.json',
       '.claude-plugin/marketplace.json',
       'skill/SKILL.md',
@@ -19,21 +18,22 @@ describe('release script contract', () => {
     }
   });
 
-  it('runs the full verification chain and rebuilds the bundled skill CLI', () => {
+  it('runs the full verification chain with no build step', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
-    const buildIndex = source.indexOf("run('npm run build:skill')");
     const typecheckIndex = source.indexOf("run('npm run typecheck')");
     const lintIndex = source.indexOf("run('npm run lint')");
     const testIndex = source.indexOf("run('npm test')");
     const installMatrixIndex = source.indexOf("run('npm run test:install-matrix')");
-    const bundleCheckIndex = source.indexOf('skill/cli/bin/boss.js --version');
+    const bundleCheckIndex = source.indexOf('skill/cli/bin/boss.mts --version');
 
-    expect(buildIndex).toBeGreaterThan(-1);
-    expect(typecheckIndex).toBeGreaterThan(buildIndex);
+    expect(typecheckIndex).toBeGreaterThan(-1);
     expect(lintIndex).toBeGreaterThan(typecheckIndex);
     expect(testIndex).toBeGreaterThan(lintIndex);
     expect(installMatrixIndex).toBeGreaterThan(testIndex);
     expect(bundleCheckIndex).toBeGreaterThan(installMatrixIndex);
+    // 源码即产物：发布链里不允许再出现构建/产物同步步骤。
+    expect(source).not.toContain('build:skill');
+    expect(source).not.toContain('build-skill-cli');
   });
 
   it('reformats version files after syncing so the release commit stays biome-clean', () => {
@@ -55,16 +55,16 @@ describe('release script contract', () => {
     expect(source).not.toContain('--no-publish');
   });
 
-  it('commits source release metadata plus the generated skill CLI bundle', () => {
+  it('commits only version metadata files', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
     const commitPathsLine = source
       .split('\n')
       .find((line) => line.includes('commitPaths') && line.includes('VERSION_FILES'));
 
     expect(commitPathsLine).toBeTruthy();
-    expect(commitPathsLine).toContain("'skill/cli'");
+    expect(commitPathsLine).not.toContain('skill/cli');
+    expect(commitPathsLine).not.toContain('packages');
     expect(source).toContain('git add ${commitPaths.join');
-    expect(source).not.toMatch(/git add[^'\n]*packages\/boss-cli\/dist/);
   });
 
   it('validates versions using structured readers instead of substring matching', () => {

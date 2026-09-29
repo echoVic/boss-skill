@@ -71,7 +71,7 @@ npx skills add echoVic/boss-skill
 Codex 等复制式安装可再用自带 CLI 合并 hooks：
 
 ```bash
-node <已安装的 skill>/cli/bin/boss.js install
+node <已安装的 skill>/cli/bin/boss.mts install
 ```
 
 ### 2. 跑一条轻量流水线
@@ -90,8 +90,8 @@ node <已安装的 skill>/cli/bin/boss.js install
 Boss 自带 CLI（随 skill 分发，无需 npm、无需配置 PATH）。下面命令里的 `<skill>` 指包含 `SKILL.md` 的目录（Claude Code 插件安装为 `<插件根>/skill`；复制式安装如 `~/.codex/skills/boss`）。
 
 ```bash
-node <skill>/cli/bin/boss.js status todo-app --json
-node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.mts status todo-app --json
+node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
 ```
 
 预期产物结构：
@@ -128,15 +128,15 @@ Boss 不等于“安装后 100% 自动交付”。它提供 runtime 工作流和
 
 ## 安装细节
 
-市场安装会把整个 `skill/` 目录复制（或软链）过去。自带 CLI 位于 `<skill>/cli/bin/boss.js`，只要求 Node.js `>=20`；hooks 用完整路径引用它，因此不依赖 npm，也不依赖 PATH 上的 `boss` 二进制。
+市场安装会把整个 `skill/` 目录复制（或软链）过去。CLI 以 TypeScript 源码形式随 skill 分发（`<skill>/cli/bin/boss.mts`），由 Node.js `>=22.18` 直接运行（原生类型擦除）——没有构建步骤、没有 npm 包、没有全局 `boss` 二进制。hooks 用完整路径引用它。
 
 常用命令（通过自带 CLI 运行）：
 
 ```bash
-node <skill>/cli/bin/boss.js install --dry-run
-node <skill>/cli/bin/boss.js uninstall
-node <skill>/cli/bin/boss.js path
-node <skill>/cli/bin/boss.js --version
+node <skill>/cli/bin/boss.mts install --dry-run
+node <skill>/cli/bin/boss.mts uninstall
+node <skill>/cli/bin/boss.mts path
+node <skill>/cli/bin/boss.mts --version
 ```
 
 `boss install` 自动检测目标：
@@ -151,7 +151,7 @@ node <skill>/cli/bin/boss.js --version
 
 ## 平台支持
 
-Boss 面向 Node.js `>=20`，支持 Linux、macOS 和 Windows。CLI 随 skill 分发，只通过 `spawnSync` 加显式参数数组调用外部命令（从不使用 `shell: true`），并在 Windows 上把 `npm`/`npx` 解析为对应的 `.cmd` 变体，因此核心流水线没有任何 POSIX-only 假设。
+Boss 面向 Node.js `>=22.18`，支持 Linux、macOS 和 Windows。CLI 以 TypeScript 源码随 skill 分发，由 Node 直接运行（原生类型擦除，无构建步骤），只通过 `spawnSync` 加显式参数数组调用外部命令（从不使用 `shell: true`），并在 Windows 上把 `npm`/`npx` 解析为对应的 `.cmd` 变体，因此核心流水线没有任何 POSIX-only 假设。
 
 有两项能力依赖可选外部工具，缺失时会优雅降级：
 
@@ -331,7 +331,7 @@ release eval 包含 release-evidence 和 pipeline-compliance 检查。它会验�
 
 环境要求：
 
-- Node.js >= 20
+- Node.js >= 22.18（直接运行 `.mts` CLI 源码）
 - `jq`，供 shell 测试辅助脚本使用
 
 初始化：
@@ -340,7 +340,6 @@ release eval 包含 release-evidence 和 pipeline-compliance 检查。它会验�
 git clone https://github.com/echoVic/boss-skill.git
 cd boss-skill
 npm install
-npm run build
 npm run typecheck
 npm test
 ```
@@ -348,8 +347,7 @@ npm test
 常用脚本：
 
 ```bash
-npm run build:skill   # 构建并同步 skill/cli（改 CLI 源码时连同产物一起提交）
-npm run typecheck
+npm run typecheck   # tsc 只检查 .mts 源码，不产出构建物
 npm test
 npm run test:skills
 npm run test:harness
@@ -361,9 +359,8 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI 和 runtime 源码
 ├── skill/                      # 安装到 Coding Agent 的 skill bundle（自包含）
-│   ├── cli/                    # 生成的 CLI 产物（node 直接运行，无需 npm）
+│   ├── cli/                    # CLI 与 runtime 源码（.mts 直接运行，无构建）
 │   ├── scripts/                # hook 运行时（调度器 + hook 脚本）
 │   └── assets/                 # 内置 DAG、pipeline packs、plugin schema
 ├── test/                       # Vitest、harness、eval、hook、install 测试
@@ -372,13 +369,13 @@ boss-skill/
 ├── .claude-plugin/             # Claude Code plugin manifest + marketplace
 ├── .codex-plugin/              # Codex plugin manifest + marketplace
 ├── .agents/plugins/            # 仓库级 plugin marketplace + provenance
+├── tsconfig.json               # 只做类型检查的配置（noEmit）
 └── package.json                # 私有开发工作区（不发布）
 ```
 
 关键源码位置：
 
-- `packages/boss-cli/src/` 是 CLI 和 runtime 的 TypeScript 源码。
-- `skill/cli/` 是随 skill 分发的 CLI 产物；`packages/boss-cli/dist/` 是开发中间产物。两者都由 `npm run build:skill` 生成，不要手工修改。
+- `skill/cli/` 是 CLI 与 runtime 的 TypeScript 源码（`.mts`），由 Node `>=22.18` 直接运行。直接改这里——没有构建步骤，也没有生成的副本。
 - `skill/assets/` 保存内置 DAG、pipeline packs、plugin schema 和插件。
 - `skill/scripts/` 保存 hook 运行时（`lib/run-with-flags.js`）和 hook 脚本。
 - `skill/SKILL.md` 是面向 Agent 的主编排入口。
@@ -398,7 +395,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-发布脚本会检查工作区干净、重建随 skill 分发的 CLI 产物（`skill/cli/`）、运行测试、同步版本、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——不再有 npm publish 步骤。
+发布脚本会检查工作区干净、运行完整验证链、同步版本、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——没有 npm publish，也没有构建步骤。
 
 详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 

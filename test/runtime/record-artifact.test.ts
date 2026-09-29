@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('recordArtifact', () => {

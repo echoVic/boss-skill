@@ -5,17 +5,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
-import { renderHtml } from '../../packages/boss-cli/src/runtime/report/render-html.js';
-import { renderJson } from '../../packages/boss-cli/src/runtime/report/render-json.js';
-import { renderMarkdown } from '../../packages/boss-cli/src/runtime/report/render-markdown.js';
-import { buildSummaryModel } from '../../packages/boss-cli/src/runtime/report/summary-model.js';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
+import { renderHtml } from '../../skill/cli/runtime/report/render-html.mts';
+import { renderJson } from '../../skill/cli/runtime/report/render-json.mts';
+import { renderMarkdown } from '../../skill/cli/runtime/report/render-markdown.mts';
+import { buildSummaryModel } from '../../skill/cli/runtime/report/summary-model.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 describe('runtime report generation', () => {
   let tmpDir: string;

@@ -2,13 +2,13 @@ import { EventEmitter } from 'node:events';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { createOpenUrl } from '../../packages/boss-cli/src/runtime/design/open.js';
-import { renderUiDesignHtml } from '../../packages/boss-cli/src/runtime/design/render.js';
+import { createOpenUrl } from '../../skill/cli/runtime/design/open.mts';
+import { renderUiDesignHtml } from '../../skill/cli/runtime/design/render.mts';
 import {
   type UiDesignArtifact,
   validateUiDesignArtifact,
-} from '../../packages/boss-cli/src/runtime/design/schema.js';
-import { startUiDesignPreviewServer } from '../../packages/boss-cli/src/runtime/design/server.js';
+} from '../../skill/cli/runtime/design/schema.mts';
+import { startUiDesignPreviewServer } from '../../skill/cli/runtime/design/server.mts';
 
 const design: UiDesignArtifact = {
   schemaVersion: '1.0.0',

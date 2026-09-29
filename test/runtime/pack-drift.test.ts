@@ -4,8 +4,8 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { evaluateAgentReuse } from '../../packages/boss-cli/src/runtime/application/pipeline-reuse.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { evaluateAgentReuse } from '../../skill/cli/runtime/application/pipeline-reuse.mts';
 
 /**
  * pipeline pack 在两次运行之间改变时，上一轮的 agent 产物不应再被复用。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractPreferenceMemories } from '../../packages/boss-cli/src/runtime/memory/preferences.js';
+import { extractPreferenceMemories } from '../../skill/cli/runtime/memory/preferences.mts';
 
 function choiceEvent(id: number, selected: string, extra: Record<string, unknown> = {}) {
   return {

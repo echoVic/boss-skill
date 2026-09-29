@@ -6,8 +6,8 @@ import {
   initPipeline,
   recordFeedback,
   updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('feedback-loops', () => {

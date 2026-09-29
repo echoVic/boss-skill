@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ARTIFACT_LAYERS,
   artifactLayer,
-} from '../../packages/boss-cli/src/runtime/application/artifact-layers.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/artifact-layers.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
 
 /**
  * 产物按生命周期分层，而不是平铺成一堆同等重要的文件。
@@ -79,7 +79,7 @@ describe('stale run artifacts are reported', () => {
     record('tasks.md', 2);
 
     const { findStaleRunArtifacts } = await import(
-      '../../packages/boss-cli/src/runtime/application/artifact-layers.js'
+      '../../skill/cli/runtime/application/artifact-layers.mts'
     );
     expect(findStaleRunArtifacts(feature, { cwd: tmpDir })).toEqual([]);
   });
@@ -90,7 +90,7 @@ describe('stale run artifacts are reported', () => {
     record('prd.md', 1);
 
     const { findStaleRunArtifacts } = await import(
-      '../../packages/boss-cli/src/runtime/application/artifact-layers.js'
+      '../../skill/cli/runtime/application/artifact-layers.mts'
     );
     const stale = findStaleRunArtifacts(feature, { cwd: tmpDir });
     expect(stale.map((item) => item.artifact)).toContain('tasks.md');
@@ -122,9 +122,7 @@ describe('layers reach the surfaces users actually read', () => {
   });
 
   it('boss status groups recorded artifacts by layer', async () => {
-    const { buildBossStatus } = await import(
-      '../../packages/boss-cli/src/runtime/application/checkpoints.js'
-    );
+    const { buildBossStatus } = await import('../../skill/cli/runtime/application/checkpoints.mts');
     const status = buildBossStatus(feature, { cwd: tmpDir });
 
     expect(status.artifactLayers.product).toContain('prd.md');
@@ -132,12 +130,8 @@ describe('layers reach the surfaces users actually read', () => {
   });
 
   it('the summary report lists product assets separately from run records', async () => {
-    const { buildSummaryModel } = await import(
-      '../../packages/boss-cli/src/runtime/report/summary-model.js'
-    );
-    const { renderMarkdown } = await import(
-      '../../packages/boss-cli/src/runtime/report/render-markdown.js'
-    );
+    const { buildSummaryModel } = await import('../../skill/cli/runtime/report/summary-model.mts');
+    const { renderMarkdown } = await import('../../skill/cli/runtime/report/render-markdown.mts');
     const markdown = renderMarkdown(buildSummaryModel(feature, { cwd: tmpDir }));
 
     expect(markdown).toContain('产品资产');

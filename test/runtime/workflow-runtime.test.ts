@@ -5,15 +5,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { readExecutionView } from '../../packages/boss-cli/src/runtime/application/state.js';
-import { verifyWave } from '../../packages/boss-cli/src/runtime/application/wave-verification.js';
-import { hashWorkflowValue } from '../../packages/boss-cli/src/runtime/application/workflow.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { readExecutionView } from '../../skill/cli/runtime/application/state.mts';
+import { verifyWave } from '../../skill/cli/runtime/application/wave-verification.mts';
+import { hashWorkflowValue } from '../../skill/cli/runtime/application/workflow.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { ensureCli } from '../helpers/run-cli.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 
 interface WorkflowPlanNode {
   id: string;
@@ -68,7 +68,7 @@ describe('workflow runtime layer', () => {
   }
 
   function runRuntimeCommand(name: string, args: string[]) {
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     return spawnSync(process.execPath, [BOSS_BIN, 'runtime', name, ...args], {
       cwd: tmpDir,
       encoding: 'utf8',
@@ -380,7 +380,7 @@ describe('workflow runtime layer', () => {
             id: 'wave-1-runtime',
             title: 'Wave 1：Runtime',
             scope: 'workflow node status',
-            writeSet: ['packages/boss-cli/src/runtime/application/workflow.ts'],
+            writeSet: ['skill/cli/runtime/application/workflow.mts'],
             redTests: [['false']],
             greenGates: [['true']],
             contractRows: ['CM-runtime'],

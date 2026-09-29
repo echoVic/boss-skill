@@ -6,14 +6,11 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import {
-  appendLineSync,
-  readJsonlTolerant,
-} from '../../packages/boss-cli/src/infrastructure/fs.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { appendLineSync, readJsonlTolerant } from '../../skill/cli/infrastructure/fs.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const DIST_FS = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'infrastructure', 'fs.js');
+const CLI_FS = path.join(REPO_ROOT, 'skill', 'cli', 'infrastructure', 'fs.mts');
 
 let tmpDir: string | null = null;
 function tmpFile(): string {
@@ -108,13 +105,13 @@ describe('appendLineSync after a crash-truncated tail', () => {
   it('loses no record when several processes append concurrently after residue', async () => {
     // 并行子 Agent 各自跑 `boss runtime report-agent-status`，即多个进程同时追加同一份
     // events.jsonl。「先截断残留再追加」的实现会让慢的一方截掉快的一方已提交的记录。
-    ensureBuilt('packages/boss-cli/dist/bin/boss.js');
+    ensureCli('skill/cli/bin/boss.mts');
     const file = tmpFile();
     fs.writeFileSync(file, '{"id":1}\n{"id":2}\n{"id":3');
     const writers = 8;
     await Promise.all(
       Array.from({ length: writers }, (_, index) => {
-        const script = `import(${JSON.stringify(pathToFileURL(DIST_FS).href)}).then((m) => m.appendLineSync(${JSON.stringify(file)}, JSON.stringify({ id: ${100 + index} })))`;
+        const script = `import(${JSON.stringify(pathToFileURL(CLI_FS).href)}).then((m) => m.appendLineSync(${JSON.stringify(file)}, JSON.stringify({ id: ${100 + index} })))`;
         return new Promise<void>((resolve, reject) => {
           const child = spawn(process.execPath, ['-e', script], {
             stdio: ['ignore', 'ignore', 'pipe'],

@@ -7,7 +7,7 @@ import {
   getArtifactVersion,
   initPipeline,
   recordArtifact,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('artifact version control', () => {

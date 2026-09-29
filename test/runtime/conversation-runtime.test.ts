@@ -9,14 +9,14 @@ import {
   listTodos,
   openConversation,
   resolveConversation,
-} from '../../packages/boss-cli/src/runtime/application/conversations.js';
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { appendRuntimeEvent } from '../../packages/boss-cli/src/runtime/application/state.js';
-import { EVENT_TYPES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
+} from '../../skill/cli/runtime/application/conversations.mts';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
+import { appendRuntimeEvent } from '../../skill/cli/runtime/application/state.mts';
+import { EVENT_TYPES } from '../../skill/cli/runtime/domain/event-types.mts';
 import {
   defaultExecutionState,
   materializeState,
-} from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+} from '../../skill/cli/runtime/projectors/materialize-state.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('conversation runtime model', () => {

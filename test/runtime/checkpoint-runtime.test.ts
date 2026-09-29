@@ -3,16 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildBossStatus } from '../../packages/boss-cli/src/runtime/application/checkpoints.js';
-import { resolveDriverCapabilities } from '../../packages/boss-cli/src/runtime/application/drivers.js';
-import {
-  initPipeline,
-  updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import { buildBossStatus } from '../../skill/cli/runtime/application/checkpoints.mts';
+import { resolveDriverCapabilities } from '../../skill/cli/runtime/application/drivers.mts';
+import { initPipeline, updateStage } from '../../skill/cli/runtime/application/pipeline.mts';
 import {
   createWipCheckpoint,
   restoreWipCheckpoint,
-} from '../../packages/boss-cli/src/runtime/application/wip-checkpoint.js';
+} from '../../skill/cli/runtime/application/wip-checkpoint.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('multi-driver checkpoint runtime', () => {

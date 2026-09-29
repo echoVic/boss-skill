@@ -4,11 +4,11 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { readJsonlTolerant } from '../../packages/boss-cli/src/infrastructure/fs.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { ensureBuilt } from '../helpers/run-cli.js';
+import { readJsonlTolerant } from '../../skill/cli/infrastructure/fs.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { ensureCli } from '../helpers/run-cli.js';
 
-const BOSS_ENTRYPOINT = 'packages/boss-cli/dist/bin/boss.js';
+const BOSS_ENTRYPOINT = 'skill/cli/bin/boss.mts';
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 
 /**
@@ -23,7 +23,7 @@ describe('a corrupt projection is recoverable from the event stream', () => {
   const feature = 'recover-feat';
 
   function boss(args: string[]) {
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     return spawnSync(process.execPath, [path.join(REPO_ROOT, BOSS_ENTRYPOINT), ...args], {
       cwd: tmpDir,
       encoding: 'utf8',
@@ -94,7 +94,7 @@ describe('concurrent appenders lose no event', () => {
   });
 
   it('keeps every record when several processes append at once', async () => {
-    ensureBuilt(BOSS_ENTRYPOINT);
+    ensureCli(BOSS_ENTRYPOINT);
     const eventsFile = path.join(tmpDir, '.boss', feature, '.meta', 'events.jsonl');
     const before = readJsonlTolerant(eventsFile).records.length;
     const agents = ['boss-frontend', 'boss-backend', 'boss-qa', 'boss-devops'];

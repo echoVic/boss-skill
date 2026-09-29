@@ -10,7 +10,7 @@ import {
   saveFeatureSummary,
   saveGlobalMemory,
   saveGlobalSummary,
-} from '../../packages/boss-cli/src/runtime/memory/store.js';
+} from '../../skill/cli/runtime/memory/store.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 describe('memory store runtime', () => {

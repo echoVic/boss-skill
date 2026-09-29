@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as runtime from '../../cli/runtime/application/pipeline.js';
+import * as runtime from '../../cli/runtime/application/pipeline.mts';
 import {
   isAgentReportStatus,
   toPipelineAgentStatus,
-} from '../../cli/runtime/domain/agent-report.js';
+} from '../../cli/runtime/domain/agent-report.mts';
 import { AGENT_STAGE_MAP, findActiveFeature, readExecJson } from '../lib/boss-utils.js';
 import { emitProgress } from '../lib/progress-emitter.js';
 

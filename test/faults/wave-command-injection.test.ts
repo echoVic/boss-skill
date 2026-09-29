@@ -4,8 +4,8 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { initPipeline } from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { verifyWave } from '../../packages/boss-cli/src/runtime/application/wave-verification.js';
+import { initPipeline } from '../../skill/cli/runtime/application/pipeline.mts';
+import { verifyWave } from '../../skill/cli/runtime/application/wave-verification.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 /**

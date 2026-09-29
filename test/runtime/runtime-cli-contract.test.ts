@@ -3,20 +3,20 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { main as continueMain } from '../../packages/boss-cli/src/commands/continue.js';
+import { main as continueMain } from '../../skill/cli/commands/continue.mts';
 import {
   buildFeatureSummary,
   writeFeatureMemory,
-} from '../../packages/boss-cli/src/runtime/application/memory.js';
+} from '../../skill/cli/runtime/application/memory.mts';
 import {
   initPipeline,
   updateAgent,
   updateStage,
-} from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+} from '../../skill/cli/runtime/application/pipeline.mts';
 import { cleanupTempDir } from '../helpers/fixtures.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
-const BOSS_BIN = path.join(REPO_ROOT, 'packages', 'boss-cli', 'dist', 'bin', 'boss.js');
+const BOSS_BIN = path.join(REPO_ROOT, 'skill', 'cli', 'bin', 'boss.mts');
 const RUN_WITH_FLAGS = path.join(REPO_ROOT, 'skill', 'scripts', 'lib', 'run-with-flags.js');
 
 describe('runtime CLI contract', () => {
@@ -39,16 +39,8 @@ describe('runtime CLI contract', () => {
     cleanupTempDir(tmpDir);
   });
 
-  function distCli(name: string) {
-    return path.join(
-      REPO_ROOT,
-      'packages',
-      'boss-cli',
-      'dist',
-      'commands',
-      'runtime',
-      `${name}.js`,
-    );
+  function commandModule(name: string) {
+    return path.join(REPO_ROOT, 'skill', 'cli', 'commands', 'runtime', `${name}.mts`);
   }
 
   function runCli(name: string, args: string[]) {
@@ -67,43 +59,21 @@ describe('runtime CLI contract', () => {
 
   it('get-ready-artifacts CLI does not depend on runtime internal exports', () => {
     const source = fs.readFileSync(
-      path.join(
-        REPO_ROOT,
-        'packages',
-        'boss-cli',
-        'src',
-        'commands',
-        'runtime',
-        'get-ready-artifacts.ts',
-      ),
+      path.join(REPO_ROOT, 'skill', 'cli', 'commands', 'runtime', 'get-ready-artifacts.mts'),
       'utf8',
     );
 
     expect(source).not.toMatch(/\._internal\b/);
   });
 
-  it('dist init-pipeline artifact is rebuilt from the current source under review', () => {
-    const sourcePath = path.join(
-      REPO_ROOT,
-      'packages',
-      'boss-cli',
-      'src',
-      'commands',
-      'runtime',
-      'init-pipeline.ts',
-    );
-    const distPath = distCli('init-pipeline');
+  it('ships the init-pipeline command as source with no build step', () => {
+    const sourcePath = commandModule('init-pipeline');
 
-    const sourceMtime = fs.statSync(sourcePath).mtimeMs;
-    const distMtime = fs.statSync(distPath).mtimeMs;
-
-    expect(distMtime).toBeGreaterThanOrEqual(sourceMtime);
+    expect(fs.existsSync(sourcePath)).toBe(true);
+    expect(fs.existsSync(path.join(REPO_ROOT, 'skill', 'cli', 'dist'))).toBe(false);
 
     const source = fs.readFileSync(sourcePath, 'utf8');
-    const dist = fs.readFileSync(distPath, 'utf8');
-
     expect(source).toContain('boss runtime init-pipeline FEATURE [options]');
-    expect(dist).toContain('boss runtime init-pipeline FEATURE [options]');
   });
 
   it('init-pipeline CLI exposes help text and stable JSON fields', () => {
@@ -1059,7 +1029,7 @@ describe('runtime CLI contract', () => {
 
     const direct = spawnSync(
       process.execPath,
-      [distCli('inspect-pipeline'), 'test-feat', '--fields', '--json'],
+      [commandModule('inspect-pipeline'), 'test-feat', '--fields', '--json'],
       {
         cwd: tmpDir,
         encoding: 'utf8',

@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['20', '22']
+        node: ['22', '24']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -33,17 +33,10 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
-      - name: Build (incl. skill CLI bundle)
-        run: npm run build:skill
-      - name: Verify skill CLI bundle is committed
-        run: |
-          if [ -n "$(git status --porcelain -- skill/cli)" ]; then
-            echo "skill/cli is out of date. Run npm run build:skill and commit the result."
-            git status --porcelain -- skill/cli
-            exit 1
-          fi
+      - name: CLI smoke (direct .mts execution, no build)
+        run: node skill/cli/bin/boss.mts --version
       - name: Doctor (version consistency)
-        run: node packages/boss-cli/dist/bin/boss.js doctor --json
+        run: node skill/cli/bin/boss.mts doctor --json
       - name: Test
         run: npm test
       - name: Deterministic evals
@@ -56,7 +49,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Install dependencies
         run: npm ci

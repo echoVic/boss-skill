@@ -4,9 +4,9 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildBossStatus } from '../../packages/boss-cli/src/runtime/application/checkpoints.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import { buildBossStatus } from '../../skill/cli/runtime/application/checkpoints.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 /**
  * 同一个问题只能有一个答案。
@@ -143,7 +143,7 @@ describe('artifact prepare reports a usable template reference', () => {
   });
 
   it('names the bundled template without a traversal path', async () => {
-    const { main } = await import('../../packages/boss-cli/src/commands/artifact/index.js');
+    const { main } = await import('../../skill/cli/commands/artifact/index.mts');
     const captured: string[] = [];
     const original = process.stdout.write.bind(process.stdout);
     process.stdout.write = ((chunk: string) => {

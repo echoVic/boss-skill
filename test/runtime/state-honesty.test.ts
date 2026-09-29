@@ -4,10 +4,10 @@ import * as path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
-import { appendRuntimeEvent } from '../../packages/boss-cli/src/runtime/application/state.js';
-import { EVENT_TYPES } from '../../packages/boss-cli/src/runtime/domain/event-types.js';
-import { materializeState } from '../../packages/boss-cli/src/runtime/projectors/materialize-state.js';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
+import { appendRuntimeEvent } from '../../skill/cli/runtime/application/state.mts';
+import { EVENT_TYPES } from '../../skill/cli/runtime/domain/event-types.mts';
+import { materializeState } from '../../skill/cli/runtime/projectors/materialize-state.mts';
 
 /**
  * 「写了但没人读」审计的后续：投影出来的状态必须诚实。
@@ -57,7 +57,7 @@ describe('projected state is honest about what it contains', () => {
     expect(nodes.length).toBeGreaterThan(0);
 
     const typesSource = fs.readFileSync(
-      path.resolve(import.meta.dirname, '../../packages/boss-cli/src/runtime/projectors/types.ts'),
+      path.resolve(import.meta.dirname, '../../skill/cli/runtime/projectors/types.mts'),
       'utf8',
     );
     const block = typesSource.slice(typesSource.indexOf('export interface WorkflowExecutionNode'));
@@ -113,9 +113,7 @@ describe('audit trail reaches the summary report', () => {
     });
 
     materializeState(feature, tmpDir); // 报告读的是投影后的 execution.json
-    const { buildSummaryModel } = await import(
-      '../../packages/boss-cli/src/runtime/report/summary-model.js'
-    );
+    const { buildSummaryModel } = await import('../../skill/cli/runtime/report/summary-model.mts');
     const model = buildSummaryModel(feature, { cwd: tmpDir });
 
     expect(model.revisionRequests).toHaveLength(1);
@@ -133,12 +131,8 @@ describe('audit trail reaches the summary report', () => {
     });
 
     materializeState(feature, tmpDir);
-    const { buildSummaryModel } = await import(
-      '../../packages/boss-cli/src/runtime/report/summary-model.js'
-    );
-    const { renderMarkdown } = await import(
-      '../../packages/boss-cli/src/runtime/report/render-markdown.js'
-    );
+    const { buildSummaryModel } = await import('../../skill/cli/runtime/report/summary-model.mts');
+    const { renderMarkdown } = await import('../../skill/cli/runtime/report/render-markdown.mts');
     const markdown = renderMarkdown(buildSummaryModel(feature, { cwd: tmpDir }));
 
     expect(markdown).toContain('缺少边界用例');

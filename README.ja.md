@@ -71,7 +71,7 @@ npx skills add echoVic/boss-skill
 Codex などのコピー式インストールでは、同梱 CLI で Boss のフックをマージします:
 
 ```bash
-node <installed-skill>/cli/bin/boss.js install
+node <installed-skill>/cli/bin/boss.mts install
 ```
 
 ### 2. 軽量パイプラインを実行する
@@ -90,8 +90,8 @@ node <installed-skill>/cli/bin/boss.js install
 Boss は専用 CLI をスキル内に同梱しています。npm install も PATH の設定も不要です。以下のスニペットで、`<skill>` は `SKILL.md` を含むディレクトリを指します(Claude Code のプラグインインストールでは `<plugin-root>/skill`、コピー式インストールでは例えば `~/.codex/skills/boss`)。
 
 ```bash
-node <skill>/cli/bin/boss.js status todo-app --json
-node <skill>/cli/bin/boss.js runtime inspect-pipeline todo-app
+node <skill>/cli/bin/boss.mts status todo-app --json
+node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
 ```
 
 想定されるアーティファクト構成:
@@ -128,15 +128,15 @@ Boss は「一度インストールすれば自律的な納品が保証される
 
 ## インストールの詳細
 
-マーケットプレイスからのインストールでは、`skill/` ディレクトリ全体がコピー(またはリンク)されます。同梱 CLI は `<skill>/cli/bin/boss.js` にあり、必要なのは Node.js `>=20` のみです。フックはフルパスでこれを参照するため、npm にもグローバルな `boss` バイナリにも依存しません。
+マーケットプレイスからのインストールでは、`skill/` ディレクトリ全体がコピー(またはリンク)されます。CLI は `<skill>/cli/bin/boss.mts` に TypeScript ソースとして同梱され、Node.js `>=22.18`(ネイティブの型ストリッピング)によって直接実行されます — ビルド手順も npm パッケージもグローバルな `boss` バイナリもありません。フックはフルパスでこれを参照します。
 
 便利なコマンド(同梱 CLI 経由で実行):
 
 ```bash
-node <skill>/cli/bin/boss.js install --dry-run
-node <skill>/cli/bin/boss.js uninstall
-node <skill>/cli/bin/boss.js path
-node <skill>/cli/bin/boss.js --version
+node <skill>/cli/bin/boss.mts install --dry-run
+node <skill>/cli/bin/boss.mts uninstall
+node <skill>/cli/bin/boss.mts path
+node <skill>/cli/bin/boss.mts --version
 ```
 
 自動検出されるターゲット:
@@ -151,7 +151,7 @@ node <skill>/cli/bin/boss.js --version
 
 ## プラットフォームサポート
 
-Boss は Node.js `>=20` を対象とし、Linux、macOS、Windows で動作します。CLI はスキルに同梱されており、明示的な引数配列を伴う `spawnSync` 経由でのみ外部コマンドを呼び出し(`shell: true` は使いません)、Windows では `npm`/`npx` をそれぞれの `.cmd` 版に解決するため、コアパイプラインに POSIX 限定の前提はありません。
+Boss は Node.js `>=22.18` を対象とし、Linux、macOS、Windows で動作します。CLI はスキル内に TypeScript ソースとして同梱され、Node が直接実行します(ネイティブの型ストリッピング — ビルド手順はありません)。外部コマンドは明示的な引数配列を伴う `spawnSync` 経由でのみ呼び出し(`shell: true` は使いません)、Windows では `npm`/`npx` をそれぞれの `.cmd` 版に解決するため、コアパイプラインに POSIX 限定の前提はありません。
 
 2つの機能はオプションの外部ツールに依存しており、それらがない場合は穏やかに縮退します:
 
@@ -328,7 +328,7 @@ npm run evals:release
 
 必要条件:
 
-- Node.js >= 20
+- Node.js >= 22.18(`.mts` の CLI ソースを直接実行)
 - シェルベースのテストヘルパー用の `jq`
 
 セットアップ:
@@ -337,7 +337,6 @@ npm run evals:release
 git clone https://github.com/echoVic/boss-skill.git
 cd boss-skill
 npm install
-npm run build
 npm run typecheck
 npm test
 ```
@@ -345,8 +344,7 @@ npm test
 便利なスクリプト:
 
 ```bash
-npm run build:skill   # skill/cli をビルドして同期(変更と一緒にバンドルをコミット)
-npm run typecheck
+npm run typecheck   # tsc は .mts ソースをチェックするだけ — ビルド出力はありません
 npm test
 npm run test:skills
 npm run test:harness
@@ -358,9 +356,8 @@ npm run evals
 
 ```text
 boss-skill/
-├── packages/boss-cli/          # TypeScript CLI とランタイムのソース
 ├── skill/                      # コーディングエージェントにインストールされるスキルバンドル(自己完結型)
-│   ├── cli/                    # 生成された CLI バンドル(node で実行、npm 不要)
+│   ├── cli/                    # CLI とランタイムのソース(.mts、直接実行 — ビルドなし)
 │   ├── scripts/                # フックランタイム(ディスパッチャー + フックスクリプト)
 │   └── assets/                 # 組み込み DAG、パイプラインパック、プラグインスキーマ
 ├── test/                       # Vitest、ハーネス、eval、フック、インストールのテスト
@@ -369,13 +366,13 @@ boss-skill/
 ├── .claude-plugin/             # Claude Code プラグインマニフェスト + マーケットプレイス
 ├── .codex-plugin/              # Codex プラグインマニフェスト + マーケットプレイス
 ├── .agents/plugins/            # リポジトリ単位のプラグインマーケットプレイス + 来歴
+├── tsconfig.json               # 型チェック専用設定(emit なし)
 └── package.json                # プライベートな開発ワークスペース(公開されません)
 ```
 
 重要なソース領域:
 
-- `packages/boss-cli/src/` には CLI とランタイムの TypeScript ソースが含まれます。
-- `skill/cli/` はスキルに同梱される生成済み CLI バンドルです。`packages/boss-cli/dist/` は開発用の中間ビルドです。どちらも `npm run build:skill` から生成されるため、手動で編集しないでください。
+- `skill/cli/` には CLI とランタイムの TypeScript ソース(`.mts`)が含まれ、Node `>=22.18` によって直接実行されます。これらのファイルを直接編集してください — ビルド手順も生成されたコピーもありません。
 - `skill/assets/` には組み込みの DAG、パイプラインパック、プラグインスキーマ、プラグインが含まれます。
 - `skill/scripts/` にはフックランタイム(`lib/run-with-flags.js`)とフックスクリプトが含まれます。
 - `skill/SKILL.md` はエージェント向けオーケストレーションのメインエントリです。
@@ -395,7 +392,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-リリーススクリプトは、作業ツリーがクリーンであることを確認し、スキルに同梱される CLI バンドル(`skill/cli/`)を再ビルドし、テストを実行し、バージョンを同期し、整合性を検証し、コミットとタグを作成してプッシュします。リリースは git タグそのもので、マーケットプレイスはリポジトリを読み取ります。npm publish の手順はありません。
+リリーススクリプトは、作業ツリーがクリーンであることを確認し、完全な検証チェーンを実行し、バージョンを同期し、整合性を検証し、コミットとタグを作成してプッシュします。リリースは git タグそのもので、マーケットプレイスはリポジトリを読み取ります — npm publish の手順もビルド手順もありません。
 
 [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 

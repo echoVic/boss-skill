@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import * as gates from '../../packages/boss-cli/src/runtime/application/gates.js';
-import * as runtime from '../../packages/boss-cli/src/runtime/application/pipeline.js';
+import * as gates from '../../skill/cli/runtime/application/gates.mts';
+import * as runtime from '../../skill/cli/runtime/application/pipeline.mts';
 
 describe('pipeline exports', () => {
   it('provides the expected pipeline operations', () => {
