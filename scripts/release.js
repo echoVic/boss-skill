@@ -286,7 +286,11 @@ function main() {
     cwd: ROOT,
     encoding: 'utf8',
   }).trim();
-  if (bundleVersion !== next) {
+  if (!/^\d+\.\d+\.\d+/.test(bundleVersion)) {
+    console.error(`❌ skill/cli/bin/boss.mts --version 输出异常: ${bundleVersion}`);
+    process.exit(1);
+  }
+  if (!dryRun && bundleVersion !== next) {
     console.error(`❌ skill/cli 版本 ${bundleVersion} 与目标版本 ${next} 不一致`);
     process.exit(1);
   }
