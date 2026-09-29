@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [5.0.2] - 2026-09-29
+
+### 变更（Changed）
+
+- 内部方法论（`skill/skills/**` 下 28 个 SKILL.md）标记 `metadata.internal: true`：
+  skills.sh 目录与 skills CLI 不再把它们列为独立可选项，只保留单一入口 `boss`。
+- 7 个语言 README 增加 skills.sh badge（https://skills.sh/echovic/boss-skill）。
+
 ## [5.0.1] - 2026-09-28
 
 ### 修复（Fixed）
