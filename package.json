@@ -58,7 +58,7 @@
     "node": ">=22.18"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
+    "@biomejs/biome": "^2.5.14",
     "@playwright/test": "^1.60.0",
     "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^5.0.1",
