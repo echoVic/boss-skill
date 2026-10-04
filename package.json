@@ -61,7 +61,7 @@
     "@biomejs/biome": "^2.5.7",
     "@playwright/test": "^1.60.0",
     "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^5.0.1",
+    "@vitest/coverage-v8": "^5.0.3",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.1"
