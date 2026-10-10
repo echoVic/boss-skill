@@ -24,6 +24,9 @@ Thumbs.db
 # Node
 node_modules/
 
+# Legacy build workspace (removed in v5.0.3 — source is the artifact now)
+/packages/
+
 # Biome
 .biome/
 
