@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 修复（Fixed）
+
+- `npm run lint` 在仓库里已有本地 `.boss/` 工作区时不再失败。Biome 现在读取 `.gitignore`
+  （需要同时设置 `vcs.enabled` 与 `vcs.clientKind`）。已提交的
+  `test/**/workspace/.boss/` 与 `test/**/fixture/.boss/` 夹具仍会检查。
+
 ## [5.0.3] - 2026-09-29
 
 ### 破坏性变更（Breaking）

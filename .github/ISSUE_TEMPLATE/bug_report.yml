@@ -1,0 +1,83 @@
+name: Bug 报告
+description: 报告缺陷或回归。Report a defect or regression.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请先搜索 [已有 issues](https://github.com/echoVic/boss-skill/issues)。
+        安全漏洞不要开公开 issue，请走 [Security Advisory](https://github.com/echoVic/boss-skill/security/advisories/new)。
+
+        Thanks for reporting. Search existing issues first. Security vulnerabilities belong in a private advisory, not a public issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: 发生了什么 / What happened
+      description: 实际行为，以及你期望的行为。Actual behavior, and what you expected.
+      placeholder: npm run lint 在本地已有 .boss/ 时失败，期望与干净检出一样通过。
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 命令、输入，以及去掉密钥后的相关输出。Commands, input, and redacted output.
+      render: bash
+      placeholder: |
+        node skill/cli/bin/boss.mts --version
+        # steps...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: boss-skill 版本 / Version
+      description: "`node skill/cli/bin/boss.mts --version`，或 marketplace 里显示的版本。"
+      placeholder: "5.0.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Coding agent
+      description: 仅使用 CLI 时选「仅 CLI」。
+      options:
+        - Claude Code
+        - Codex
+        - OpenClaw
+        - Antigravity
+        - Hermes
+        - 仅 CLI / CLI only
+        - 其他 / Other
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js 版本 / Node.js version
+      placeholder: "v22.18.0"
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统 / OS
+      placeholder: "macOS 15 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或报错 / Logs
+      description: 请去掉 token、密钥和本机绝对路径中的用户名。Redact tokens, secrets, and home-directory usernames. 也可以直接附上日志文件。
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认 / Checklist
+      options:
+        - label: 我已经搜过现有 issues，这不是重复问题。I searched existing issues.
+          required: true
+        - label: 这不是安全漏洞。安全问题走 Security Advisory，不走公开 issue。This is not a security vulnerability.
+          required: true
