@@ -1,0 +1,50 @@
+name: 功能建议
+description: 提议新能力或改进。Propose a feature or improvement.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请看 [贡献指南](https://github.com/echoVic/boss-skill/blob/main/CONTRIBUTING.md)。
+        缺陷用 Bug 报告模板；安全问题走 [Security Advisory](https://github.com/echoVic/boss-skill/security/advisories/new)。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题 / Problem
+      description: 现在缺什么，谁会遇到。What is missing, and who hits it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案 / Proposal
+      description: 期望的命令、行为、产物或文档变化。Expected command, behavior, artifact, or docs change.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案 / Alternatives
+      description: 包括「不做」会怎样。Include what happens if we do nothing.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及范围 / Area
+      options:
+        - CLI / runtime
+        - Skill prompts / agents
+        - Hooks
+        - Quality gates / evals
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认 / Checklist
+      options:
+        - label: 我已经搜过现有 issues，这不是重复建议。I searched existing issues.
+          required: true

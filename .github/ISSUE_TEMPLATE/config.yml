@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞 / Security report
+    url: https://github.com/echoVic/boss-skill/security/advisories/new
+    about: 请私下报告安全问题，不要开公开 issue。Report vulnerabilities privately.
+  - name: 贡献指南 / Contributing guide
+    url: https://github.com/echoVic/boss-skill/blob/main/CONTRIBUTING.md
+    about: 提交代码前先看环境、测试和提交规范。Read this before opening a pull request.

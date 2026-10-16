@@ -18,6 +18,7 @@ sudo apt install jq    # Ubuntu/Debian
 
 # 安装依赖并验证
 npm install
+npm run lint        # biome；尊重 .gitignore，本地 .boss/ 不参与检查
 npm run typecheck   # tsc 只检查，不产出构建物（skill/cli 下的 .mts 即产物）
 npm test
 ```
@@ -183,7 +184,7 @@ docs: 更新 README 安装说明
 2. 编写代码和测试
 3. 确保 `npm test` 全部通过
 4. 提交并推送：`git push origin feat/my-feature`
-5. 创建 Pull Request，描述你的修改和动机
+5. 创建 Pull Request。描述会套用 `.github/pull_request_template.md`，写清修改和动机
 
 ### PR 检查清单
 
@@ -212,8 +213,9 @@ docs: 更新 README 安装说明
 
 ## 问题反馈
 
-- Bug 报告：[GitHub Issues](https://github.com/echoVic/boss-skill/issues)
-- 功能建议：同上，加 `enhancement` 标签
+- Bug 报告：使用 [Bug 报告模板](https://github.com/echoVic/boss-skill/issues/new?template=bug_report.yml)
+- 功能建议：使用 [功能建议模板](https://github.com/echoVic/boss-skill/issues/new?template=feature_request.yml)
+- 安全漏洞：不要开公开 issue，见 [SECURITY.md](./SECURITY.md)
 
 ## License
 
