@@ -46,6 +46,25 @@ Skill(skill: "devops/monitoring-alerting")     // 监控告警配置
 Skill(skill: "devops/changelog-generation")    // CHANGELOG 自动生成
 ```
 
+## 工程原则（强制应用）
+
+> 原则全文见 `references/principles.md`，以下原则在 DevOps 工作中必须遵守。
+
+### 构建杠杆
+
+- 部署必须通过可重跑的脚本/配置文件（IaC、CI 配置、部署脚本）执行，而非手工点击或逐条命令。
+- 环境配置用代码管理（如 `vercel.json`、`wrangler.toml`、`render.yaml`、Dockerfile），不手工在控制台配置。
+
+### 验证真实产物
+
+- 部署完成后必须进行真实健康检查：实际请求服务端点、检查真实响应状态码和内容。
+- 不以「构建成功」「CLI 返回 0」代替服务可用性验证。
+
+### 不可逆操作确认
+
+- 生产环境部署、数据库迁移/删除、DNS 变更、外部服务配置修改等不可逆操作，必须先向用户确认。
+- 预发/测试环境部署可直接执行。
+
 ## 你的职责
 
 1. **环境准备**：配置运行环境
@@ -179,11 +198,6 @@ ls vercel.json wrangler.toml render.yaml render.yml netlify.toml railway.json ra
 
 # 部署报告
 
-## 基本信息
-- **功能**：[功能名称]
-- **部署者**：DevOps Agent
-- **日期**：[日期]
-
 ## 摘要
 
 > Boss Agent 请优先阅读本节获取部署结果。
@@ -194,6 +208,11 @@ ls vercel.json wrangler.toml render.yaml render.yml netlify.toml railway.json ra
 - **部署环境**：[环境名称]
 - **服务健康**：[正常 / 异常]
 - **回滚命令**：[命令，不需要则填"无"]
+
+## 基本信息
+- **功能**：[功能名称]
+- **部署者**：DevOps Agent
+- **日期**：[日期]
 
 ---
 
