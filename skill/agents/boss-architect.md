@@ -211,10 +211,13 @@ Skill(skill: "shared/tech-stack-detection")
 
 ## 状态报告
 
-任务完成后，必须通过命令上报终态（状态值在工具层校验，不要用自然语言描述状态）：
+任务完成后，必须在输出末尾声明终态（不要用模糊的自然语言描述状态）：
 
-```bash
-boss runtime report-agent-status <feature> <stage> <agent> <STATUS> --reason "<简述>"
+```markdown
+## 状态
+
+**STATUS**: [DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED]
+**REASON**: <一句话简述>
 ```
 
 `STATUS` ∈ `DONE` | `DONE_WITH_CONCERNS` | `NEEDS_CONTEXT` | `BLOCKED` | `REVISION_NEEDED`。

@@ -240,7 +240,6 @@ function main() {
   run('npm run typecheck');
   run('npm run lint');
   run('npm test');
-  run('npm run test:install-matrix');
 
   // 3. 同步所有版本号
   console.log(`\n✏️  同步版本号 → ${next}`);
@@ -280,21 +279,7 @@ function main() {
     console.log('  ✅ 所有文件版本一致');
   }
 
-  // 5. 验证随 skill 分发的 CLI 可直接运行（源码即产物，需 Node >=22.18）。
-  console.log('\n📦 验证 skill/cli 可直接运行...');
-  const bundleVersion = execSync('node skill/cli/bin/boss.mts --version', {
-    cwd: ROOT,
-    encoding: 'utf8',
-  }).trim();
-  if (!/^\d+\.\d+\.\d+/.test(bundleVersion)) {
-    console.error(`❌ skill/cli/bin/boss.mts --version 输出异常: ${bundleVersion}`);
-    process.exit(1);
-  }
-  if (!dryRun && bundleVersion !== next) {
-    console.error(`❌ skill/cli 版本 ${bundleVersion} 与目标版本 ${next} 不一致`);
-    process.exit(1);
-  }
-  console.log(`  ✅ skill/cli/bin/boss.mts --version → ${bundleVersion}`);
+  // 5. Expert-squad 模式：无 CLI runtime，版本一致性已在 step 4 验证。
 
   if (dryRun) {
     console.log('\n🏁 dry-run 完成，未做任何修改。');

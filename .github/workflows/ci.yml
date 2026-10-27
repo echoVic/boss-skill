@@ -33,10 +33,6 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
-      - name: CLI smoke (direct .mts execution, no build)
-        run: node skill/cli/bin/boss.mts --version
-      - name: Doctor (version consistency)
-        run: node skill/cli/bin/boss.mts doctor --json
       - name: Test
         run: npm test
       - name: Deterministic evals

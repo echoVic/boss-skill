@@ -421,6 +421,7 @@ async function getUserWithCache(id: string): Promise<User> {
 - [ ] 实现请求验证
 - [ ] 实现统一错误处理
 - [ ] 添加认证和授权
+- [ ] TDD：每个 Service/Controller 先有失败测试，已验证 RED
 - [ ] 编写单元测试（Service 层）
 - [ ] 编写集成测试（API 端点）
 - [ ] 编写 E2E 测试（完整流程）

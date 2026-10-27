@@ -21,8 +21,8 @@ test/evals/run-evals.sh --release
 Use `--smoke` for the fast deterministic canary and `--release` for the
 release-readiness fixtures:
 
-- `release-evidence` — evidence-wave planning, QA evidence, runtime duration/cost thresholds
-- `pipeline-compliance` — runtime-first orchestration transcript checks
+- `release-evidence` — evidence-wave planning, QA evidence, cost thresholds
+- `pipeline-compliance` — expert-squad orchestration transcript checks
 
 Both modes score captured fixtures only.
 
@@ -32,7 +32,7 @@ Each eval case has:
 
 - `case.json`: prompt, feature, required artifacts, required behaviors, and thresholds.
 - `transcript.jsonl`: captured Claude/Codex-style tool transcript.
-- `workspace/.boss/<feature>/`: produced Boss artifacts and runtime metadata.
+- `workspace/.boss/<feature>/`: produced Boss artifacts.
 
 ## Behavior Checks
 
@@ -42,10 +42,7 @@ Each eval case has:
 | `runs-tests` | Transcript runs a project test command |
 | `records-qa-evidence` | `qa-report.md` contains verified or honest unverified evidence |
 | `produces-evidence-wave` | `tasks.md` includes Evidence Wave + Contract Matrix |
-| `uses-runtime-cli` | Transcript calls `boss runtime`, `boss project`, `boss packs`, etc. |
-| `records-artifacts-via-runtime` | Every `requiredArtifact` has a matching `boss runtime record-artifact <feature> <artifact>` call |
-| `avoids-direct-execution-write` | Transcript does not directly manipulate `.meta/execution.json` (only read-only access like `cat`/`jq`/`boss status` allowed) |
-| `has-workflow-scheduler` | `execution.json` exposes `workflow.nextNodeIds` or `workflow.nodes` |
+| `writes-artifacts-to-boss-dir` | Transcript does not call the deprecated `boss runtime record-artifact` command (agents write artifacts directly) |
 
 ## Capturing A New Case From A Real Run
 

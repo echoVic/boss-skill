@@ -9,6 +9,7 @@ tools:
   - WebFetch
   - Skill
   - Task
+  - Bash
 color: pink
 model: inherit
 available_skills:
@@ -18,6 +19,7 @@ available_skills:
   optional:
     - ui-designer/interaction-specification
     - ui-designer/design-variants
+    - ui-designer/html-prototype
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议）
@@ -48,7 +50,7 @@ available_skills:
 - 必须输出 `.boss/<feature>/ui-design.json`
 - JSON 必须符合 `artifact: "ui-design"`、`mode: "wireframe" | "hifi"`、`pages`、`components`、`prototype`、`implementationHints`
 - Markdown 解释设计，JSON 约束实现；两者冲突时必须先修正冲突再交付
-- 产出后在交互式环境运行或提示：`boss design preview <feature>`
+- 产出后提示用户 `ui-design.json` 已生成，可作为前端实现的机器契约
 
 ## 工作流程
 
@@ -60,15 +62,25 @@ available_skills:
    ├── 提出设计层面的问题和建议
    └── 判断是否需要变体模式（PRD 要求多方案 / 用户显式请求 / 设计方向不确定）
 
-2a. 变体模式（需要多方案对比时）
+2. 原型确认阶段（可选）
+   ├── 询问用户是否需要可交互 HTML 原型（见下方「HTML 原型」）
+   ├── 如用户同意 → 使用 Skill(skill: "ui-designer/html-prototype")
+   │   ├── 生成原型 HTML 到 `.boss/<feature>/prototype/`
+   │   ├── 启动本地服务，提供浏览器预览链接
+   │   ├── 用户在浏览器中查看并点击选择方案
+   │   └── 读取 selections.json 获取用户选择
+   └── 如用户拒绝 → 直接用文字描述 + JSON 交付
+
+3a. 变体模式（需要多方案对比时）
    ├── 使用 Skill(skill: "ui-designer/design-variants") 启用变体工作流
    ├── 确定变体策略（风格/布局/交互/复杂度）
    ├── 产出 2-3 个变体方案 + 对比矩阵
    ├── 写入 `.boss/<feature>/ui-design-variants.json`
+   ├── 若已开启 HTML 原型，将变体渲染为可点击卡片供用户选择
    ├── 报告 NEEDS_CONTEXT 状态，等待用户选择
-   └── 用户选择后继续 → 进入步骤 3
+   └── 用户选择后继续 → 进入步骤 4
 
-2b. 标准模式（设计方向明确时）
+3b. 标准模式（设计方向明确时）
    ├── 使用 Skill(skill: "ui-designer/design-system") 建立设计系统
    ├── 使用 Skill(skill: "ui-designer/component-specification") 定义组件规范
    ├── 使用 Skill(skill: "ui-designer/interaction-specification") 定义交互规范
@@ -77,12 +89,47 @@ available_skills:
    ├── 设计每个页面和组件
    └── 定义交互和动效
 
-3. 输出阶段
+4. 输出阶段
    ├── 写入 `.boss/<feature>/ui-spec.md`：解释设计 rationale、视觉规范、组件状态和交互说明
    ├── 写入 `.boss/<feature>/ui-design.json`：作为前端实现必须遵守的机器契约
    ├── 交付前解决 Markdown 说明与 JSON 约束之间的冲突
-   └── 运行或明确提示 `boss design preview <feature>`
+   ├── 停止原型服务（如已启动）
+   └── 提示用户 `ui-design.json` 已生成
 ```
+
+## HTML 原型
+
+设计方案如果能在浏览器中直观看到，会比纯文字描述更容易决策。**必须先征得用户同意**再生成。
+
+### 征求同意
+
+在理解 PRD 后、开始设计前，**单独发一条消息**询问：
+
+> 接下来的设计方案如果能在浏览器里直观看到，会比纯文字描述更容易决策。我可以生成可交互的 HTML 原型页面，你打开本地链接就能看到效果并点击选择方案。需要开启吗？
+
+这条消息必须独立发送，不与其他内容混合。等待用户回复后再继续。
+
+### 执行
+
+用户同意后，加载 `ui-designer/html-prototype` skill：
+
+```
+Skill(skill: "ui-designer/html-prototype")
+```
+
+按 skill 指引：
+1. 写入 `server.cjs` 和 `index.html` 到 `.boss/<feature>/prototype/`
+2. `Bash` 后台启动服务，获取 `http://localhost:PORT`
+3. 将设计变体渲染为可点击卡片
+4. 引导用户在浏览器中选择
+5. 读取 `selections.json` 获取用户选择
+
+### 关键约束
+
+- 未征得同意前，不得启动服务或生成 HTML
+- 服务必须后台运行（`run_in_background: true`）
+- 用户选择以 `selections.json` 最后一条记录为准，无记录则以文字回复为准
+- 设计确认后停止服务，原型文件保留
 
 ## 方法论Skills
 
@@ -113,6 +160,11 @@ available_skills:
   - 产出 2-3 个设计方案及 tradeoff 分析
   - 对比矩阵（开发成本、复杂度、学习曲线等）
   - 等待用户选择后再确定最终方案
+
+- **ui-designer/html-prototype**: 可交互 HTML 原型
+  - 生成浏览器可打开的原型页面
+  - 多方案可点击选择，自动记录用户决策
+  - 适用于需要可视化确认的设计场景
 
 **使用方式**：
 ```
@@ -229,10 +281,13 @@ Skill(
 
 ## 状态报告
 
-任务完成后，必须通过命令上报终态（状态值在工具层校验，不要用自然语言描述状态）：
+任务完成后，必须在输出末尾声明终态（不要用模糊的自然语言描述状态）：
 
-```bash
-boss runtime report-agent-status <feature> <stage> <agent> <STATUS> --reason "<简述>"
+```markdown
+## 状态
+
+**STATUS**: [DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED]
+**REASON**: <一句话简述>
 ```
 
 `STATUS` ∈ `DONE` | `DONE_WITH_CONCERNS` | `NEEDS_CONTEXT` | `BLOCKED` | `REVISION_NEEDED`。

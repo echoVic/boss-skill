@@ -23,17 +23,14 @@ describe('release script contract', () => {
     const typecheckIndex = source.indexOf("run('npm run typecheck')");
     const lintIndex = source.indexOf("run('npm run lint')");
     const testIndex = source.indexOf("run('npm test')");
-    const installMatrixIndex = source.indexOf("run('npm run test:install-matrix')");
-    const bundleCheckIndex = source.indexOf('skill/cli/bin/boss.mts --version');
 
     expect(typecheckIndex).toBeGreaterThan(-1);
     expect(lintIndex).toBeGreaterThan(typecheckIndex);
     expect(testIndex).toBeGreaterThan(lintIndex);
-    expect(installMatrixIndex).toBeGreaterThan(testIndex);
-    expect(bundleCheckIndex).toBeGreaterThan(installMatrixIndex);
-    // 源码即产物：发布链里不允许再出现构建/产物同步步骤。
+    // Expert-squad 模式：无 CLI runtime，发布链里不允许再出现构建/产物同步步骤。
     expect(source).not.toContain('build:skill');
     expect(source).not.toContain('build-skill-cli');
+    expect(source).not.toContain('skill/cli/bin/boss.mts');
   });
 
   it('reformats version files after syncing so the release commit stays biome-clean', () => {

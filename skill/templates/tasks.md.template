@@ -1,7 +1,7 @@
 ---
 type: tasks
 outputFor: [frontend, backend, qa]
-dependencies: [prd, tech-review]
+dependencies: [prd, tech-review, plan]
 ---
 
 # 开发任务规格文档
@@ -42,7 +42,7 @@ dependencies: [prd, tech-review]
 | 路由约定 | `unknown` | framework route files and docs in repo |
 | migration 风险 | `unknown` | migration/backfill files |
 
-> Repo Preflight 事实由 Boss orchestrator Step 0.4c 提供，Scrum Master 只负责落表；不得自行编造命令结果。`unknown` 表示已检查但尚未确认；必须保留对应证据命令或文件，不得用模板默认值猜测。
+> Repo Preflight 事实由 Boss 提供，Scrum Master 只负责落表；不得自行编造命令结果。`unknown` 表示已检查但尚未确认；必须保留对应证据命令或文件，不得用模板默认值猜测。
 
 ---
 
@@ -80,7 +80,7 @@ dependencies: [prd, tech-review]
 - [ ] 修改认证、支付、数据模型、迁移、权限、任务队列、全局状态等核心模块
 - [ ] 删除文件、迁移数据、或执行不可逆操作
 
-> 任一项勾选时，code 阶段派发前必须先由 orchestrator 向用户展示 Blast Radius 摘要并获得确认。
+> 任一项勾选时，开发环节派发前必须先由 Boss 向用户展示 Blast Radius 摘要并获得确认。
 
 ---
 

@@ -13,8 +13,11 @@ model: inherit
 available_skills:
   required:
     - qa/test-strategy
+    - qa/unit-testing
     - qa/test-execution
     - qa/e2e-playwright
+    - qa/api-testing
+    - qa/integration-testing
   optional:
     - shared/tech-stack-detection
 ---
@@ -61,10 +64,13 @@ E2E 缺失时不得报 `DONE`：仅有单元与组件测试不构成对用户路
 
 1. `Skill(skill: "qa/test-strategy")` 取金字塔与 QA Attack Protocol；必要时
    `Skill(skill: "shared/tech-stack-detection")` 确认技术栈与测试框架。
-2. `Skill(skill: "qa/test-execution")` 取执行与结果解析方法，逐条运行并**逐条记录**上表四项字段。
-3. E2E 用 `Skill(skill: "qa/e2e-playwright")`（含 Gate 1 E2E 检查项与 storageState、page.route 等）。
-4. 安全用例：SQL 注入、XSS、认证绕过、越权、输入边界。
-5. 汇总为 `qa-report.md`，并对每条 Contract Matrix 行标注其 Test Evidence 是否已落实。
+2. **单元测试审查**：`Skill(skill: "qa/unit-testing")` 审查已有单元测试的质量（隔离性、Mock 边界、边界值覆盖），补充缺失的纯函数/Service/组件/Hook 单元测试。
+3. **接口测试**：`Skill(skill: "qa/api-testing")` 覆盖 RESTful/GraphQL 接口的功能、边界、安全、契约、流程测试。
+4. **集成测试**：`Skill(skill: "qa/integration-testing")` 验证模块间协作、数据库真实交互、服务间调用、前后端契约。
+5. `Skill(skill: "qa/test-execution")` 取执行与结果解析方法，逐条运行并**逐条记录**上表四项字段。
+6. E2E 用 `Skill(skill: "qa/e2e-playwright")`（含 Gate 1 E2E 检查项与 storageState、page.route 等）。
+7. 安全用例：SQL 注入、XSS、认证绕过、越权、输入边界。
+8. 汇总为 `qa-report.md`，并对每条 Contract Matrix 行标注其 Test Evidence 是否已落实。
 
 ## 输出格式
 
@@ -94,10 +100,13 @@ E2E 缺失时不得报 `DONE`：仅有单元与组件测试不构成对用户路
 
 ## 状态报告
 
-任务完成后，必须通过命令上报终态（状态值在工具层校验，不要用自然语言描述状态）：
+任务完成后，必须在输出末尾声明终态（不要用模糊的自然语言描述状态）：
 
-```bash
-boss runtime report-agent-status <feature> <stage> <agent> <STATUS> --reason "<简述>"
+```markdown
+## 状态
+
+**STATUS**: [DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | REVISION_NEEDED]
+**REASON**: <一句话简述>
 ```
 
 `STATUS` ∈ `DONE` | `DONE_WITH_CONCERNS` | `NEEDS_CONTEXT` | `BLOCKED` | `REVISION_NEEDED`。
