@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "plugin": {
     "name": "boss",
-    "version": "5.0.3",
+    "version": "5.0.4",
     "distribution": "skill-marketplace"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "389315e060b8803fd8c4473b2a734a3b1501e271",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/389315e060b8803fd8c4473b2a734a3b1501e271"
+    "commit": "69265c47d090cc549cf06e24f7847ed167c103cb",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/69265c47d090cc549cf06e24f7847ed167c103cb"
   },
   "publisher": {
     "name": "echoVic",
@@ -27,35 +27,35 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "daa250e1fc9a2dcdf08602ed8e4ac631bbe5b2aab231ef4f2479e32802d6dc24",
+      "sha256": "fd65129d5a7e9d7e482cb0304ad928eb43d5034209f6f6ef202631647d174333",
       "bytes": 1576
     },
     {
       "path": ".codex-plugin/marketplace.json",
-      "sha256": "94cf95ef8f5b2a4ae9631ddf7e7d4e321b247ae94c3e0ee2217685d3e34f0209",
+      "sha256": "e9faa959269773d65374e752f084b6865258ab77fea411ca592d0402dec89327",
       "bytes": 1063
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "5bc58120d81056c461725791232e89dd9ae3d1dce8c61d6f56db4143761bc0da",
+      "sha256": "86880e6b85ea34bbba7d9c3c3fd9e3d3895c6de208a556faf2615d9e8070a705",
       "bytes": 1781
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "83c78b7560649e9f5f2f21cdeee6e8f3d49aba3f945c6dd467412bdb9ccd462e",
+      "sha256": "9a2d8f15f1487a49a18b84a0ace135f9ed2eda8f2a364831fd1ab29a2fbefad9",
       "bytes": 1016
     },
     {
       "path": ".agents/plugins/marketplace.json",
-      "sha256": "1c853d682dccd1132e35804db2ef6225a7a89c087af740cc8a2b10f4c677e7ea",
+      "sha256": "d735fcd11cff9536d119f6c482381b814c74f4040c0bf388fdf3f9c366a365ce",
       "bytes": 802
     }
   ],
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "5196a608c7695ffe1323a9a7241830b851e88066441be6005be0a0244aabd288",
-      "bytes": 6496
+      "sha256": "c2d1618fa3f117167eade0f512cde4981c54124cf5a262eed3384aca80de17c3",
+      "bytes": 6491
     },
     {
       "path": "skill/commands/boss.md",

@@ -20,9 +20,10 @@ Does NOT trigger:
 - 单文件修改或简单 bug 修复（直接编辑即可）
 - 纯代码阅读或解释（使用 read 工具）
 - 极小事（预计 <30 分钟人工可完成）
-  version: 6.0.0
-  license: MIT
-  user-invocable: true
+
+version: 5.0.4
+license: MIT
+user-invocable: true
 
 ---
 
