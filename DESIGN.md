@@ -8,22 +8,22 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 
 ### 1.2 核心价值
 
-| 价值 | 说明 |
-|------|------|
-| **全自动化** | 无需人工干预，一键完成从需求到部署 |
+| 价值         | 说明                                      |
+| ------------ | ----------------------------------------- |
+| **全自动化** | 无需人工干预，一键完成从需求到部署        |
 | **专业分工** | 9 个专业 Agent 各司其职，模拟真实研发团队 |
-| **质量保障** | 测试门禁机制，确保交付质量 |
-| **产物驱动** | 每阶段产出文档，可追溯、可审计 |
-| **需求穿透** | PM Agent 深度挖掘用户真实需求 |
+| **质量保障** | 测试门禁机制，确保交付质量                |
+| **产物驱动** | 每阶段产出文档，可追溯、可审计            |
+| **需求穿透** | PM Agent 深度挖掘用户真实需求             |
 
 ### 1.3 触发方式
 
-| 触发词 | 说明 |
-|--------|------|
-| `/boss` | 主要触发词 |
-| `boss mode` | 自然语言触发 |
-| `全自动开发` | 中文触发 |
-| `从需求到部署` | 场景触发 |
+| 触发词         | 说明         |
+| -------------- | ------------ |
+| `/boss`        | 主要触发词   |
+| `boss mode`    | 自然语言触发 |
+| `全自动开发`   | 中文触发     |
+| `从需求到部署` | 场景触发     |
 
 ---
 
@@ -60,17 +60,17 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 
 ### 2.2 Agent 职责矩阵
 
-| Agent | 角色定位 | 核心能力 | 输入 | 输出 |
-|-------|----------|----------|------|------|
-| PM | 20 年产品经验，受乔布斯/张小龙认可 | 需求穿透、4 层需求挖掘 | 用户原始需求 | prd.md |
-| UI Designer | Apple 20 年设计师 | 像素级设计、前端友好规范 | prd.md | ui-spec.md + ui-design.json |
-| Architect | 系统架构师 | 架构设计、技术选型 | prd.md | architecture.md |
-| Tech Lead | 技术负责人 | 技术评审、风险评估 | prd.md + architecture.md | tech-review.md |
-| Scrum Master | 敏捷教练 | 任务拆解、工作量估算 | prd.md + tech-review.md | tasks.md |
-| Frontend | 前端专家 | UI 实现、状态管理 | tasks.md + ui-design.json + ui-spec.md | 前端代码 |
-| Backend | 后端专家 | API 开发、数据库 | tasks.md + architecture.md | 后端代码 |
-| QA | 测试工程师 | 测试执行、质量验证 | 代码 + prd.md | qa-report.md |
-| DevOps | 运维工程师 | 构建部署、健康检查 | 代码 | deploy-report.md |
+| Agent        | 角色定位                           | 核心能力                 | 输入                                   | 输出                        |
+| ------------ | ---------------------------------- | ------------------------ | -------------------------------------- | --------------------------- |
+| PM           | 20 年产品经验，受乔布斯/张小龙认可 | 需求穿透、4 层需求挖掘   | 用户原始需求                           | prd.md                      |
+| UI Designer  | Apple 20 年设计师                  | 像素级设计、前端友好规范 | prd.md                                 | ui-spec.md + ui-design.json |
+| Architect    | 系统架构师                         | 架构设计、技术选型       | prd.md                                 | architecture.md             |
+| Tech Lead    | 技术负责人                         | 技术评审、风险评估       | prd.md + architecture.md               | tech-review.md              |
+| Scrum Master | 敏捷教练                           | 任务拆解、工作量估算     | prd.md + tech-review.md                | tasks.md                    |
+| Frontend     | 前端专家                           | UI 实现、状态管理        | tasks.md + ui-design.json + ui-spec.md | 前端代码                    |
+| Backend      | 后端专家                           | API 开发、数据库         | tasks.md + architecture.md             | 后端代码                    |
+| QA           | 测试工程师                         | 测试执行、质量验证       | 代码 + prd.md                          | qa-report.md                |
+| DevOps       | 运维工程师                         | 构建部署、健康检查       | 代码                                   | deploy-report.md            |
 
 ### 2.3 数据流设计
 
@@ -132,7 +132,6 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 ### 2.4 执行中会话层
 
 Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍是正式 source of truth，但执行期间允许点对点会话来处理偏差、求助和局部决策。
-
 - **会话原语**：`ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
 - **锚点要求**：每条会话必须绑定到 `artifact`、`task`、`scope` 或 `decision`
 - **最小模型**：`Thread -> Message -> Resolution -> Todo`
@@ -255,20 +254,19 @@ PM Agent 采用 **4 层需求挖掘模型**：
 
 **5W2H 深度追问法**：
 
-| 维度 | 核心问题 | 目的 |
-|------|----------|------|
-| What | 背后真正想要什么？ | 识别真实需求 |
-| Why | 解决什么问题？ | 理解动机 |
-| Who | 谁在什么场景下用？ | 明确用户 |
-| When | 什么时候用？频率？ | 理解场景 |
-| Where | 在哪里用？环境？ | 理解上下文 |
-| How | 现在怎么解决？痛点？ | 发现机会 |
-| How much | 愿意付出多少？ | 评估价值 |
+| 维度     | 核心问题             | 目的         |
+| -------- | -------------------- | ------------ |
+| What     | 背后真正想要什么？   | 识别真实需求 |
+| Why      | 解决什么问题？       | 理解动机     |
+| Who      | 谁在什么场景下用？   | 明确用户     |
+| When     | 什么时候用？频率？   | 理解场景     |
+| Where    | 在哪里用？环境？     | 理解上下文   |
+| How      | 现在怎么解决？痛点？ | 发现机会     |
+| How much | 愿意付出多少？       | 评估价值     |
 
 ### 4.2 Apple 级设计标准
 
 UI Designer Agent 遵循 Apple 设计原则：
-
 - **简约至上**：去除一切不必要的元素
 - **细节决定成败**：像素级对齐、动效精心打磨
 - **一致性**：整体体验如同出自一人之手
@@ -277,12 +275,12 @@ UI Designer Agent 遵循 Apple 设计原则：
 
 **输出规范**：
 
-| 规范类型 | 内容 |
-|----------|------|
-| 设计系统 | 颜色、字体、间距、圆角、阴影、动效 |
-| 组件状态 | 默认、悬停、按下、禁用、聚焦、加载 |
-| 无障碍 | 对比度 ≥ 4.5:1、键盘导航、屏幕阅读器 |
-| 响应式 | Mobile / Tablet / Desktop 断点 |
+| 规范类型 | 内容                                 |
+| -------- | ------------------------------------ |
+| 设计系统 | 颜色、字体、间距、圆角、阴影、动效   |
+| 组件状态 | 默认、悬停、按下、禁用、聚焦、加载   |
+| 无障碍   | 对比度 ≥ 4.5:1、键盘导航、屏幕阅读器 |
+| 响应式   | Mobile / Tablet / Desktop 断点       |
 
 ### 4.3 测试门禁机制
 
@@ -299,11 +297,11 @@ UI Designer Agent 遵循 Apple 设计原则：
 
 **测试金字塔**：
 
-| 测试类型 | 占比 | 说明 |
-|----------|------|------|
-| 单元测试 | 70% | 每个函数/组件必须有测试 |
-| 集成测试 | 20% | API 端点、组件交互 |
-| E2E 测试 | 10% | 关键用户流程 |
+| 测试类型 | 占比 | 说明                    |
+| -------- | ---- | ----------------------- |
+| 单元测试 | 70%  | 每个函数/组件必须有测试 |
+| 集成测试 | 20%  | API 端点、组件交互      |
+| E2E 测试 | 10%  | 关键用户流程            |
 
 ---
 
@@ -366,42 +364,42 @@ skills/boss/
 
 ```javascript
 // 1. 读取 Agent Prompt 文件
-pm_prompt = Read("agents/boss-pm.md")
+pm_prompt = Read('agents/boss-pm.md');
 
 // 2. 调用 Task 工具
 Task({
-  subagent_type: "general_purpose_task",
-  description: "PM: 需求穿透与 PRD 创建",
-  query: pm_prompt + "\n\n---\n\n## 当前任务\n\n[任务描述]"
-})
+  subagent_type: 'general_purpose_task',
+  description: 'PM: 需求穿透与 PRD 创建',
+  query: pm_prompt + '\n\n---\n\n## 当前任务\n\n[任务描述]',
+});
 ```
 
 ### 6.2 阶段执行策略
 
-| 阶段 | 执行策略 | 说明 |
-|------|----------|------|
-| 模板初始化 | 条件执行 | 用户传入 `--template` 时，复制内置模板到 `.boss/templates/` 并暂停流水线 |
-| 阶段 1 | 串行 → 并行 | PM 先执行（需求穿透），然后 Architect + UI Designer 并行 |
-| 阶段 2 | 串行 | Tech Lead 评审 → Scrum Master 拆解 |
-| 阶段 3 | 并行 + 循环 | Frontend/Backend 并行开发，QA 持续验证 |
-| 阶段 4 | 串行 | QA 完整测试 → 门禁检查 → DevOps 部署 |
+| 阶段       | 执行策略    | 说明                                                                     |
+| ---------- | ----------- | ------------------------------------------------------------------------ |
+| 模板初始化 | 条件执行    | 用户传入 `--template` 时，复制内置模板到 `.boss/templates/` 并暂停流水线 |
+| 阶段 1     | 串行 → 并行 | PM 先执行（需求穿透），然后 Architect + UI Designer 并行                 |
+| 阶段 2     | 串行        | Tech Lead 评审 → Scrum Master 拆解                                       |
+| 阶段 3     | 并行 + 循环 | Frontend/Backend 并行开发，QA 持续验证                                   |
+| 阶段 4     | 串行        | QA 完整测试 → 门禁检查 → DevOps 部署                                     |
 
 ### 6.3 质量门禁
 
 阶段 3 门禁（必须全部通过；未通过会被记录，并让 `boss gate final` 与 `boss doctor` 判定失败）：
 
-| 门禁检查 | 要求 |
-|----------|------|
-| 单元测试 | 必须执行并通过 |
-| 测试覆盖率 | ≥70% |
-| 测试通过率 | 无严重 Bug，无失败测试 |
-| E2E 测试 | **必须编写并执行**（Playwright/Cypress） |
+| 门禁检查   | 要求                                     |
+| ---------- | ---------------------------------------- |
+| 单元测试   | 必须执行并通过                           |
+| 测试覆盖率 | ≥70%                                     |
+| 测试通过率 | 无严重 Bug，无失败测试                   |
+| E2E 测试   | **必须编写并执行**（Playwright/Cypress） |
 
 阶段 4 门禁：
 
-| 门禁检查 | 要求 |
-|----------|------|
-| 部署报告 | 必须存在 |
+| 门禁检查   | 要求              |
+| ---------- | ----------------- |
+| 部署报告   | 必须存在          |
 | 服务可访问 | URL 返回 HTTP 2xx |
 
 ### 6.4 兼容性设计
@@ -410,27 +408,26 @@ Boss Skill 使用通用的 `general_purpose_task` agent，兼容主流 AI 编程
 
 #### 完全兼容 ✅
 
-| 工具 | Skills 目录 | 说明 |
-|------|-------------|------|
-| **Trae** | `~/.blade/skills/` | 字节跳动 AI IDE |
-| **Claude Code** | `~/.claude/skills/` | Anthropic 官方 CLI |
-| **Open Code** | `~/.opencode/skills/` | 开源 Claude Code 替代 |
-| **Cursor** | `~/.cursor/skills/` | AI-first 代码编辑器 |
-| **Windsurf** | `~/.windsurf/skills/` | Codeium AI IDE |
+| 工具            | Skills 目录           | 说明                  |
+| --------------- | --------------------- | --------------------- |
+| **Trae**        | `~/.blade/skills/`    | 字节跳动 AI IDE       |
+| **Claude Code** | `~/.claude/skills/`   | Anthropic 官方 CLI    |
+| **Open Code**   | `~/.opencode/skills/` | 开源 Claude Code 替代 |
+| **Cursor**      | `~/.cursor/skills/`   | AI-first 代码编辑器   |
+| **Windsurf**    | `~/.windsurf/skills/` | Codeium AI IDE        |
 
 #### 部分兼容 ⚠️
 
-| 工具 | 适配方式 | 说明 |
-|------|----------|------|
-| **Cline** | `.clinerules` | 需手动配置 Agent prompts |
-| **Roo Code** | `.roo/rules/` | Cline 分支，配置类似 |
-| **Aider** | `.aider.conf.yml` | 需适配为 Aider 格式 |
-| **Continue** | `.continue/config.json` | 需配置自定义 commands |
+| 工具         | 适配方式                | 说明                     |
+| ------------ | ----------------------- | ------------------------ |
+| **Cline**    | `.clinerules`           | 需手动配置 Agent prompts |
+| **Roo Code** | `.roo/rules/`           | Cline 分支，配置类似     |
+| **Aider**    | `.aider.conf.yml`       | 需适配为 Aider 格式      |
+| **Continue** | `.continue/config.json` | 需配置自定义 commands    |
 
 #### 兼容性原理
 
 Boss Skill 的核心设计确保了广泛兼容性：
-
 1. **纯 Markdown 格式** - 所有 Agent prompts 都是标准 Markdown，无特殊语法
 2. **通用 Task 调用** - 使用 `general_purpose_task` 而非特定工具 API
 3. **无外部依赖** - 不依赖特定运行时或框架
@@ -441,7 +438,6 @@ Boss Skill 的核心设计确保了广泛兼容性：
 Boss Skill 支持项目级模板覆盖，以适配团队自己的文档规范。
 
 模板查找顺序：
-
 1. `.boss/templates/<name>.template`
 2. Skill 内置 `templates/<name>.template`
 
@@ -452,7 +448,6 @@ boss project init <feature-name> --template
 ```
 
 设计原则：
-
 - 用户可以直接修改项目中的模板副本，无需改动 Skill 仓库默认模板
 - 下游 Agent 必须优先读取项目级模板
 - `boss project init` 只负责初始化轻量占位文件；正式落文前再通过 `boss artifact prepare` 按模板优先级逐个准备当前产物骨架
@@ -527,10 +522,10 @@ boss project init <feature-name> --template
 
 ## 8. 版本历史
 
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
+| 版本 | 日期    | 变更内容                                                                    |
+| ---- | ------- | --------------------------------------------------------------------------- |
 | v2.0 | 2025-01 | PM 需求穿透能力、UI Designer Apple 级设计、Tech Lead 技术评审、角色职责优化 |
-| v1.0 | 2024-12 | 初始版本，基础流水线 |
+| v1.0 | 2024-12 | 初始版本，基础流水线                                                        |
 
 ### v2.0 主要变更
 
@@ -602,12 +597,12 @@ Harness Engineer 是 Boss Skill 的**流水线工程化层**，负责将 Agent �
 
 **四件套职责矩阵**：
 
-| 组件 | 职责 | 核心文件 | 说明 |
-|------|------|----------|------|
-| **Pipeline** | 流水线模板定义 | `pipeline.json` | 声明阶段编排、Agent 组合、Gate 绑定，按场景选择不同模板 |
-| **Gate** | 质量门禁检查 | 内置 TS gate + `plugin.json` | 阶段间检查点，执行安全审计/质量检查；结果进入事件流与最终门禁，未通过会让 `boss gate final` 与 `boss doctor` 判定失败 |
-| **Metrics** | 运行时度量采集 | `execution.json` | 记录阶段计时、重试次数、产物列表、门禁结果 |
-| **Runner** | 阶段级执行控制 | `boss runtime <command>` | 状态机驱动，管理阶段生命周期和状态转换 |
+| 组件         | 职责           | 核心文件                     | 说明                                                                                                                  |
+| ------------ | -------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Pipeline** | 流水线模板定义 | `pipeline.json`              | 声明阶段编排、Agent 组合、Gate 绑定，按场景选择不同模板                                                               |
+| **Gate**     | 质量门禁检查   | 内置 TS gate + `plugin.json` | 阶段间检查点，执行安全审计/质量检查；结果进入事件流与最终门禁，未通过会让 `boss gate final` 与 `boss doctor` 判定失败 |
+| **Metrics**  | 运行时度量采集 | `execution.json`             | 记录阶段计时、重试次数、产物列表、门禁结果                                                                            |
+| **Runner**   | 阶段级执行控制 | `boss runtime <command>`     | 状态机驱动，管理阶段生命周期和状态转换                                                                                |
 
 ### 9.3 Pipeline Pack（流水线模板包）
 
@@ -615,12 +610,12 @@ Pipeline Pack 是预置的流水线配置模板，通过声明式 JSON 定义阶
 
 **内置模板**：
 
-| Pack 名称 | 适用场景 | Agent 数 | 阶段 | 特点 |
-|-----------|----------|----------|------|------|
-| `default` | 全流程标准项目 | 9 | 1-2-3-4 | BMAD 完整 9-Agent 流水线 |
-| `core` | 轻量快速开发 | 5 | 1-3-4 | 跳过 UI 设计和技术评审，直接进入开发 |
-| `api-only` | 纯 API 后端服务 | 7 | 1-2-3-4 | 无 UI Designer/Frontend，专注后端 |
-| `solana-contract` | Solana 智能合约 | 5 | 1-2-3-4 | Anchor + Rust，集成 security-audit 门禁 |
+| Pack 名称         | 适用场景        | Agent 数 | 阶段    | 特点                                    |
+| ----------------- | --------------- | -------- | ------- | --------------------------------------- |
+| `default`         | 全流程标准项目  | 9        | 1-2-3-4 | BMAD 完整 9-Agent 流水线                |
+| `core`            | 轻量快速开发    | 5        | 1-3-4   | 跳过 UI 设计和技术评审，直接进入开发    |
+| `api-only`        | 纯 API 后端服务 | 7        | 1-2-3-4 | 无 UI Designer/Frontend，专注后端       |
+| `solana-contract` | Solana 智能合约 | 5        | 1-2-3-4 | Anchor + Rust，集成 security-audit 门禁 |
 
 **Pipeline 配置结构**：
 
@@ -670,21 +665,21 @@ Runner 由三个脚本组成，基于**有限状态机**管理阶段生命周期
 
 **合法状态转换表**：
 
-| 当前状态 | 允许转换到 |
-|----------|-----------|
-| `pending` | `running`、`skipped` |
-| `running` | `completed`、`failed` |
-| `failed` | `retrying` |
-| `retrying` | `running` |
+| 当前状态    | 允许转换到            |
+| ----------- | --------------------- |
+| `pending`   | `running`、`skipped`  |
+| `running`   | `completed`、`failed` |
+| `failed`    | `retrying`            |
+| `retrying`  | `running`             |
 | `completed` | `running`（回退重跑） |
 
 **Runtime CLI**：
 
-| CLI | 功能 | 关键能力 |
-|------|------|----------|
-| `boss runtime check-stage` | 阶段状态查询 | 前置依赖检查、摘要输出、JSON 导出 |
+| CLI                         | 功能         | 关键能力                                                          |
+| --------------------------- | ------------ | ----------------------------------------------------------------- |
+| `boss runtime check-stage`  | 阶段状态查询 | 前置依赖检查、摘要输出、JSON 导出                                 |
 | `boss runtime update-stage` | 阶段状态更新 | 状态转换校验、计时记录、产物记录、Gate 结果记录、全局状态自动推导 |
-| `boss runtime retry-stage` | 阶段重试 | 自动检查重试上限、`failed → retrying → running` 两步转换 |
+| `boss runtime retry-stage`  | 阶段重试     | 自动检查重试上限、`failed → retrying → running` 两步转换          |
 
 ### 9.5 插件协议
 
@@ -692,12 +687,12 @@ Harness 支持通过插件扩展流水线能力。每个插件必须包含一个
 
 **插件类型**：
 
-| 类型 | 说明 | 必需钩子 |
-|------|------|----------|
-| `gate` | 门禁插件，在阶段间执行质量/安全检查 | `hooks.gate` |
-| `agent` | Agent 扩展插件，增加新的专业 Agent | — |
-| `pipeline-pack` | 流水线模板包，预置阶段和 Agent 组合 | — |
-| `reporter` | 报告生成器，自定义报告格式 | `hooks.report` |
+| 类型            | 说明                                | 必需钩子       |
+| --------------- | ----------------------------------- | -------------- |
+| `gate`          | 门禁插件，在阶段间执行质量/安全检查 | `hooks.gate`   |
+| `agent`         | Agent 扩展插件，增加新的专业 Agent  | —              |
+| `pipeline-pack` | 流水线模板包，预置阶段和 Agent 组合 | —              |
+| `reporter`      | 报告生成器，自定义报告格式          | `hooks.report` |
 
 **插件清单结构（plugin.json）**：
 
@@ -737,11 +732,11 @@ Harness 支持通过插件扩展流水线能力。每个插件必须包含一个
 
 **插件 runtime 功能**：
 
-| 命令 | 功能 |
-|------|------|
-| `boss runtime inspect-plugins` | 列出插件生命周期 read model |
-| `boss runtime register-plugins` | 发现、校验并注册插件到事件流 |
-| `boss runtime run-plugin-hook` | 执行指定钩子，自动按阶段范围过滤 |
+| 命令                            | 功能                             |
+| ------------------------------- | -------------------------------- |
+| `boss runtime inspect-plugins`  | 列出插件生命周期 read model      |
+| `boss runtime register-plugins` | 发现、校验并注册插件到事件流     |
+| `boss runtime run-plugin-hook`  | 执行指定钩子，自动按阶段范围过滤 |
 
 ### 9.6 新增目录结构
 
@@ -782,12 +777,12 @@ Claude Code Hooks 是 Coding Agent 宿主提供的**生命周期回调机制**�
 
 核心价值：
 
-| 维度 | 说明 |
-|------|------|
-| **环境一致性** | 会话启动/恢复时自动校验运行环境，确保流水线所需的目录结构和依赖就绪 |
-| **产物完整性** | 文件写入前后自动校验产物格式与路径规范，拦截不合规写入 |
+| 维度             | 说明                                                                  |
+| ---------------- | --------------------------------------------------------------------- |
+| **环境一致性**   | 会话启动/恢复时自动校验运行环境，确保流水线所需的目录结构和依赖就绪   |
+| **产物完整性**   | 文件写入前后自动校验产物格式与路径规范，拦截不合规写入                |
 | **流水线可观测** | 子 Agent 启动/结束时记录度量，Bash 命令执行后采集结果，实现全链路追踪 |
-| **优雅终止** | Agent 停止或会话结束时自动保存状态快照，支持断点续跑 |
+| **优雅终止**     | Agent 停止或会话结束时自动保存状态快照，支持断点续跑                  |
 
 #### 生命周期节点
 
@@ -816,27 +811,62 @@ SessionStart ──► SessionResume
 
 Hooks 配置采用**两级分层**，实现"项目全局配置"与"Skill 级声明"的解耦：
 
-| 层级 | 配置位置 | 作用域 | 说明 |
-|------|----------|--------|------|
-| **项目级** | `.claude/settings.json` | 整个项目 | 定义 hooks 事件与脚本的绑定关系，Claude Code 启动时自动加载 |
-| **Skill 级** | Skill frontmatter | 单个 Skill | Skill 内部声明所需的 hook 脚本，安装插件时自动合并到项目级配置 |
+| 层级         | 配置位置                | 作用域     | 说明                                                           |
+| ------------ | ----------------------- | ---------- | -------------------------------------------------------------- |
+| **项目级**   | `.claude/settings.json` | 整个项目   | 定义 hooks 事件与脚本的绑定关系，Claude Code 启动时自动加载    |
+| **Skill 级** | Skill frontmatter       | 单个 Skill | Skill 内部声明所需的 hook 脚本，安装插件时自动合并到项目级配置 |
 
 项目级配置示例（`.claude/settings.json`）：
 
 ```json
 {
   "hooks": {
-    "SessionStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:start\" \"scripts/hooks/session-start.js\"" }],
-    "PreToolUse": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"", "matcher": "Write|Edit" }],
-    "PostToolUse": [
-      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\"", "matcher": "Write" },
-      { "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\"", "matcher": "Bash" }
+    "SessionStart": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:start\" \"scripts/hooks/session-start.js\""
+      }
     ],
-    "SubagentStart": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\"" }],
-    "SubagentStop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\"" }],
-    "Stop": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\"" }],
-    "Notification": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"notification:log\" \"scripts/hooks/on-notification.js\"" }],
-    "SessionEnd": [{ "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:end\" \"scripts/hooks/session-end.js\"" }]
+    "PreToolUse": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"pre:write:artifact-guard\" \"scripts/hooks/pre-tool-write.js\" \"standard,strict\"",
+        "matcher": "Write|Edit"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:write:artifact-track\" \"scripts/hooks/post-tool-write.js\"",
+        "matcher": "Write"
+      },
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"post:bash:context\" \"scripts/hooks/post-tool-bash.js\"",
+        "matcher": "Bash"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:start\" \"scripts/hooks/subagent-start.js\""
+      }
+    ],
+    "SubagentStop": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"subagent:stop\" \"scripts/hooks/subagent-stop.js\""
+      }
+    ],
+    "Stop": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"stop:pipeline-guard\" \"scripts/hooks/on-stop.js\" \"standard,strict\""
+      }
+    ],
+    "Notification": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"notification:log\" \"scripts/hooks/on-notification.js\""
+      }
+    ],
+    "SessionEnd": [
+      {
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skill/cli/bin/boss.mts\" hooks run \"session:end\" \"scripts/hooks/session-end.js\""
+      }
+    ]
   }
 }
 ```
@@ -846,28 +876,28 @@ hook 命令通过插件根占位符（`${CLAUDE_PLUGIN_ROOT}` / Codex 的 `${PLU
 
 #### Hook 脚本说明
 
-| Hook | 触发时机 | 职责 |
-|------|----------|------|
-| `session-start.js` | 新会话启动时 | 校验运行环境（目录结构、依赖版本），初始化 `.boss/` 产物目录，加载流水线配置 |
-| `session-resume.js` | 会话恢复/重连时 | 检测上次执行状态快照，恢复流水线断点，输出中断摘要供 Agent 上下文对齐 |
-| `pre-tool-write.js` | 文件写入前 | 校验目标路径是否符合产物规范（如必须在 `.boss/<feature>/` 下），拦截不合规写入 |
-| `post-tool-write.js` | 文件写入后 | 校验产物格式完整性（如模板必需 section 是否存在），更新事件流 |
-| `post-tool-bash.js` | Bash 命令执行后 | 采集命令退出码和关键输出，记录到度量日志，检测门禁相关命令（如测试、构建）的结果 |
-| `subagent-start.js` | 子 Agent 启动时 | 记录子 Agent 启动时间和角色，更新运行时状态为 `running` |
-| `subagent-stop.js` | 子 Agent 结束时 | 记录子 Agent 结束时间和耗时，采集产出物列表，触发阶段完成度检查 |
-| `on-stop.js` | Agent 被用户中断时 | 保存当前流水线状态快照到 `.boss/<feature>/.meta/`，记录中断点位，支持后续断点续跑 |
-| `on-notification.js` | 收到系统通知时 | 处理外部事件通知（如 CI 回调、部署状态变更），将通知内容路由到对应的流水线阶段 |
-| `session-end.js` | 会话正常结束时 | 生成流水线执行摘要，归档度量数据，清理临时文件，输出最终状态报告 |
+| Hook                 | 触发时机           | 职责                                                                              |
+| -------------------- | ------------------ | --------------------------------------------------------------------------------- |
+| `session-start.js`   | 新会话启动时       | 校验运行环境（目录结构、依赖版本），初始化 `.boss/` 产物目录，加载流水线配置      |
+| `session-resume.js`  | 会话恢复/重连时    | 检测上次执行状态快照，恢复流水线断点，输出中断摘要供 Agent 上下文对齐             |
+| `pre-tool-write.js`  | 文件写入前         | 校验目标路径是否符合产物规范（如必须在 `.boss/<feature>/` 下），拦截不合规写入    |
+| `post-tool-write.js` | 文件写入后         | 校验产物格式完整性（如模板必需 section 是否存在），更新事件流                     |
+| `post-tool-bash.js`  | Bash 命令执行后    | 采集命令退出码和关键输出，记录到度量日志，检测门禁相关命令（如测试、构建）的结果  |
+| `subagent-start.js`  | 子 Agent 启动时    | 记录子 Agent 启动时间和角色，更新运行时状态为 `running`                           |
+| `subagent-stop.js`   | 子 Agent 结束时    | 记录子 Agent 结束时间和耗时，采集产出物列表，触发阶段完成度检查                   |
+| `on-stop.js`         | Agent 被用户中断时 | 保存当前流水线状态快照到 `.boss/<feature>/.meta/`，记录中断点位，支持后续断点续跑 |
+| `on-notification.js` | 收到系统通知时     | 处理外部事件通知（如 CI 回调、部署状态变更），将通知内容路由到对应的流水线阶段    |
+| `session-end.js`     | 会话正常结束时     | 生成流水线执行摘要，归档度量数据，清理临时文件，输出最终状态报告                  |
 
 ---
 
 ## 10. 版本历史（更新）
 
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
+| 版本 | 日期    | 变更内容                                                                                        |
+| ---- | ------- | ----------------------------------------------------------------------------------------------- |
 | v3.0 | 2026-04 | Harness Engineer 四件套架构（Pipeline + Gate + Metrics + Runner）、插件协议、Pipeline Pack 模板 |
-| v2.0 | 2025-01 | PM 需求穿透能力、UI Designer Apple 级设计、Tech Lead 技术评审、角色职责优化 |
-| v1.0 | 2024-12 | 初始版本，基础流水线 |
+| v2.0 | 2025-01 | PM 需求穿透能力、UI Designer Apple 级设计、Tech Lead 技术评审、角色职责优化                     |
+| v1.0 | 2024-12 | 初始版本，基础流水线                                                                            |
 
 ### v3.0 主要变更
 

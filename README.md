@@ -21,7 +21,6 @@ Boss works with Claude Code, Codex, OpenClaw, Antigravity, and Hermes.
 ## Why Boss
 
 Prompt-only orchestration can sound organized, but it usually cannot prove that the plan was followed, tests were run, or gates passed. Boss is built around evidence and hard contracts:
-
 - **Hard quality contracts**: every role has a non-negotiable requirements table (e.g. PRD must have Given-When-Then scenarios; architecture must compare at least two options; QA must record verified or honestly-unverified evidence). Failed contracts block the next stage unless you explicitly override.
 - **Artifact-driven**: every stage writes a real file under `.boss/<feature>/`. Progress is judged by artifacts on disk, not by what the agent claims.
 - **Continuation chain**: start at any stage (`/boss:pm`, `/boss:dev`, ...) and Boss auto-runs every downstream stage until `ship` or until you stop it. No manual hand-offs.
@@ -34,17 +33,17 @@ Prompt-only orchestration can sound organized, but it usually cannot prove that 
 
 Boss is not a single monolithic command. Each slash command is an entry point; by default it auto-runs all downstream stages.
 
-| Command | Starts at | Auto-runs through | Use when |
-| --- | --- | --- | --- |
-| `/boss` | PM | full chain → ship | Go from idea to shippable work |
-| `/boss:pm` | PM | Architect → ... → Ship | Start from requirements |
-| `/boss:architect` | Architect | UI → ... → Ship | You have a spec, need design |
-| `/boss:ui` | UI Designer | Review → ... → Ship | You have architecture, need UI |
-| `/boss:review` | Tech Lead | Tasks → ... → Ship | Need technical review + plan |
-| `/boss:tasks` | Scrum Master | Dev → QA → Ship | Need task breakdown |
-| `/boss:dev` | Frontend/Backend | QA → Ship | Start implementation |
-| `/boss:qa` | QA | Ship | Need test evidence |
-| `/boss:ship` | DevOps | (end) | Deploy only |
+| Command           | Starts at        | Auto-runs through      | Use when                       |
+| ----------------- | ---------------- | ---------------------- | ------------------------------ |
+| `/boss`           | PM               | full chain → ship      | Go from idea to shippable work |
+| `/boss:pm`        | PM               | Architect → ... → Ship | Start from requirements        |
+| `/boss:architect` | Architect        | UI → ... → Ship        | You have a spec, need design   |
+| `/boss:ui`        | UI Designer      | Review → ... → Ship    | You have architecture, need UI |
+| `/boss:review`    | Tech Lead        | Tasks → ... → Ship     | Need technical review + plan   |
+| `/boss:tasks`     | Scrum Master     | Dev → QA → Ship        | Need task breakdown            |
+| `/boss:dev`       | Frontend/Backend | QA → Ship              | Start implementation           |
+| `/boss:qa`        | QA               | Ship                   | Need test evidence             |
+| `/boss:ship`      | DevOps           | (end)                  | Deploy only                    |
 
 The full chain:
 
@@ -140,39 +139,38 @@ User request
 
 ### Roles & Artifacts
 
-| Role | Responsibility | Artifact |
-| --- | --- | --- |
-| PM | Requirement discovery, PRD, hidden needs, edge cases | `prd.md` |
-| Architect | System architecture, technical design, APIs | `architecture.md` |
-| UI Designer | UI/UX spec, renderable design JSON, HTML prototype | `ui-spec.md`, `ui-design.json` |
-| Tech Lead | Technical review, risk assessment, implementation plan | `tech-review.md`, `plan.md` |
-| Scrum Master | Task breakdown and acceptance criteria | `tasks.md` |
-| Frontend | UI implementation, TDD, frontend tests | source code |
-| Backend | API, storage, TDD, backend tests | source code |
-| QA | Test execution, bug reports, verification evidence | `qa-report.md` |
-| DevOps | Build, deployment, health checks | `deploy-report.md` |
+| Role         | Responsibility                                         | Artifact                       |
+| ------------ | ------------------------------------------------------ | ------------------------------ |
+| PM           | Requirement discovery, PRD, hidden needs, edge cases   | `prd.md`                       |
+| Architect    | System architecture, technical design, APIs            | `architecture.md`              |
+| UI Designer  | UI/UX spec, renderable design JSON, HTML prototype     | `ui-spec.md`, `ui-design.json` |
+| Tech Lead    | Technical review, risk assessment, implementation plan | `tech-review.md`, `plan.md`    |
+| Scrum Master | Task breakdown and acceptance criteria                 | `tasks.md`                     |
+| Frontend     | UI implementation, TDD, frontend tests                 | source code                    |
+| Backend      | API, storage, TDD, backend tests                       | source code                    |
+| QA           | Test execution, bug reports, verification evidence     | `qa-report.md`                 |
+| DevOps       | Build, deployment, health checks                       | `deploy-report.md`             |
 
 ## Quality Contract
 
 Boss has two layers of quality control:
-
 - **Hard requirements per role**: each agent's prompt defines a non-negotiable requirements table. The agent self-checks before handing off; a failed contract blocks the next stage.
 - **Quality gates**: real commands whose verdicts are recorded in the stage artifact.
 
-| Gate | Stage | Checks |
-| --- | --- | --- |
-| Gate 0 (code quality) | After dev, before QA | TypeScript/lint pass, no high-severity dependency vulnerabilities |
-| Gate 1 (testing) | After QA, before deploy | Unit + integration tests pass, coverage ≥ 70%, no P0/P1 bugs, E2E tests written |
-| Gate 2 (performance) | Before web deploy | Lighthouse ≥ 80, API P99 < 500ms (web projects only) |
+| Gate                  | Stage                   | Checks                                                                          |
+| --------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| Gate 0 (code quality) | After dev, before QA    | TypeScript/lint pass, no high-severity dependency vulnerabilities               |
+| Gate 1 (testing)      | After QA, before deploy | Unit + integration tests pass, coverage ≥ 70%, no P0/P1 bugs, E2E tests written |
+| Gate 2 (performance)  | Before web deploy       | Lighthouse ≥ 80, API P99 < 500ms (web projects only)                            |
 
 ## When To Use Boss
 
-| Good fit | Poor fit |
-| --- | --- |
-| New features that need requirements, design, implementation, tests, and delivery evidence | One-line fixes or tiny local edits |
-| API, full-stack, UI, or medium-sized product work | Pure code reading or explanation |
-| Work where `.boss/<feature>/` artifacts are valuable | Tasks with a complete existing spec where you only need a quick patch |
-| Teams that want repeatable quality gates and audit trails | Work that does not need coordination or review evidence |
+| Good fit                                                                                  | Poor fit                                                              |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| New features that need requirements, design, implementation, tests, and delivery evidence | One-line fixes or tiny local edits                                    |
+| API, full-stack, UI, or medium-sized product work                                         | Pure code reading or explanation                                      |
+| Work where `.boss/<feature>/` artifacts are valuable                                      | Tasks with a complete existing spec where you only need a quick patch |
+| Teams that want repeatable quality gates and audit trails                                 | Work that does not need coordination or review evidence               |
 
 Rule of thumb: if you do not need a traceable `.boss/` folder, you probably do not need the full `/boss` pipeline. Use a single role or let your coding agent edit directly.
 
@@ -219,7 +217,6 @@ See [test/evals/README.md](./test/evals/README.md).
 ## Development
 
 Requirements:
-
 - Node.js >= 22.18
 
 Setup:

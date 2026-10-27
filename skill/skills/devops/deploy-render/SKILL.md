@@ -1,4 +1,5 @@
 ---
+
 name: devops/deploy-render
 description: Render 部署方法论，使用 render.yaml 蓝图和 Render CLI 部署全栈应用（Web 服务、Worker、静态站点、数据库）
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要部署到 Render 时
-  - 项目是全栈应用且需要数据库时
-  - 项目使用 Docker 容器部署时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要部署到 Render 时
+- 项目是全栈应用且需要数据库时
+- 项目使用 Docker 容器部署时
+  metadata:
   internal: true
+
 ---
 
 # Render 部署
@@ -35,7 +37,6 @@ metadata:
 ## 部署方式
 
 Render 支持两种部署方式：
-
 1. **render.yaml 蓝图（推荐）**：基础设施即代码，一键创建所有服务和数据库
 2. **Dashboard 手动创建**：通过 Web 界面逐个创建服务
 
@@ -73,7 +74,7 @@ services:
           name: my-db
           property: connectionString
       - key: API_KEY
-        sync: false  # 需要在 Dashboard 手动设置
+        sync: false # 需要在 Dashboard 手动设置
 
   # 后台 Worker
   - type: worker
@@ -91,7 +92,7 @@ databases:
   - name: my-db
     databaseName: myapp
     user: myapp
-    plan: free  # free | starter | standard | pro
+    plan: free # free | starter | standard | pro
     ipAllowList:
       - source: 0.0.0.0/0
         description: allow all (仅开发环境)
@@ -185,7 +186,7 @@ services:
   - type: cron
     name: my-cron
     env: node
-    schedule: "0 2 * * *"  # 每天凌晨 2 点
+    schedule: "0 2 * * *" # 每天凌晨 2 点
     buildCommand: npm ci
     startCommand: npm run cron
 ```
@@ -304,15 +305,15 @@ jobs:
 
 ## 项目类型适配
 
-| 项目类型 | env 类型 | buildCommand | startCommand |
-|----------|----------|--------------|--------------|
-| Next.js (Node) | node | `npm ci && npm run build` | `npm start` |
-| Vite 静态站点 | static | `npm ci && npm run build` | - |
-| Express API | node | `npm ci` | `npm start` |
-| Django | python | `pip install -r requirements.txt` | `gunicorn app:app` |
-| FastAPI | python | `pip install -r requirements.txt` | `uvicorn main:app` |
-| Gin (Go) | go | `go build -o server` | `./server` |
-| Docker 应用 | docker | (Dockerfile) | (Dockerfile CMD) |
+| 项目类型       | env 类型 | buildCommand                      | startCommand       |
+| -------------- | -------- | --------------------------------- | ------------------ |
+| Next.js (Node) | node     | `npm ci && npm run build`         | `npm start`        |
+| Vite 静态站点  | static   | `npm ci && npm run build`         | -                  |
+| Express API    | node     | `npm ci`                          | `npm start`        |
+| Django         | python   | `pip install -r requirements.txt` | `gunicorn app:app` |
+| FastAPI        | python   | `pip install -r requirements.txt` | `uvicorn main:app` |
+| Gin (Go)       | go       | `go build -o server`              | `./server`         |
+| Docker 应用    | docker   | (Dockerfile)                      | (Dockerfile CMD)   |
 
 ## 检查清单
 

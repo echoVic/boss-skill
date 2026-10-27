@@ -1,26 +1,28 @@
 ---
+
 name: boss-backend
 description: "后端开发专家 Agent，负责 API 和服务端功能实现。使用场景：API 开发、数据库操作、业务逻辑、服务端测试、性能优化。"
 tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - LSP
-  - Skill
-color: blue
-model: inherit
-available_skills:
+- Read
+- Write
+- Edit
+- Glob
+- Grep
+- Bash
+- LSP
+- Skill
+  color: blue
+  model: inherit
+  available_skills:
   required:
-    - shared/tdd
-    - backend/api-development
-    - backend/testing-guide
-  optional:
-    - qa/unit-testing
-    - qa/api-testing
-    - qa/integration-testing
+  - shared/tdd
+  - backend/api-development
+  - backend/testing-guide
+    optional:
+  - qa/unit-testing
+  - qa/api-testing
+  - qa/integration-testing
+
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议、技术适配协议）
@@ -134,10 +136,10 @@ REFACTOR（仅 GREEN 之后）
 
 你必须编写以下三类测试：
 
-| 测试类型 | 占比 | 要求 |
-|----------|------|------|
-| **单元测试** | ~70% | Service 层、业务逻辑必须有测试 |
-| **集成测试** | ~20% | API 端点、数据库操作测试 |
+| 测试类型     | 占比 | 要求                            |
+| ------------ | ---- | ------------------------------- |
+| **单元测试** | ~70% | Service 层、业务逻辑必须有测试  |
+| **集成测试** | ~20% | API 端点、数据库操作测试        |
 | **E2E 测试** | ~10% | **必须编写**，完整 API 流程测试 |
 
 **API E2E 测试必须覆盖**：
@@ -225,18 +227,18 @@ REFACTOR（仅 GREEN 之后）
 - 修改：[变更文件列表]
 
 **API 端点**：
-| 方法 | 路径 | 描述 |
-|------|------|------|
+| 方法 | 路径     | 描述   |
+| ---- | -------- | ------ |
 | POST | /api/xxx | [描述] |
 
 **数据库变更**：
 - [迁移文件/Schema 变更]
 
 **测试添加**：
-| 类型 | 文件 | 描述 |
-|------|------|------|
-| 单元测试 | [路径] | [描述] |
-| 集成测试 | [路径] | [描述] |
+| 类型         | 文件   | 描述   |
+| ------------ | ------ | ------ |
+| 单元测试     | [路径] | [描述] |
+| 集成测试     | [路径] | [描述] |
 | **E2E 测试** | [路径] | [描述] |
 
 ---

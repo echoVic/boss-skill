@@ -21,7 +21,6 @@ Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 ## 为什么需要 Boss
 
 只靠 prompt 的编排经常"看起来很像团队"，但很难证明计划真的被执行、测试真的跑过、门禁真的通过。Boss 的核心是证据和硬契约：
-
 - **硬性质量契约**：每个角色都有不可妥协的要求表（例如 PRD 必须包含 Given-When-Then 场景；架构必须对比至少两种方案；QA 必须记录已验证或诚实标注未验证的证据）。契约未通过则阻断下一环节，除非你显式覆盖。
 - **产物驱动**：每个环节都把真实文件写入 `.boss/<feature>/`。进度以磁盘上的产物为准，而非 Agent 的口头声明。
 - **续跑链**：从任意环节启动（`/boss:pm`、`/boss:dev` ...），Boss 自动跑完所有下游环节直到 `ship` 或你叫停。无需手动交接。
@@ -34,17 +33,17 @@ Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 
 Boss 不是一个巨大的单体命令。每个 slash command 都是一个入口；默认自动跑完所有下游环节。
 
-| 命令 | 起点 | 自动续跑到 | 适合什么时候用 |
-| --- | --- | --- | --- |
-| `/boss` | PM | 全流程到 ship | 从想法做到可交付 |
-| `/boss:pm` | PM | Architect → ... → Ship | 从需求分析开始 |
-| `/boss:architect` | Architect | UI → ... → Ship | 已有需求，需要设计 |
-| `/boss:ui` | UI Designer | Review → ... → Ship | 已有架构，需要 UI |
-| `/boss:review` | Tech Lead | Tasks → ... → Ship | 需要技术评审 + 实施计划 |
-| `/boss:tasks` | Scrum Master | Dev → QA → Ship | 需要任务拆解 |
-| `/boss:dev` | Frontend/Backend | QA → Ship | 开始开发 |
-| `/boss:qa` | QA | Ship | 需要测试证据 |
-| `/boss:ship` | DevOps | 终点 | 只做部署 |
+| 命令              | 起点             | 自动续跑到             | 适合什么时候用          |
+| ----------------- | ---------------- | ---------------------- | ----------------------- |
+| `/boss`           | PM               | 全流程到 ship          | 从想法做到可交付        |
+| `/boss:pm`        | PM               | Architect → ... → Ship | 从需求分析开始          |
+| `/boss:architect` | Architect        | UI → ... → Ship        | 已有需求，需要设计      |
+| `/boss:ui`        | UI Designer      | Review → ... → Ship    | 已有架构，需要 UI       |
+| `/boss:review`    | Tech Lead        | Tasks → ... → Ship     | 需要技术评审 + 实施计划 |
+| `/boss:tasks`     | Scrum Master     | Dev → QA → Ship        | 需要任务拆解            |
+| `/boss:dev`       | Frontend/Backend | QA → Ship              | 开始开发                |
+| `/boss:qa`        | QA               | Ship                   | 需要测试证据            |
+| `/boss:ship`      | DevOps           | 终点                   | 只做部署                |
 
 完整链路：
 
@@ -140,39 +139,38 @@ npx skills add echoVic/boss-skill
 
 ### 角色与产物
 
-| 角色 | 职责 | 产物 |
-| --- | --- | --- |
-| PM | 需求穿透、PRD、隐性需求、边界场景 | `prd.md` |
-| Architect | 系统架构、技术设计、API | `architecture.md` |
-| UI Designer | UI/UX 规范、可渲染设计 JSON、HTML 原型 | `ui-spec.md`、`ui-design.json` |
-| Tech Lead | 技术评审、风险评估、实施计划 | `tech-review.md`、`plan.md` |
-| Scrum Master | 任务拆解和验收标准 | `tasks.md` |
-| Frontend | UI 实现、TDD、前端测试 | 源代码 |
-| Backend | API、存储、TDD、后端测试 | 源代码 |
-| QA | 测试执行、Bug 报告、验证证据 | `qa-report.md` |
-| DevOps | 构建、部署、健康检查 | `deploy-report.md` |
+| 角色         | 职责                                   | 产物                           |
+| ------------ | -------------------------------------- | ------------------------------ |
+| PM           | 需求穿透、PRD、隐性需求、边界场景      | `prd.md`                       |
+| Architect    | 系统架构、技术设计、API                | `architecture.md`              |
+| UI Designer  | UI/UX 规范、可渲染设计 JSON、HTML 原型 | `ui-spec.md`、`ui-design.json` |
+| Tech Lead    | 技术评审、风险评估、实施计划           | `tech-review.md`、`plan.md`    |
+| Scrum Master | 任务拆解和验收标准                     | `tasks.md`                     |
+| Frontend     | UI 实现、TDD、前端测试                 | 源代码                         |
+| Backend      | API、存储、TDD、后端测试               | 源代码                         |
+| QA           | 测试执行、Bug 报告、验证证据           | `qa-report.md`                 |
+| DevOps       | 构建、部署、健康检查                   | `deploy-report.md`             |
 
 ## 质量契约
 
 Boss 的质量保障分两层：
-
 - **每个角色的硬性要求**：每个 Agent 的 prompt 定义了不可妥协的要求表。Agent 在交接前自检；契约未通过则阻断下一环节。
 - **质量门禁**：真实执行的命令，判定结果记录在环节产物中。
 
-| 门禁 | 时机 | 检查 |
-| --- | --- | --- |
-| Gate 0（代码质量） | 开发后、QA 前 | TypeScript/lint 通过、无高危依赖漏洞 |
-| Gate 1（测试） | QA 后、部署前 | 单元 + 集成测试通过、覆盖率 ≥ 70%、无 P0/P1 Bug、E2E 测试已编写 |
-| Gate 2（性能） | Web 部署前 | Lighthouse ≥ 80、API P99 < 500ms（仅 Web 项目） |
+| 门禁               | 时机          | 检查                                                            |
+| ------------------ | ------------- | --------------------------------------------------------------- |
+| Gate 0（代码质量） | 开发后、QA 前 | TypeScript/lint 通过、无高危依赖漏洞                            |
+| Gate 1（测试）     | QA 后、部署前 | 单元 + 集成测试通过、覆盖率 ≥ 70%、无 P0/P1 Bug、E2E 测试已编写 |
+| Gate 2（性能）     | Web 部署前    | Lighthouse ≥ 80、API P99 < 500ms（仅 Web 项目）                 |
 
 ## 什么时候适合用
 
-| 适合 | 不适合 |
-| --- | --- |
-| 新 feature，需要需求、设计、开发、测试和交付证据 | 一行修复、很小的局部修改 |
-| API、全栈、UI、中等规模产品功能 | 单纯读代码或解释实现 |
-| 需要 `.boss/<feature>/` 产物留痕 | 已有完整 spec，只想快速 patch |
-| 团队希望有可重复门禁和审计轨迹 | 不需要协作或评审证据的小任务 |
+| 适合                                             | 不适合                        |
+| ------------------------------------------------ | ----------------------------- |
+| 新 feature，需要需求、设计、开发、测试和交付证据 | 一行修复、很小的局部修改      |
+| API、全栈、UI、中等规模产品功能                  | 单纯读代码或解释实现          |
+| 需要 `.boss/<feature>/` 产物留痕                 | 已有完整 spec，只想快速 patch |
+| 团队希望有可重复门禁和审计轨迹                   | 不需要协作或评审证据的小任务  |
 
 经验法则：如果你不需要一个可追踪的 `.boss/` 目录，就不一定要开完整 `/boss` 流水线。可以只用单个角色，或者直接让 Coding Agent 修改。
 
@@ -219,7 +217,6 @@ release eval 包含 release-evidence 和 pipeline-compliance 检查——验证�
 ## 开发
 
 环境要求：
-
 - Node.js >= 22.18
 
 初始化：

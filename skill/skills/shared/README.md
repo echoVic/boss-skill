@@ -7,16 +7,15 @@
 ## 使用场景
 
 当一个方法论或工作流程满足以下条件时，应放入 shared 目录：
-
 1. **跨 Agent 复用**：被 2 个或以上的 Agent 使用
 2. **通用性强**：不包含特定 Agent 的上下文或角色假设
 3. **独立性好**：可以独立使用，不依赖特定 Agent 的状态
 
 ## 当前 Shared Skills
 
-| Skill | 路径 | 使用者 | 用途 |
-| --- | --- | --- | --- |
-| TDD | `shared/tdd/SKILL.md` | Frontend, Backend | Red-Green-Refactor 测试驱动开发铁律 |
+| Skill                | 路径                                   | 使用者                                      | 用途                                                   |
+| -------------------- | -------------------------------------- | ------------------------------------------- | ------------------------------------------------------ |
+| TDD                  | `shared/tdd/SKILL.md`                  | Frontend, Backend                           | Red-Green-Refactor 测试驱动开发铁律                    |
 | Tech Stack Detection | `shared/tech-stack-detection/SKILL.md` | Architect, Tech Lead, Frontend, Backend, QA | 检测项目技术栈（package.json、pom.xml、Cargo.toml 等） |
 
 ## Frontmatter 规范
@@ -24,15 +23,15 @@
 ```yaml
 ---
 name: shared/{skill-name}
-description: {一句话描述}
+description: { 一句话描述 }
 version: 1.0.0
 agent: shared
-type: {methodology|workflow|guideline}
+type: { methodology|workflow|guideline }
 user-invocable: false
 agent-invocable: true
 dependencies: []
 triggers:
-  - {触发场景描述}
+  - { 触发场景描述 }
 ---
 ```
 

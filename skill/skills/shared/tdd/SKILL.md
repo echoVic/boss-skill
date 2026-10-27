@@ -1,4 +1,5 @@
 ---
+
 name: shared/tdd
 description: 测试驱动开发（TDD）方法论，Red-Green-Refactor 循环，先写失败测试再写实现
 version: 1.0.0
@@ -8,12 +9,13 @@ user-invocable: false
 agent-invocable: true
 dependencies: []
 triggers:
-  - 实现新功能前
-  - 修复 bug 前
-  - 重构代码前
-  - 任何行为变更前
-metadata:
+- 实现新功能前
+- 修复 bug 前
+- 重构代码前
+- 任何行为变更前
+  metadata:
   internal: true
+
 ---
 
 # 测试驱动开发（TDD）
@@ -44,7 +46,6 @@ metadata:
 ### 🔴 RED — 写失败测试
 
 为**一个行为**写最小测试：
-
 - 一个测试只测一件事（名称里有 "and" 就拆开）
 - 名称描述行为，而非实现（`rejects empty email` 而非 `test1`）
 - 用真实代码，除非依赖外部服务才 mock
@@ -86,7 +87,6 @@ npm test -- path/to/test.test.ts
 ### 🟢 GREEN — 写最小实现
 
 写**刚好让测试通过**的最少代码：
-
 - 不添加测试未要求的功能
 - 不重构、不"顺便优化"
 - 不提前抽象
@@ -98,7 +98,10 @@ function validateEmail(email: string): boolean {
 }
 
 // ❌ 坏：过度工程
-function validateEmail(email: string, options?: { allowPlus?: boolean; domainWhitelist?: string[] }): boolean {
+function validateEmail(
+  email: string,
+  options?: { allowPlus?: boolean; domainWhitelist?: string[] },
+): boolean {
   // YAGNI
 }
 ```
@@ -106,7 +109,6 @@ function validateEmail(email: string, options?: { allowPlus?: boolean; domainWhi
 ### 验证 GREEN — 必须看到它通过
 
 运行测试，确认：
-
 1. 新测试通过
 2. **所有已有测试仍然通过**
 3. 输出干净（无报错、无意外警告）
@@ -117,7 +119,6 @@ function validateEmail(email: string, options?: { allowPlus?: boolean; domainWhi
 ### 🔵 REFACTOR — 重构（仅在 GREEN 之后）
 
 测试全绿后才允许重构：
-
 - 消除重复
 - 改善命名
 - 提取辅助函数
@@ -144,7 +145,6 @@ function validateEmail(email: string, options?: { allowPlus?: boolean; domainWhi
 ## 验证清单
 
 标记任务完成前，逐项确认：
-
 - [ ] 每个新增函数/方法都有对应测试
 - [ ] 每个测试都先看到它失败（RED 已验证）
 - [ ] 失败原因是功能缺失，而非拼写/导入错误
@@ -157,20 +157,20 @@ function validateEmail(email: string, options?: { allowPlus?: boolean; domainWhi
 
 ## 常见借口与回应
 
-| 借口 | 回应 |
-|------|------|
-| "太简单了不用测" | 简单代码也会坏，测试只要 30 秒 |
-| "我之后补测试" | 事后写的测试一跑就过，证明不了任何事 |
-| "我手动测过了" | 手动测试无记录、不可复跑、容易漏 |
+| 借口                     | 回应                                 |
+| ------------------------ | ------------------------------------ |
+| "太简单了不用测"         | 简单代码也会坏，测试只要 30 秒       |
+| "我之后补测试"           | 事后写的测试一跑就过，证明不了任何事 |
+| "我手动测过了"           | 手动测试无记录、不可复跑、容易漏     |
 | "已经写了代码，删了浪费" | 沉没成本。保留未验证的代码才是技术债 |
-| "TDD 太慢" | TDD 比事后调试快，省的是未来的时间 |
-| "这个不一样因为..." | 没有例外。删代码，从测试开始。 |
+| "TDD 太慢"               | TDD 比事后调试快，省的是未来的时间   |
+| "这个不一样因为..."      | 没有例外。删代码，从测试开始。       |
 
 ## 卡住时
 
-| 问题 | 解法 |
-|------|------|
-| 不知道怎么测 | 先写你期望的 API 调用，再写断言 |
-| 测试太复杂 | 说明设计太复杂，简化接口 |
-| 什么都要 mock | 代码耦合太高，用依赖注入解耦 |
-| 测试设置庞大 | 提取辅助函数；仍复杂就简化设计 |
+| 问题          | 解法                            |
+| ------------- | ------------------------------- |
+| 不知道怎么测  | 先写你期望的 API 调用，再写断言 |
+| 测试太复杂    | 说明设计太复杂，简化接口        |
+| 什么都要 mock | 代码耦合太高，用依赖注入解耦    |
+| 测试设置庞大  | 提取辅助函数；仍复杂就简化设计  |

@@ -1,4 +1,5 @@
 ---
+
 name: boss:upgrade
 description: "更新 Boss Skill 到市场最新版本。"
 allowed-tools: Bash, Read

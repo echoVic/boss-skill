@@ -1,4 +1,5 @@
 ---
+
 name: boss:dev
 description: "从开发开始：Frontend + Backend 按任务实现代码，默认自动续跑后续环节（测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, LSP
@@ -12,10 +13,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, LSP
 
 ## 适合 / 不适合
 
-| 适合 `/boss:dev` | 不适合 |
-|------------------|--------|
+| 适合 `/boss:dev`              | 不适合                        |
+| ----------------------------- | ----------------------------- |
 | 已有任务/架构，直接开始写代码 | 需求还不清晰（用 `/boss:pm`） |
-| 给已有项目加新功能 | 只想做测试（用 `/boss:qa`） |
+| 给已有项目加新功能            | 只想做测试（用 `/boss:qa`）   |
 
 ## 前置输入
 
@@ -50,7 +51,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, LSP
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
+| 参数                  | 说明                                                   |
+| --------------------- | ------------------------------------------------------ |
 | `--stop-after <环节>` | 跑到指定环节后停（如 `--stop-after dev` 只开发不测试） |
-| `--lang <zh\|en>` | 产物语言（默认 zh） |
+| `--lang <zh\|en>`     | 产物语言（默认 zh）                                    |

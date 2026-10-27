@@ -1,4 +1,5 @@
 ---
+
 name: devops/deploy-railway
 description: Railway 部署方法论，使用 railway CLI 部署后端服务（Node.js、Python、Go、Java、Docker）和托管数据库（PostgreSQL、MySQL、Redis）
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要部署后端服务到 Railway 时
-  - 项目需要托管数据库（PostgreSQL/MySQL/Redis）时
-  - 项目是多语言后端应用时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要部署后端服务到 Railway 时
+- 项目需要托管数据库（PostgreSQL/MySQL/Redis）时
+- 项目是多语言后端应用时
+  metadata:
   internal: true
+
 ---
 
 # Railway 部署
@@ -45,14 +47,14 @@ railway init
 
 Railway 使用 **Nixpacks** 自动检测项目类型并构建，无需手动配置：
 
-| 项目类型 | 检测依据 | 构建命令 | 启动命令 |
-|----------|----------|----------|----------|
-| Node.js | `package.json` | `npm install` + `npm run build` | `npm start` |
-| Python | `requirements.txt` / `pyproject.toml` | `pip install -r requirements.txt` | `python main.py` 或 `gunicorn` |
-| Go | `go.mod` | `go build` | 编译产物 |
-| Java | `pom.xml` / `build.gradle` | `mvn package` | `java -jar target/*.jar` |
-| Ruby | `Gemfile` | `bundle install` | `rails s` 或 `ruby app.rb` |
-| Docker | `Dockerfile` | Docker build | Docker CMD |
+| 项目类型 | 检测依据                              | 构建命令                          | 启动命令                       |
+| -------- | ------------------------------------- | --------------------------------- | ------------------------------ |
+| Node.js  | `package.json`                        | `npm install` + `npm run build`   | `npm start`                    |
+| Python   | `requirements.txt` / `pyproject.toml` | `pip install -r requirements.txt` | `python main.py` 或 `gunicorn` |
+| Go       | `go.mod`                              | `go build`                        | 编译产物                       |
+| Java     | `pom.xml` / `build.gradle`            | `mvn package`                     | `java -jar target/*.jar`       |
+| Ruby     | `Gemfile`                             | `bundle install`                  | `rails s` 或 `ruby app.rb`     |
+| Docker   | `Dockerfile`                          | Docker build                      | Docker CMD                     |
 
 ### 3. 配置启动命令（如自动检测失败）
 
@@ -229,14 +231,14 @@ jobs:
 
 ## 项目类型适配
 
-| 项目类型 | builder | startCommand 示例 |
-|----------|---------|-------------------|
-| Express/Koa (Node) | NIXPACKS | `npm start` |
-| FastAPI/Flask (Python) | NIXPACKS | `uvicorn main:app` 或 `gunicorn app:app` |
-| Gin/Fiber (Go) | NIXPACKS | `./server` |
-| Spring Boot (Java) | NIXPACKS | `java -jar target/app.jar` |
-| Rails (Ruby) | NIXPACKS | `rails s -b 0.0.0.0` |
-| Docker 应用 | DOCKERFILE | (Dockerfile CMD) |
+| 项目类型               | builder    | startCommand 示例                        |
+| ---------------------- | ---------- | ---------------------------------------- |
+| Express/Koa (Node)     | NIXPACKS   | `npm start`                              |
+| FastAPI/Flask (Python) | NIXPACKS   | `uvicorn main:app` 或 `gunicorn app:app` |
+| Gin/Fiber (Go)         | NIXPACKS   | `./server`                               |
+| Spring Boot (Java)     | NIXPACKS   | `java -jar target/app.jar`               |
+| Rails (Ruby)           | NIXPACKS   | `rails s -b 0.0.0.0`                     |
+| Docker 应用            | DOCKERFILE | (Dockerfile CMD)                         |
 
 ## 检查清单
 

@@ -1,4 +1,5 @@
 ---
+
 name: boss:ship
 description: "部署环节：DevOps 构建部署 + 上线前门禁 + 部署报告。专家小队终点环节。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
@@ -12,9 +13,9 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 适合 / 不适合
 
-| 适合 `/boss:ship` | 不适合 |
-|-------------------|--------|
-| 已过测试、要构建部署 | 还没开发（用 `/boss:dev`） |
+| 适合 `/boss:ship`    | 不适合                               |
+| -------------------- | ------------------------------------ |
+| 已过测试、要构建部署 | 还没开发（用 `/boss:dev`）           |
 | 补一份可追溯部署报告 | 只是本地跑一下（直接 `npm run dev`） |
 
 ## 前置输入
@@ -40,18 +41,18 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
    - 如用户指定平台（`--platform`），覆盖以上自动检测
    - 加载对应平台方法论 Skill
 
-   | 项目类型 | 推荐平台 | Skill |
-   |----------|----------|-------|
-   | Next.js / React / Vue | Vercel | `devops/deploy-vercel` |
-   | 静态站点 | Vercel / Netlify | `devops/deploy-vercel` |
-   | 边缘计算 / Workers | Cloudflare | `devops/deploy-cloudflare` |
-   | 全栈 + 数据库 | Render / Railway | `devops/deploy-render` |
-   | Node.js 后端 API | Railway | `devops/deploy-railway` |
-   | Python/Django/FastAPI | Railway | `devops/deploy-railway` |
-   | Go/Rust 后端 | Fly.io | `devops/deploy-flyio` |
-   | Java/Spring Boot | Railway | `devops/deploy-railway` |
-   | Docker 化应用 | Fly.io | `devops/deploy-flyio` |
-   | 有状态服务（需 Volume） | Fly.io | `devops/deploy-flyio` |
+   | 项目类型                | 推荐平台         | Skill                      |
+   | ----------------------- | ---------------- | -------------------------- |
+   | Next.js / React / Vue   | Vercel           | `devops/deploy-vercel`     |
+   | 静态站点                | Vercel / Netlify | `devops/deploy-vercel`     |
+   | 边缘计算 / Workers      | Cloudflare       | `devops/deploy-cloudflare` |
+   | 全栈 + 数据库           | Render / Railway | `devops/deploy-render`     |
+   | Node.js 后端 API        | Railway          | `devops/deploy-railway`    |
+   | Python/Django/FastAPI   | Railway          | `devops/deploy-railway`    |
+   | Go/Rust 后端            | Fly.io           | `devops/deploy-flyio`      |
+   | Java/Spring Boot        | Railway          | `devops/deploy-railway`    |
+   | Docker 化应用           | Fly.io           | `devops/deploy-flyio`      |
+   | 有状态服务（需 Volume） | Fly.io           | `devops/deploy-flyio`      |
 
 4. **派发 DevOps Agent**：读取 `agents/boss-devops.md`，执行构建 + 部署 + 健康检查，产出 `.boss/<slug>/deploy-report.md`。
 5. **上线前门禁**（参考 `references/quality-gate.md` Gate 2）：
@@ -76,7 +77,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
+| 参数                                                               | 说明                             |
+| ------------------------------------------------------------------ | -------------------------------- |
 | `--platform <vercel\|cloudflare\|render\|netlify\|railway\|flyio>` | 指定部署平台（不指定则自动检测） |
-| `--lang <zh\|en>` | 部署报告语言（默认 zh） |
+| `--lang <zh\|en>`                                                  | 部署报告语言（默认 zh）          |

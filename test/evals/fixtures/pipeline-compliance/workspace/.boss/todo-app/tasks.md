@@ -6,6 +6,6 @@
 
 ## Contract Matrix
 
-| Contract | Evidence |
-| --- | --- |
+| Contract  | Evidence |
+| --------- | -------- |
 | Todo flow | npm test |

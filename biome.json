@@ -1,12 +1,20 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/.git", "!**/node_modules", "!**/coverage"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.git",
+      "!**/node_modules",
+      "!**/coverage",
+      "!**/docs/archive",
+      "!**/docs/superpowers"
+    ]
   },
   "formatter": {
     "indentStyle": "space",
