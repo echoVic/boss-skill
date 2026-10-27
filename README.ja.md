@@ -2,50 +2,65 @@
 
 [![skills.sh](https://skills.sh/b/echovic/boss-skill)](https://skills.sh/echovic/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
+[![G-Star Incubation](https://img.shields.io/badge/G--Star-Incubation-C71D23)](https://atomgit.com/echoVic/boss-skill)
+[![AtomGit Mirror](https://img.shields.io/badge/AtomGit-Mirror-1F6FEB)](https://atomgit.com/echoVic/boss-skill)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
 **Languages / 语言 / 言語 / 언어 / Idiomas / Langues:** [English](./README.md) · [中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md) · [Español](./README.es.md) · [Français](./README.fr.md) · [Português](./README.pt-BR.md)
 
 ![boss-skill promo](https://raw.githubusercontent.com/echoVic/boss-skill/main/boss-skill-promo.png)
 
-**Boss は、コーディングエージェント向けの監査可能なエージェントチームワークフローです。** 1つのコーディングエージェントを、PM、Architect、UI Designer、Tech Lead、Scrum Master、Frontend、Backend、QA、DevOps という構造化されたエンジニアリングチームへと変えます。プロンプトのみのエージェントチームとは異なり、Boss にはランタイム状態、追記専用イベント、品質ゲート、決定的な eval、フック、再生可能なアーティファクトが追加されています。
+> このプロジェクトは AtomGit G-Star Incubation Program の一部です。GitHub が正規リポジトリであり、AtomGit は中国国内での高速アクセスのための自動同期ミラーを提供しています。Issue や Pull Request は [GitHub](https://github.com/echoVic/boss-skill) に投稿してください。
+>
+> GitHub: <https://github.com/echoVic/boss-skill> · AtomGit ミラー: <https://atomgit.com/echoVic/boss-skill>
+
+**Boss はコーディングエージェント向けのエキスパートスクワッドワークフローです。** 1 つのコーディングエージェントを、PM、Architect、UI Designer、Tech Lead、Scrum Master、Frontend、Backend、QA、DevOps という構造化されたエンジニアリングチームへと変えます。プロンプトのみのエージェントチームとは異なり、Boss はロールごとの硬性品質契約を強制し、再生可能なアーティファクトを生成し、ステージを自動的に連鎖させます——どこから始めても、あなたが止めるまで後続のステージを実行し続けます。
 
 Boss は Claude Code、Codex、OpenClaw、Antigravity、Hermes で動作します。
 
 ## Boss を選ぶ理由
 
-プロンプトのみのオーケストレーションは整然としているように見えても、計画どおりに実行されたこと、テストが実行されたこと、ゲートを通過したこと、状態がハルシネーションではないことを証明できないのが普通です。Boss はエビデンスを中心に構築されています:
+プロンプトのみのオーケストレーションは整然としているように見えても、計画どおりに実行されたこと、テストが実行されたこと、ゲートを通過したことを証明できないのが普通です。Boss はエビデンスと硬性契約を中心に構築されています:
 
-- **デフォルトでゼロ通信**: テレメトリなし、フォンホームなし、リモート LLM プロキシなし。唯一のネットワーク面は、`127.0.0.1` にバインドされたオプトインのループバックプレビューサーバのみです。ソースレベルの [network-boundary テスト](./test/runtime/network-boundary.test.ts)が、誰かが送信クライアントを再導入した瞬間に CI を落とします。詳細は [PRIVACY.md](./PRIVACY.md)。
-- **シェルインジェクション不可**: wave 検証は構造化 `argv`（`waves.json`）で実行され、シェルを経由しません。悪意あるリポジトリを clone しても、`tasks.md` からコマンドを密輸することはできません。
-- **イベントソーシング方式のランタイム**: パイプライン状態は `.boss/<feature>/.meta/events.jsonl` に追記され、読み取り専用の実行状態へ投影されます。
-- **検証可能なゲート**: QA、デプロイ、最終チェックは実際に実行されるコマンドであり、その判定はイベントとして記録されます。ステージが完了とされたのにゲートが不合格の場合、`boss gate final` と `boss doctor` は失敗と判定します。ゲートの実行はオーケストレータがプロトコルを守ることに依存します。CLI が提供するのは検証可能な判定と記録であり、迂回を阻止する仕組みではありません。
-- **再生可能なアーティファクト**: PRD、アーキテクチャドキュメント、タスクリスト、QA レポート、デプロイレポート、サマリーは `.boss/<feature>/` 配下に保存されます。
+- **硬性品質契約**: すべてのロールには妥協できない要求事項テーブルがあります（例: PRD には Given-When-Then シナリオが必須、アーキテクチャは少なくとも 2 つの選択肢を比較、QA は検証済みまたは正直に未検証と記載したエビデンスが必須）。契約に失敗した場合は、明示的にオーバーライドしない限り次のステージに進めません。
+- **アーティファクト駆動**: すべてのステージは `.boss/<feature>/` 配下に実ファイルを書き出します。進捗はエージェントの主張ではなく、ディスク上のアーティファクトで判断されます。
+- **継続チェーン**: 任意のステージ（`/boss:pm`、`/boss:dev` ...）から開始すると、Boss は `ship` またはあなたが停止するまで、すべての下流ステージを自動実行します。手動の引き継ぎは不要です。
+- **エンジニアリング原則**: スクワッドは 10 の原則を共有します——実物を検証する、根本原因を修正する、レバーを作る、ドメインをモデル化する、境界を守る、検証可能な単位にシーケンス化する、振る舞いをテストする、読者の負担を最小限にする、構造化された経験、自律的ルール。各エージェントは適用した原則を明記します。
+- **デフォルトで TDD**: 開発ステージでは最初に失敗するテストを書き、RED を確認してから、GREEN にする最小限のコードを書きます。
+- **デフォルトでゼロ通信**: テレメトリなし、フォンホームなし、リモート LLM プロキシなし。唯一のネットワーク面は UI プロトタイピング用のオプトイン・ループバックプレビューサーバ（`127.0.0.1`）のみです。詳細は [PRIVACY.md](./PRIVACY.md)。
 - **決定的な eval**: 記録されたトランスクリプトは、実際の LLM を呼び出すことなくスコアリングできます。
-- **エージェントフレンドリーな CLI**: コマンドは JSON 出力、`--describe`、ドライラン、制限付きフィールド、構造化エラーをサポートします。
-- **自己検証可能**: `boss doctor` は解決されたランタイム、インストール位置、イベントストリームの健全性、ネットワーク境界を出力します。「ゼロ通信」は主張ではなく監査可能な事実です。
 
-## 1つのロール、またはチーム全体を使う
+## エキスパートスクワッドコマンド
 
-Boss は単一のモノリシックなコマンドではありません。既存のプロジェクトに対して1つのロールだけを実行することも、アイデアから納品までフルパイプラインを実行することもできます。
+Boss は単一のモノリシックなコマンドではありません。各スラッシュコマンドはエントリポイントであり、デフォルトですべての下流ステージを自動実行します。
 
-| コマンド | 機能 | 使う場面 |
-| --- | --- | --- |
-| `/boss` | 全4ステージのパイプライン | アイデアから出荷可能な成果物まで進めたい場合 |
-| `/boss:plan` | PM + Architect による計画 | 実装前に PRD とアーキテクチャが欲しい場合 |
-| `/boss:review` | Tech Lead によるレビュー | コード、PR、デザインの読み取り専用レビューが必要な場合 |
-| `/boss:qa` | QA とゲート | 検証可能なテストエビデンスが必要な場合 |
-| `/boss:ship` | DevOps によるビルド・デプロイチェック | リリースの準備ができている場合 |
-| `/boss:extend` | カスタムエージェント、パック、ゲート | Boss を自チームに合わせて拡張したい場合 |
-| `/boss:upgrade` | Boss スキルの更新とフックの再マージ | 最新のマーケットプレイス版とフック設定が欲しい場合 |
+| コマンド | 起点 | 自動継続先 | 使う場面 |
+| --- | --- | --- | --- |
+| `/boss` | PM | 全チェーン → ship | アイデアから出荷可能な成果物まで進めたい場合 |
+| `/boss:pm` | PM | Architect → ... → Ship | 要件分析から始める |
+| `/boss:architect` | Architect | UI → ... → Ship | 仕様はあるが設計が必要な場合 |
+| `/boss:ui` | UI Designer | Review → ... → Ship | アーキテクチャはあるが UI が必要な場合 |
+| `/boss:review` | Tech Lead | Tasks → ... → Ship | 技術レビュー + 実装計画が必要な場合 |
+| `/boss:tasks` | Scrum Master | Dev → QA → Ship | タスク分解が必要な場合 |
+| `/boss:dev` | Frontend/Backend | QA → Ship | 実装を始める |
+| `/boss:qa` | QA | Ship | テストエビデンスが必要な場合 |
+| `/boss:ship` | DevOps | （終点） | デプロイのみ |
+
+完全なチェーン:
+
+```
+pm → architect → ui → review → tasks → dev → qa → ship
+```
+
+「止めて」「このステップだけ」と言うか、`--stop-after <ステージ>` を渡すと継続が停止します。
 
 ## クイックスタート
 
 ### 1. インストール
 
-Boss はコーディングエージェントにインストールするスキルであり、他のスキルをインストールするためのツールではありません。配布はマーケットプレイスのみです。npm パッケージもグローバルバイナリもありません。スキルには専用 CLI(`skill/cli/`)が同梱されており、フックとエージェントは `node` 経由でそれを呼び出します。
+Boss はコーディングエージェントにインストールするスキルです。配布はマーケットプレイスのみで、npm パッケージもグローバルバイナリもありません。
 
-**Claude Code — プラグインマーケットプレイス(推奨、フックも自動で設定されます):**
+**Claude Code — プラグインマーケットプレイス（推奨）:**
 
 ```text
 /plugin marketplace add echoVic/boss-skill
@@ -58,278 +73,154 @@ Boss はコーディングエージェントにインストールするスキル
 codex plugin marketplace add echoVic/boss-skill
 ```
 
-次にプラグインブラウザ(`/plugins`)を開き、**boss** をインストールします。
+プラグインブラウザ（`/plugins`）を開いて **boss** をインストールします。
 
-**任意のエージェント — `skills` CLI 経由([vercel-labs/skills](https://github.com/vercel-labs/skills)、skills.sh):**
+**任意のエージェント — `skills` CLI（[vercel-labs/skills](https://github.com/vercel-labs/skills)、skills.sh）経由:**
 
 ```bash
 npx skills add echoVic/boss-skill
 ```
 
-これはスキルをインストールする標準的でエージェント非依存の方法です。リポジトリから `boss` を検出し、対象エージェント / スコープ(プロジェクトかグローバルか)/ インストール方法を尋ね、コミット可能な `skills-lock.json` を記録します。Boss は単一のスキルルートとして配布されるため、ピッカーには `boss` だけが表示され、その内部方法論も一緒に引き継がれます。
+### 2. 既存プロジェクトで試す
 
-Codex などのコピー式インストールでは、同梱 CLI で Boss のフックをマージします:
+最低コストの初回実行は、既存コードに対する読み取り専用レビューです:
 
-```bash
-node <installed-skill>/cli/bin/boss.mts install
+```
+/boss:review
 ```
 
-### 2. 軽量パイプラインを実行する
+`.boss/<feature>/` 配下にリスク、所見、深刻度を含む `tech-review.md`（と `plan.md`）が生成されます。リポジトリの他のファイルは一切変更されません。
+
+検証可能なテストエビデンスが必要な場合は？ `/boss:qa` がテストを実行し、`qa-report.md` を書き出します。
+
+### 3. フルパイプラインを実行
 
 コーディングエージェント内で:
 
 ```text
-/boss Build a local personal todo app --roles core --skip-deploy
+/boss Build a local personal todo app --skip-ui
 ```
 
-- `--roles core` は PM、Architect、Dev、QA を使用します。
-- `--skip-deploy` は実装とテストエビデンスの後に停止します。
+- `--skip-ui` は UI 設計ステージをスキップします（API 専用/CLI プロジェクト向け）。
+- `--quick` は通常の確認プロンプトをスキップします。
 
-### 3. 結果を確認する
+### 4. 結果を確認
 
-Boss は専用 CLI をスキル内に同梱しています。npm install も PATH の設定も不要です。以下のスニペットで、`<skill>` は `SKILL.md` を含むディレクトリを指します(Claude Code のプラグインインストールでは `<plugin-root>/skill`、コピー式インストールでは例えば `~/.codex/skills/boss`)。
-
-```bash
-node <skill>/cli/bin/boss.mts status todo-app --json
-node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
-```
-
-想定されるアーティファクト構成:
+アーティファクトは `.boss/<feature>/` 配下にあります:
 
 ```text
 .boss/todo-app/
-├── design-brief.md
-├── prd.md
-├── architecture.md
-├── tasks.md
-├── qa-report.md
-└── .meta/
-    ├── events.jsonl
-    ├── execution.json
-    └── workflow-plan.json
-```
-
-## Boss を使うべき場面
-
-| 適しているケース | 適さないケース |
-| --- | --- |
-| 要件、設計、実装、テスト、納品エビデンスを必要とする新機能 | 1行の修正や小さなローカル編集 |
-| API、フルスタック、UI、あるいは中規模のプロダクト開発 | コードを読む・説明するだけの作業 |
-| `.boss/<feature>/` のアーティファクトに価値がある作業 | 仕様がすでに完成していて素早いパッチだけで済むタスク |
-| 再現可能なゲートと監査証跡を求めるチーム | 調整やレビューのエビデンスが不要な作業 |
-
-経験則: 追跡可能な `.boss/` フォルダが不要なら、おそらくフルの `/boss` パイプラインも不要です。単一ロールを使うか、コーディングエージェントに直接編集させましょう。
-
-## CLI がなくても動作します
-
-CLI はスキルに同梱されているため、マーケットプレイスからのインストールには必ず含まれます。`node` が利用できない、または CLI を見つけられない場合、ワークフローはイベントストリームではなく `.boss/<feature>/` 配下の Markdown アーティファクトへ縮退します。CLI は監査可能性を強化するものです。イベントソーシング、再生可能な再開、決定的な eval、ランタイムゲート、構造化診断を提供します。
-
-Boss は「一度インストールすれば自律的な納品が保証される」という意味ではありません。ランタイムワークフローとエビデンスゲートを提供するものであり、アクティブなコーディングエージェントが Boss プロトコルに従う必要は依然としてあります。
-
-## インストールの詳細
-
-マーケットプレイスからのインストールでは、`skill/` ディレクトリ全体がコピー(またはリンク)されます。CLI は `<skill>/cli/bin/boss.mts` に TypeScript ソースとして同梱され、Node.js `>=22.18`(ネイティブの型ストリッピング)によって直接実行されます — ビルド手順も npm パッケージもグローバルな `boss` バイナリもありません。フックはフルパスでこれを参照します。
-
-便利なコマンド(同梱 CLI 経由で実行):
-
-```bash
-node <skill>/cli/bin/boss.mts install --dry-run
-node <skill>/cli/bin/boss.mts uninstall
-node <skill>/cli/bin/boss.mts path
-node <skill>/cli/bin/boss.mts --version
-```
-
-自動検出されるターゲット:
-
-| エージェント | 検出方法 | インストール方法 |
-| --- | --- | --- |
-| OpenClaw | `~/.openclaw/` | `~/.openclaw/skills/boss/` にコピーし、メタデータを注入 |
-| Codex | `~/.codex/` | `~/.codex/skills/boss/` にコピーし、メタデータを注入してフックをマージ |
-| Antigravity | `~/.gemini/antigravity/` | Antigravity のスキルディレクトリにコピーし、メタデータを注入 |
-| Hermes | `~/.hermes/` | `~/.hermes/skills/boss/` にコピーし、メタデータを注入 |
-| Claude Code | 常に利用可能 | プラグインマーケットプレイス(クイックスタート参照) |
-
-## プラットフォームサポート
-
-Boss は Node.js `>=22.18` を対象とし、Linux、macOS、Windows で動作します。CLI はスキル内に TypeScript ソースとして同梱され、Node が直接実行します(ネイティブの型ストリッピング — ビルド手順はありません)。外部コマンドは明示的な引数配列を伴う `spawnSync` 経由でのみ呼び出し(`shell: true` は使いません)、Windows では `npm`/`npx` をそれぞれの `.cmd` 版に解決するため、コアパイプラインに POSIX 限定の前提はありません。
-
-2つの機能はオプションの外部ツールに依存しており、それらがない場合は穏やかに縮退します:
-
-- **WIP チェックポイント**(スタッシュ/コミット/ブランチ)には `git` と Git の作業ツリーが必要です。リポジトリの外、または `PATH` に `git` がない場合、チェックポイントは警告なしにスキップされ、パイプラインには影響しません。
-- **レガシーな手書き `gate.sh` プラグイン**は `bash` 経由で実行されます。`PATH` に bash がない Windows では起動に失敗するため、移植性のあるプラグインにはクロスプラットフォームの Node ゲートエントリ(`gate.js` / `gate.mjs`)を使用してください。
-
-`boss doctor` を実行すると、解決済みのランタイム環境(Node のバージョン、プラットフォーム、`git` の利用可否)を、インストールとイベントストリームの健全性とともに確認できます。
-
-## コマンド
-
-よく使うスラッシュコマンド:
-
-```text
-/boss Build a todo app
-/boss Add authentication to this existing project --skip-ui
-/boss Build an API service --skip-deploy --quick
-/boss Continue the previous task --continue-from 3
-/boss Lightweight mode --roles core --hitl-level off
-/boss:upgrade
-```
-
-よく使うオプション:
-
-| オプション | 意味 |
-| --- | --- |
-| `--roles <preset>` | 9ロールすべてを使う `full`、または PM/Architect/Dev/QA を使う `core` |
-| `--skip-ui` | UI デザインをスキップします |
-| `--skip-deploy` | デプロイをスキップします |
-| `--quick` | 確認ノードと要件明確化ノードをスキップします |
-| `--template` | `.boss/templates/` を初期化して一時停止します |
-| `--continue-from <1-4>` | パイプラインのステージから再開します |
-| `--hitl-level <level>` | ヒューマンインザループモード: `auto`、`interactive`、`off` |
-
-Boss CLI コマンド:
-
-```bash
-boss --help
-boss status FEATURE
-boss continue FEATURE
-boss gate FEATURE
-boss qa attack FEATURE
-boss project init FEATURE
-boss design preview FEATURE
-boss packs detect
-boss runtime inspect-pipeline FEATURE
-boss runtime generate-summary FEATURE
-```
-
-エージェント向けの `boss` コマンドは、該当する場合にこれらの共通オプションを使用します。コマンドに `--describe` を付けると正確な JSON スキーマを確認できます:
-
-- `--json`: 構造化出力。非 TTY の stdout はデフォルトで JSON になります
-- `--describe`: JSON コマンドスキーマ
-- `--dry-run`: 書き込みやリスクのある操作の構造化アクションプラン
-- `--json-input=<json|->`: JSON 入力ペイロード
-- `--fields=<a,b>` と `--limit=<n>`: 出力の制限
-- `--yes`: 追加の確認が必要な高リスクの非対話型コマンドでのみ必須
-
-構造化エラーは stderr に `{"error":{...}}` として書き込まれ、`code`、`message`、`input`、`retryable`、`suggestion` を含みます。
-
-## ワークフロー
-
-Boss は4ステージのワークフローに従います:
-
-```text
-User request
-  -> requirement clarification
-  -> Stage 1: PM, Architect, UI Designer
-  -> Stage 2: Tech Lead, Scrum Master
-  -> Stage 3: Frontend, Backend, QA, gates
-  -> Stage 4: DevOps, deployment checks, summary
-```
-
-全ロール一覧:
-
-| ロール | 責務 |
-| --- | --- |
-| PM | 要件の洗い出し、PRD、潜在的ニーズ、エッジケース |
-| Architect | システムアーキテクチャ、技術設計、API |
-| UI Designer | UI/UX 仕様とレンダリング可能なデザイン JSON |
-| Tech Lead | 技術レビュー、リスク評価 |
-| Scrum Master | タスク分解と受け入れ基準 |
-| Frontend | UI 実装とフロントエンドテスト |
-| Backend | API、ストレージ、バックエンドテスト |
-| QA | テスト実行、バグ報告、検証エビデンス |
-| DevOps | ビルド、デプロイ、ヘルスチェック |
-
-## ランタイムと品質ゲート
-
-Boss には2層の品質管理があります:
-
-- **ハード制約**(コードと CI によって検証されます): ランタイムイベント、保護された `execution.json`、フック、インストールマトリックステスト、ハーネスシナリオ、Vitest カバレッジ。
-- **エージェントプロトコル制約**(スキルバンドルによって誘導されます): DAG ディスパッチ、段階的なリファレンス読み込み、テストエビデンス、ゲート規律。
-
-組み込みゲート:
-
-| ゲート | タイミング | チェック内容 |
-| --- | --- | --- |
-| Gate 0 | 開発後、QA 前 | TypeScript、lint、基本的なコンパイルチェック |
-| Gate 1 | QA 後、デプロイ前 | テストエビデンス、P0/P1 バグなし、E2E 期待値 |
-| Gate 2 | Web デプロイ前 | 該当する場合の Lighthouse と API レイテンシの目標値 |
-
-フックは環境変数で制御されます:
-
-| 変数 | 値 |
-| --- | --- |
-| `BOSS_HOOK_PROFILE` | `minimal`、`standard`、`strict` |
-| `BOSS_DISABLED_HOOKS` | カンマ区切りのフック ID |
-
-ランタイム状態は `.boss/<feature>/.meta/workflow-plan.json` と `.boss/<feature>/.meta/execution.json` によって支えられています。ワークフロー定義には `workflowHash`、`packHash`、アーティファクト DAG ハッシュが記録されます。ランタイムの再開では `boss runtime resume <feature> --from-run <run-id>` を使用してプランを再読み込みし、ノード入力を比較して、次にスケジュール可能なノードのための `execution.workflow.nextNodeIds` を具体化します。`GateEvaluated` / `WaveVerified` イベントは、ゲートとエビデンスウェーブの完了時にワークフローノードのステータスを更新します。
-
-## セキュリティ上重要な領域
-
-Boss は公開するプラグインマニフェストを意図的に小さく保っています。宣言するのは同梱スキルのみで、MCP サーバー、アプリマニフェスト、アセット参照は、対応するファイルが存在しない限り記載しません。Codex のフックは、マーケットプレイスマニフェストではなく `boss-skill install` のフローによってインストールされます。
-
-npm パッケージには、`.claude/settings.json` や `.claude/settings.local.json` といったローカル開発用のエージェント設定は含まれません。公開可能なプラグインメタデータは `.claude-plugin/`、`.codex-plugin/`、`.agents/plugins/marketplace.json` に置かれます。
-
-リリースの来歴は `.agents/plugins/provenance.json` にあります。ここには、リポジトリの HTTPS URL、イミュータブルなソースコミット SHA、パブリッシャーの身元、プラグインマニフェストとセキュリティ上重要なコンポーネントの SHA-256 ダイジェストが固定されています。次のコマンドで検証できます:
-
-```bash
-npm run provenance:verify
-```
-
-パブリッシャーの検証はパッケージの外部で行われます。HOL レジストリでは、リポジトリ所有者の GitHub アカウントで `https://hol.org/guard/plugins` からプラグインを申請してください。公開トラストカードは `https://hol.org/registry/plugins/echovic%2Fboss/embed` で入手できます。
-
-公開またはインストールの前に確認すべきセキュリティ上重要な動作:
-
-- `boss-skill install` は `~/.codex/skills/boss/` などのエージェント設定ディレクトリに書き込みを行い、`~/.codex/hooks.json` に Boss 管理のエントリをマージする場合があります。
-- フックエントリは `boss hooks run ...` を実行し、`scripts/hooks/` のスクリプトをディスパッチします。
-- `.boss/plugins/<name>/plugin.json` 配下のランタイムプラグインは、ゲートフックやレポーターフックを登録できます。有効化する前にプロジェクトローカルのプラグインを確認してください。
-- 機密性の高い環境でフックの動作を減らす必要がある場合は、`BOSS_HOOK_PROFILE=minimal` または `BOSS_DISABLED_HOOKS=<ids>` を使用してください。
-
-Boss はローカルファーストで、デフォルトでは外部へのネットワークリクエストを行いません。唯一のネットワーク面は、オプトインでループバック限定の `boss design preview` サーバーです。データとネットワークの境界の全体像は [PRIVACY.md](PRIVACY.md) を参照してください。
-
-## パイプラインのアーティファクト
-
-```text
-.boss/<feature>/
-├── design-brief.md
 ├── prd.md
 ├── architecture.md
 ├── ui-spec.md
 ├── ui-design.json
 ├── tech-review.md
+├── plan.md
 ├── tasks.md
 ├── qa-report.md
-├── deploy-report.md
-├── summary-report.md
-└── .meta/
-    ├── events.jsonl
-    ├── execution.json
-    └── workflow-plan.json
+└── deploy-report.md
 ```
 
-生成された UI デザインをプレビューするには、対話型環境で次を実行します:
+各 Markdown アーティファクトは `## 摘要`（サマリー）セクションで始まり、下流のエージェントは結論を先に読み、必要に応じて全文を読みます。
+
+## ワークフロー
+
+```text
+ユーザー要求
+  → 要件の明確化（--quick を除く）
+  → PM: 要件分析 → prd.md
+  → Architect: システム設計 → architecture.md
+  → UI Designer: UI/UX 仕様 → ui-spec.md + ui-design.json（--skip-ui でスキップ）
+  → Tech Lead: 技術レビュー + 実装計画 → tech-review.md + plan.md
+  → Scrum Master: タスク分解 → tasks.md
+  → Frontend / Backend: TDD 実装
+  → QA: テスト実行、バグレポート、エビデンス → qa-report.md
+  → DevOps: ビルド、デプロイ、ヘルスチェック → deploy-report.md
+```
+
+### ロールとアーティファクト
+
+| ロール | 責務 | アーティファクト |
+| --- | --- | --- |
+| PM | 要件分析、PRD、隠れたニーズ、エッジケース | `prd.md` |
+| Architect | システムアーキテクチャ、技術設計、API | `architecture.md` |
+| UI Designer | UI/UX 仕様、レンダリング可能な設計 JSON、HTML プロトタイプ | `ui-spec.md`、`ui-design.json` |
+| Tech Lead | 技術レビュー、リスク評価、実装計画 | `tech-review.md`、`plan.md` |
+| Scrum Master | タスク分解と受け入れ基準 | `tasks.md` |
+| Frontend | UI 実装、TDD、フロントエンドテスト | ソースコード |
+| Backend | API、ストレージ、TDD、バックエンドテスト | ソースコード |
+| QA | テスト実行、バグレポート、検証エビデンス | `qa-report.md` |
+| DevOps | ビルド、デプロイ、ヘルスチェック | `deploy-report.md` |
+
+## 品質契約
+
+Boss の品質管理は 2 層構造です:
+
+- **ロールごとの硬性要求**: 各エージェントのプロンプトには妥協できない要求事項テーブルが定義されています。エージェントは引き継ぎ前にセルフチェックし、契約に失敗した場合は次のステージに進めません。
+- **品質ゲート**: 実際に実行されるコマンドであり、その判定はステージのアーティファクトに記録されます。
+
+| ゲート | タイミング | チェック内容 |
+| --- | --- | --- |
+| Gate 0（コード品質） | 開発後、QA 前 | TypeScript/lint パス、高深刻度の依存関係脆弱性なし |
+| Gate 1（テスト） | QA 後、デプロイ前 | 単体 + 結合テストパス、カバレッジ ≥ 70%、P0/P1 バグなし、E2E テスト作成済み |
+| Gate 2（パフォーマンス） | Web デプロイ前 | Lighthouse ≥ 80、API P99 < 500ms（Web プロジェクトのみ） |
+
+## Boss を使うべきとき
+
+| 適している | 適さない |
+| --- | --- |
+| 要件、設計、実装、テスト、納品エビデンスが必要な新機能 | 1 行修正や小さなローカル編集 |
+| API、フルスタック、UI、中規模プロダクト作業 | 純粋なコードリーディングや説明 |
+| `.boss/<feature>/` アーティファクトが価値を持つ作業 | 既存の完全な仕様があり、クイックパッチだけが必要なタスク |
+| 反復可能な品質ゲートと監査証跡を求めるチーム | 調整やレビューエビデンスが不要な作業 |
+
+経験則: トレース可能な `.boss/` フォルダが必要ないなら、完全な `/boss` パイプラインは不要かもしれません。単一のロールを使うか、コーディングエージェントに直接編集させてください。
+
+## セキュリティとプライバシー
+
+Boss はローカルファーストであり、デフォルトで一切の外部ネットワークリクエストを行いません。唯一のネットワーク面は、UI 設計ステージで使用されるオプトインのループバック専用（`127.0.0.1`）HTML プロトタイプサーバです。
+
+リリースの provenance は `.agents/plugins/provenance.json` にあります。リポジトリ HTTPS URL、不変のソースコミット SHA、パブリッシャー ID、プラグインマニフェストの SHA-256 ダイジェストを記録しています。以下で検証できます:
 
 ```bash
-boss design preview <feature>
+npm run provenance:verify
+```
+
+完全なデータとネットワーク境界については [PRIVACY.md](./PRIVACY.md) を参照してください。
+
+## パイプラインアーティファクト
+
+```text
+.boss/<feature>/
+├── prd.md              # PM — 製品要件
+├── architecture.md     # Architect — システム設計
+├── ui-spec.md          # UI Designer — UI/UX 仕様（--skip-ui でスキップ）
+├── ui-design.json      # UI Designer — レンダリング可能な設計 JSON
+├── tech-review.md      # Tech Lead — 技術レビュー
+├── plan.md             # Tech Lead — 実装計画
+├── tasks.md            # Scrum Master — タスク分解
+├── qa-report.md        # QA — テストエビデンス
+└── deploy-report.md    # DevOps — デプロイ記録
 ```
 
 ## Evals
 
-Boss の eval は、実際の LLM を起動せずに、記録されたフィクスチャをスコアリングします:
+Boss の eval は、実際の LLM を起動することなく、キャプチャされたフィクスチャをスコアリングします:
 
 ```bash
 npm run evals
 npm run evals:release
 ```
 
-リリース eval にはリリースエビデンスとパイプラインコンプライアンスのチェックが含まれます。ランタイムコマンドの使用、アーティファクトの記録、`execution.json` の直接編集の回避、ワークフローのスケジューリングフィールドを検証します。
+リリース eval には release-evidence と pipeline-compliance のチェックが含まれます——アーティファクトの記録、廃止された runtime コマンドの回避、エキスパートスクワッドのオーケストレーション動作を検証します。
 
-[test/evals/README.md](./test/evals/README.md) を参照してください。
+詳細は [test/evals/README.md](./test/evals/README.md) を参照してください。
 
 ## 開発
 
-必要条件:
+要件:
 
-- Node.js >= 22.18(`.mts` の CLI ソースを直接実行)
-- シェルベースのテストヘルパー用の `jq`
+- Node.js >= 22.18
 
 セットアップ:
 
@@ -344,45 +235,38 @@ npm test
 便利なスクリプト:
 
 ```bash
-npm run typecheck   # tsc は .mts ソースをチェックするだけ — ビルド出力はありません
-npm test
-npm run test:skills
-npm run test:harness
-npm run test:install-matrix
-npm run evals
+npm run typecheck    # tsc --noEmit
+npm test             # vitest（単体 + スキル振る舞い + evals）
+npm run test:skills  # スキル振る舞いテストのみ
+npm run evals        # 決定的トランスクリプト eval
+npm run lint         # biome ci
 ```
 
 ## リポジトリ構成
 
 ```text
 boss-skill/
-├── skill/                      # コーディングエージェントにインストールされるスキルバンドル(自己完結型)
-│   ├── cli/                    # CLI とランタイムのソース(.mts、直接実行 — ビルドなし)
-│   ├── scripts/                # フックランタイム(ディスパッチャー + フックスクリプト)
-│   └── assets/                 # 組み込み DAG、パイプラインパック、プラグインスキーマ
-├── test/                       # Vitest、ハーネス、eval、フック、インストールのテスト
-├── docs/superpowers/           # 過去の仕様書、プラン、レポート
+├── skill/                      # コーディングエージェントにインストールされるスキルバンドル（自己完結）
+│   ├── SKILL.md                # メインオーケストレーションエントリ（不変条件 + インデックス）
+│   ├── agents/                 # ロールプロンプト（boss-pm、boss-architect、...）
+│   ├── commands/               # スラッシュコマンド（/boss、/boss:pm、...）
+│   ├── references/             # 共有メソッドロジー（principles、quality-gate、...）
+│   ├── skills/                 # ドメイン別メソッドロジースキル（pm/、qa/、devops/、...）
+│   └── templates/              # アーティファクトテンプレート（.md.template）
+├── test/                       # Vitest、スキル振る舞い、eval テスト
+├── scripts/                    # release.js、provenance.js
+├── docs/                       # 履歴的な specs、plans、reports
 ├── examples/                   # サンプルプロジェクト
 ├── .claude-plugin/             # Claude Code プラグインマニフェスト + マーケットプレイス
 ├── .codex-plugin/              # Codex プラグインマニフェスト + マーケットプレイス
-├── .agents/plugins/            # リポジトリ単位のプラグインマーケットプレイス + 来歴
-├── tsconfig.json               # 型チェック専用設定(emit なし)
-└── package.json                # プライベートな開発ワークスペース(公開されません)
+├── .agents/plugins/            # リポジトリスコープのプラグインマーケットプレイス + provenance
+├── tsconfig.json               # 型チェックのみの設定（noEmit）
+└── package.json                # プライベート開発ワークスペース（公開されない）
 ```
-
-重要なソース領域:
-
-- `skill/cli/` には CLI とランタイムの TypeScript ソース(`.mts`)が含まれ、Node `>=22.18` によって直接実行されます。これらのファイルを直接編集してください — ビルド手順も生成されたコピーもありません。
-- `skill/assets/` には組み込みの DAG、パイプラインパック、プラグインスキーマ、プラグインが含まれます。
-- `skill/scripts/` にはフックランタイム(`lib/run-with-flags.js`)とフックスクリプトが含まれます。
-- `skill/SKILL.md` はエージェント向けオーケストレーションのメインエントリです。
-- `skill/agents/` にはロールプロンプトが含まれます。
-- `skill/commands/` にはスラッシュコマンドが含まれます。
-- `skill/templates/` にはアーティファクトテンプレートが含まれます。
 
 ## リリース
 
-パッケージメタデータとスキル/プラグインマニフェストの間でバージョン番号の同期を保つために、リリーススクリプトを使用してください:
+リリーススクリプトを使って、パッケージメタデータとスキル/プラグインマニフェスト間のバージョン番号を同期させます:
 
 ```bash
 npm run release -- patch
@@ -392,20 +276,20 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-リリーススクリプトは、作業ツリーがクリーンであることを確認し、完全な検証チェーンを実行し、バージョンを同期し、整合性を検証し、コミットとタグを作成してプッシュします。リリースは git タグそのもので、マーケットプレイスはリポジトリを読み取ります — npm publish の手順もビルド手順もありません。
+リリーススクリプトは、ワークツリーのクリーン状態を確認し、完全な検証チェーン（typecheck、lint、test）を実行し、すべてのマニフェストのバージョンを同期し、整合性を検証し、コミットとタグを作成してプッシュします。リリース物は git タグです: マーケットプレイスはリポジトリを読み取ります——npm publish もビルドステップもありません。
 
-[CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
+詳細は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 
-## 設計思想
+## 設計
 
-Boss は BMAD(Breakthrough Method of Agile AI-Driven Development)に触発されています。このプロジェクトは、そのアイデアをエージェントによるソフトウェア開発のための監査可能なランタイムへと応用したものです。
+Boss は BMAD（Breakthrough Method of Agile AI-Driven Development）と「write less, higher quality code」の哲学に触発されています。エキスパートスクワッドモデルは、ハーネスを軽量に保ちます——runtime 状態機械もイベントソーシングも hooks もなし——それでいて硬性品質契約とアーティファクト駆動のコラボレーションを維持します。
 
-詳細は [DESIGN.md](./DESIGN.md) と `skill/references/bmad-methodology.md` をご覧ください。
+詳細は [DESIGN.md](./DESIGN.md)、`skill/references/bmad-methodology.md`、`skill/references/principles.md` を参照してください。
 
-## スター履歴
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=echoVic/boss-skill&type=Date)](https://star-history.com/#echoVic/boss-skill&Date)
 
-## ライセンス
+## License
 
 MIT

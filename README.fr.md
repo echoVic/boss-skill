@@ -2,50 +2,65 @@
 
 [![skills.sh](https://skills.sh/b/echovic/boss-skill)](https://skills.sh/echovic/boss-skill)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/echoVic/boss-skill?utm_source=oss&utm_medium=github&utm_campaign=echoVic%2Fboss-skill&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
+[![G-Star Incubation](https://img.shields.io/badge/G--Star-Incubation-C71D23)](https://atomgit.com/echoVic/boss-skill)
+[![AtomGit Mirror](https://img.shields.io/badge/AtomGit-Mirror-1F6FEB)](https://atomgit.com/echoVic/boss-skill)
 [![Boss trust badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dechovic%252Fboss%26metric%3Dtrust%26style%3Dflat)](https://hol.org/registry/plugins/echovic%2Fboss)
 
 **Languages / 语言 / 言語 / 언어 / Idiomas / Langues:** [English](./README.md) · [中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md) · [Español](./README.es.md) · [Français](./README.fr.md) · [Português](./README.pt-BR.md)
 
 ![boss-skill promo](https://raw.githubusercontent.com/echoVic/boss-skill/main/boss-skill-promo.png)
 
-**Boss est un workflow d'équipe d'agents auditable pour les agents de codage.** Il transforme un agent de codage en une équipe d'ingénierie structurée : PM, Architect, UI Designer, Tech Lead, Scrum Master, Frontend, Backend, QA et DevOps. Contrairement aux équipes d'agents reposant uniquement sur des prompts, Boss ajoute un état de runtime, des événements append-only, des gates de qualité, des evals déterministes, des hooks et des artefacts rejouables.
+> Ce projet fait partie du programme AtomGit G-Star Incubation. GitHub est le dépôt canonique ; AtomGit fournit un miroir synchronisé automatiquement pour un accès plus rapide en Chine. Veuillez soumettre les issues et pull requests sur [GitHub](https://github.com/echoVic/boss-skill).
+>
+> GitHub : <https://github.com/echoVic/boss-skill> · Miroir AtomGit : <https://atomgit.com/echoVic/boss-skill>
+
+**Boss est un workflow d'escouade d'experts pour les agents de codage.** Il transforme un agent de codage en une équipe d'ingénierie structurée : PM, Architecte, Designer UI, Tech Lead, Scrum Master, Frontend, Backend, QA et DevOps. Contrairement aux équipes d'agents reposant uniquement sur des prompts, Boss impose des contrats de qualité stricts par rôle, produit des artefacts rejouables et enchaîne les étapes automatiquement : commencez où vous voulez, il exécute le reste jusqu'à ce que vous disiez stop.
 
 Boss fonctionne avec Claude Code, Codex, OpenClaw, Antigravity et Hermes.
 
 ## Pourquoi Boss
 
-Une orchestration reposant uniquement sur des prompts peut sembler organisée, mais elle ne peut généralement pas prouver que le plan a été suivi, que les tests ont été exécutés, que les gates ont été franchies ou que l'état n'a pas été halluciné. Boss est construit autour de preuves :
+L'orchestration par prompts seule peut sembler organisée, mais elle ne peut généralement pas prouver que le plan a été suivi, que les tests ont été exécutés ou que les gates ont été passées. Boss est construit autour de la preuve et des contrats stricts :
 
-- **Zéro réseau par défaut** : aucune télémétrie, aucun phone-home, aucun proxy LLM distant. La seule surface réseau est un serveur d'aperçu opt-in lié à `127.0.0.1`. Un [test network-boundary](./test/runtime/network-boundary.test.ts) au niveau du code source fait échouer la CI si quelqu'un réintroduit un client sortant. Voir [PRIVACY.md](./PRIVACY.md).
-- **Pas d'injection shell** : la vérification des waves s'exécute via un `argv` structuré (`waves.json`), jamais via une shell. Cloner un dépôt malveillant ne peut pas glisser de commandes via `tasks.md`.
-- **Runtime à event sourcing** : l'état du pipeline est ajouté à `.boss/<feature>/.meta/events.jsonl` et projeté dans un état d'exécution en lecture seule.
-- **Gates vérifiables** : la QA, le déploiement et les vérifications finales sont de vraies commandes dont les verdicts sont enregistrés comme événements. `boss gate final` et `boss doctor` échouent lorsqu'une étape marquée terminée porte un gate en échec. L'application reste tributaire du respect du protocole par l'agent orchestrateur : la CLI rend le verdict vérifiable, pas inévitable.
-- **Artefacts rejouables** : les PRD, documents d'architecture, listes de tâches, rapports QA, rapports de déploiement et résumés sont stockés sous `.boss/<feature>/`.
-- **Evals déterministes** : les transcriptions capturées peuvent être notées sans appeler un vrai LLM.
-- **CLI adaptée aux agents** : les commandes prennent en charge la sortie JSON, `--describe`, les exécutions à blanc, les champs limités et les erreurs structurées.
-- **Auto-vérifiable** : lancez `boss doctor` pour confirmer le runtime résolu, les emplacements d'installation, l'intégrité du flux d'événements et la limite réseau — l'affirmation « zéro réseau » est auditable, pas seulement déclarée.
+- **Contrats de qualité stricts** : chaque rôle possède un tableau d'exigences non négociables (par exemple, le PRD doit contenir des scénarios Given-When-Then ; l'architecture doit comparer au moins deux options ; QA doit enregistrer des preuves vérifiées ou honnêtement non vérifiées). Un contrat échoué bloque l'étape suivante sauf override explicite.
+- **Orienté artefacts** : chaque étape écrit un fichier réel sous `.boss/<feature>/`. La progression est jugée sur les artefacts sur disque, pas sur ce que l'agent affirme.
+- **Chaîne de continuation** : commencez à n'importe quelle étape (`/boss:pm`, `/boss:dev`, ...) et Boss exécute automatiquement toutes les étapes en aval jusqu'à `ship` ou jusqu'à ce que vous l'arrêtiez. Pas de transferts manuels.
+- **Principes d'ingénierie** : l'escouade partage dix principes : vérifier le produit réel, corriger les causes racines, construire le levier, modéliser le domaine, discipline des frontières, séquencer les unités vérifiables, tester le comportement, minimiser la charge du lecteur, expérience structurée, règles autonomes. Chaque agent cite le principe qu'il applique.
+- **TDD par défaut** : les étapes de développement doivent d'abord écrire un test qui échoue, constater l'état RED, puis écrire le code minimum pour passer à GREEN.
+- **Zéro réseau par défaut** : pas de télémétrie, pas de phone-home, pas de proxy LLM distant. La seule surface réseau est un serveur de prévisualisation loopback opt-in (`127.0.0.1`) pour le prototypage UI. Voir [PRIVACY.md](./PRIVACY.md).
+- **Evals déterministes** : les transcriptions capturées sont notées sans appeler de vrai LLM.
 
-## Utiliser un seul rôle ou toute l'équipe
+## Commandes de l'Escouade d'Experts
 
-Boss n'est pas une commande monolithique unique. Vous pouvez exécuter un seul rôle sur un projet existant, ou lancer le pipeline complet de l'idée à la livraison.
+Boss n'est pas une seule commande monolithique. Chaque commande slash est un point d'entrée ; par défaut elle exécute automatiquement toutes les étapes en aval.
 
-| Commande | Ce qu'elle fait | Quand l'utiliser |
-| --- | --- | --- |
-| `/boss` | Pipeline complet en 4 étapes | Vous voulez passer de l'idée à un travail livrable |
-| `/boss:plan` | Planification PM + Architect | Vous voulez une PRD et l'architecture avant l'implémentation |
-| `/boss:review` | Revue par le Tech Lead | Vous avez besoin d'une revue en lecture seule du code, d'une PR ou du design |
-| `/boss:qa` | QA plus gates | Vous avez besoin de preuves de test vérifiables |
-| `/boss:ship` | Vérifications de build et de déploiement DevOps | Vous êtes prêt à livrer |
-| `/boss:extend` | Agent, pack ou gate personnalisé | Vous voulez adapter Boss à votre équipe |
-| `/boss:upgrade` | Mettre à jour Boss Skill et refusionner les hooks | Vous voulez la dernière version du marketplace et la config des hooks |
+| Commande | Commence à | Exécute jusqu'à | Quand l'utiliser |
+| --- | --- | --- | --- |
+| `/boss` | PM | chaîne complète → ship | Aller de l'idée au travail livrable |
+| `/boss:pm` | PM | Architect → ... → Ship | Commencer par les exigences |
+| `/boss:architect` | Architect | UI → ... → Ship | Vous avez une spec, besoin de design |
+| `/boss:ui` | Designer UI | Review → ... → Ship | Vous avez l'architecture, besoin d'UI |
+| `/boss:review` | Tech Lead | Tasks → ... → Ship | Besoin de revue technique + plan |
+| `/boss:tasks` | Scrum Master | Dev → QA → Ship | Besoin de décomposition des tâches |
+| `/boss:dev` | Frontend/Backend | QA → Ship | Commencer l'implémentation |
+| `/boss:qa` | QA | Ship | Besoin de preuves de test |
+| `/boss:ship` | DevOps | (fin) | Déployer seulement |
 
-## Démarrage rapide
+La chaîne complète :
 
-### 1. Installation
+```
+pm → architect → ui → review → tasks → dev → qa → ship
+```
 
-Boss est un skill que vous installez dans votre agent de codage — pas un outil qui installe d'autres skills. La distribution passe uniquement par les marketplaces : pas de package npm, pas de binaire global. Le skill embarque sa propre CLI (`skill/cli/`), que les hooks et l'agent invoquent via `node`.
+Arrêtez la chaîne en disant "stop", "fais seulement cette étape" ou en passant `--stop-after <étape>`.
 
-**Claude Code — marketplace de plugins (recommandé ; les hooks sont déjà câblés) :**
+## Démarrage Rapide
+
+### 1. Installer
+
+Boss est une compétence que vous installez dans votre agent de codage. La distribution se fait uniquement via le marketplace : pas de package npm, pas de binaire global.
+
+**Claude Code — marketplace de plugins (recommandé) :**
 
 ```text
 /plugin marketplace add echoVic/boss-skill
@@ -60,267 +75,144 @@ codex plugin marketplace add echoVic/boss-skill
 
 Ouvrez ensuite le navigateur de plugins (`/plugins`) et installez **boss**.
 
-**N'importe quel agent — via la CLI `skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills), skills.sh) :**
+**Tout agent — via le CLI `skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills), skills.sh) :**
 
 ```bash
 npx skills add echoVic/boss-skill
 ```
 
-Elle découvre `boss` depuis le dépôt, demande l'agent cible / la portée (projet ou global) / la méthode d'installation, et enregistre un fichier `skills-lock.json` que vous pouvez committer. Boss fournit une racine de skill unique, le sélecteur n'affiche donc que `boss` — ses méthodologies internes l'accompagnent.
+### 2. Essayez sur un projet que vous avez déjà
 
-Pour Codex et les autres installations par copie, câblez les hooks Boss avec la CLI embarquée :
+La première exécution la moins coûteuse est une revue en lecture seule sur du code existant :
 
-```bash
-node <installed-skill>/cli/bin/boss.mts install
+```
+/boss:review
 ```
 
-### 2. Exécuter un pipeline léger
+Vous obtenez `tech-review.md` (et `plan.md`) sous `.boss/<feature>/` avec les risques, les constatations et la sévérité. Aucun autre fichier du dépôt n'est touché.
+
+Vous voulez plutôt des preuves de test vérifiables ? `/boss:qa` exécute les tests et écrit `qa-report.md`.
+
+### 3. Exécutez le Pipeline Complet
 
 Dans votre agent de codage :
 
 ```text
-/boss Build a local personal todo app --roles core --skip-deploy
+/boss Build a local personal todo app --skip-ui
 ```
 
-- `--roles core` utilise les rôles PM, Architect, Dev et QA.
-- `--skip-deploy` s'arrête après l'implémentation et les preuves de test.
+- `--skip-ui` saute l'étape de design UI (projets API/CLI purs).
+- `--quick` saute les invites de confirmation routinières.
 
-### 3. Inspecter les résultats
+### 4. Inspectez les Résultats
 
-Boss embarque sa propre CLI dans le skill — aucune installation npm, aucune configuration du PATH. Dans les extraits ci-dessous, `<skill>` est le répertoire qui contient `SKILL.md` (pour les installations via le marketplace de plugins Claude Code : `<plugin-root>/skill` ; pour les installations par copie, par ex. `~/.codex/skills/boss`).
-
-```bash
-node <skill>/cli/bin/boss.mts status todo-app --json
-node <skill>/cli/bin/boss.mts runtime inspect-pipeline todo-app
-```
-
-Structure des artefacts attendue :
+Les artefacts vivent sous `.boss/<feature>/` :
 
 ```text
 .boss/todo-app/
-├── design-brief.md
-├── prd.md
-├── architecture.md
-├── tasks.md
-├── qa-report.md
-└── .meta/
-    ├── events.jsonl
-    ├── execution.json
-    └── workflow-plan.json
-```
-
-## Quand utiliser Boss
-
-| Bien adapté | Peu adapté |
-| --- | --- |
-| Nouvelles fonctionnalités nécessitant exigences, design, implémentation, tests et preuves de livraison | Corrections d'une ligne ou petites modifications locales |
-| Travail sur des API, du full-stack, de l'UI ou des produits de taille moyenne | Simple lecture ou explication de code |
-| Travaux où les artefacts `.boss/<feature>/` ont de la valeur | Tâches avec une spec existante complète où seul un patch rapide est nécessaire |
-| Équipes qui veulent des gates reproductibles et des pistes d'audit | Travaux qui n'ont pas besoin de coordination ni de preuves de revue |
-
-Règle générale : si vous n'avez pas besoin d'un dossier `.boss/` traçable, vous n'avez probablement pas besoin du pipeline `/boss` complet. Utilisez un seul rôle ou laissez votre agent de codage modifier directement.
-
-## Pas de CLI ? Ça marche quand même
-
-La CLI est embarquée dans le skill, donc une installation via un marketplace la fournit toujours. Lorsque `node` n'est pas disponible ou que la CLI est introuvable, le workflow se replie sur des artefacts Markdown sous `.boss/<feature>/` au lieu du flux d'événements. La CLI est la mise à niveau en matière d'auditabilité : event sourcing, reprise rejouable, evals déterministes, gates de runtime et diagnostics structurés.
-
-Boss ne signifie pas « installez une fois et obtenez une livraison autonome garantie ». Il fournit un workflow de runtime et des gates de preuve ; l'agent de codage actif doit toujours suivre le protocole Boss.
-
-## Détails d'installation
-
-Les installations via un marketplace copient (ou lient) tout le répertoire `skill/`. La CLI est fournie sous forme de source TypeScript à `<skill>/cli/bin/boss.mts` et est exécutée directement par Node.js `>=22.18` (type stripping natif) — aucune étape de build, aucun paquet npm et aucun binaire global `boss`. Les hooks la référencent par chemin complet.
-
-Commandes utiles (exécutées via la CLI embarquée) :
-
-```bash
-node <skill>/cli/bin/boss.mts install --dry-run
-node <skill>/cli/bin/boss.mts uninstall
-node <skill>/cli/bin/boss.mts path
-node <skill>/cli/bin/boss.mts --version
-```
-
-Cibles détectées automatiquement :
-
-| Agent | Détection | Méthode d'installation |
-| --- | --- | --- |
-| OpenClaw | `~/.openclaw/` | Copie vers `~/.openclaw/skills/boss/` et injection des métadonnées |
-| Codex | `~/.codex/` | Copie vers `~/.codex/skills/boss/`, injection des métadonnées, fusion des hooks |
-| Antigravity | `~/.gemini/antigravity/` | Copie vers le répertoire de skills d'Antigravity et injection des métadonnées |
-| Hermes | `~/.hermes/` | Copie vers `~/.hermes/skills/boss/` et injection des métadonnées |
-| Claude Code | Toujours disponible | Marketplace de plugins (voir Démarrage rapide) |
-
-## Support des plateformes
-
-Boss cible Node.js `>=22.18` et fonctionne sous Linux, macOS et Windows. La CLI est fournie dans le skill sous forme de source TypeScript que Node exécute directement (type stripping natif — aucune étape de build), n'exécute des commandes externes que via `spawnSync` avec des tableaux d'arguments explicites (jamais `shell: true`) et résout `npm`/`npx` vers leurs variantes `.cmd` sous Windows : le pipeline principal ne fait donc aucune supposition propre à POSIX.
-
-Deux capacités dépendent d'outils externes optionnels et se dégradent proprement lorsqu'ils sont absents :
-
-- Les **checkpoints WIP** (stash/commit/branche) nécessitent `git` et un arbre de travail git. En dehors d'un dépôt, ou sans `git` dans le `PATH`, la création de checkpoints est silencieusement ignorée — le pipeline n'est pas affecté.
-- Les **plugins `gate.sh` legacy écrits à la main** sont exécutés via `bash`. Sous Windows sans bash dans le `PATH`, ils ne pourront pas se lancer ; préférez le point d'entrée de gate Node multiplateforme (`gate.js` / `gate.mjs`) pour des plugins portables.
-
-Exécutez `boss doctor` pour voir l'environnement de runtime résolu (version de Node, plateforme et disponibilité de `git`), ainsi que l'état de l'installation et du flux d'événements.
-
-## Commandes
-
-Commandes slash courantes :
-
-```text
-/boss Build a todo app
-/boss Add authentication to this existing project --skip-ui
-/boss Build an API service --skip-deploy --quick
-/boss Continue the previous task --continue-from 3
-/boss Lightweight mode --roles core --hitl-level off
-/boss:upgrade
-```
-
-Options courantes :
-
-| Option | Signification |
-| --- | --- |
-| `--roles <preset>` | `full` pour les 9 rôles, ou `core` pour PM/Architect/Dev/QA |
-| `--skip-ui` | Ignorer le design UI |
-| `--skip-deploy` | Ignorer le déploiement |
-| `--quick` | Ignorer les nœuds de confirmation et de clarification des exigences |
-| `--template` | Initialiser `.boss/templates/` et faire une pause |
-| `--continue-from <1-4>` | Reprendre depuis une étape du pipeline |
-| `--hitl-level <level>` | Mode human-in-the-loop : `auto`, `interactive` ou `off` |
-
-Commandes de la CLI Boss :
-
-```bash
-boss --help
-boss status FEATURE
-boss continue FEATURE
-boss gate FEATURE
-boss qa attack FEATURE
-boss project init FEATURE
-boss design preview FEATURE
-boss packs detect
-boss runtime inspect-pipeline FEATURE
-boss runtime generate-summary FEATURE
-```
-
-Les commandes `boss` destinées aux agents utilisent ces options courantes lorsqu'elles s'appliquent ; exécutez `--describe` sur une commande pour obtenir son schéma JSON exact :
-
-- `--json` : sortie structurée ; sur une sortie standard non TTY, la sortie par défaut est du JSON
-- `--describe` : schéma JSON de la commande
-- `--dry-run` : plan d'action structuré pour les écritures ou les opérations risquées
-- `--json-input=<json|->` : charge utile d'entrée JSON
-- `--fields=<a,b>` et `--limit=<n>` : sortie limitée
-- `--yes` : requis uniquement pour les commandes non interactives à haut risque qui nécessitent une confirmation supplémentaire
-
-Les erreurs structurées sont écrites sur stderr sous la forme `{"error":{...}}` et incluent `code`, `message`, `input`, `retryable` et `suggestion`.
-
-## Workflow
-
-Boss suit un workflow en quatre étapes :
-
-```text
-User request
-  -> requirement clarification
-  -> Stage 1: PM, Architect, UI Designer
-  -> Stage 2: Tech Lead, Scrum Master
-  -> Stage 3: Frontend, Backend, QA, gates
-  -> Stage 4: DevOps, deployment checks, summary
-```
-
-L'ensemble complet des rôles :
-
-| Rôle | Responsabilité |
-| --- | --- |
-| PM | Découverte des exigences, PRD, besoins cachés, cas limites |
-| Architect | Architecture système, design technique, API |
-| UI Designer | Spec UI/UX plus design JSON affichable |
-| Tech Lead | Revue technique, évaluation des risques |
-| Scrum Master | Décomposition des tâches et critères d'acceptation |
-| Frontend | Implémentation de l'UI et tests frontend |
-| Backend | API, stockage, tests backend |
-| QA | Exécution des tests, rapports de bugs, preuves de vérification |
-| DevOps | Build, déploiement, vérifications de santé |
-
-## Runtime et gates de qualité
-
-Boss possède deux niveaux de contrôle qualité :
-
-- **Contraintes dures** vérifiées par le code et la CI : événements de runtime, `execution.json` protégé, hooks, tests de la matrice d'installation, scénarios du harness et couverture Vitest.
-- **Contraintes du protocole d'agent** guidées par le bundle de skill : dispatch DAG, chargement progressif des références, preuves de test et discipline de gate.
-
-Gates intégrées :
-
-| Gate | Moment | Vérifications |
-| --- | --- | --- |
-| Gate 0 | Après le développement, avant la QA | TypeScript, lint, vérifications de compilation de base |
-| Gate 1 | Après la QA, avant le déploiement | Preuves de test, aucun bug P0/P1, attentes E2E |
-| Gate 2 | Avant le déploiement web | Cibles Lighthouse et de latence API le cas échéant |
-
-Les hooks sont contrôlés par des variables d'environnement :
-
-| Variable | Valeurs |
-| --- | --- |
-| `BOSS_HOOK_PROFILE` | `minimal`, `standard`, `strict` |
-| `BOSS_DISABLED_HOOKS` | IDs de hooks séparés par des virgules |
-
-L'état du runtime s'appuie sur `.boss/<feature>/.meta/workflow-plan.json` et `.boss/<feature>/.meta/execution.json`. La définition du workflow enregistre `workflowHash`, `packHash` et les hashs du DAG d'artefacts. La reprise au runtime utilise `boss runtime resume <feature> --from-run <run-id>` pour recharger le plan, comparer les entrées des nœuds et matérialiser `execution.workflow.nextNodeIds` pour les prochains nœuds planifiables. Les événements `GateEvaluated` / `WaveVerified` mettent à jour le statut des nœuds du workflow lorsque les gates et les vagues de preuves sont terminées.
-
-## Surfaces sensibles pour la sécurité
-
-Boss garde volontairement le manifeste de plugin publié minimal : il ne déclare que les skills fournis et omet les serveurs MCP, les manifestes d'application et les références d'assets, sauf si ces fichiers compagnons existent. Les hooks Codex sont installés par le flux `boss-skill install`, et non par le manifeste du marketplace.
-
-Le package npm exclut les réglages locaux de l'agent de développement tels que `.claude/settings.json` et `.claude/settings.local.json`. Les métadonnées de plugin publiables se trouvent sous `.claude-plugin/`, `.codex-plugin/` et `.agents/plugins/marketplace.json`.
-
-La provenance des releases se trouve dans `.agents/plugins/provenance.json`. Elle fige l'URL HTTPS du dépôt, le SHA immuable du commit source, l'identité de l'éditeur et les empreintes SHA-256 des manifestes de plugin et des composants sensibles pour la sécurité. Vérifiez-la avec :
-
-```bash
-npm run provenance:verify
-```
-
-La vérification de l'éditeur est externe au package. Pour le registre HOL, revendiquez le plugin avec le compte GitHub du propriétaire du dépôt sur `https://hol.org/guard/plugins`. La carte de confiance publique est disponible sur `https://hol.org/registry/plugins/echovic%2Fboss/embed`.
-
-Comportements sensibles pour la sécurité à vérifier avant de publier ou d'installer :
-
-- `boss-skill install` peut écrire dans les répertoires de configuration de l'agent, comme `~/.codex/skills/boss/`, et fusionner des entrées gérées par Boss dans `~/.codex/hooks.json`.
-- Les entrées de hook exécutent `boss hooks run ...`, qui dispatche des scripts depuis `scripts/hooks/`.
-- Les plugins de runtime sous `.boss/plugins/<name>/plugin.json` peuvent enregistrer des hooks de gate ou de reporter ; examinez les plugins locaux au projet avant de les activer.
-- Utilisez `BOSS_HOOK_PROFILE=minimal` ou `BOSS_DISABLED_HOOKS=<ids>` lorsque vous devez réduire le comportement des hooks dans un environnement sensible.
-
-Boss est local-first et n'effectue aucune requête réseau sortante par défaut ; la seule surface réseau est le serveur optionnel `boss design preview`, limité à la boucle locale. Consultez [PRIVACY.md](PRIVACY.md) pour la description complète des données et de la frontière réseau.
-
-## Artefacts du pipeline
-
-```text
-.boss/<feature>/
-├── design-brief.md
 ├── prd.md
 ├── architecture.md
 ├── ui-spec.md
 ├── ui-design.json
 ├── tech-review.md
+├── plan.md
 ├── tasks.md
 ├── qa-report.md
-├── deploy-report.md
-├── summary-report.md
-└── .meta/
-    ├── events.jsonl
-    ├── execution.json
-    └── workflow-plan.json
+└── deploy-report.md
 ```
 
-Exécutez ceci dans un environnement interactif pour prévisualiser un design UI généré :
+Chaque artefact Markdown commence par une section `## 摘要` (résumé) pour que les agents en aval lisent d'abord la conclusion.
+
+## Flux de Travail
+
+```text
+Demande utilisateur
+  → clarification des exigences (sauf --quick)
+  → PM : découverte des exigences → prd.md
+  → Architecte : conception du système → architecture.md
+  → Designer UI : spécification UI/UX → ui-spec.md + ui-design.json (sauter avec --skip-ui)
+  → Tech Lead : revue technique + plan d'implémentation → tech-review.md + plan.md
+  → Scrum Master : décomposition des tâches → tasks.md
+  → Frontend / Backend : implémentation TDD
+  → QA : exécution des tests, rapports de bugs, preuves → qa-report.md
+  → DevOps : build, déploiement, vérifications de santé → deploy-report.md
+```
+
+### Rôles et Artefacts
+
+| Rôle | Responsabilité | Artefact |
+| --- | --- | --- |
+| PM | Découverte des exigences, PRD, besoins cachés, cas limites | `prd.md` |
+| Architecte | Architecture système, conception technique, APIs | `architecture.md` |
+| Designer UI | Spécification UI/UX, JSON de design rendable, prototype HTML | `ui-spec.md`, `ui-design.json` |
+| Tech Lead | Revue technique, évaluation des risques, plan d'implémentation | `tech-review.md`, `plan.md` |
+| Scrum Master | Décomposition des tâches et critères d'acceptation | `tasks.md` |
+| Frontend | Implémentation UI, TDD, tests frontend | code source |
+| Backend | API, stockage, TDD, tests backend | code source |
+| QA | Exécution des tests, rapports de bugs, preuves de vérification | `qa-report.md` |
+| DevOps | Build, déploiement, vérifications de santé | `deploy-report.md` |
+
+## Contrat de Qualité
+
+Boss possède deux couches de contrôle qualité :
+
+- **Exigences strictes par rôle** : le prompt de chaque agent définit un tableau d'exigences non négociables. L'agent s'auto-vérifie avant de transmettre ; un contrat échoué bloque l'étape suivante.
+- **Gates de qualité** : de vraies commandes dont les verdicts sont enregistrés dans l'artefact de l'étape.
+
+| Gate | Étape | Vérifications |
+| --- | --- | --- |
+| Gate 0 (qualité du code) | Après dev, avant QA | TypeScript/lint passent, pas de vulnérabilités de dépendances haute sévérité |
+| Gate 1 (tests) | Après QA, avant déploiement | Tests unitaires + d'intégration passent, couverture ≥ 70%, pas de bugs P0/P1, tests E2E écrits |
+| Gate 2 (performance) | Avant déploiement web | Lighthouse ≥ 80, API P99 < 500ms (projets web uniquement) |
+
+## Quand Utiliser Boss
+
+| Bon ajustement | Mauvais ajustement |
+| --- | --- |
+| Nouvelles fonctionnalités nécessitant exigences, design, implémentation, tests et preuves de livraison | Corrections d'une ligne ou petites éditions locales |
+| Travail API, full-stack, UI ou produit de taille moyenne | Lecture ou explication de code pure |
+| Travail où les artefacts `.boss/<feature>/` ont de la valeur | Tâches avec une spec existante complète où vous ne besoin que d'un patch rapide |
+| Équipes voulant des gates de qualité répétables et des traces d'audit | Travail ne nécessitant pas de coordination ou de preuves de revue |
+
+Règle de pouce : si vous n'avez pas besoin d'un dossier `.boss/` traçable, vous n'avez probablement pas besoin du pipeline complet `/boss`. Utilisez un seul rôle ou laissez votre agent éditer directement.
+
+## Sécurité et Confidentialité
+
+Boss est local-first et n'effectue aucune requête réseau sortante par défaut. La seule surface réseau est un serveur de prototype HTML opt-in et exclusif loopback (`127.0.0.1`) utilisé pendant l'étape de design UI.
+
+La provenance de release vit dans `.agents/plugins/provenance.json`. Elle épingle l'URL HTTPS du dépôt, le SHA du commit source immuable, l'identité du publisher et les résumés SHA-256 des manifestes de plugins. Vérifiez-la avec :
 
 ```bash
-boss design preview <feature>
+npm run provenance:verify
+```
+
+Voir [PRIVACY.md](./PRIVACY.md) pour la limite complète de données et de réseau.
+
+## Artefacts du Pipeline
+
+```text
+.boss/<feature>/
+├── prd.md              # PM — exigences produit
+├── architecture.md     # Architecte — conception du système
+├── ui-spec.md          # Designer UI — spécification UI/UX (sauter avec --skip-ui)
+├── ui-design.json      # Designer UI — JSON de design rendable
+├── tech-review.md      # Tech Lead — revue technique
+├── plan.md             # Tech Lead — plan d'implémentation
+├── tasks.md            # Scrum Master — décomposition des tâches
+├── qa-report.md        # QA — preuves de test
+└── deploy-report.md    # DevOps — registre de déploiement
 ```
 
 ## Evals
 
-Les evals de Boss notent les fixtures capturées sans démarrer un vrai LLM :
+Les evals de Boss notent des fixtures capturées sans lancer de vrai LLM :
 
 ```bash
 npm run evals
 npm run evals:release
 ```
 
-L'eval de release inclut des vérifications release-evidence et pipeline-compliance. Elle vérifie l'utilisation des commandes de runtime, l'enregistrement des artefacts, l'absence de modifications directes de `execution.json` et les champs d'ordonnancement du workflow.
+L'eval de release inclut les vérifications release-evidence et pipeline-compliance : il vérifie l'enregistrement des artefacts, l'évitement des commandes runtime obsolètes et le comportement d'orchestration de l'escouade d'experts.
 
 Voir [test/evals/README.md](./test/evals/README.md).
 
@@ -328,8 +220,7 @@ Voir [test/evals/README.md](./test/evals/README.md).
 
 Prérequis :
 
-- Node.js >= 22.18 (exécute directement la source `.mts` de la CLI)
-- `jq` pour les helpers de test basés sur le shell
+- Node.js >= 22.18
 
 Installation :
 
@@ -344,45 +235,38 @@ npm test
 Scripts utiles :
 
 ```bash
-npm run typecheck   # tsc ne vérifie que la source .mts — aucune sortie de build
-npm test
-npm run test:skills
-npm run test:harness
-npm run test:install-matrix
-npm run evals
+npm run typecheck    # tsc --noEmit
+npm test             # vitest (unitaires + comportement skill + evals)
+npm run test:skills  # tests de comportement skill uniquement
+npm run evals        # evals déterministes de transcription
+npm run lint         # biome ci
 ```
 
-## Structure du dépôt
+## Structure du Dépôt
 
 ```text
 boss-skill/
-├── skill/                      # Skill bundle installed into coding agents (self-contained)
-│   ├── cli/                    # CLI + runtime source (.mts, run directly — no build)
-│   ├── scripts/                # Hook runtime (dispatcher + hook scripts)
-│   └── assets/                 # Built-in DAGs, pipeline packs, plugin schema
-├── test/                       # Vitest, harness, eval, hook, and install tests
-├── docs/superpowers/           # Historical specs, plans, and reports
-├── examples/                   # Example projects
-├── .claude-plugin/             # Claude Code plugin manifest + marketplace
-├── .codex-plugin/              # Codex plugin manifest + marketplace
-├── .agents/plugins/            # Repo-scoped plugin marketplace + provenance
-├── tsconfig.json               # Typecheck-only config (no emit)
-└── package.json                # Private dev workspace (never published)
+├── skill/                      # Bundle de skill installé dans les agents de codage (autonome)
+│   ├── SKILL.md                # Entrée d'orchestration principale (invariants + index)
+│   ├── agents/                 # Prompts de rôle (boss-pm, boss-architect, ...)
+│   ├── commands/               # Commandes slash (/boss, /boss:pm, ...)
+│   ├── references/             # Méthodologie partagée (principles, quality-gate, ...)
+│   ├── skills/                 # Skills de méthodologie par domaine (pm/, qa/, devops/, ...)
+│   └── templates/              # Modèles d'artefacts (.md.template)
+├── test/                       # Tests Vitest, comportement skill et evals
+├── scripts/                    # release.js, provenance.js
+├── docs/                       # Specs, plans et rapports historiques
+├── examples/                   # Projets d'exemple
+├── .claude-plugin/             # Manifeste de plugin Claude Code + marketplace
+├── .codex-plugin/              # Manifeste de plugin Codex + marketplace
+├── .agents/plugins/            # Marketplace de plugins au niveau du dépôt + provenance
+├── tsconfig.json               # Config de typecheck uniquement (noEmit)
+└── package.json                # Espace de travail de développement privé (jamais publié)
 ```
-
-Zones de source importantes :
-
-- `skill/cli/` contient la source TypeScript (`.mts`) de la CLI et du runtime, exécutée directement par Node `>=22.18`. Modifiez ces fichiers directement — il n'y a aucune étape de build ni copie générée.
-- `skill/assets/` contient les DAG intégrés, les packs de pipeline, le schéma de plugin et les plugins.
-- `skill/scripts/` contient le runtime des hooks (`lib/run-with-flags.js`) et les scripts de hooks.
-- `skill/SKILL.md` est le point d'entrée principal d'orchestration destiné aux agents.
-- `skill/agents/` contient les prompts des rôles.
-- `skill/commands/` contient les commandes slash.
-- `skill/templates/` contient les templates d'artefacts.
 
 ## Release
 
-Utilisez le script de release afin que les numéros de version restent synchronisés entre les métadonnées du package et les manifestes de skill/plugin :
+Utilisez le script de release pour que les numéros de version restent synchronisés entre les métadonnées du package et les manifestes de skill/plugin :
 
 ```bash
 npm run release -- patch
@@ -392,20 +276,20 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-Le script de release vérifie que l'arbre de travail est propre, exécute la chaîne de vérification complète, synchronise les versions, vérifie la cohérence, crée un commit et un tag, puis pousse. La release est le tag git : les marketplaces lisent le dépôt — il n'y a aucune étape de publication npm ni d'étape de build.
+Le script de release vérifie que l'arbre de travail est propre, exécute la chaîne de vérification complète (typecheck, lint, test), synchronise les versions dans tous les manifestes, vérifie la cohérence, crée un commit et un tag, puis pousse. Le release est le tag git : les marketplaces lisent le dépôt — pas d'étape npm publish ni de build.
 
 Voir [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Design
 
-Boss s'inspire de BMAD : Breakthrough Method of Agile AI-Driven Development. Le projet adapte cette idée en un runtime auditable pour le travail logiciel agentique.
+Boss est inspiré par BMAD : Breakthrough Method of Agile AI-Driven Development, et par la philosophie "write less, higher quality code". Le modèle d'escouade d'experts garde le harness léger — pas de machine à états runtime, pas d'event sourcing, pas de hooks — tout en préservant les contrats de qualité stricts et la collaboration orientée artefacts.
 
-Pour en savoir plus, voir [DESIGN.md](./DESIGN.md) et `skill/references/bmad-methodology.md`.
+En savoir plus dans [DESIGN.md](./DESIGN.md), `skill/references/bmad-methodology.md` et `skill/references/principles.md`.
 
-## Historique des étoiles
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=echoVic/boss-skill&type=Date)](https://star-history.com/#echoVic/boss-skill&Date)
 
-## Licence
+## License
 
 MIT
