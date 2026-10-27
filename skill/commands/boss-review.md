@@ -1,4 +1,5 @@
 ---
+
 name: boss:review
 description: "从技术评审开始：Tech Lead 做技术评审与风险评估，默认自动续跑后续环节（任务 → 开发 → 测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
@@ -16,10 +17,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 适合 / 不适合
 
-| 适合 `/boss:review` | 不适合 |
-|---------------------|--------|
-| 对已有架构/代码做技术评审 | 想让 agent 直接改代码（用 `/boss:dev`） |
-| 评审 `/boss:architect` 产出的架构 | 需求还不清晰（用 `/boss:pm`） |
+| 适合 `/boss:review`               | 不适合                                  |
+| --------------------------------- | --------------------------------------- |
+| 对已有架构/代码做技术评审         | 想让 agent 直接改代码（用 `/boss:dev`） |
+| 评审 `/boss:architect` 产出的架构 | 需求还不清晰（用 `/boss:pm`）           |
 
 ## 前置输入
 
@@ -51,7 +52,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
+| 参数                  | 说明                                                      |
+| --------------------- | --------------------------------------------------------- |
 | `--stop-after <环节>` | 跑到指定环节后停（如 `--stop-after review` 只评审不拆解） |
-| `--lang <zh\|en>` | 评审文档语言（默认 zh） |
+| `--lang <zh\|en>`     | 评审文档语言（默认 zh）                                   |

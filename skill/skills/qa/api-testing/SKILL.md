@@ -1,4 +1,5 @@
 ---
+
 name: qa/api-testing
 description: API 接口测试方法论，覆盖 RESTful/GraphQL 接口的功能、边界、安全、契约测试，参考 Supertest、REST Assured 等开源实践
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要编写或执行 API 接口测试时
-  - 需要验证 API 契约一致性时
-  - 需要覆盖接口边界和安全场景时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要编写或执行 API 接口测试时
+- 需要验证 API 契约一致性时
+- 需要覆盖接口边界和安全场景时
+  metadata:
   internal: true
+
 ---
 
 # API 接口测试方法论
@@ -30,13 +32,13 @@ metadata:
 
 ## 测试类型矩阵
 
-| 测试类型 | 目的 | 工具 | 示例 |
-|----------|------|------|------|
-| **功能测试** | 验证接口正常行为 | Supertest / REST Assured | 创建资源返回 201 |
-| **边界测试** | 验证边界值和错误处理 | Supertest | 空 payload、超长字符串、非法 ID |
-| **安全测试** | 认证、授权、越权 | Supertest + auth header | 无 Token 访问受保护资源 |
-| **契约测试** | 请求/响应 schema 一致性 | Zod / JSON Schema | 响应字段类型校验 |
-| **流程测试** | 多接口业务链路 | Supertest 链式调用 | 注册→登录→下单→支付 |
+| 测试类型     | 目的                    | 工具                     | 示例                            |
+| ------------ | ----------------------- | ------------------------ | ------------------------------- |
+| **功能测试** | 验证接口正常行为        | Supertest / REST Assured | 创建资源返回 201                |
+| **边界测试** | 验证边界值和错误处理    | Supertest                | 空 payload、超长字符串、非法 ID |
+| **安全测试** | 认证、授权、越权        | Supertest + auth header  | 无 Token 访问受保护资源         |
+| **契约测试** | 请求/响应 schema 一致性 | Zod / JSON Schema        | 响应字段类型校验                |
+| **流程测试** | 多接口业务链路          | Supertest 链式调用       | 注册→登录→下单→支付             |
 
 ## 1. RESTful API 测试
 
@@ -231,10 +233,7 @@ describe('Authorization', () => {
 describe('Input boundaries', () => {
   it('rejects email exceeding max length', async () => {
     const longEmail = 'a'.repeat(256) + '@example.com';
-    await request(app)
-      .post('/api/users')
-      .send({ name: 'Test', email: longEmail })
-      .expect(400);
+    await request(app).post('/api/users').send({ name: 'Test', email: longEmail }).expect(400);
   });
 
   it('rejects invalid UUID format', async () => {
@@ -249,9 +248,7 @@ describe('Input boundaries', () => {
   });
 
   it('rejects SQL injection attempt', async () => {
-    await request(app)
-      .get("/api/users?id=1' OR '1'='1")
-      .expect(400);
+    await request(app).get("/api/users?id=1' OR '1'='1").expect(400);
   });
 });
 ```
@@ -325,10 +322,7 @@ describe('Dependent endpoints', () => {
   });
 
   it('updates existing user', async () => {
-    await request(app)
-      .put(`/api/users/${existingUserId}`)
-      .send({ name: 'Updated' })
-      .expect(200);
+    await request(app).put(`/api/users/${existingUserId}`).send({ name: 'Updated' }).expect(200);
   });
 });
 ```
@@ -339,9 +333,7 @@ describe('Dependent endpoints', () => {
 
 ```typescript
 it('returns 404 when deleting non-existent user', async () => {
-  await request(app)
-    .delete('/api/users/00000000-0000-0000-0000-000000000000')
-    .expect(404);
+  await request(app).delete('/api/users/00000000-0000-0000-0000-000000000000').expect(404);
 });
 ```
 
@@ -361,11 +353,11 @@ it('handles 10 concurrent user creations', async () => {
   const promises = Array.from({ length: 10 }, (_, i) =>
     request(app)
       .post('/api/users')
-      .send({ name: `User${i}`, email: `user${i}@test.com` })
+      .send({ name: `User${i}`, email: `user${i}@test.com` }),
   );
 
   const responses = await Promise.all(promises);
-  responses.forEach(res => expect(res.status).toBe(201));
+  responses.forEach((res) => expect(res.status).toBe(201));
 });
 ```
 
@@ -373,20 +365,19 @@ it('handles 10 concurrent user creations', async () => {
 
 ### 分层判定原则
 
-| 场景 | 主判据 | 辅判据 |
-|------|--------|--------|
-| 正常请求 | HTTP 状态码 2xx | 响应体字段 |
-| 参数错误 | HTTP 400 + 业务码 | 错误消息 |
-| 业务错误 | **业务码**（非 HTTP 状态码） | 错误消息 |
-| 认证失败 | HTTP 401 | WWW-Authenticate header |
-| 授权失败 | HTTP 403 | - |
+| 场景     | 主判据                       | 辅判据                  |
+| -------- | ---------------------------- | ----------------------- |
+| 正常请求 | HTTP 状态码 2xx              | 响应体字段              |
+| 参数错误 | HTTP 400 + 业务码            | 错误消息                |
+| 业务错误 | **业务码**（非 HTTP 状态码） | 错误消息                |
+| 认证失败 | HTTP 401                     | WWW-Authenticate header |
+| 授权失败 | HTTP 403                     | -                       |
 
 > ⚠️ 当后端使用「200 + 业务码」表达错误时，断言应以**业务码语义**为主，不应因 HTTP 200 就判定通过。
 
 ## 9. 测试报告要求
 
 每个 API 测试文件必须覆盖：
-
 - [ ] 正常流程（happy path）
 - [ ] 参数校验（必填、格式、长度、类型）
 - [ ] 认证（无 Token、无效 Token、过期 Token）

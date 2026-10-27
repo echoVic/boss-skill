@@ -1,4 +1,5 @@
 ---
+
 name: ui-designer/design-system
 description: 设计系统方法论，基于 Refactoring UI、Material Design 3、HIG、Laws of UX、WCAG 等开源设计原则，指导如何建立有设计方向、可落地的设计令牌体系
 version: 2.0.0
@@ -8,19 +9,20 @@ user-invocable: false
 agent-invocable: true
 dependencies: []
 triggers:
-  - 开始UI设计时
-  - 需要定义视觉规范时
-  - 确保设计一致性时
-metadata:
+- 开始UI设计时
+- 需要定义视觉规范时
+- 确保设计一致性时
+  metadata:
   internal: true
   references:
-    - "Refactoring UI (Steve Schoger & Adam Wathan): https://www.refactoringui.com/"
-    - "Material Design 3: https://m3.material.io/"
-    - "Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/"
-    - "Laws of UX (Jon Yablonski): https://lawsofux.com/"
-    - "Ant Design: https://ant.design/docs/spec/introduce"
-    - "Carbon Design System (IBM): https://carbondesignsystem.com/"
-    - "WCAG 2.1: https://www.w3.org/WAI/WCAG21/quickref/"
+  - "Refactoring UI (Steve Schoger & Adam Wathan): https://www.refactoringui.com/"
+  - "Material Design 3: https://m3.material.io/"
+  - "Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/"
+  - "Laws of UX (Jon Yablonski): https://lawsofux.com/"
+  - "Ant Design: https://ant.design/docs/spec/introduce"
+  - "Carbon Design System (IBM): https://carbondesignsystem.com/"
+  - "WCAG 2.1: https://www.w3.org/WAI/WCAG21/quickref/"
+
 ---
 
 # 设计系统方法论
@@ -34,7 +36,6 @@ metadata:
 ### 核心原则（来自 Refactoring UI）
 
 设计不是把内容塞进布局里，而是**用视觉手段引导用户注意力**。记住以下原则：
-
 1. **从功能出发，不从布局出发** — 先想清楚用户要完成什么任务，再决定界面怎么排布。不要上来就画三栏布局。
 2. **先灰阶，后上色** — 先用灰度建立层次和对比度，确认信息架构没问题后再引入颜色。颜色是锦上添花，不是救命稻草。
 3. **字号不超过 3 种** — 正文、小标题、大标题。更多字号只会造成混乱，用字重和颜色来区分层次。
@@ -47,13 +48,13 @@ metadata:
 
 在定义令牌之前，先确定产品的**设计人格**。回答以下问题：
 
-| 维度 | 选项 | 决策依据 |
-|------|------|----------|
-| **调性** | 专业 / 亲和 / 活力 / 极简 | 目标用户群体 + 品牌定位 |
-| **密度** | 紧凑（数据密集型）/ 舒适（消费级） | 用户使用时长 + 信息密度 |
-| **圆角** | 直角（严谨）/ 中圆角（友好）/ 大圆角（童趣） | 品牌调性 |
-| **阴影** | 无阴影（扁平）/ 轻阴影（层次）/ 重阴影（拟物） | 设计风格 |
-| **动效** | 克制（专业工具）/ 适度（通用）/ 丰富（娱乐） | 产品类型 |
+| 维度     | 选项                                           | 决策依据                |
+| -------- | ---------------------------------------------- | ----------------------- |
+| **调性** | 专业 / 亲和 / 活力 / 极简                      | 目标用户群体 + 品牌定位 |
+| **密度** | 紧凑（数据密集型）/ 舒适（消费级）             | 用户使用时长 + 信息密度 |
+| **圆角** | 直角（严谨）/ 中圆角（友好）/ 大圆角（童趣）   | 品牌调性                |
+| **阴影** | 无阴影（扁平）/ 轻阴影（层次）/ 重阴影（拟物） | 设计风格                |
+| **动效** | 克制（专业工具）/ 适度（通用）/ 丰富（娱乐）   | 产品类型                |
 
 **参考**：Material Design 3 提供了「风格表达」（Expressive / Functional）的二元模型；HIG 强调「清晰、遵从、深度」三原则。
 
@@ -79,18 +80,18 @@ metadata:
 
 主色阶（以 Primary 为例）：
 
-| Token | 用途 | 生成方法 |
-|-------|------|----------|
-| `primary-50` | 极浅背景 | 主色 + 95% 白 |
+| Token         | 用途         | 生成方法      |
+| ------------- | ------------ | ------------- |
+| `primary-50`  | 极浅背景     | 主色 + 95% 白 |
 | `primary-100` | 浅背景、标签 | 主色 + 85% 白 |
-| `primary-200` | 边框、禁用 | 主色 + 70% 白 |
-| `primary-300` | 次强调 | 主色 + 50% 白 |
-| `primary-400` | 悬停态 | 主色 + 25% 白 |
-| `primary-500` | **基础主色** | 选定的品牌色 |
-| `primary-600` | 按下态 | 主色 + 15% 黑 |
-| `primary-700` | 深色背景上 | 主色 + 30% 黑 |
-| `primary-800` | 极深 | 主色 + 45% 黑 |
-| `primary-900` | 最深 | 主色 + 60% 黑 |
+| `primary-200` | 边框、禁用   | 主色 + 70% 白 |
+| `primary-300` | 次强调       | 主色 + 50% 白 |
+| `primary-400` | 悬停态       | 主色 + 25% 白 |
+| `primary-500` | **基础主色** | 选定的品牌色  |
+| `primary-600` | 按下态       | 主色 + 15% 黑 |
+| `primary-700` | 深色背景上   | 主色 + 30% 黑 |
+| `primary-800` | 极深         | 主色 + 45% 黑 |
+| `primary-900` | 最深         | 主色 + 60% 黑 |
 
 > **工具**：可使用 [Material Theme Builder](https://m3.material.io/theme-builder) 或 [coolors.co](https://coolors.co/) 生成色阶。
 
@@ -98,27 +99,27 @@ metadata:
 
 不要用纯灰（#808080）。在中性灰中混入主色相，让整体色调更统一。
 
-| Token | 用途 |
-|-------|------|
-| `neutral-50` | 页面背景 |
+| Token         | 用途               |
+| ------------- | ------------------ |
+| `neutral-50`  | 页面背景           |
 | `neutral-100` | 卡片悬浮背景、悬停 |
-| `neutral-200` | 浅边框、分割线 |
-| `neutral-300` | 边框 |
-| `neutral-400` | 占位文字、禁用 |
-| `neutral-500` | 辅助文字 |
-| `neutral-600` | 次要文字 |
-| `neutral-700` | 正文文字 |
-| `neutral-800` | 重要文字、标题 |
-| `neutral-900` | 大标题、强调文字 |
+| `neutral-200` | 浅边框、分割线     |
+| `neutral-300` | 边框               |
+| `neutral-400` | 占位文字、禁用     |
+| `neutral-500` | 辅助文字           |
+| `neutral-600` | 次要文字           |
+| `neutral-700` | 正文文字           |
+| `neutral-800` | 重要文字、标题     |
+| `neutral-900` | 大标题、强调文字   |
 
 ### 语义色
 
-| Token | 色值范围 | 用途 |
-|-------|----------|------|
+| Token     | 色值范围               | 用途           |
+| --------- | ---------------------- | -------------- |
 | `success` | 绿色系（#10B981 附近） | 成功状态、通过 |
-| `warning` | 橙色系（#F59E0B 附近） | 警告、需注意 |
-| `error` | 红色系（#EF4444 附近） | 错误、危险操作 |
-| `info` | 蓝色系（#3B82F6 附近） | 信息提示 |
+| `warning` | 橙色系（#F59E0B 附近） | 警告、需注意   |
+| `error`   | 红色系（#EF4444 附近） | 错误、危险操作 |
+| `info`    | 蓝色系（#3B82F6 附近） | 信息提示       |
 
 每个语义色都应有对应的浅色背景变体（用于 toast、badge 背景）和深色文字变体。
 
@@ -155,22 +156,21 @@ metadata:
 ### 字号阶梯（Type Scale）
 
 使用**模块化比例**（Modular Scale）生成字号，而非随意取值。推荐比例：
-
 - **1.250（Major Third）**：保守、专业，适合工具类产品
 - **1.333（Perfect Fourth）**：平衡，适合大多数产品
 - **1.500（Perfect Fifth）**：大胆、有冲击力，适合营销页
 
 以 16px 为基准（正文），1.250 比例：
 
-| Token | 字号 | 行高 | 字重 | 用途 |
-|-------|------|------|------|------|
-| `text-xs` | 12px | 1.5 | 400 | 辅助说明、标签 |
-| `text-sm` | 14px | 1.5 | 400 | 次要文字、表单标签 |
-| `text-base` | 16px | 1.6 | 400 | **正文** |
-| `text-lg` | 20px | 1.4 | 600 | 卡片标题、小标题 |
-| `text-xl` | 24px | 1.3 | 600 | 区块标题 |
-| `text-2xl` | 30px | 1.25 | 700 | 页面标题 |
-| `text-3xl` | 36px | 1.2 | 700 | 大标题（Hero） |
+| Token       | 字号 | 行高 | 字重 | 用途               |
+| ----------- | ---- | ---- | ---- | ------------------ |
+| `text-xs`   | 12px | 1.5  | 400  | 辅助说明、标签     |
+| `text-sm`   | 14px | 1.5  | 400  | 次要文字、表单标签 |
+| `text-base` | 16px | 1.6  | 400  | **正文**           |
+| `text-lg`   | 20px | 1.4  | 600  | 卡片标题、小标题   |
+| `text-xl`   | 24px | 1.3  | 600  | 区块标题           |
+| `text-2xl`  | 30px | 1.25 | 700  | 页面标题           |
+| `text-3xl`  | 36px | 1.2  | 700  | 大标题（Hero）     |
 
 **原则**（来自 Refactoring UI）：
 - 正文不小于 14px，理想 16px
@@ -186,19 +186,19 @@ metadata:
 
 所有间距和尺寸都是 **4px 或 8px 的倍数**。这是行业标准（Material Design、HIG、Ant Design 均采用）。
 
-| Token | 值 | 典型用途 |
-|-------|-----|----------|
-| `space-0` | 0 | 无间距 |
-| `space-1` | 4px | 图标与文字、紧凑元素 |
-| `space-2` | 8px | 相关元素间距（标签+输入框） |
-| `space-3` | 12px | 组内元素间距 |
-| `space-4` | 16px | 默认内边距、组件间距 |
-| `space-5` | 20px | 卡片内边距 |
-| `space-6` | 24px | 区块内间距 |
-| `space-8` | 32px | 区块间距 |
-| `space-10` | 40px | 大区块间距 |
-| `space-12` | 48px | 页面级间距 |
-| `space-16` | 64px | 超大间距、Hero 区域 |
+| Token      | 值   | 典型用途                    |
+| ---------- | ---- | --------------------------- |
+| `space-0`  | 0    | 无间距                      |
+| `space-1`  | 4px  | 图标与文字、紧凑元素        |
+| `space-2`  | 8px  | 相关元素间距（标签+输入框） |
+| `space-3`  | 12px | 组内元素间距                |
+| `space-4`  | 16px | 默认内边距、组件间距        |
+| `space-5`  | 20px | 卡片内边距                  |
+| `space-6`  | 24px | 区块内间距                  |
+| `space-8`  | 32px | 区块间距                    |
+| `space-10` | 40px | 大区块间距                  |
+| `space-12` | 48px | 页面级间距                  |
+| `space-16` | 64px | 超大间距、Hero 区域         |
 
 ### 间距使用原则（来自 Refactoring UI）
 
@@ -210,13 +210,13 @@ metadata:
 
 ### 布局容器
 
-| 断点 | 宽度 | 容器最大宽 | 用途 |
-|------|------|-----------|------|
-| `sm` | ≥ 640px | 100% | 手机 |
-| `md` | ≥ 768px | 720px | 平板 |
-| `lg` | ≥ 1024px | 960px | 小桌面 |
-| `xl` | ≥ 1280px | 1200px | 桌面 |
-| `2xl` | ≥ 1536px | 1400px | 大桌面 |
+| 断点  | 宽度     | 容器最大宽 | 用途   |
+| ----- | -------- | ---------- | ------ |
+| `sm`  | ≥ 640px  | 100%       | 手机   |
+| `md`  | ≥ 768px  | 720px      | 平板   |
+| `lg`  | ≥ 1024px | 960px      | 小桌面 |
+| `xl`  | ≥ 1280px | 1200px     | 桌面   |
+| `2xl` | ≥ 1536px | 1400px     | 大桌面 |
 
 ---
 
@@ -229,14 +229,14 @@ metadata:
 - **中圆角**（12-16px）：柔和、亲切。适合消费级应用
 - **大圆角**（20-24px）：童趣、温暖。适合面向儿童或娱乐的产品
 
-| Token | 值 | 用途 |
-|-------|-----|------|
-| `radius-none` | 0 | 直角元素 |
-| `radius-sm` | 4px | 标签、徽章、小输入框 |
-| `radius-md` | 8px | 按钮、输入框、卡片 |
-| `radius-lg` | 12px | 大卡片、弹窗 |
-| `radius-xl` | 16px | 模态框、大面板 |
-| `radius-2xl` | 24px | 超大卡片 |
+| Token         | 值     | 用途                 |
+| ------------- | ------ | -------------------- |
+| `radius-none` | 0      | 直角元素             |
+| `radius-sm`   | 4px    | 标签、徽章、小输入框 |
+| `radius-md`   | 8px    | 按钮、输入框、卡片   |
+| `radius-lg`   | 12px   | 大卡片、弹窗         |
+| `radius-xl`   | 16px   | 模态框、大面板       |
+| `radius-2xl`  | 24px   | 超大卡片             |
 | `radius-full` | 9999px | 圆形、胶囊按钮、头像 |
 
 **原则**：
@@ -252,13 +252,13 @@ metadata:
 
 阴影表达**层级关系**（z-axis）。元素越「浮起」，阴影越大。
 
-| Token | 值 | 用途 |
-|-------|-----|------|
-| `shadow-xs` | `0 1px 2px rgba(0,0,0,0.05)` | 输入框、分隔感 |
-| `shadow-sm` | `0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)` | 按钮悬停、小卡片 |
-| `shadow-md` | `0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)` | 卡片、下拉菜单 |
-| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)` | 弹窗、悬浮面板 |
-| `shadow-xl` | `0 20px 25px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.04)` | 模态框 |
+| Token       | 值                                                           | 用途             |
+| ----------- | ------------------------------------------------------------ | ---------------- |
+| `shadow-xs` | `0 1px 2px rgba(0,0,0,0.05)`                                 | 输入框、分隔感   |
+| `shadow-sm` | `0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)`      | 按钮悬停、小卡片 |
+| `shadow-md` | `0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)`     | 卡片、下拉菜单   |
+| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)`    | 弹窗、悬浮面板   |
+| `shadow-xl` | `0 20px 25px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.04)` | 模态框           |
 
 **原则**：
 - 阴影要**柔和** — 用多层小阴影模拟真实光照，不要用单个大黑影
@@ -285,20 +285,20 @@ metadata:
 
 ### 时长
 
-| Token | 值 | 用途 |
-|-------|-----|------|
-| `duration-fast` | 150ms | 微交互（hover、focus、开关） |
-| `duration-normal` | 250ms | 状态切换、展开收起、卡片变换 |
-| `duration-slow` | 350ms | 页面过渡、模态框进出、大型动画 |
+| Token             | 值    | 用途                           |
+| ----------------- | ----- | ------------------------------ |
+| `duration-fast`   | 150ms | 微交互（hover、focus、开关）   |
+| `duration-normal` | 250ms | 状态切换、展开收起、卡片变换   |
+| `duration-slow`   | 350ms | 页面过渡、模态框进出、大型动画 |
 
 ### 缓动函数
 
-| Token | 值 | 用途 |
-|-------|-----|------|
-| `ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | 元素进入（从快到慢） |
-| `ease-in` | `cubic-bezier(0.4, 0, 1, 1)` | 元素退出（从慢到快） |
-| `ease-in-out` | `cubic-bezier(0.4, 0, 0.2, 1)` | 状态切换（慢-快-慢） |
-| `spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | 弹性效果（按钮按下、弹出） |
+| Token         | 值                                  | 用途                       |
+| ------------- | ----------------------------------- | -------------------------- |
+| `ease-out`    | `cubic-bezier(0, 0, 0.2, 1)`        | 元素进入（从快到慢）       |
+| `ease-in`     | `cubic-bezier(0.4, 0, 1, 1)`        | 元素退出（从慢到快）       |
+| `ease-in-out` | `cubic-bezier(0.4, 0, 0.2, 1)`      | 状态切换（慢-快-慢）       |
+| `spring`      | `cubic-bezier(0.34, 1.56, 0.64, 1)` | 弹性效果（按钮按下、弹出） |
 
 > **参考**：Material Design 3 推荐的标准缓动是 `cubic-bezier(0.2, 0, 0, 1)`（Standard），强调用 `cubic-bezier(0.2, 0, 0, 1)`。
 
@@ -306,7 +306,9 @@ metadata:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -319,15 +321,15 @@ metadata:
 
 ### 必须遵守的 WCAG 2.1 要求
 
-| 准则 | 要求 | 实现方式 |
-|------|------|----------|
-| **1.4.3 对比度** | 正文 ≥ 4.5:1，大字 ≥ 3:1 | 所有文字颜色必须通过对比度检查 |
-| **1.4.1 颜色用途** | 不只靠颜色传达信息 | 错误状态同时显示图标和文字 |
-| **2.1.1 键盘** | 所有功能可键盘操作 | Tab 顺序合理，焦点可见 |
-| **2.4.7 焦点可见** | 焦点指示器清晰可见 | 自定义 focus ring，不要用 `outline: none` |
-| **2.4.6 标题和标签** | 标题描述主题 | 语义化 `<h1>-<h6>` |
-| **3.3.2 标签** | 表单控件有标签 | `<label for>` 或 `aria-label` |
-| **4.1.2 名称和角色** | 组件有正确语义 | button 用 `<button>`，不用 `<div onclick>` |
+| 准则                 | 要求                     | 实现方式                                   |
+| -------------------- | ------------------------ | ------------------------------------------ |
+| **1.4.3 对比度**     | 正文 ≥ 4.5:1，大字 ≥ 3:1 | 所有文字颜色必须通过对比度检查             |
+| **1.4.1 颜色用途**   | 不只靠颜色传达信息       | 错误状态同时显示图标和文字                 |
+| **2.1.1 键盘**       | 所有功能可键盘操作       | Tab 顺序合理，焦点可见                     |
+| **2.4.7 焦点可见**   | 焦点指示器清晰可见       | 自定义 focus ring，不要用 `outline: none`  |
+| **2.4.6 标题和标签** | 标题描述主题             | 语义化 `<h1>-<h6>`                         |
+| **3.3.2 标签**       | 表单控件有标签           | `<label for>` 或 `aria-label`              |
+| **4.1.2 名称和角色** | 组件有正确语义           | button 用 `<button>`，不用 `<div onclick>` |
 
 ### 焦点管理
 
@@ -382,7 +384,7 @@ metadata:
   --radius-lg: 12px;
 
   /* Shadow */
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
 
   /* Motion */
   --duration-fast: 150ms;

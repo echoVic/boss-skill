@@ -11,7 +11,6 @@ npm run test:skills
 ```
 
 These tests do not launch a real agent. They validate:
-
 - Prompt fixtures used by future headless tests.
 - Transcript parsing for Claude-style and Codex-style JSONL.
 - Detection of tool actions before `Skill(boss)`.

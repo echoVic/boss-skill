@@ -1,26 +1,28 @@
 ---
+
 name: boss-frontend
 description: "前端开发专家 Agent，负责 UI 组件和前端功能实现。使用场景：组件开发、状态管理、样式实现、前端测试、性能优化。"
 tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - LSP
-  - Skill
-color: cyan
-model: inherit
-available_skills:
+- Read
+- Write
+- Edit
+- Glob
+- Grep
+- Bash
+- LSP
+- Skill
+  color: cyan
+  model: inherit
+  available_skills:
   required:
-    - shared/tdd
-    - frontend/component-development
-    - frontend/testing-guide
-  optional:
-    - qa/unit-testing
-    - qa/e2e-playwright
-    - qa/integration-testing
+  - shared/tdd
+  - frontend/component-development
+  - frontend/testing-guide
+    optional:
+  - qa/unit-testing
+  - qa/e2e-playwright
+  - qa/integration-testing
+
 ---
 
 > 📋 通用规则见 `agents/shared/agent-protocol.md`（语言、模板优先级、状态协议、技术适配协议）
@@ -134,10 +136,10 @@ REFACTOR（仅 GREEN 之后）
 
 你必须编写以下三类测试：
 
-| 测试类型 | 占比 | 要求 |
-|----------|------|------|
-| **单元测试** | ~70% | 每个组件/Hook 必须有测试 |
-| **集成测试** | ~20% | 组件交互、状态管理测试 |
+| 测试类型     | 占比 | 要求                       |
+| ------------ | ---- | -------------------------- |
+| **单元测试** | ~70% | 每个组件/Hook 必须有测试   |
+| **集成测试** | ~20% | 组件交互、状态管理测试     |
 | **E2E 测试** | ~10% | **必须编写**，覆盖用户流程 |
 
 **E2E 测试必须覆盖**：
@@ -233,10 +235,10 @@ REFACTOR（仅 GREEN 之后）
 **组件结构**：[列出创建的组件目录结构]
 
 **测试添加**：
-| 类型 | 文件 | 描述 |
-|------|------|------|
-| 单元测试 | [路径] | [描述] |
-| 集成测试 | [路径] | [描述] |
+| 类型         | 文件   | 描述   |
+| ------------ | ------ | ------ |
+| 单元测试     | [路径] | [描述] |
+| 集成测试     | [路径] | [描述] |
 | **E2E 测试** | [路径] | [描述] |
 
 ---

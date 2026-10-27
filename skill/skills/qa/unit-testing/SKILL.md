@@ -1,4 +1,5 @@
 ---
+
 name: qa/unit-testing
 description: 单元测试方法论，覆盖 AAA 模式、Test Doubles、跨语言示例（JS/TS、Python、Go、Java）、前后端单元测试、边界与属性测试、变异测试
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要编写或审查单元测试时
-  - 需要测试纯函数、Service 层、组件、Hook 时
-  - 需要确定 Mock 边界时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要编写或审查单元测试时
+- 需要测试纯函数、Service 层、组件、Hook 时
+- 需要确定 Mock 边界时
+  metadata:
   internal: true
+
 ---
 
 # 单元测试方法论
@@ -24,24 +26,24 @@ metadata:
 
 ### 核心原则
 
-| 原则 | 说明 |
-|------|------|
+| 原则     | 说明                                             |
+| -------- | ------------------------------------------------ |
 | **隔离** | 一个测试只验证一个行为，不依赖其他测试或外部系统 |
-| **快速** | 毫秒级执行，全部单元测试应在秒级完成 |
+| **快速** | 毫秒级执行，全部单元测试应在秒级完成             |
 | **确定** | 相同输入多次运行结果一致，不依赖时间/网络/随机数 |
-| **可读** | 测试代码即文档，命名清晰表达意图 |
-| **独立** | 测试顺序不影响结果，可任意顺序执行 |
+| **可读** | 测试代码即文档，命名清晰表达意图                 |
+| **独立** | 测试顺序不影响结果，可任意顺序执行               |
 
 ### 什么该做单元测试
 
-| 应该测 | 不应该测 |
-|--------|----------|
-| 纯函数 / 工具函数 | 框架内部行为（React 渲染机制） |
-| Service 层业务逻辑 | 第三方库本身 |
-| 组件渲染与交互（前端） | 配置文件 / 常量 |
-| Hook 状态逻辑 | 简单的 getter/setter |
-| 校验 / 转换 / 格式化逻辑 | 数据库查询（属于集成测试） |
-| 状态机 / 状态转换 | 网络请求（属于集成测试） |
+| 应该测                   | 不应该测                       |
+| ------------------------ | ------------------------------ |
+| 纯函数 / 工具函数        | 框架内部行为（React 渲染机制） |
+| Service 层业务逻辑       | 第三方库本身                   |
+| 组件渲染与交互（前端）   | 配置文件 / 常量                |
+| Hook 状态逻辑            | 简单的 getter/setter           |
+| 校验 / 转换 / 格式化逻辑 | 数据库查询（属于集成测试）     |
+| 状态机 / 状态转换        | 网络请求（属于集成测试）       |
 
 ## AAA 模式（Arrange-Act-Assert）
 
@@ -65,25 +67,25 @@ it('applies 10% discount when total > 100', () => {
 
 ```typescript
 // ✅ 好
-it('returns error when email is invalid')
-it('calculates total with discount applied')
+it('returns error when email is invalid');
+it('calculates total with discount applied');
 
 // ❌ 差
-it('should work')
-it('test1')
+it('should work');
+it('test1');
 ```
 
 ## Test Doubles（测试替身）
 
 根据用途选择不同的替身类型：
 
-| 类型 | 用途 | 示例 |
-|------|------|------|
-| **Dummy** | 占位，不被调用 | 传一个空对象满足参数签名 |
-| **Stub** | 提供预设返回值 | `repo.findById.mockResolvedValue(user)` |
-| **Spy** | 记录调用信息 | `expect(fn).toHaveBeenCalledWith(arg)` |
-| **Mock** | Stub + Spy，验证交互 | `mock.calledWith(...)` |
-| **Fake** | 简化的真实实现 | 内存数据库替代真实 DB |
+| 类型      | 用途                 | 示例                                    |
+| --------- | -------------------- | --------------------------------------- |
+| **Dummy** | 占位，不被调用       | 传一个空对象满足参数签名                |
+| **Stub**  | 提供预设返回值       | `repo.findById.mockResolvedValue(user)` |
+| **Spy**   | 记录调用信息         | `expect(fn).toHaveBeenCalledWith(arg)`  |
+| **Mock**  | Stub + Spy，验证交互 | `mock.calledWith(...)`                  |
+| **Fake**  | 简化的真实实现       | 内存数据库替代真实 DB                   |
 
 ### 何时使用哪种
 
@@ -101,8 +103,12 @@ expect(emailSpy).toHaveBeenCalledWith(user.email, expect.any(String));
 // Fake：需要一个可用但简化的实现
 class FakeCache implements Cache {
   private store = new Map<string, string>();
-  async get(k: string) { return this.store.get(k) ?? null; }
-  async set(k: string, v: string) { this.store.set(k, v); }
+  async get(k: string) {
+    return this.store.get(k) ?? null;
+  }
+  async set(k: string, v: string) {
+    this.store.set(k, v);
+  }
 }
 ```
 
@@ -276,8 +282,9 @@ describe('UserService', () => {
     it('throws ConflictError when email exists', async () => {
       mockFindById.mockResolvedValue({ id: '1', email: 'exists@example.com' });
 
-      await expect(service.create({ name: 'X', email: 'exists@example.com' }))
-        .rejects.toThrow('Email already exists');
+      await expect(service.create({ name: 'X', email: 'exists@example.com' })).rejects.toThrow(
+        'Email already exists',
+      );
 
       expect(mockCreate).not.toHaveBeenCalled(); // 不应调用创建
     });
@@ -305,8 +312,9 @@ describe('calculatePrice', () => {
   });
 
   it('throws on negative quantity', () => {
-    expect(() => calculatePrice([{ price: 10, quantity: -1 }]))
-      .toThrow('Quantity must be positive');
+    expect(() => calculatePrice([{ price: 10, quantity: -1 }])).toThrow(
+      'Quantity must be positive',
+    );
   });
 });
 
@@ -556,15 +564,15 @@ class UserServiceTest {
 
 单元测试必须覆盖边界：
 
-| 边界类型 | 示例 |
-|----------|------|
-| **空值** | 空字符串、空数组、null、undefined |
-| **零值** | 数量为 0、金额为 0 |
-| **最小值/最大值** | 字符串最大长度、数值上下限 |
-| **负数** | 负数数量、负数金额 |
-| **类型边界** | 整数溢出、浮点数精度 |
-| **日期时间** | 闰年、时区、夏令时、跨年 |
-| **集合边界** | 单元素、刚好达到上限、超过上限 |
+| 边界类型          | 示例                              |
+| ----------------- | --------------------------------- |
+| **空值**          | 空字符串、空数组、null、undefined |
+| **零值**          | 数量为 0、金额为 0                |
+| **最小值/最大值** | 字符串最大长度、数值上下限        |
+| **负数**          | 负数数量、负数金额                |
+| **类型边界**      | 整数溢出、浮点数精度              |
+| **日期时间**      | 闰年、时区、夏令时、跨年          |
+| **集合边界**      | 单元素、刚好达到上限、超过上限    |
 
 ```typescript
 describe('pagination', () => {
@@ -591,13 +599,16 @@ describe('pagination', () => {
 ```typescript
 describe('error handling', () => {
   it('throws custom error with code', () => {
-    expect(() => validateEmail('invalid'))
-      .toThrow(expect.objectContaining({ code: 'INVALID_EMAIL' }));
+    expect(() => validateEmail('invalid')).toThrow(
+      expect.objectContaining({ code: 'INVALID_EMAIL' }),
+    );
   });
 
   it('rejects promise with typed error', async () => {
-    await expect(service.delete('not-owner-id'))
-      .rejects.toMatchObject({ code: 'FORBIDDEN', status: 403 });
+    await expect(service.delete('not-owner-id')).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      status: 403,
+    });
   });
 
   it('does not throw for valid input', () => {
@@ -619,7 +630,7 @@ describe('reverse function (property test)', () => {
     fc.assert(
       fc.property(fc.array(fc.integer()), (arr) => {
         expect(reverse(reverse(arr))).toEqual(arr);
-      })
+      }),
     );
   });
 
@@ -627,7 +638,7 @@ describe('reverse function (property test)', () => {
     fc.assert(
       fc.property(fc.array(fc.integer()), (arr) => {
         expect(reverse(arr)).toHaveLength(arr.length);
-      })
+      }),
     );
   });
 });
@@ -660,34 +671,34 @@ go test -run TestMutate -v
 
 ### 单元测试中应该 Mock 的
 
-| 依赖 | 原因 |
-|------|------|
-| 数据库 | 单元测试不碰真实 DB（那是集成测试） |
-| 网络请求 / 外部 API | 不可控、慢 |
-| 文件系统 | 速度和隔离 |
-| 时间 | 保证确定性 |
+| 依赖                | 原因                                |
+| ------------------- | ----------------------------------- |
+| 数据库              | 单元测试不碰真实 DB（那是集成测试） |
+| 网络请求 / 外部 API | 不可控、慢                          |
+| 文件系统            | 速度和隔离                          |
+| 时间                | 保证确定性                          |
 
 ### 不应该 Mock 的
 
-| 依赖 | 原因 |
-|------|------|
-| 被测函数内部调用的同模块函数 | 要验证真实协作 |
-| 纯函数 / 工具函数 | Mock 它们无意义 |
-| 数据结构 / 常量 | 不是行为依赖 |
+| 依赖                         | 原因            |
+| ---------------------------- | --------------- |
+| 被测函数内部调用的同模块函数 | 要验证真实协作  |
+| 纯函数 / 工具函数            | Mock 它们无意义 |
+| 数据结构 / 常量              | 不是行为依赖    |
 
 **判断标准**：如果一个依赖的行为会被测试直接验证，就不要 Mock 它。
 
 ## 测试反模式（禁止）
 
-| 反模式 | 问题 | 正确做法 |
-|--------|------|----------|
-| **一个测试多个断言无关行为** | 失败时不知道哪里坏了 | 拆分多个测试 |
-| **测试实现细节而非行为** | 重构就全挂 | 测输入输出 |
-| **Mock 一切** | 测的是 Mock 不是代码 | 只 Mock 外部依赖 |
-| **测试间共享状态** | 顺序依赖、flaky | beforeEach 重建 |
-| **try-catch 吞异常** | 测试永远通过 | 让断言抛错 |
-| **用随机数据不固定种子** | 不可重复 | 固定种子或用固定值 |
-| **只测 happy path** | 边界没覆盖 | 必须有边界/异常用例 |
+| 反模式                       | 问题                 | 正确做法            |
+| ---------------------------- | -------------------- | ------------------- |
+| **一个测试多个断言无关行为** | 失败时不知道哪里坏了 | 拆分多个测试        |
+| **测试实现细节而非行为**     | 重构就全挂           | 测输入输出          |
+| **Mock 一切**                | 测的是 Mock 不是代码 | 只 Mock 外部依赖    |
+| **测试间共享状态**           | 顺序依赖、flaky      | beforeEach 重建     |
+| **try-catch 吞异常**         | 测试永远通过         | 让断言抛错          |
+| **用随机数据不固定种子**     | 不可重复             | 固定种子或用固定值  |
+| **只测 happy path**          | 边界没覆盖           | 必须有边界/异常用例 |
 
 ## 检查清单
 

@@ -1,4 +1,5 @@
 ---
+
 name: devops/deploy-vercel
 description: Vercel 部署方法论，使用 vercel CLI 部署前端和全栈应用（Next.js、React、Vue、静态站点）
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要部署到 Vercel 时
-  - 项目使用 Next.js 或 React 框架时
-  - 需要配置 Vercel 部署配置时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要部署到 Vercel 时
+- 项目使用 Next.js 或 React 框架时
+- 需要配置 Vercel 部署配置时
+  metadata:
   internal: true
+
 ---
 
 # Vercel 部署
@@ -140,7 +142,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.ORG_ID }}
           vercel-project-id: ${{ secrets.PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
 ```
 
 **需要的 Secrets**：
@@ -150,12 +152,12 @@ jobs:
 
 ## 项目类型适配
 
-| 项目类型 | vercel.json 配置 | 说明 |
-|----------|------------------|------|
-| Next.js | 自动检测 | 无需额外配置 |
-| Vite (React/Vue) | `"outputDirectory": "dist"` | 需指定构建输出 |
-| 静态 HTML | 无需配置 | 直接部署根目录 |
-| SvelteKit | 自动检测 | 使用 adapter-vercel |
+| 项目类型         | vercel.json 配置            | 说明                |
+| ---------------- | --------------------------- | ------------------- |
+| Next.js          | 自动检测                    | 无需额外配置        |
+| Vite (React/Vue) | `"outputDirectory": "dist"` | 需指定构建输出      |
+| 静态 HTML        | 无需配置                    | 直接部署根目录      |
+| SvelteKit        | 自动检测                    | 使用 adapter-vercel |
 
 ## 检查清单
 

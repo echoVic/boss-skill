@@ -25,17 +25,17 @@
 
 ## 产物清单
 
-| 环节 | 产物 | 模板 |
-|------|------|------|
-| pm | `prd.md` | `templates/prd.md.template` |
-| architect | `architecture.md` | `templates/architecture.md.template` |
-| ui | `ui-spec.md` | `templates/ui-spec.md.template` |
-| ui | `ui-design.json` | `templates/ui-design.json.template` |
-| review | `tech-review.md` | `templates/tech-review.md.template` |
-| review | `plan.md` | `templates/plan.md.template` |
-| tasks | `tasks.md` | `templates/tasks.md.template` |
-| qa | `qa-report.md` | `templates/qa-report.md.template` |
-| ship | `deploy-report.md` | `templates/deploy-report.md.template` |
+| 环节      | 产物               | 模板                                  |
+| --------- | ------------------ | ------------------------------------- |
+| pm        | `prd.md`           | `templates/prd.md.template`           |
+| architect | `architecture.md`  | `templates/architecture.md.template`  |
+| ui        | `ui-spec.md`       | `templates/ui-spec.md.template`       |
+| ui        | `ui-design.json`   | `templates/ui-design.json.template`   |
+| review    | `tech-review.md`   | `templates/tech-review.md.template`   |
+| review    | `plan.md`          | `templates/plan.md.template`          |
+| tasks     | `tasks.md`         | `templates/tasks.md.template`         |
+| qa        | `qa-report.md`     | `templates/qa-report.md.template`     |
+| ship      | `deploy-report.md` | `templates/deploy-report.md.template` |
 
 产物流：
 

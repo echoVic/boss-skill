@@ -1,4 +1,5 @@
 ---
+
 name: qa/integration-testing
 description: 集成测试方法论，验证模块间协作、数据库交互、服务间调用，参考 Testcontainers、Testing Library、WireMock 等开源实践
 version: 1.0.0
@@ -7,14 +8,15 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要验证模块间协作时
-  - 需要测试数据库真实交互时
-  - 需要测试服务间调用时
-  - 需要验证前端组件与 API 集成时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要验证模块间协作时
+- 需要测试数据库真实交互时
+- 需要测试服务间调用时
+- 需要验证前端组件与 API 集成时
+  metadata:
   internal: true
+
 ---
 
 # 集成测试方法论
@@ -23,13 +25,13 @@ metadata:
 
 ## 集成测试 vs 单元测试
 
-| 维度 | 单元测试 | 集成测试 |
-|------|----------|----------|
-| 范围 | 单个函数/组件 | 多个模块协作 |
-| 依赖 | Mock 外部依赖 | 真实依赖（DB、HTTP） |
-| 速度 | 快（ms） | 较慢（s） |
-| 目的 | 验证逻辑正确性 | 验证模块间协作 |
-| 数据 | Mock 数据 | 测试数据库/真实数据 |
+| 维度 | 单元测试       | 集成测试             |
+| ---- | -------------- | -------------------- |
+| 范围 | 单个函数/组件  | 多个模块协作         |
+| 依赖 | Mock 外部依赖  | 真实依赖（DB、HTTP） |
+| 速度 | 快（ms）       | 较慢（s）            |
+| 目的 | 验证逻辑正确性 | 验证模块间协作       |
+| 数据 | Mock 数据      | 测试数据库/真实数据  |
 
 ## 1. 后端集成测试
 
@@ -151,7 +153,9 @@ describe('User API + DB integration', () => {
   });
 
   it('DELETE removes user from database', async () => {
-    const user = await prisma.user.create({ data: { name: 'Charlie', email: 'charlie@example.com' } });
+    const user = await prisma.user.create({
+      data: { name: 'Charlie', email: 'charlie@example.com' },
+    });
 
     await request(app).delete(`/api/users/${user.id}`).expect(200);
 
@@ -196,8 +200,9 @@ describe('OrderService integration with PaymentService', () => {
     });
 
     const order = await orderService.create({ userId: '1', items: [] });
-    await expect(orderService.pay(order.id, { method: 'credit_card' }))
-      .rejects.toThrow('Payment failed');
+    await expect(orderService.pay(order.id, { method: 'credit_card' })).rejects.toThrow(
+      'Payment failed',
+    );
 
     const refreshed = await orderService.getById(order.id);
     expect(refreshed.status).toBe('pending');
@@ -351,12 +356,12 @@ describe('Auth flow integration', () => {
 
 ### 3.1 方案选择
 
-| 方案 | 适用场景 | 优点 | 缺点 |
-|------|----------|------|------|
-| **Testcontainers** | 需要真实数据库 | 最接近生产 | 启动慢（5-10s） |
-| **内存数据库** (H2/SQLite) | 简单 CRUD | 快 | 与生产 DB 行为可能不一致 |
-| **测试数据库** | 已有测试环境 | 真实 | 需要维护 |
-| **事务回滚** | 单测级隔离 | 快、无残留 | 不支持跨事务测试 |
+| 方案                       | 适用场景       | 优点       | 缺点                     |
+| -------------------------- | -------------- | ---------- | ------------------------ |
+| **Testcontainers**         | 需要真实数据库 | 最接近生产 | 启动慢（5-10s）          |
+| **内存数据库** (H2/SQLite) | 简单 CRUD      | 快         | 与生产 DB 行为可能不一致 |
+| **测试数据库**             | 已有测试环境   | 真实       | 需要维护                 |
+| **事务回滚**               | 单测级隔离     | 快、无残留 | 不支持跨事务测试         |
 
 ### 3.2 数据清理策略
 
@@ -381,20 +386,20 @@ afterEach(async () => {
 
 ### 应该 Mock 的
 
-| 依赖 | 原因 |
-|------|------|
-| 第三方 API（支付、邮件、短信） | 不可控、有成本 |
-| 外部微服务 | 独立部署，不应耦合 |
-| 文件系统 | 测试速度和隔离 |
+| 依赖                           | 原因               |
+| ------------------------------ | ------------------ |
+| 第三方 API（支付、邮件、短信） | 不可控、有成本     |
+| 外部微服务                     | 独立部署，不应耦合 |
+| 文件系统                       | 测试速度和隔离     |
 
 ### 不应该 Mock 的
 
-| 依赖 | 原因 |
-|------|------|
-| 数据库 | 集成测试的核心就是验证 DB 交互 |
-| 应用内部服务 | 要验证模块间协作 |
-| HTTP 框架（Express/Nest） | 要验证路由和中间件 |
-| 验证库（Zod/Joi） | 要验证真实校验逻辑 |
+| 依赖                      | 原因                           |
+| ------------------------- | ------------------------------ |
+| 数据库                    | 集成测试的核心就是验证 DB 交互 |
+| 应用内部服务              | 要验证模块间协作               |
+| HTTP 框架（Express/Nest） | 要验证路由和中间件             |
+| 验证库（Zod/Joi）         | 要验证真实校验逻辑             |
 
 ## 5. 跨前后端契约集成测试
 

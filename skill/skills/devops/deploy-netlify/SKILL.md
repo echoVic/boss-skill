@@ -1,4 +1,5 @@
 ---
+
 name: devops/deploy-netlify
 description: Netlify 部署方法论，使用 netlify CLI 部署前端应用、静态站点和 Serverless Functions
 version: 1.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要部署到 Netlify 时
-  - 项目是静态站点或前端 SPA 时
-  - 需要 Serverless Functions 时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要部署到 Netlify 时
+- 项目是静态站点或前端 SPA 时
+- 需要 Serverless Functions 时
+  metadata:
   internal: true
+
 ---
 
 # Netlify 部署
@@ -154,15 +156,15 @@ netlify domains:list
 exports.handler = async (event) => {
   return {
     statusCode: 200,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: "Hello from Netlify Functions!" }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Hello from Netlify Functions!' }),
   };
 };
 ```
 
 ```typescript
 // netlify/functions/api.ts
-import type { Handler } from "@netlify/functions";
+import type { Handler } from '@netlify/functions';
 
 const handler: Handler = async (event) => {
   return {
@@ -224,14 +226,14 @@ jobs:
 
 ## 项目类型适配
 
-| 项目类型 | publish 目录 | build 命令 | 说明 |
-|----------|-------------|-----------|------|
-| Vite (React/Vue) | dist | `npm run build` | 需配置 SPA redirect |
-| Next.js 静态导出 | out | `next build && next export` | next.config 配置 `output: 'export'` |
-| Create React App | build | `npm run build` | 需配置 SPA redirect |
-| Gatsby | public | `npm run build` | - |
-| Hugo | public | `hugo` | 需设置 HUGO_VERSION 环境变量 |
-| Astro | dist | `npm run build` | - |
+| 项目类型         | publish 目录 | build 命令                  | 说明                                |
+| ---------------- | ------------ | --------------------------- | ----------------------------------- |
+| Vite (React/Vue) | dist         | `npm run build`             | 需配置 SPA redirect                 |
+| Next.js 静态导出 | out          | `next build && next export` | next.config 配置 `output: 'export'` |
+| Create React App | build        | `npm run build`             | 需配置 SPA redirect                 |
+| Gatsby           | public       | `npm run build`             | -                                   |
+| Hugo             | public       | `hugo`                      | 需设置 HUGO_VERSION 环境变量        |
+| Astro            | dist         | `npm run build`             | -                                   |
 
 ## 检查清单
 

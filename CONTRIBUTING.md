@@ -27,14 +27,14 @@ npm test
 
 ## 项目结构概览
 
-| 目录 | 职责 |
-|------|------|
-| `skill/` | 安装到 Coding Agent 的 skill bundle（自包含：`SKILL.md`、agents、commands、templates、hooks、子 skills、CLI、资产） |
-| `skill/cli/` | CLI 与 runtime 源码（`.mts`，Node `>=22.18` 直接运行；无构建、无生成副本） |
-| `skill/scripts/` | Hook 运行时（`lib/run-with-flags.js`）与 10 个 Hook 脚本（由 `boss hooks run` 调度） |
-| `skill/assets/` | 内置 DAG、packs、plugin schema、内置插件 |
-| `docs/` | runtime contract、实施计划等设计/迁移文档 |
-| `test/` | 自动化测试 |
+| 目录             | 职责                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `skill/`         | 安装到 Coding Agent 的 skill bundle（自包含：`SKILL.md`、agents、commands、templates、hooks、子 skills、CLI、资产） |
+| `skill/cli/`     | CLI 与 runtime 源码（`.mts`，Node `>=22.18` 直接运行；无构建、无生成副本）                                          |
+| `skill/scripts/` | Hook 运行时（`lib/run-with-flags.js`）与 10 个 Hook 脚本（由 `boss hooks run` 调度）                                |
+| `skill/assets/`  | 内置 DAG、packs、plugin schema、内置插件                                                                            |
+| `docs/`          | runtime contract、实施计划等设计/迁移文档                                                                           |
+| `test/`          | 自动化测试                                                                                                          |
 
 ## 开发规范
 
@@ -47,7 +47,6 @@ npm test
 ### Agent-Friendly CLI Contract
 
 Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
-
 - `--json`: structured JSON output; non-TTY stdout defaults to JSON
 - `--describe`: JSON command schema
 - `--dry-run`: structured action plan for writes or risky operations
@@ -108,7 +107,10 @@ describe('my-hook', () => {
   let tmpDir: string | null = null;
 
   afterEach(() => {
-    if (tmpDir) { cleanupTempDir(tmpDir); tmpDir = null; }
+    if (tmpDir) {
+      cleanupTempDir(tmpDir);
+      tmpDir = null;
+    }
   });
 
   it('handles normal input', async () => {
@@ -124,7 +126,6 @@ describe('my-hook', () => {
 ### 测试覆盖范围
 
 提交 PR 时，请确保：
-
 - 新增的 Hook 脚本有对应的测试
 - 新增的 `skill/scripts/lib/` 工具函数有对应的测试
 - CLI 功能变更在 `test/bin/boss-skill.test.ts` 中覆盖
@@ -134,11 +135,11 @@ describe('my-hook', () => {
 
 版本号在 4 个文件中必须保持一致：
 
-| 文件 | 字段 |
-|------|------|
-| `package.json` | `version` |
-| `skill/SKILL.md` | frontmatter `version:` |
-| `.claude-plugin/plugin.json` | `version` |
+| 文件                              | 字段                                  |
+| --------------------------------- | ------------------------------------- |
+| `package.json`                    | `version`                             |
+| `skill/SKILL.md`                  | frontmatter `version:`                |
+| `.claude-plugin/plugin.json`      | `version`                             |
 | `.claude-plugin/marketplace.json` | 外层 `version` + `plugins[0].version` |
 
 **不要手动修改版本号**，使用发布脚本自动同步：
@@ -159,14 +160,14 @@ npm run release -- <version|major|minor|patch> [--dry-run]
 [可选正文]
 ```
 
-| Type | 用途 |
-|------|------|
-| `feat` | 新功能 |
-| `fix` | Bug 修复 |
+| Type       | 用途               |
+| ---------- | ------------------ |
+| `feat`     | 新功能             |
+| `fix`      | Bug 修复           |
 | `refactor` | 重构（不改变行为） |
-| `test` | 测试相关 |
-| `docs` | 文档 |
-| `chore` | 构建、发布、配置等 |
+| `test`     | 测试相关           |
+| `docs`     | 文档               |
+| `chore`    | 构建、发布、配置等 |
 
 示例：
 
@@ -198,7 +199,6 @@ docs: 更新 README 安装说明
 ## 插件开发
 
 如需开发自定义插件，请参考：
-
 - 插件 Schema：`skill/assets/plugin-schema.json`
 - 内置插件示例：`skill/assets/plugins/security-audit/`
 - 插件注册入口：`boss runtime register-plugins <feature>`

@@ -1,4 +1,5 @@
 ---
+
 name: boss:tasks
 description: "从任务拆解开始：Scrum Master 将架构/需求拆分为可执行任务，默认自动续跑后续环节（开发 → 测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
@@ -12,10 +13,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 适合 / 不适合
 
-| 适合 `/boss:tasks` | 不适合 |
-|--------------------|--------|
-| 已有实施计划（plan.md），需要拆成原子开发任务 | 需求还不清晰（用 `/boss:pm`） |
-| 想明确开发范围和写集 | 只想做技术评审（用 `/boss:review`） |
+| 适合 `/boss:tasks`                            | 不适合                              |
+| --------------------------------------------- | ----------------------------------- |
+| 已有实施计划（plan.md），需要拆成原子开发任务 | 需求还不清晰（用 `/boss:pm`）       |
+| 想明确开发范围和写集                          | 只想做技术评审（用 `/boss:review`） |
 
 ## 前置输入
 
@@ -43,7 +44,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
-| `--stop-after <环节>` | 跑到指定环节后停 |
-| `--lang <zh\|en>` | 产物语言（默认 zh） |
+| 参数                  | 说明                |
+| --------------------- | ------------------- |
+| `--stop-after <环节>` | 跑到指定环节后停    |
+| `--lang <zh\|en>`     | 产物语言（默认 zh） |

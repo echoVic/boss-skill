@@ -21,7 +21,6 @@ Boss funciona con Claude Code, Codex, OpenClaw, Antigravity y Hermes.
 ## Por qué Boss
 
 La orquestación basada solo en prompts puede parecer organizada, pero normalmente no puede demostrar que se siguió el plan, que se ejecutaron las pruebas o que se superaron las puertas. Boss se construye en torno a la evidencia y los contratos estrictos:
-
 - **Contratos de calidad estrictos**: cada rol tiene una tabla de requisitos innegociables (por ejemplo, el PRD debe incluir escenarios Given-When-Then; la arquitectura debe comparar al menos dos opciones; QA debe registrar evidencia verificada o honestamente no verificada). Los contratos fallidos bloquean la siguiente etapa a menos que los anules explícitamente.
 - **Orientado a artefactos**: cada etapa escribe un archivo real bajo `.boss/<feature>/`. El progreso se juzga por los artefactos en disco, no por lo que el agente afirma.
 - **Cadena de continuación**: empieza en cualquier etapa (`/boss:pm`, `/boss:dev`, ...) y Boss ejecuta automáticamente todas las etapas posteriores hasta `ship` o hasta que lo detengas. Sin entregas manuales.
@@ -34,17 +33,17 @@ La orquestación basada solo en prompts puede parecer organizada, pero normalmen
 
 Boss no es un único comando monolítico. Cada comando de barra es un punto de entrada; por defecto ejecuta automáticamente todas las etapas posteriores.
 
-| Comando | Empieza en | Ejecuta hasta | Cuándo usarlo |
-| --- | --- | --- | --- |
-| `/boss` | PM | cadena completa → ship | Ir de la idea al trabajo entregable |
-| `/boss:pm` | PM | Architect → ... → Ship | Empezar desde los requisitos |
-| `/boss:architect` | Architect | UI → ... → Ship | Tienes una especificación, necesitas diseño |
-| `/boss:ui` | UI Designer | Review → ... → Ship | Tienes arquitectura, necesitas UI |
-| `/boss:review` | Tech Lead | Tasks → ... → Ship | Necesitas revisión técnica + plan |
-| `/boss:tasks` | Scrum Master | Dev → QA → Ship | Necesitas desglose de tareas |
-| `/boss:dev` | Frontend/Backend | QA → Ship | Empezar la implementación |
-| `/boss:qa` | QA | Ship | Necesitas evidencia de pruebas |
-| `/boss:ship` | DevOps | (fin) | Solo desplegar |
+| Comando           | Empieza en       | Ejecuta hasta          | Cuándo usarlo                               |
+| ----------------- | ---------------- | ---------------------- | ------------------------------------------- |
+| `/boss`           | PM               | cadena completa → ship | Ir de la idea al trabajo entregable         |
+| `/boss:pm`        | PM               | Architect → ... → Ship | Empezar desde los requisitos                |
+| `/boss:architect` | Architect        | UI → ... → Ship        | Tienes una especificación, necesitas diseño |
+| `/boss:ui`        | UI Designer      | Review → ... → Ship    | Tienes arquitectura, necesitas UI           |
+| `/boss:review`    | Tech Lead        | Tasks → ... → Ship     | Necesitas revisión técnica + plan           |
+| `/boss:tasks`     | Scrum Master     | Dev → QA → Ship        | Necesitas desglose de tareas                |
+| `/boss:dev`       | Frontend/Backend | QA → Ship              | Empezar la implementación                   |
+| `/boss:qa`        | QA               | Ship                   | Necesitas evidencia de pruebas              |
+| `/boss:ship`      | DevOps           | (fin)                  | Solo desplegar                              |
 
 La cadena completa:
 
@@ -140,39 +139,38 @@ Solicitud del usuario
 
 ### Roles y Artefactos
 
-| Rol | Responsabilidad | Artefacto |
-| --- | --- | --- |
-| PM | Descubrimiento de requisitos, PRD, necesidades ocultas, casos límite | `prd.md` |
-| Architect | Arquitectura del sistema, diseño técnico, APIs | `architecture.md` |
-| UI Designer | Especificación UI/UX, JSON de diseño renderizable, prototipo HTML | `ui-spec.md`, `ui-design.json` |
-| Tech Lead | Revisión técnica, evaluación de riesgos, plan de implementación | `tech-review.md`, `plan.md` |
-| Scrum Master | Desglose de tareas y criterios de aceptación | `tasks.md` |
-| Frontend | Implementación de UI, TDD, pruebas de frontend | código fuente |
-| Backend | API, almacenamiento, TDD, pruebas de backend | código fuente |
-| QA | Ejecución de pruebas, informes de bugs, evidencia de verificación | `qa-report.md` |
-| DevOps | Build, despliegue, comprobaciones de salud | `deploy-report.md` |
+| Rol          | Responsabilidad                                                      | Artefacto                      |
+| ------------ | -------------------------------------------------------------------- | ------------------------------ |
+| PM           | Descubrimiento de requisitos, PRD, necesidades ocultas, casos límite | `prd.md`                       |
+| Architect    | Arquitectura del sistema, diseño técnico, APIs                       | `architecture.md`              |
+| UI Designer  | Especificación UI/UX, JSON de diseño renderizable, prototipo HTML    | `ui-spec.md`, `ui-design.json` |
+| Tech Lead    | Revisión técnica, evaluación de riesgos, plan de implementación      | `tech-review.md`, `plan.md`    |
+| Scrum Master | Desglose de tareas y criterios de aceptación                         | `tasks.md`                     |
+| Frontend     | Implementación de UI, TDD, pruebas de frontend                       | código fuente                  |
+| Backend      | API, almacenamiento, TDD, pruebas de backend                         | código fuente                  |
+| QA           | Ejecución de pruebas, informes de bugs, evidencia de verificación    | `qa-report.md`                 |
+| DevOps       | Build, despliegue, comprobaciones de salud                           | `deploy-report.md`             |
 
 ## Contrato de Calidad
 
 Boss tiene dos capas de control de calidad:
-
 - **Requisitos estrictos por rol**: el prompt de cada agente define una tabla de requisitos innegociables. El agente se autocontrola antes de entregar; un contrato fallido bloquea la siguiente etapa.
 - **Puertas de calidad**: comandos reales cuyos veredictos se registran en el artefacto de la etapa.
 
-| Puerta | Etapa | Comprobaciones |
-| --- | --- | --- |
-| Gate 0 (calidad de código) | Tras dev, antes de QA | TypeScript/lint pasan, sin vulnerabilidades de dependencias de alta severidad |
-| Gate 1 (pruebas) | Tras QA, antes de despliegue | Pruebas unitarias + de integración pasan, cobertura ≥ 70%, sin bugs P0/P1, pruebas E2E escritas |
-| Gate 2 (rendimiento) | Antes de despliegue web | Lighthouse ≥ 80, API P99 < 500ms (solo proyectos web) |
+| Puerta                     | Etapa                        | Comprobaciones                                                                                  |
+| -------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| Gate 0 (calidad de código) | Tras dev, antes de QA        | TypeScript/lint pasan, sin vulnerabilidades de dependencias de alta severidad                   |
+| Gate 1 (pruebas)           | Tras QA, antes de despliegue | Pruebas unitarias + de integración pasan, cobertura ≥ 70%, sin bugs P0/P1, pruebas E2E escritas |
+| Gate 2 (rendimiento)       | Antes de despliegue web      | Lighthouse ≥ 80, API P99 < 500ms (solo proyectos web)                                           |
 
 ## Cuándo Usar Boss
 
-| Buen ajuste | Mal ajuste |
-| --- | --- |
-| Nuevas funcionalidades que necesitan requisitos, diseño, implementación, pruebas y evidencia de entrega | Arreglos de una línea o pequeñas ediciones locales |
-| Trabajo de API, full-stack, UI o producto de tamaño medio | Lectura o explicación de código pura |
-| Trabajo donde los artefactos `.boss/<feature>/` son valiosos | Tareas con una especificación completa existente donde solo necesitas un parche rápido |
-| Equipos que quieren puertas de calidad repetibles y trazabilidad de auditoría | Trabajo que no necesita coordinación ni evidencia de revisión |
+| Buen ajuste                                                                                             | Mal ajuste                                                                             |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Nuevas funcionalidades que necesitan requisitos, diseño, implementación, pruebas y evidencia de entrega | Arreglos de una línea o pequeñas ediciones locales                                     |
+| Trabajo de API, full-stack, UI o producto de tamaño medio                                               | Lectura o explicación de código pura                                                   |
+| Trabajo donde los artefactos `.boss/<feature>/` son valiosos                                            | Tareas con una especificación completa existente donde solo necesitas un parche rápido |
+| Equipos que quieren puertas de calidad repetibles y trazabilidad de auditoría                           | Trabajo que no necesita coordinación ni evidencia de revisión                          |
 
 Regla de oro: si no necesitas una carpeta `.boss/` trazable, probablemente no necesitas el pipeline completo `/boss`. Usa un solo rol o deja que tu agente edite directamente.
 
@@ -219,7 +217,6 @@ Ver [test/evals/README.md](./test/evals/README.md).
 ## Desarrollo
 
 Requisitos:
-
 - Node.js >= 22.18
 
 Configuración:

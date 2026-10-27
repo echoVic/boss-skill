@@ -18,17 +18,17 @@ BMAD（Breakthrough Method of Agile AI-Driven Development）是一种突破性�
 
 BMAD 将软件开发流程分解为 9 个专业化角色，每个角色由专门的 AI Agent 承担：
 
-| 角色 | Agent 文件 | 职责 | 输出产物 |
-|------|-----------|------|----------|
-| 产品经理 (PM) | `boss-pm.md` | 需求分析、PRD 编写 | `prd.md` |
-| 系统架构师 | `boss-architect.md` | 技术架构、选型决策、API 契约 | `architecture.md` |
-| UI/UX 设计师 | `boss-ui-designer.md` | 界面设计、用户体验 | `ui-spec.md` + `ui-design.json`（可选） |
-| 技术负责人 | `boss-tech-lead.md` | 技术评审、风险评估、实施计划 | `tech-review.md` + `plan.md` |
-| Scrum Master | `boss-scrum-master.md` | 任务拆解、开发规划 | `tasks.md` |
-| 前端开发 | `boss-frontend.md` | 前端代码实现 | 源代码 |
-| 后端开发 | `boss-backend.md` | 后端代码实现 | 源代码 |
-| QA 工程师 | `boss-qa.md` | 测试验证 | `qa-report.md` |
-| DevOps | `boss-devops.md` | 部署运维 | `deploy-report.md` |
+| 角色          | Agent 文件             | 职责                         | 输出产物                                |
+| ------------- | ---------------------- | ---------------------------- | --------------------------------------- |
+| 产品经理 (PM) | `boss-pm.md`           | 需求分析、PRD 编写           | `prd.md`                                |
+| 系统架构师    | `boss-architect.md`    | 技术架构、选型决策、API 契约 | `architecture.md`                       |
+| UI/UX 设计师  | `boss-ui-designer.md`  | 界面设计、用户体验           | `ui-spec.md` + `ui-design.json`（可选） |
+| 技术负责人    | `boss-tech-lead.md`    | 技术评审、风险评估、实施计划 | `tech-review.md` + `plan.md`            |
+| Scrum Master  | `boss-scrum-master.md` | 任务拆解、开发规划           | `tasks.md`                              |
+| 前端开发      | `boss-frontend.md`     | 前端代码实现                 | 源代码                                  |
+| 后端开发      | `boss-backend.md`      | 后端代码实现                 | 源代码                                  |
+| QA 工程师     | `boss-qa.md`           | 测试验证                     | `qa-report.md`                          |
+| DevOps        | `boss-devops.md`       | 部署运维                     | `deploy-report.md`                      |
 
 ### 2. 产物驱动
 
@@ -116,16 +116,15 @@ prd.md ─┬→ architecture.md → tech-review.md → plan.md → tasks.md →
 
 ### 三层门禁体系
 
-| 门禁 | 执行时机 | 检查内容 |
-|------|----------|----------|
+| 门禁   | 执行时机   | 检查内容                                                       |
+| ------ | ---------- | -------------------------------------------------------------- |
 | Gate 0 | 开发完成后 | TypeScript 编译、Lint、npm audit、敏感信息扫描、不安全代码模式 |
-| Gate 1 | QA 执行后 | 单元测试、覆盖率（≥70%）、E2E 测试 |
-| Gate 2 | 部署前 | Lighthouse 性能分数（≥80）、API P99 延迟（<500ms） |
+| Gate 1 | QA 执行后  | 单元测试、覆盖率（≥70%）、E2E 测试                             |
+| Gate 2 | 部署前     | Lighthouse 性能分数（≥80）、API P99 延迟（<500ms）             |
 
 ### Gate 0 默认安全检查
 
 Gate 0 内置两类安全检查：
-
 1. **敏感信息扫描**（secrets-scan）：检测 AWS Key、Private Key、GitHub Token、OpenAI Key 等
 2. **不安全代码模式**（unsafe-patterns）：检测 `eval()`、`dangerouslySetInnerHTML`、`innerHTML =` 等
 
@@ -162,17 +161,17 @@ Gate 0 内置两类安全检查：
 
 每种产物都有对应的模板文件，位于 `templates/` 目录：
 
-| 模板 | 产物 |
-|------|------|
-| `templates/prd.md.template` | 产品需求文档 |
-| `templates/architecture.md.template` | 架构设计文档 |
-| `templates/ui-spec.md.template` | UI/UX 规范 |
-| `templates/ui-design.json.template` | 可渲染 UI 设计 |
-| `templates/tech-review.md.template` | 技术评审报告 |
-| `templates/plan.md.template` | 实施计划 |
-| `templates/tasks.md.template` | 任务拆解 |
-| `templates/qa-report.md.template` | QA 测试报告 |
-| `templates/deploy-report.md.template` | 部署报告 |
+| 模板                                  | 产物           |
+| ------------------------------------- | -------------- |
+| `templates/prd.md.template`           | 产品需求文档   |
+| `templates/architecture.md.template`  | 架构设计文档   |
+| `templates/ui-spec.md.template`       | UI/UX 规范     |
+| `templates/ui-design.json.template`   | 可渲染 UI 设计 |
+| `templates/tech-review.md.template`   | 技术评审报告   |
+| `templates/plan.md.template`          | 实施计划       |
+| `templates/tasks.md.template`         | 任务拆解       |
+| `templates/qa-report.md.template`     | QA 测试报告    |
+| `templates/deploy-report.md.template` | 部署报告       |
 
 ---
 

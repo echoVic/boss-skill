@@ -1,4 +1,5 @@
 ---
+
 name: boss:architect
 description: "从架构设计开始：Architect 产出全栈架构设计，默认自动续跑后续环节（UI → 评审 → 任务 → 开发 → 测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
@@ -12,10 +13,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 
 ## 适合 / 不适合
 
-| 适合 `/boss:architect` | 不适合 |
-|------------------------|--------|
-| 已有需求，直接做架构设计 | 需求还不清晰（用 `/boss:pm`） |
-| 给已有项目补架构文档 | 只想做技术评审（用 `/boss:review`） |
+| 适合 `/boss:architect`   | 不适合                              |
+| ------------------------ | ----------------------------------- |
+| 已有需求，直接做架构设计 | 需求还不清晰（用 `/boss:pm`）       |
+| 给已有项目补架构文档     | 只想做技术评审（用 `/boss:review`） |
 
 ## 前置输入
 
@@ -41,8 +42,8 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
-| `--skip-ui` | 续跑时跳过 UI 设计环节 |
-| `--stop-after <环节>` | 跑到指定环节后停 |
-| `--lang <zh\|en>` | 产物语言（默认 zh） |
+| 参数                  | 说明                   |
+| --------------------- | ---------------------- |
+| `--skip-ui`           | 续跑时跳过 UI 设计环节 |
+| `--stop-after <环节>` | 跑到指定环节后停       |
+| `--lang <zh\|en>`     | 产物语言（默认 zh）    |

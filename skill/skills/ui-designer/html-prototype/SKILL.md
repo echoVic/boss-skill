@@ -1,4 +1,5 @@
 ---
+
 name: ui-designer/html-prototype
 description: 可交互 HTML 原型，生成浏览器可打开的原型页面供用户查看和选择设计方案
 version: 1.0.0
@@ -7,13 +8,14 @@ type: workflow
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - ui-designer/design-system
-triggers:
-  - 用户需要直观看到设计效果而非纯文字描述时
-  - 存在多个设计变体需要用户对比选择时
-  - 设计方向存在分歧，需要可视化决策时
-metadata:
+- ui-designer/design-system
+  triggers:
+- 用户需要直观看到设计效果而非纯文字描述时
+- 存在多个设计变体需要用户对比选择时
+- 设计方向存在分歧，需要可视化决策时
+  metadata:
   internal: true
+
 ---
 
 # 可交互 HTML 原型
@@ -45,7 +47,6 @@ metadata:
 > 接下来的设计方案如果能在浏览器里直观看到，会比纯文字描述更容易决策。我可以生成可交互的 HTML 原型页面，你打开本地链接就能看到效果并点击选择方案。需要开启吗？
 
 **这条消息必须独立发送**，不要和其他内容混在一起。等待用户回复。
-
 - 用户同意 → 继续步骤 2
 - 用户拒绝 → 跳过 HTML 原型，用文字描述 + JSON 交付
 
@@ -85,7 +86,9 @@ const MIME = {
 
 let selections = [];
 const selFile = path.join(DIR, 'selections.json');
-try { selections = JSON.parse(fs.readFileSync(selFile, 'utf-8')); } catch (e) {}
+try {
+  selections = JSON.parse(fs.readFileSync(selFile, 'utf-8'));
+} catch (e) {}
 
 function saveSelections() {
   fs.writeFileSync(selFile, JSON.stringify(selections, null, 2));
@@ -104,7 +107,9 @@ const server = http.createServer((req, res) => {
         selections.push(sel);
         saveSelections();
         for (const c of clients) {
-          try { c.write(`data: ${JSON.stringify(sel)}\n\n`); } catch (e) {}
+          try {
+            c.write(`data: ${JSON.stringify(sel)}\n\n`);
+          } catch (e) {}
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
@@ -315,9 +320,7 @@ cd .boss/<feature>/prototype && node server.cjs
 用户回复后，读取 `.boss/<feature>/prototype/selections.json`：
 
 ```json
-[
-  { "choice": "A", "name": "方案A: 简约单栏", "timestamp": 1706000101000 }
-]
+[{ "choice": "A", "name": "方案A: 简约单栏", "timestamp": 1706000101000 }]
 ```
 
 - 取最后一条记录的 `choice` 作为用户选择

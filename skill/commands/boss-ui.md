@@ -1,4 +1,5 @@
 ---
+
 name: boss:ui
 description: "从 UI 设计开始：UI Designer 产出 ui-spec.md + ui-design.json，默认自动续跑后续环节（评审 → 任务 → 开发 → 测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
@@ -12,10 +13,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 ## 适合 / 不适合
 
-| 适合 `/boss:ui` | 不适合 |
-|-----------------|--------|
+| 适合 `/boss:ui`          | 不适合                                             |
+| ------------------------ | -------------------------------------------------- |
 | 有需求，需要 UI 设计规范 | 纯 API/CLI 项目（用 `--skip-ui` 或直接从架构开始） |
-| 给已有项目补 UI 规范 | 只想做技术评审 |
+| 给已有项目补 UI 规范     | 只想做技术评审                                     |
 
 ## 前置输入
 
@@ -36,7 +37,6 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 ## HTML 原型
 
 UI Designer 在设计前会询问用户是否需要可交互 HTML 原型：
-
 - 用户同意 → 生成 `.boss/<slug>/prototype/`，启动本地服务，用户在浏览器中查看并点击选择方案
 - 用户拒绝 → 直接用文字描述 + JSON 交付
 
@@ -51,7 +51,7 @@ UI Designer 在设计前会询问用户是否需要可交互 HTML 原型：
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
-| `--stop-after <环节>` | 跑到指定环节后停 |
-| `--lang <zh\|en>` | 产物语言（默认 zh） |
+| 参数                  | 说明                |
+| --------------------- | ------------------- |
+| `--stop-after <环节>` | 跑到指定环节后停    |
+| `--lang <zh\|en>`     | 产物语言（默认 zh） |

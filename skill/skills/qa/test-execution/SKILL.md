@@ -1,4 +1,5 @@
 ---
+
 name: qa/test-execution
 description: 测试执行方法，包含测试框架检测、覆盖率门禁、多框架结果解析、失败分级、增量测试选择、并行执行策略
 version: 2.0.0
@@ -7,13 +8,14 @@ type: methodology
 user-invocable: false
 agent-invocable: true
 dependencies:
-  - shared/tech-stack-detection
-triggers:
-  - 需要执行测试时
-  - 需要验证测试覆盖率时
-  - 需要解析测试结果时
-metadata:
+- shared/tech-stack-detection
+  triggers:
+- 需要执行测试时
+- 需要验证测试覆盖率时
+- 需要解析测试结果时
+  metadata:
   internal: true
+
 ---
 
 # 测试执行方法
@@ -36,19 +38,19 @@ metadata:
 
 ### JavaScript/TypeScript
 
-| 框架 | 检测标志 | 配置文件 |
-|------|----------|----------|
-| Jest | `"jest"` in devDependencies | `jest.config.js` / `jest.config.ts` |
-| Vitest | `"vitest"` in devDependencies | `vitest.config.ts` |
-| Playwright | `"@playwright/test"` in devDependencies | `playwright.config.ts` |
-| Cypress | `"cypress"` in devDependencies | `cypress.config.ts` |
+| 框架       | 检测标志                                | 配置文件                            |
+| ---------- | --------------------------------------- | ----------------------------------- |
+| Jest       | `"jest"` in devDependencies             | `jest.config.js` / `jest.config.ts` |
+| Vitest     | `"vitest"` in devDependencies           | `vitest.config.ts`                  |
+| Playwright | `"@playwright/test"` in devDependencies | `playwright.config.ts`              |
+| Cypress    | `"cypress"` in devDependencies          | `cypress.config.ts`                 |
 
 ### Python
 
-| 框架 | 检测标志 | 配置文件 |
-|------|----------|----------|
-| pytest | `"pytest"` in dependencies | `pytest.ini` / `pyproject.toml` |
-| unittest | 内置 | - |
+| 框架     | 检测标志                   | 配置文件                        |
+| -------- | -------------------------- | ------------------------------- |
+| pytest   | `"pytest"` in dependencies | `pytest.ini` / `pyproject.toml` |
+| unittest | 内置                       | -                               |
 
 ### Go
 
@@ -57,19 +59,19 @@ metadata:
 
 ### Java
 
-| 框架 | 检测标志 |
-|------|----------|
+| 框架    | 检测标志                     |
+| ------- | ---------------------------- |
 | JUnit 5 | `pom.xml` 含 `junit-jupiter` |
-| TestNG | `pom.xml` 含 `testng` |
+| TestNG  | `pom.xml` 含 `testng`        |
 
 ## 测试命令矩阵
 
-| 语言 | 单元测试 | 集成测试 | 接口测试 | E2E 测试 |
-|------|----------|----------|----------|---------|
+| 语言    | 单元测试                      | 集成测试                           | 接口测试                   | E2E 测试              |
+| ------- | ----------------------------- | ---------------------------------- | -------------------------- | --------------------- |
 | Node.js | `npx vitest run` / `npx jest` | `npx vitest run tests/integration` | `npx vitest run tests/api` | `npx playwright test` |
-| Python | `pytest tests/unit` | `pytest tests/integration` | `pytest tests/api` | `pytest tests/e2e` |
-| Go | `go test ./internal/...` | `go test -tags=integration ./...` | `go test ./tests/api/...` | - |
-| Java | `mvn test` | `mvn verify` | `mvn verify -Papi-test` | - |
+| Python  | `pytest tests/unit`           | `pytest tests/integration`         | `pytest tests/api`         | `pytest tests/e2e`    |
+| Go      | `go test ./internal/...`      | `go test -tags=integration ./...`  | `go test ./tests/api/...`  | -                     |
+| Java    | `mvn test`                    | `mvn verify`                       | `mvn verify -Papi-test`    | -                     |
 
 > 接口测试方法论见 `Skill(skill: "qa/api-testing")`，集成测试方法论见 `Skill(skill: "qa/integration-testing")`。
 
@@ -112,13 +114,13 @@ go tool cover -func=coverage.out
 
 ### 覆盖率门禁
 
-| 指标 | 门槛 | 未达标处理 |
-|------|------|-----------|
-| 行覆盖率 | ≥ 80% | 列出未覆盖行，报 `REVISION_NEEDED` |
-| 语句覆盖率 | ≥ 80% | 同上 |
-| 函数覆盖率 | ≥ 80% | 同上 |
-| 分支覆盖率 | ≥ 75% | 列出未覆盖分支 |
-| 变更文件覆盖率 | ≥ 80% | 重点检查本次变更文件 |
+| 指标           | 门槛  | 未达标处理                         |
+| -------------- | ----- | ---------------------------------- |
+| 行覆盖率       | ≥ 80% | 列出未覆盖行，报 `REVISION_NEEDED` |
+| 语句覆盖率     | ≥ 80% | 同上                               |
+| 函数覆盖率     | ≥ 80% | 同上                               |
+| 分支覆盖率     | ≥ 75% | 列出未覆盖分支                     |
+| 变更文件覆盖率 | ≥ 80% | 重点检查本次变更文件               |
 
 **覆盖率检查脚本**（Node.js）：
 
@@ -215,23 +217,23 @@ go test ./... -v 2>&1 | grep -E "^(=== RUN|--- (PASS|FAIL|SKIP))" | \
 
 ### Playwright JSON 输出
 
-| 字段 | 说明 |
-|------|------|
-| `stats.expected` | 通过的测试数 |
-| `stats.unexpected` | 失败的测试数 |
-| `stats.flaky` | 重试后通过的测试数 |
-| `stats.skipped` | 跳过的测试数 |
+| 字段               | 说明               |
+| ------------------ | ------------------ |
+| `stats.expected`   | 通过的测试数       |
+| `stats.unexpected` | 失败的测试数       |
+| `stats.flaky`      | 重试后通过的测试数 |
+| `stats.skipped`    | 跳过的测试数       |
 
 ## 失败分级与处理
 
 ### 失败分级
 
-| 级别 | 判定标准 | 处理方式 |
-|------|----------|----------|
-| **Blocker** | 核心功能不可用、数据丢失、安全漏洞 | 立即修复，阻止发布 |
-| **Critical** | 主要功能异常、数据不一致 | 必须修复，阻塞发布 |
-| **Major** | 次要功能异常、有 workaround | 修复后发布 |
-| **Minor** | UI 展示问题、文案错误 | 可带 issue 发布 |
+| 级别         | 判定标准                           | 处理方式           |
+| ------------ | ---------------------------------- | ------------------ |
+| **Blocker**  | 核心功能不可用、数据丢失、安全漏洞 | 立即修复，阻止发布 |
+| **Critical** | 主要功能异常、数据不一致           | 必须修复，阻塞发布 |
+| **Major**    | 次要功能异常、有 workaround        | 修复后发布         |
+| **Minor**    | UI 展示问题、文案错误              | 可带 issue 发布    |
 
 ### 失败处理流程
 
@@ -292,8 +294,12 @@ tests/
 import { describe, it } from 'vitest';
 
 describe('@critical 用户认证', () => {
-  it('@smoke 登录成功', async () => { /* ... */ });
-  it('登录失败', async () => { /* ... */ });
+  it('@smoke 登录成功', async () => {
+    /* ... */
+  });
+  it('登录失败', async () => {
+    /* ... */
+  });
 });
 ```
 

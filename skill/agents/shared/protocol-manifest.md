@@ -7,7 +7,6 @@
 ## 公共 prefix 缓存
 
 以下内容适合放入同一轮流水线的共享 prefix 缓存，所有 subagent 复用，不需要每次重复展开全文：
-
 - 输出语言：文档类 Agent 使用中文；代码类 Agent 注释中文、代码英文。
 - 产物优先级：项目模板 > Skill 内置模板 > Agent Prompt 兜底格式。
 - 状态块：所有 Agent 必须用 `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED / REVISION_NEEDED` 报告。
@@ -21,13 +20,13 @@
 
 ## 按需加载矩阵
 
-| 模块 | 文件 | 何时加载全文 |
-|------|------|--------------|
-| 通用协议 | `agents/shared/agent-protocol.md` | Agent 第一次接入、模板优先级/状态格式不清楚、或需要完整技术适配规则 |
-| 技术检测 | `agents/shared/tech-detection.md` | `tech-stack.json` 缺失、缓存过期、项目结构变化、或 Agent 明确需要重新识别技术栈 |
+| 模块            | 文件                                  | 何时加载全文                                                                     |
+| --------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| 通用协议        | `agents/shared/agent-protocol.md`     | Agent 第一次接入、模板优先级/状态格式不清楚、或需要完整技术适配规则              |
+| 技术检测        | `agents/shared/tech-detection.md`     | `tech-stack.json` 缺失、缓存过期、项目结构变化、或 Agent 明确需要重新识别技术栈  |
 | 子代理状态/反馈 | `agents/prompts/subagent-protocol.md` | Boss 处理状态机、执行中会话、反馈循环、Wave 校验、风险确认、或子代理返回异常状态 |
-| 测试标准 | `references/testing-standards.md` | code / QA / gate 相关任务 |
-| 产物保存 | `references/artifact-guide.md` | 保存或校验 `.boss/<feature>/` 产物路径时 |
+| 测试标准        | `references/testing-standards.md`     | code / QA / gate 相关任务                                                        |
+| 产物保存        | `references/artifact-guide.md`        | 保存或校验 `.boss/<feature>/` 产物路径时                                         |
 
 默认不要把 `agent-protocol.md`、`tech-detection.md` 和自家 prompt 全文一起塞给每个 subagent。先给角色 prompt + 本 manifest 的公共 prefix；缺上下文时再按矩阵渐进式披露。
 

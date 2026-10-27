@@ -1,4 +1,5 @@
 ---
+
 name: boss:pm
 description: "从需求分析开始：PM 需求穿透产出 PRD，默认自动续跑后续所有环节（架构 → UI → 评审 → 任务 → 开发 → 测试 → 部署）。"
 allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
@@ -12,10 +13,10 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 
 ## 适合 / 不适合
 
-| 适合 `/boss:pm` | 不适合 |
-|-----------------|--------|
+| 适合 `/boss:pm`              | 不适合                                             |
+| ---------------------------- | -------------------------------------------------- |
 | 有想法但需求不清晰，需要穿透 | 已经有 PRD，直接从架构开始（用 `/boss:architect`） |
-| 想拿到可验收的需求文档 | 只想改个小 bug |
+| 想拿到可验收的需求文档       | 只想改个小 bug                                     |
 
 ## 执行步骤
 
@@ -35,9 +36,9 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 
 ## 选项
 
-| 参数 | 说明 |
-|------|------|
-| `--quick` | 跳过需求澄清 |
-| `--skip-ui` | 续跑时跳过 UI 设计环节 |
+| 参数                  | 说明                                            |
+| --------------------- | ----------------------------------------------- |
+| `--quick`             | 跳过需求澄清                                    |
+| `--skip-ui`           | 续跑时跳过 UI 设计环节                          |
 | `--stop-after <环节>` | 跑到指定环节后停（如 `--stop-after architect`） |
-| `--lang <zh\|en>` | 产物语言（默认 zh） |
+| `--lang <zh\|en>`     | 产物语言（默认 zh）                             |

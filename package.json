@@ -37,9 +37,12 @@
   ],
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --skipLibCheck --allowImportingTsExtensions --erasableSyntaxOnly --types node,vitest/globals vitest.config.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:faults": "vitest run test/faults",
+    "test:harness": "vitest run test/harness",
+    "test:install-matrix": "vitest run test/install",
     "test:skills": "vitest run test/skills",
     "evals": "bash test/evals/run-evals.sh",
     "evals:release": "bash test/evals/run-evals.sh --release",
@@ -55,10 +58,10 @@
     "node": ">=22.18"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
-    "@playwright/test": "^1.64.1",
+    "@biomejs/biome": "^2.6.2",
+    "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.5",
-    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/coverage-v8": "^5.0.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
