@@ -358,7 +358,7 @@ describe('User CRUD E2E', () => {
       .send({
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'password123',
+        password: '<PASSWORD>',
       })
       .expect(201);
 
@@ -413,7 +413,7 @@ describe('Authentication Flow E2E', () => {
       .send({
         name: 'Alice',
         email: 'alice@example.com',
-        password: 'password123',
+        password: '<PASSWORD>',
       })
       .expect(201);
 
@@ -439,7 +439,7 @@ describe('Authentication Flow E2E', () => {
       .post('/api/auth/login')
       .send({
         email: 'alice@example.com',
-        password: 'password123',
+        password: '<PASSWORD>',
       })
       .expect(200);
 
@@ -451,7 +451,7 @@ describe('Authentication Flow E2E', () => {
       .post('/api/auth/login')
       .send({
         email: 'alice@example.com',
-        password: 'wrong-example',
+        password: '<WRONG_PASSWORD>',
       })
       .expect(401);
   });
@@ -470,7 +470,7 @@ describe('Order Flow E2E', () => {
     // 注册并登录
     const registerResponse = await request(app)
       .post('/api/auth/register')
-      .send({ name: 'Buyer', email: 'buyer@example.com', password: 'pass123' });
+      .send({ name: 'Buyer', email: 'buyer@example.com', password: '<PASSWORD>' });
     authToken = registerResponse.body.data.token;
 
     // 创建测试商品

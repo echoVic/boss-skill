@@ -37,12 +37,9 @@
   ],
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --skipLibCheck --allowImportingTsExtensions --erasableSyntaxOnly --types node,vitest/globals test/bin/boss-skill.test.ts test/helpers/run-cli.ts vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:faults": "vitest run test/faults",
-    "test:harness": "vitest run test/harness",
-    "test:install-matrix": "vitest run test/install",
     "test:skills": "vitest run test/skills",
     "evals": "bash test/evals/run-evals.sh",
     "evals:release": "bash test/evals/run-evals.sh --release",

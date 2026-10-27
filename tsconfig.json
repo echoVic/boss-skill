@@ -13,5 +13,5 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["skill/cli/**/*.mts"]
+  "include": ["test/**/*.ts", "vitest.config.ts"]
 }

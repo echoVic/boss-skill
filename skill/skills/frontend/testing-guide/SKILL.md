@@ -99,13 +99,13 @@ describe('LoginForm', () => {
     render(<LoginForm onSubmit={onSubmit} />);
     
     await userEvent.type(screen.getByLabelText('Email'), 'user@example.com');
-    await userEvent.type(screen.getByLabelText('Password'), 'password123');
+    await userEvent.type(screen.getByLabelText('Password'), '<PASSWORD>');
     await userEvent.click(screen.getByRole('button', { name: 'Login' }));
     
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
         email: 'user@example.com',
-        password: 'password123',
+        password: '<PASSWORD>',
       });
     });
   });

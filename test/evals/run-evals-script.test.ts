@@ -29,7 +29,7 @@ describe('Boss eval shell runner', () => {
       reports: Array<{ id: string }>;
     };
     expect(payload.passed).toBe(true);
-    expect(payload.reports[0].id).toBe('smoke-success');
+    expect(payload.reports[0]!.id).toBe('smoke-success');
   });
 
   it('runs the explicit smoke eval set', () => {
@@ -68,7 +68,7 @@ describe('Boss eval shell runner', () => {
       reports: Array<{ failures: string[] }>;
     };
     expect(payload.passed).toBe(false);
-    expect(payload.reports[0].failures).toContain('missing artifact: qa-report.md');
+    expect(payload.reports[0]!.failures).toContain('missing artifact: qa-report.md');
   });
 
   it('runs the smoke eval when invoked through a symlinked checkout path', () => {
@@ -105,7 +105,7 @@ describe('Boss eval shell runner', () => {
     expect(readme).toContain('--smoke');
     expect(readme).toContain('--release');
     expect(readme).toContain('pipeline-compliance');
-    expect(readme).toContain('uses-runtime-cli');
+    expect(readme).toContain('writes-artifacts-to-boss-dir');
     expect(readme).toContain('does not launch a');
     expect(readme).toContain('case.json');
     expect(readme).toContain('transcript.jsonl');

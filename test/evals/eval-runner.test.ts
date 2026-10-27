@@ -36,23 +36,21 @@ describe('Boss deterministic eval runner', () => {
         cacheReadInputTokens: 0,
       },
       estimatedCostUsd: 0.0105,
-      durationSeconds: 120,
+      durationSeconds: null,
       failures: [],
     });
   });
 
-  it('scores pipeline-compliance eval for runtime-first orchestration evidence', () => {
+  it('scores pipeline-compliance eval for expert-squad orchestration evidence', () => {
     const report = evaluateEvalCase(path.join(FIXTURES, 'pipeline-compliance', 'case.json'));
 
     expect(report.passed).toBe(true);
     expect(report.behaviorResults).toEqual({
       'uses-boss-skill': true,
-      'uses-runtime-cli': true,
-      'records-artifacts-via-runtime': true,
-      'avoids-direct-execution-write': true,
-      'has-workflow-scheduler': true,
+      'writes-artifacts-to-boss-dir': true,
       'runs-tests': true,
       'records-qa-evidence': true,
+      'produces-evidence-wave': true,
     });
   });
 
