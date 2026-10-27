@@ -6,12 +6,6 @@ dependencies: [qa-report]
 
 # 部署报告
 
-## 报告信息
-- **功能名称**：{{FEATURE_NAME}}
-- **版本**：{{VERSION}}
-- **部署日期**：{{DATE}}
-- **部署者**：DevOps Agent
-
 ## 摘要
 
 > Boss Agent 请优先阅读本节获取部署结果。
@@ -23,6 +17,12 @@ dependencies: [qa-report]
 - **部署环境**：[环境名称]
 - **服务健康**：[正常 / 异常]
 - **回滚命令**：[命令，不需要则填"无"]
+
+## 报告信息
+- **功能名称**：{{FEATURE_NAME}}
+- **版本**：{{VERSION}}
+- **部署日期**：{{DATE}}
+- **部署者**：DevOps Agent
 
 ---
 
