@@ -326,7 +326,7 @@ describe('Auth flow integration', () => {
   it('logs in and stores token in context', async () => {
     server.use(
       rest.post('/api/auth/login', (req, res, ctx) =>
-        res(ctx.json({ data: { token: 'jwt-token-123', user: { name: 'Alice' } } }))
+        res(ctx.json({ data: { token: '<JWT_TOKEN>', user: { name: 'Alice' } } }))
       )
     );
 
@@ -337,7 +337,7 @@ describe('Auth flow integration', () => {
     );
 
     fireEvent.change(screen.getByLabelText('邮箱'), { target: { value: 'alice@example.com' } });
-    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'password' } });
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: '<PASSWORD>' } });
     fireEvent.click(screen.getByRole('button', { name: '登录' }));
 
     await waitFor(() => {

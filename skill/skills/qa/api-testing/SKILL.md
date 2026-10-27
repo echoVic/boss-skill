@@ -171,7 +171,7 @@ describe('Protected endpoints', () => {
   beforeAll(async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@example.com', password: 'password' });
+      .send({ email: 'admin@example.com', password: '<PASSWORD>' });
     token = res.body.data.token;
   });
 
@@ -182,7 +182,7 @@ describe('Protected endpoints', () => {
   it('returns 401 with invalid token', async () => {
     await request(app)
       .get('/api/users/profile')
-      .set('Authorization', 'Bearer invalid-token')
+      .set('Authorization', 'Bearer <INVALID_TOKEN>')
       .expect(401);
   });
 
@@ -203,8 +203,8 @@ describe('Authorization', () => {
   let userToken: string;
 
   beforeAll(async () => {
-    adminToken = await login('admin@example.com', 'password');
-    userToken = await login('user@example.com', 'password');
+    adminToken = await login('admin@example.com', '<PASSWORD>');
+    userToken = await login('user@example.com', '<PASSWORD>');
   });
 
   it('admin can delete any user', async () => {

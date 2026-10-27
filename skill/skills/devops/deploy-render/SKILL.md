@@ -248,27 +248,32 @@ envVars:
 2. Render 自动检测 `render.yaml` 并创建服务
 3. 每次 push 到指定分支自动触发部署
 
-### 通过 API 触发部署
+### 通过 CLI 触发部署
 
 ```bash
-# 获取服务 ID（在 Dashboard URL 中查看）
+# 安装 Render CLI
+npm install -g render-cli
+# 或 brew install render
+
+# 登录（需要用户交互）
+render login
+
 # 触发部署
-curl -X POST "https://api.render.com/v1/services/${SERVICE_ID}/deploys" \
-  -H "Authorization: Bearer ${RENDER_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{}'
+render services deploy <service-id-or-name>
+
+# 查看部署状态
+render services list-deploys <service-id-or-name>
 ```
 
-### 查看部署状态
+### 通过 API 触发部署（备选）
 
-```bash
-curl "https://api.render.com/v1/services/${SERVICE_ID}/deploys" \
-  -H "Authorization: Bearer ${RENDER_API_KEY}"
-```
+如需直接调用 Render REST API，请在受信任的 CI 环境中使用官方 GitHub Action，详见下方 CI/CD 集成。
 
 ## CI/CD 集成
 
 ### GitHub Actions 触发部署
+
+使用 Render 官方 GitHub Action 触发部署：
 
 ```yaml
 name: Deploy to Render
@@ -287,11 +292,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - name: Trigger Render Deploy
-        run: |
-          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}'
+        uses: renderinc/deploy-render-action@v1
+        with:
+          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
+          apiKey: ${{ secrets.RENDER_API_KEY }}
 ```
 
 **需要的 Secrets**：

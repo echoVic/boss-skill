@@ -32,8 +32,9 @@ metadata:
    ```bash
    # macOS
    brew install flyctl
-   # 或 curl 安装
-   curl -L https://fly.io/install.sh | sh
+   # Windows（PowerShell）
+   iwr https://fly.io/install.ps1 -useb | iex
+   # Linux 及其他平台请参考 fly.io 官方文档安装 flyctl
    ```
 2. 登录 Fly.io：`fly auth login`（需要用户交互完成授权）
 3. 验证登录：`fly auth whoami`

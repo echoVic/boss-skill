@@ -17,7 +17,7 @@
  *   node scripts/release.js minor
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -116,9 +116,9 @@ const VERSION_FILES = [
 
 // ── 辅助函数 ──────────────────────────────────────────
 
-function run(cmd, opts) {
-  console.log(`  $ ${cmd}`);
-  return execSync(cmd, { cwd: ROOT, stdio: 'inherit', ...opts });
+function run(bin, args, opts) {
+  console.log(`  $ ${bin} ${args.join(' ')}`);
+  return execFileSync(bin, args, { cwd: ROOT, stdio: 'inherit', ...opts });
 }
 
 function readFile(rel) {
@@ -169,7 +169,7 @@ function verifyVersionFile(file, version) {
   }
 
   if (file.kind === 'provenance') {
-    run('npm run provenance:verify');
+    run('npm', ['run', 'provenance:verify']);
     return;
   }
 
@@ -229,7 +229,10 @@ function main() {
   console.log(`   ${current} → ${next}${dryRun ? ' (dry-run)' : ''}\n`);
 
   // 1. 检查工作区干净
-  const status = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' }).trim();
+  const status = execFileSync('git', ['status', '--porcelain'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  }).trim();
   if (status) {
     console.error('❌ 工作区不干净，请先提交或暂存修改:\n' + status);
     process.exit(1);
@@ -237,9 +240,9 @@ function main() {
 
   // 2. 跑完整验证
   console.log('🧪 运行完整验证...');
-  run('npm run typecheck');
-  run('npm run lint');
-  run('npm test');
+  run('npm', ['run', 'typecheck']);
+  run('npm', ['run', 'lint']);
+  run('npm', ['test']);
 
   // 3. 同步所有版本号
   console.log(`\n✏️  同步版本号 → ${next}`);
@@ -261,8 +264,8 @@ function main() {
   } else {
     // 版本回写会重排 JSON（JSON.stringify 展开数组），先恢复 biome 格式再生成 provenance，
     // 保证 release 提交本身通过 CI 的 lint 门禁。
-    run('npm run format');
-    run('npm run provenance:generate');
+    run('npm', ['run', 'format']);
+    run('npm', ['run', 'provenance:generate']);
   }
 
   // 4. 验证一致性
@@ -289,17 +292,17 @@ function main() {
   // 6. Git commit + tag
   console.log('\n📝 提交版本更新...');
   const commitPaths = VERSION_FILES.map((f) => f.path);
-  run(`git add ${commitPaths.join(' ')}`);
-  run(`git commit -m "chore: release v${next}"`);
-  run(`git tag v${next}`);
+  run('git', ['add', ...commitPaths]);
+  run('git', ['commit', '-m', `chore: release v${next}`]);
+  run('git', ['tag', `v${next}`]);
 
   // 7. 分发：市场从仓库拉取，git tag + push 即发布
   console.log('\n🚀 分发通过 git tag：Claude/Codex 插件市场与 skills.sh 从仓库读取');
 
   // 8. Push
   console.log('\n📤 推送到远程...');
-  run('git push');
-  run('git push --tags');
+  run('git', ['push']);
+  run('git', ['push', '--tags']);
 
   console.log(`\n✅ v${next} 发布完成！`);
 }
