@@ -1,6 +1,6 @@
 {
   "name": "dsh-boss-mode",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Boss expert squad for DeepSeek Harness: nine engineering roles, artifact-driven delivery, and a live team panel.",
   "type": "module",
   "license": "MIT",

@@ -127,6 +127,7 @@ describe('DeepSeek Harness Boss bundle', () => {
         },
       },
     };
+    expect(module.inject).toEqual(['locale', 'sidebarRightTabs', 'slots']);
     module.apply(ctx);
     const empty = JSON.stringify(Panel({ sessionId: 'root' }));
     expect(empty).toContain('team.empty');

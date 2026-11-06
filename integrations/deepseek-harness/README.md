@@ -15,7 +15,7 @@ delegation and the native roster/task projection, also enable DSH's
 `@deepseek-ai/dsh-experimental-agent-team-profile` bundle in that profile. With the DSH CLI:
 
 ```sh
-dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.1/dsh-boss-mode-0.1.1.tgz
+dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.2/dsh-boss-mode-0.1.2.tgz
 ```
 
 Or add the [raw market index](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json) to the DSH plugin market. Then fully

@@ -142,6 +142,6 @@ window.__ModuleLoader__.load({
       );
     }
 
-    return { inject: ['locale', 'sidebarRightTabs'], apply };
+    return { inject: ['locale', 'sidebarRightTabs', 'slots'], apply };
   },
 });
