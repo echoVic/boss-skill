@@ -27,7 +27,7 @@
           "source": {
             "type": "git",
             "url": "https://github.com/echoVic/boss-skill",
-            "commit": "0000000000000000000000000000000000000000",
+            "commit": "70763d123a0978dc3e7c7fdbda6cf68e7d242072",
             "path": "integrations/deepseek-harness"
           }
         }
