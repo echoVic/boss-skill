@@ -12,7 +12,8 @@ function collect(relative) {
   )) {
     const key = path.posix.join(relative, entry.name);
     if (entry.isDirectory()) collect(key);
-    else if (entry.isFile()) files[key] = readFileSync(path.join(skill, key), 'utf8');
+    else if (entry.isFile() && !['.DS_Store', 'Thumbs.db'].includes(entry.name))
+      files[key] = readFileSync(path.join(skill, key), 'utf8');
   }
 }
 files['SKILL.md'] = readFileSync(path.join(skill, 'SKILL.md'), 'utf8');

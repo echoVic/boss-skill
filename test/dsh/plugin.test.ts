@@ -90,6 +90,7 @@ describe('DeepSeek Harness Boss bundle', () => {
     expect(resources.files['agents/boss-qa.md']).toContain('退出码');
     expect(resources.files['templates/prd.md.template']).toBeTruthy();
     expect(resources.files['skills/qa/test-execution/SKILL.md']).toBeTruthy();
+    expect(Object.keys(resources.files).some((file) => file.includes('.DS_Store'))).toBe(false);
   });
 
   it('renders live task ownership and failure states without fabricating progress', () => {

@@ -15,10 +15,10 @@ delegation and the native roster/task projection, also enable DSH's
 `@deepseek-ai/dsh-experimental-agent-team-profile` bundle in that profile. With the DSH CLI:
 
 ```sh
-dsh plugin --profile desktop add dsh-boss-mode@0.1.0
+dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.1/dsh-boss-mode-0.1.1.tgz
 ```
 
-Or add the repository's market index to the DSH plugin market after a release. Then fully
+Or add the [raw market index](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json) to the DSH plugin market. Then fully
 restart DeepSeek Harness, create a new session, and choose **Boss 专家小队**. Agent Teams
 must be enabled for the live team panel and `spawn_teammate` workflow; without it, the
 preset still provides the role contract and uses the available `subagent` tool when one
