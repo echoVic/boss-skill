@@ -1,0 +1,137 @@
+# Boss Mode for DeepSeek Harness. Install this bundle into a profile that already
+# contains the standard DSH base and (optionally) the experimental Agent Teams layer.
+- insert:
+    - id: preset-boss
+      name: "@deepseek-ai/dsh-agent-preset"
+      config:
+        id: boss
+        name: Boss 专家小队
+        description: PM、架构、UI、评审、任务、开发、QA、DevOps 的证据驱动研发流水线
+        order: 6
+        plugins:
+          - id: persona
+            name: "@deepseek-ai/dsh-persona"
+            config:
+              prefix: |-
+                你是 Boss 专家小队的首辅调度者，负责把用户目标变成可核验的研发交付。完整链路为 pm → architect → ui → review → tasks → dev → qa → ship。
+
+                【对外与身份】
+                - 用户只与 Boss 首辅对话。若运行时明确给出 `You are teammate "<name>".` 或 `Your Team Lead is named "<name>".`，你是被分派角色，只向 lead 回报；不得自称 Boss 首辅，不得擅自续跑整条链。
+                - 未出现明确 Team 身份时，你是当前会话的 Boss 首辅。不要根据工具是否可见猜身份。
+                - 结论先行，中文交付；没跑说没跑，没验说没验，失败、遗留和未验证项必须明写。
+
+                【首辅调度规矩】
+                1. 先拆任务，再分派：写清目标、交付物、验收标准、写入范围和依赖顺序。
+                2. 有 Agent Teams 时按角色使用 `spawn_teammate` 与 `team_task_*`：pm、architect、ui、review、tasks、frontend/backend、qa、devops。单个成员只接一个交付物和一份写入范围；同角色可用 -2 后缀。
+                3. 没有 Agent Teams 时说明事实，改用可用的 `subagent`；若没有委派工具，执行类工作须先向用户说明再做，不能虚构团队已完成。
+                4. 分派后主动收齐、核验、裁断卡点；不接受成员自述作为证据。每次回报检查路径、行号、命令输出、退出码和未验证清单。
+                5. 默认续跑到 ship；用户说停、只做一步、传入 `--stop-after <环节>`、当前阶段无法修复或到达 ship 时停止。`--skip-ui` 跳到 review，`--quick` 只减少确认，不跳过证据门禁。
+                6. 只在用户授权范围内改文件、执行命令、部署、发消息或使用凭据。ship 不等于自动发布到外部服务；需用户明确授权才执行不可逆外部动作。
+
+                【质量底线】
+                - 产物驱动：在用户项目 `.boss/<feature>/` 生成 prd.md、architecture.md、ui-spec.md/ui-design.json、tech-review.md/plan.md、tasks.md、qa-report.md、deploy-report.md。
+                - 每个环节硬性契约必须通过；失败先修根因，不能删测试、改断言或硬编码凑绿。
+                - 开发默认 TDD：先看到失败测试 RED，再写最小实现 GREEN。
+                - QA 必须给完整命令、实测退出码、通过/失败/跳过数量和失败详情；未实测显式写“未验证”。
+                - 用户交差前，按原话逐项回对范围、产物、验证结果和遗留风险。
+          - id: agent-instructions
+            name: "@deepseek-ai/dsh-agent-instructions"
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: "@deepseek-ai/dsh-time-context"
+          - id: tool-bash
+            name: "@deepseek-ai/dsh-tool-bash"
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: "@deepseek-ai/dsh-tool-pwsh"
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: "@deepseek-ai/dsh-tool-fs"
+          - id: tool-fs-search
+            name: "@deepseek-ai/dsh-tool-fs-search"
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: "@deepseek-ai/dsh-tool-jobs"
+          - id: tool-schedule
+            name: "@deepseek-ai/dsh-tool-schedule"
+          - id: skill-filesystem
+            name: "@deepseek-ai/dsh-skill-filesystem"
+          - id: tool-skill
+            name: "@deepseek-ai/dsh-tool-skill"
+          - id: command-goal
+            name: "@deepseek-ai/dsh-command-goal"
+          - id: tool-goal
+            name: "@deepseek-ai/dsh-tool-goal"
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: "@deepseek-ai/dsh-plan-mode"
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: "@deepseek-ai/dsh-compaction-basic"
+              - id: command-compact
+                name: "@deepseek-ai/dsh-command-compact"
+              - id: tool-result-pruner
+                name: "@deepseek-ai/dsh-compaction-tool-result-pruner"
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: "@deepseek-ai/dsh-tool-subagent-control"
+              - id: tool-subagent
+                name: "@deepseek-ai/dsh-tool-subagent"
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: "@deepseek-ai/dsh-tool-subagent"
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: "@deepseek-ai/dsh-workflow-ptc"
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: "@deepseek-ai/dsh-tool-workflow"
+          - id: tool-ask-user
+            name: "@deepseek-ai/dsh-tool-ask-user"
+          - id: tool-todo
+            name: "@deepseek-ai/dsh-tool-todo"
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: "@deepseek-ai/dsh-tool-web"
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: "@deepseek-ai/dsh-tool-present"
+          - id: tool-plugin-manager
+            name: "@deepseek-ai/dsh-plugin-manager/tools"
+            disabled: true
+          - id: tool-plugin-market
+            name: "@deepseek-ai/dsh-plugin-market/tools"
+            disabled: true
+    - id: boss-ui
+      name: dsh-boss-mode

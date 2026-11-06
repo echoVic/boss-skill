@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Boss Expert Squad</title>
+  <rect width="128" height="128" rx="28" fill="#20211e"/>
+  <path d="M30 32h36c18 0 28 8 28 21 0 8-4 14-12 18 10 3 15 10 15 20 0 16-12 25-32 25H30V32zm20 17v16h14c7 0 11-3 11-8s-4-8-11-8H50zm0 32v18h15c8 0 12-3 12-9 0-6-4-9-12-9H50z" transform="translate(0 -10)" fill="#e8b580"/>
+  <circle cx="99" cy="30" r="9" fill="#a4ba91"/>
+</svg>

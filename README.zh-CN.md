@@ -18,6 +18,13 @@
 
 Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 
+## DeepSeek Harness
+
+Boss 同时提供 DeepSeek Harness bundle：增加可选择的「Boss 专家小队」模式，并在右侧栏显示
+Agent Teams 的成员与任务。安装 `integrations/deepseek-harness` 的 GitHub Release 包或 DSH
+插件市场索引后，重启 DSH 并在模式选择器中选择「Boss 专家小队」。需要使用
+`spawn_teammate`、原生成员列表和任务板时，再启用 DSH 的实验性 Agent Teams profile。
+
 ## 为什么需要 Boss
 
 只靠 prompt 的编排经常"看起来很像团队"，但很难证明计划真的被执行、测试真的跑过、门禁真的通过。Boss 的核心是证据和硬契约：

@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "title": { "en": "Boss Mode", "zh": "Boss 专家小队" },
+  "description": {
+    "en": "Evidence-driven expert squad workflow for DeepSeek Harness.",
+    "zh": "为 DeepSeek Harness 提供证据驱动的专家小队研发流水线。"
+  },
+  "plugins": [
+    {
+      "name": "dsh-boss-mode",
+      "title": { "en": "Boss Mode", "zh": "Boss 专家小队" },
+      "description": {
+        "en": "PM, architecture, design, implementation, QA, and delivery roles with a live team panel.",
+        "zh": "包含 PM、架构、设计、开发、QA、交付角色与实时团队面板。"
+      },
+      "icon": "https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/icon.svg",
+      "author": "echoVic",
+      "homepage": "https://github.com/echoVic/boss-skill/tree/main/integrations/deepseek-harness",
+      "repository": {
+        "url": "https://github.com/echoVic/boss-skill",
+        "directory": "integrations/deepseek-harness"
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1793923200,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/echoVic/boss-skill",
+            "commit": "0000000000000000000000000000000000000000",
+            "path": "integrations/deepseek-harness"
+          }
+        }
+      ]
+    }
+  ]
+}

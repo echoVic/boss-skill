@@ -1,0 +1,57 @@
+{
+  "name": "dsh-boss-mode",
+  "version": "0.1.0",
+  "description": "Boss expert squad for DeepSeek Harness: nine engineering roles, artifact-driven delivery, and a live team panel.",
+  "type": "module",
+  "license": "MIT",
+  "author": "echoVic",
+  "icon": "./icon.svg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/echoVic/boss-skill.git",
+    "directory": "integrations/deepseek-harness"
+  },
+  "homepage": "https://github.com/echoVic/boss-skill/tree/main/integrations/deepseek-harness",
+  "bugs": {
+    "url": "https://github.com/echoVic/boss-skill/issues"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-bundle",
+    "boss",
+    "agent-team",
+    "coding-agent"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "resources.json",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-api-session-controller",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ]
+    }
+  }
+}
