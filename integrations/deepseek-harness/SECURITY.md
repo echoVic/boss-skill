@@ -19,14 +19,12 @@ Security fixes are applied to the latest published release of `dsh-boss-mode`.
 ## Reporting a Vulnerability
 
 Report privately so the issue can be addressed before public disclosure.
-
 - **Preferred:** Open a [GitHub Security Advisory](https://github.com/echoVic/boss-skill/security/advisories/new)
   for the boss-skill repository.
 - **Alternative:** Email the maintainer at `137844255@qq.com` with the subject
   line `[SECURITY] dsh-boss-mode`.
 
 Please include:
-
 - The affected `dsh-boss-mode` version (`npm ls dsh-boss-mode` or the installed
   bundle directory), and the DSH version.
 - A description of the vulnerability and its impact.
@@ -38,7 +36,6 @@ Do **not** open a public issue for security reports.
 
 This bundle loads the Boss skills and agent definitions into DSH and registers
 the Boss mode UI. Security-sensitive surfaces include:
-
 - `cordis.patch.yml` and `client.js`, which patch the DSH client at load time.
 - `resources.json`, whose embedded skills and agent instructions are loaded
   into agent context.
