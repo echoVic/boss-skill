@@ -36,3 +36,14 @@ so it can be installed alongside an existing team profile.
 
 This integration is community maintained. The authoritative Boss skill remains in the
 repository root; this package does not install the historical Boss CLI or hooks.
+
+## Publishing
+
+The bundle is released to npm as `dsh-boss-mode`, versioned independently from the root
+Boss skill. Bump `integrations/deepseek-harness/package.json`, push a
+`dsh-boss-mode-v<version>` tag, and the `dsh-publish.yml` workflow publishes through npm
+trusted publishing (GitHub OIDC, no token secret, provenance included). npm only accepts
+interactive 2FA codes for `npm publish`; accounts that registered a WebAuthn security key
+cannot complete that CLI prompt, so stage locally instead with
+`npx npm@11 stage publish` and approve the release under the npm profile menu → Staged
+Packages.

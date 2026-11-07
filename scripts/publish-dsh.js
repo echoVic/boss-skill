@@ -5,7 +5,10 @@
  *
  * `integrations/deepseek-harness` 以独立版本号发布为 npm 包 `dsh-boss-mode`。
  * 发布前依次完成：npm 元数据校验 → 资源快照校验（dsh:check）→ npm pack 内容校验
- * → 版本占用检查 → npm publish。CI 里由 tag `dsh-boss-mode-v<version>` 触发同一流程。
+ * → 版本占用检查 → npm publish。CI 里由 tag `dsh-boss-mode-v<version>` 触发
+ * GitHub Actions 的 trusted publishing（OIDC）发布；仅注册 WebAuthn 安全密钥的账号
+ * 无法用本脚本直发（CLI 2FA 只支持 TOTP），请改用 `npx npm@11 stage publish` 后
+ * 在 npm 头像菜单 → Staged Packages 里审批。
  *
  * 用法:
  *   node scripts/publish-dsh.js [--dry-run] [--provenance] [--otp=<code>]

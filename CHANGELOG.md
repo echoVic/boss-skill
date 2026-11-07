@@ -10,11 +10,12 @@
 ### 新增（Added）
 
 - **DeepSeek Harness bundle 发布到 npm。** `integrations/deepseek-harness` 以
-  `dsh-boss-mode` 独立版本发布到 npm，DSH 用户可直接
-  `dsh plugin --profile desktop add dsh-boss-mode` 安装。新增
+  `dsh-boss-mode` 独立版本发布到 npm，`0.1.3` 已通过暂存发布（staged publishing）审批上线；
+  DSH 用户可直接 `dsh plugin --profile desktop add dsh-boss-mode` 安装。新增
   `npm run dsh:publish`（发布前校验元数据、资源快照、pack 内容与版本占用）以及
-  tag `dsh-boss-mode-v*` 触发的 GitHub Actions 发布工作流（npm provenance，需要仓库
-  secret `NPM_TOKEN`）。根 skill 包 `@blade-ai/boss-skill` 仍不发布到 npm。
+  tag `dsh-boss-mode-v*` 触发的 GitHub Actions 发布工作流，CI 走 npm trusted publishing
+  （GitHub OIDC，无需 `NPM_TOKEN`，自带 provenance）。根 skill 包 `@blade-ai/boss-skill`
+  仍不发布到 npm。
 
 ### 修复（Fixed）
 

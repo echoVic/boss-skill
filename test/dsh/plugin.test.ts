@@ -200,6 +200,8 @@ describe('npm publishing', () => {
     expect(fs.existsSync(path.join(root, 'scripts/publish-dsh.js'))).toBe(true);
     const workflow = fs.readFileSync(path.join(root, '.github/workflows/dsh-publish.yml'), 'utf8');
     expect(workflow).toContain('dsh-boss-mode-v*');
+    expect(workflow).toContain('id-token: write');
     expect(workflow).toContain('npm publish ./integrations/deepseek-harness --access public');
+    expect(workflow).not.toContain('NODE_AUTH_TOKEN');
   });
 });

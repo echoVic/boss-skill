@@ -1,13 +1,24 @@
 name: DSH npm publish
 
-# Publishes the DeepSeek Harness bundle (integrations/deepseek-harness) to npm as
-# `dsh-boss-mode`. Triggered by the release tag, or manually from main.
+# Publishes integrations/deepseek-harness to npm as `dsh-boss-mode` through npm
+# trusted publishing (GitHub OIDC): no NPM_TOKEN secret is stored, and CI never
+# needs an interactive 2FA code. Provenance is generated from this workflow's
+# OIDC identity.
 #
-# Requires one repository secret:
-#   NPM_TOKEN — npm automation token with publish rights for `dsh-boss-mode`
+# One-time setup, done interactively in the browser (2FA / security key):
+#   https://www.npmjs.com/package/dsh-boss-mode/access → Trusted Publisher →
+#   GitHub Actions
+#     Organization or user: echoVic
+#     Repository:           boss-skill
+#     Workflow filename:    dsh-publish.yml
+#     Environment:          (leave empty)
+#     Permissions:          Allow direct publish
 #
-# Provenance is generated through GitHub OIDC (id-token: write), so the token only
-# needs publish rights; no long-lived provenance key is stored.
+# Local publishing for accounts that only hold a WebAuthn security key (npm
+# reject interactive 2FA on the CLI): stage the tarball with
+#   npx npm@11 stage publish
+# from integrations/deepseek-harness, then approve it under the npm profile menu
+# → Staged Packages.
 
 on:
   push:
@@ -32,7 +43,13 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          registry-url: "https://registry.npmjs.org"
+      - name: Install an npm CLI with trusted publishing support
+        run: npm install --global npm@11.21.2
+      - name: Refuse a manual publish from a non-main branch
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "workflow_dispatch publishes only from main; got ${{ github.ref }}"
+          exit 1
       - name: Install dependencies
         run: npm ci
       - name: Verify bundle snapshot and release tag
@@ -56,7 +73,5 @@ jobs:
           npm run lint
           npm run typecheck
           npm test
-      - name: Publish to npm
+      - name: Publish to npm (trusted publishing / OIDC)
         run: npm publish ./integrations/deepseek-harness --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
