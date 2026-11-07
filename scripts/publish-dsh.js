@@ -8,12 +8,13 @@
  * → 版本占用检查 → npm publish。CI 里由 tag `dsh-boss-mode-v<version>` 触发同一流程。
  *
  * 用法:
- *   node scripts/publish-dsh.js [--dry-run] [--provenance]
+ *   node scripts/publish-dsh.js [--dry-run] [--provenance] [--otp=<code>]
  *
  * 示例:
  *   node scripts/publish-dsh.js --dry-run
  *   node scripts/publish-dsh.js
- *   node scripts/publish-dsh.js --provenance   # CI 中生成 npm provenance
+ *   node scripts/publish-dsh.js --otp=123456     # npm 账号开启 2FA 时的一次性密码
+ *   node scripts/publish-dsh.js --provenance     # CI 中生成 npm provenance
  */
 
 import { execFileSync } from 'node:child_process';
@@ -147,13 +148,24 @@ function main() {
 
   if (!dryRun) assertAuthenticated();
 
+  const otpArg = args.find((arg) => arg.startsWith('--otp='));
+  const otp = otpArg?.slice('--otp='.length);
+
   const publishArgs = ['publish', '--access', 'public'];
   if (provenance) publishArgs.push('--provenance');
+  if (otp) publishArgs.push(`--otp=${otp}`);
   if (dryRun) publishArgs.push('--dry-run');
 
   console.log(`\n🚀 ${dryRun ? '模拟' : ''}发布 ${manifest.name}@${manifest.version}...`);
   console.log(`  $ npm ${publishArgs.join(' ')}`);
-  execFileSync('npm', publishArgs, { cwd: BUNDLE_DIR, stdio: 'inherit' });
+  try {
+    execFileSync('npm', publishArgs, { cwd: BUNDLE_DIR, stdio: 'inherit' });
+  } catch (error) {
+    console.error(
+      '\n❌ npm 发布失败。若 npm 提示 EOTP（需要一次性密码），用 npm run dsh:publish -- --otp=<6位验证码> 重试；CI 中应配置可绕过 OTP 的自动化 token。',
+    );
+    process.exit(typeof error.status === 'number' ? error.status : 1);
+  }
 
   if (dryRun) {
     console.log('\n✅ dry-run 通过：打包与元数据就绪，可执行 npm run dsh:publish 正式发布');
