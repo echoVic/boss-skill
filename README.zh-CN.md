@@ -22,7 +22,7 @@ Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
 
 Boss 同时提供 DeepSeek Harness bundle：增加可选择的「Boss 专家小队」模式，并在右侧栏显示
 Agent Teams 的成员与任务。可以从 npm 安装（`dsh plugin --profile desktop add dsh-boss-mode`），
-或安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.3) 的 tgz 包，或添加
+或安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4) 的 tgz 包，或添加
 [DSH 原始市场索引](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json)；之后重启 DSH 并在模式选择器中选择「Boss 专家小队」。需要使用
 `spawn_teammate`、原生成员列表和任务板时，再启用 DSH 的实验性 Agent Teams profile。
 

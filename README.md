@@ -23,7 +23,7 @@ Boss works with Claude Code, Codex, OpenClaw, Antigravity, and Hermes.
 Boss also ships a DeepSeek Harness bundle. It adds a selectable **Boss Expert Squad**
 preset and a right sidebar that reads live Agent Teams members and tasks. Install it from
 npm (`dsh plugin --profile desktop add dsh-boss-mode`), from the
-[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.3)
+[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4)
 tarball, or via the
 [raw DSH market index](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json);
 then restart DSH and select `Boss Expert Squad`. Enable DSH's experimental Agent Teams
