@@ -296,7 +296,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-发布脚本会检查工作区干净、运行完整验证链（typecheck、lint、test）、同步所有 manifest 的版本号、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——没有 npm publish，也没有构建步骤。DeepSeek Harness bundle 版本独立，由 tag 触发的 workflow（`.github/workflows/dsh-publish.yml`）发布到 npm。
+发布脚本会检查工作区干净、运行完整验证链（typecheck、lint、test）、同步所有 manifest 的版本号、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——没有 npm publish，也没有构建步骤。DeepSeek Harness bundle 版本独立，由 tag 触发的 workflow（`.github/workflows/dsh-publish.yml`）发布到 npm。完整流程见 [docs/dsh-release.md](./docs/dsh-release.md)。
 
 详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 

@@ -47,3 +47,5 @@ interactive 2FA codes for `npm publish`; accounts that registered a WebAuthn sec
 cannot complete that CLI prompt, so stage locally instead with
 `npx npm@11 stage publish` and approve the release under the npm profile menu → Staged
 Packages.
+
+The full release checklist lives in [docs/dsh-release.md](https://github.com/echoVic/boss-skill/blob/main/docs/dsh-release.md).

@@ -16,7 +16,9 @@
   安装说明同步 npm 分发，Quick Start 增加 DeepSeek Harness 安装命令并移除「没有 npm 包」的旧说法。新增
   `npm run dsh:publish`（发布前校验元数据、资源快照、pack 内容与版本占用）以及
   tag `dsh-boss-mode-v*` 触发的工作流（无需 `NPM_TOKEN`，自带 provenance）。根 skill 包
-  `@blade-ai/boss-skill` 仍不发布到 npm。
+  `@blade-ai/boss-skill` 仍不发布到 npm。发布流程（版本号、marketplace pin、tag、CI OIDC
+  发布、GitHub Release、本地 staged publish 兜底）沉淀在
+  [docs/dsh-release.md](./docs/dsh-release.md)，并在 CONTRIBUTING 与 README 中链接。
 
 ### 修复（Fixed）
 

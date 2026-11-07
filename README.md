@@ -300,7 +300,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-The release script checks for a clean worktree, runs the full verification chain (typecheck, lint, test), syncs versions across all manifests, verifies consistency, creates a commit and tag, and pushes. Release is the git tag: marketplaces read the repository — there is no npm publish step and no build step. The DeepSeek Harness bundle is versioned separately and published to npm by a tag-triggered workflow (`.github/workflows/dsh-publish.yml`).
+The release script checks for a clean worktree, runs the full verification chain (typecheck, lint, test), syncs versions across all manifests, verifies consistency, creates a commit and tag, and pushes. Release is the git tag: marketplaces read the repository — there is no npm publish step and no build step. The DeepSeek Harness bundle is versioned separately and published to npm by a tag-triggered workflow (`.github/workflows/dsh-publish.yml`). See [docs/dsh-release.md](./docs/dsh-release.md) for the full checklist.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

@@ -150,6 +150,12 @@ npm run release -- <version|major|minor|patch> [--dry-run]
 
 测试套件中包含版本一致性检查，CI 会自动拦截版本不同步的问题。
 
+## DeepSeek Harness bundle 发布
+
+`integrations/deepseek-harness` 以独立版本号发布为 npm 包 `dsh-boss-mode`，与根 skill 版本互不影响。
+版本号、marketplace pin、tag、CI 的 OIDC 发布、GitHub Release 以及本地 staged publish 备用路径见
+[docs/dsh-release.md](./docs/dsh-release.md)。
+
 ## 提交规范
 
 使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式：

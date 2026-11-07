@@ -204,4 +204,14 @@ describe('npm publishing', () => {
     expect(workflow).toContain('npm publish ./integrations/deepseek-harness --access public');
     expect(workflow).not.toContain('NODE_AUTH_TOKEN');
   });
+
+  it('documents the bundle release process next to the contributor guide', () => {
+    const releaseDoc = fs.readFileSync(path.join(root, 'docs/dsh-release.md'), 'utf8');
+    expect(releaseDoc).toContain('dsh-boss-mode-v<version>');
+    expect(releaseDoc).toContain('npm publish ./integrations/deepseek-harness --access public');
+    expect(releaseDoc).toContain('Trusted Publisher');
+    expect(releaseDoc).toContain('npx npm@11 stage publish');
+    const contributing = fs.readFileSync(path.join(root, 'CONTRIBUTING.md'), 'utf8');
+    expect(contributing).toContain('docs/dsh-release.md');
+  });
 });
