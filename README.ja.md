@@ -57,7 +57,7 @@ pm → architect → ui → review → tasks → dev → qa → ship
 
 ### 1. インストール
 
-Boss はコーディングエージェントにインストールするスキルです。配布はマーケットプレイスのみで、npm パッケージもグローバルバイナリもありません。
+Boss はコーディングエージェントにインストールするスキルです。スキル本体はマーケットプレイス経由で配布され（グローバルバイナリはありません）、DeepSeek Harness 用バンドルは npm の [`dsh-boss-mode`](https://www.npmjs.com/package/dsh-boss-mode) として別途公開されています。
 
 **Claude Code — プラグインマーケットプレイス（推奨）:**
 
@@ -79,6 +79,14 @@ codex plugin marketplace add echoVic/boss-skill
 ```bash
 npx skills add echoVic/boss-skill
 ```
+
+**DeepSeek Harness — npm プラグイン:**
+
+```bash
+dsh plugin --profile desktop add dsh-boss-mode
+```
+
+再起動して新しいセッションを作成し、モード選択で **Boss 专家小队** を選びます。
 
 ### 2. 既存プロジェクトで試す
 

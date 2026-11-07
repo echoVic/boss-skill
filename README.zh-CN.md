@@ -16,14 +16,21 @@
 
 **Boss 是面向 Coding Agent 的专家小队工作流。** 它把一个 Coding Agent 组织成结构化研发团队：PM、Architect、UI Designer、Tech Lead、Scrum Master、Frontend、Backend、QA、DevOps。和只靠 prompt 的 Agent 团队不同，Boss 为每个角色强制执行硬性质量契约，产出可回放的产物，并自动串联各环节——从任意环节切入，自动跑完后续流程，除非你主动叫停。
 
-Boss 支持 Claude Code、Codex、OpenClaw、Antigravity 和 Hermes。
+Boss 支持 Claude Code、Codex、OpenClaw、Antigravity、Hermes 和 DeepSeek Harness。
 
 ## DeepSeek Harness
 
-Boss 同时提供 DeepSeek Harness bundle：增加可选择的「Boss 专家小队」模式，并在右侧栏显示
-Agent Teams 的成员与任务。可以从 npm 安装（`dsh plugin --profile desktop add dsh-boss-mode`），
-或安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4) 的 tgz 包，或添加
-[DSH 原始市场索引](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json)；之后重启 DSH 并在模式选择器中选择「Boss 专家小队」。需要使用
+Boss 同时提供 DeepSeek Harness bundle，已发布到 npm：
+[`dsh-boss-mode`](https://www.npmjs.com/package/dsh-boss-mode)。它增加可选择的「Boss 专家小队」模式，并在右侧栏显示
+Agent Teams 的成员与任务。
+
+```bash
+dsh plugin --profile desktop add dsh-boss-mode
+```
+
+也可以安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4) 的 tgz 包，或添加
+[DSH 原始市场索引](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json)。
+之后重启 DSH、新建会话，并在模式选择器中选择「Boss 专家小队」。需要使用
 `spawn_teammate`、原生成员列表和任务板时，再启用 DSH 的实验性 Agent Teams profile。
 
 ## 为什么需要 Boss
@@ -65,7 +72,7 @@ pm → architect → ui → review → tasks → dev → qa → ship
 
 ### 1. 安装
 
-Boss 是一个「被安装进 coding agent」的 skill。分发只走 skill 市场：没有 npm 包，也没有全局二进制。
+Boss 是一个「被安装进 coding agent」的 skill。skill 本身只通过市场分发（没有全局二进制）；DeepSeek Harness bundle 单独发布在 npm 上，包名 [`dsh-boss-mode`](https://www.npmjs.com/package/dsh-boss-mode)。
 
 **Claude Code —— 插件市场（推荐）：**
 
@@ -87,6 +94,14 @@ codex plugin marketplace add echoVic/boss-skill
 ```bash
 npx skills add echoVic/boss-skill
 ```
+
+**DeepSeek Harness — npm 插件：**
+
+```bash
+dsh plugin --profile desktop add dsh-boss-mode
+```
+
+然后重启 DeepSeek Harness、新建会话，在模式选择器中选择「Boss 专家小队」（详见 [DeepSeek Harness](#deepseek-harness)）。
 
 ### 2. 跑一条轻量流水线
 
@@ -281,7 +296,7 @@ npm run release -- 4.1.0
 npm run release -- 4.1.0 --dry-run
 ```
 
-发布脚本会检查工作区干净、运行完整验证链（typecheck、lint、test）、同步所有 manifest 的版本号、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——没有 npm publish，也没有构建步骤。
+发布脚本会检查工作区干净、运行完整验证链（typecheck、lint、test）、同步所有 manifest 的版本号、验证一致性、创建 commit 和 tag 并推送。发布物就是 git tag：市场直接从仓库读取——没有 npm publish，也没有构建步骤。DeepSeek Harness bundle 版本独立，由 tag 触发的 workflow（`.github/workflows/dsh-publish.yml`）发布到 npm。
 
 详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 

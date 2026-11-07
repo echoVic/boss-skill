@@ -57,7 +57,7 @@ pm → architect → ui → review → tasks → dev → qa → ship
 
 ### 1. 설치
 
-Boss는 코딩 에이전트에 설치하는 스킬입니다. 배포는 마켓플레이스만 통해 이뤄지며, npm 패키지도 전역 바이너리도 없습니다.
+Boss는 코딩 에이전트에 설치하는 스킬입니다. 스킬 자체는 마켓플레이스를 통해 배포되며(전역 바이너리 없음), DeepSeek Harness 번들은 npm의 [`dsh-boss-mode`](https://www.npmjs.com/package/dsh-boss-mode)로 별도 배포됩니다.
 
 **Claude Code — 플러그인 마켓플레이스(권장):**
 
@@ -79,6 +79,14 @@ codex plugin marketplace add echoVic/boss-skill
 ```bash
 npx skills add echoVic/boss-skill
 ```
+
+**DeepSeek Harness — npm 플러그인:**
+
+```bash
+dsh plugin --profile desktop add dsh-boss-mode
+```
+
+재시작한 뒤 새 세션을 만들고 모드 선택기에서 **Boss 专家小队**를 고릅니다.
 
 ### 2. 기존 프로젝트에서 시도
 
