@@ -28,7 +28,7 @@ Agent Teams 的成员与任务。
 dsh plugin --profile desktop add dsh-boss-mode
 ```
 
-也可以安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4) 的 tgz 包，或添加
+也可以安装 [GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.5) 的 tgz 包，或添加
 [DSH 原始市场索引](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json)。
 之后重启 DSH、新建会话，并在模式选择器中选择「Boss 专家小队」。需要使用
 `spawn_teammate`、原生成员列表和任务板时，再启用 DSH 的实验性 Agent Teams profile。

@@ -30,7 +30,7 @@ dsh plugin --profile desktop add dsh-boss-mode
 ```
 
 You can also install the tarball from the
-[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.4)
+[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.5)
 or add the
 [raw DSH market index](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json).
 Then restart DeepSeek Harness, create a new session, and pick **Boss Expert Squad**. Enable

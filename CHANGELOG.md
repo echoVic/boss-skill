@@ -12,7 +12,7 @@
 - **DeepSeek Harness bundle 发布到 npm。** `integrations/deepseek-harness` 以
   `dsh-boss-mode` 独立版本发布到 npm：`0.1.3` 通过暂存发布（staged publishing）审批上线，
   `0.1.4` 由 tag 触发的 GitHub Actions 经 npm trusted publishing（GitHub OIDC）发布并激活
-  该连接；DSH 用户可直接 `dsh plugin --profile desktop add dsh-boss-mode` 安装。README（en/zh-CN/ja/ko）的
+  该连接；`0.1.5` 把发布 runbook 链接同步进 npm 包 README。DSH 用户可直接 `dsh plugin --profile desktop add dsh-boss-mode` 安装。README（en/zh-CN/ja/ko）的
   安装说明同步 npm 分发，Quick Start 增加 DeepSeek Harness 安装命令并移除「没有 npm 包」的旧说法。新增
   `npm run dsh:publish`（发布前校验元数据、资源快照、pack 内容与版本占用）以及
   tag `dsh-boss-mode-v*` 触发的工作流（无需 `NPM_TOKEN`，自带 provenance）。根 skill 包
