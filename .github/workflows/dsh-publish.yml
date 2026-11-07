@@ -1,0 +1,62 @@
+name: DSH npm publish
+
+# Publishes the DeepSeek Harness bundle (integrations/deepseek-harness) to npm as
+# `dsh-boss-mode`. Triggered by the release tag, or manually from main.
+#
+# Requires one repository secret:
+#   NPM_TOKEN — npm automation token with publish rights for `dsh-boss-mode`
+#
+# Provenance is generated through GitHub OIDC (id-token: write), so the token only
+# needs publish rights; no long-lived provenance key is stored.
+
+on:
+  push:
+    tags: ["dsh-boss-mode-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dsh-npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish dsh-boss-mode to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify bundle snapshot and release tag
+        run: |
+          npm run dsh:check
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const pkg = JSON.parse(
+              fs.readFileSync("integrations/deepseek-harness/package.json", "utf8"),
+            );
+            const expected = `dsh-boss-mode-v${pkg.version}`;
+            const ref = process.env.GITHUB_REF_NAME ?? "";
+            if (ref.startsWith("dsh-boss-mode-v") && ref !== expected) {
+              console.error(`tag ${ref} does not match bundle version ${pkg.version}`);
+              process.exit(1);
+            }
+            console.log(`publishing ${pkg.name}@${pkg.version}`);
+          '
+      - name: Lint, typecheck, test
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+      - name: Publish to npm
+        run: npm publish ./integrations/deepseek-harness --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -167,3 +167,39 @@ describe('DeepSeek Harness Boss bundle', () => {
     expect(populated).toContain('boss-task-in_progress');
   });
 });
+
+describe('npm publishing', () => {
+  it('packages dsh-boss-mode as a public npm bundle with documented install steps', () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(plugin, 'package.json'), 'utf8'));
+    expect(manifest.name).toBe('dsh-boss-mode');
+    expect(manifest.private).toBeUndefined();
+    expect(manifest.publishConfig).toMatchObject({ access: 'public' });
+    expect(manifest.repository.directory).toBe('integrations/deepseek-harness');
+    expect(manifest.scripts.prepublishOnly).toBe('node ../../scripts/build-dsh.js --check');
+    for (const file of [
+      'index.js',
+      'client.js',
+      'resources.json',
+      'cordis.patch.yml',
+      'icon.svg',
+      'README.md',
+      'LICENSE',
+      'NOTICE.md',
+    ]) {
+      expect(manifest.files, file).toContain(file);
+      expect(fs.existsSync(path.join(plugin, file)), file).toBe(true);
+    }
+    const readme = fs.readFileSync(path.join(plugin, 'README.md'), 'utf8');
+    expect(readme).toContain('dsh plugin --profile desktop add dsh-boss-mode');
+    expect(readme).toContain('https://www.npmjs.com/package/dsh-boss-mode');
+  });
+
+  it('publishes the bundle to npm from the release tag workflow', () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    expect(manifest.scripts['dsh:publish']).toBe('node scripts/publish-dsh.js');
+    expect(fs.existsSync(path.join(root, 'scripts/publish-dsh.js'))).toBe(true);
+    const workflow = fs.readFileSync(path.join(root, '.github/workflows/dsh-publish.yml'), 'utf8');
+    expect(workflow).toContain('dsh-boss-mode-v*');
+    expect(workflow).toContain('npm publish ./integrations/deepseek-harness --access public');
+  });
+});

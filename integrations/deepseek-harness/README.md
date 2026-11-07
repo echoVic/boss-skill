@@ -10,9 +10,18 @@ package remains usable without cloning this repository.
 
 ## Install
 
-Install the package into a DSH profile that already has the standard profile. For team
-delegation and the native roster/task projection, also enable DSH's
-`@deepseek-ai/dsh-experimental-agent-team-profile` bundle in that profile. With the DSH CLI:
+The package is published to npm as [`dsh-boss-mode`](https://www.npmjs.com/package/dsh-boss-mode)
+and versioned independently from the root Boss skill. Install it into a DSH profile that
+already has the standard profile. For team delegation and the native roster/task
+projection, also enable DSH's `@deepseek-ai/dsh-experimental-agent-team-profile` bundle in
+that profile. With the DSH CLI:
+
+```sh
+dsh plugin --profile desktop add dsh-boss-mode
+```
+
+Or install the tarball attached to the
+[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.3):
 
 ```sh
 dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.3/dsh-boss-mode-0.1.3.tgz

@@ -25,6 +25,12 @@
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepublishOnly": "node ../../scripts/build-dsh.js --check"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js"
