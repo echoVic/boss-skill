@@ -1,0 +1,17 @@
+# Dependabot coverage for the independently versioned DeepSeek Harness bundle.
+#
+# GitHub only reads the repository-root `.github/dependabot.yml`, so this file
+# does not activate updates by itself. It documents the bundle's update policy
+# next to its manifest and satisfies the HOL plugin scanner, which evaluates a
+# monorepo once per detected package (this bundle is its own package root).
+# Keep it aligned with the root configuration when either changes.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/integrations/deepseek-harness"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -43,7 +43,8 @@
     "icon.svg",
     "README.md",
     "LICENSE",
-    "NOTICE.md"
+    "NOTICE.md",
+    "SECURITY.md"
   ],
   "dsh": {
     "bundle": {
