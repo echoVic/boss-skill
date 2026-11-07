@@ -28,6 +28,16 @@
       },
       "versions": [
         {
+          "version": "0.1.5",
+          "publishTimestamp": 1794074356,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/echoVic/boss-skill",
+            "commit": "62972e3e7ee0125a14fd539155f830225c059cd1",
+            "path": "integrations/deepseek-harness"
+          }
+        },
+        {
           "version": "0.1.4",
           "publishTimestamp": 1794073793,
           "source": {
