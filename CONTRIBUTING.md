@@ -47,6 +47,7 @@ npm test
 ### Agent-Friendly CLI Contract
 
 Agent-facing `boss` commands use these common options where applicable; run `--describe` on a command for its exact JSON schema:
+
 - `--json`: structured JSON output; non-TTY stdout defaults to JSON
 - `--describe`: JSON command schema
 - `--dry-run`: structured action plan for writes or risky operations
@@ -126,6 +127,7 @@ describe('my-hook', () => {
 ### 测试覆盖范围
 
 提交 PR 时，请确保：
+
 - 新增的 Hook 脚本有对应的测试
 - 新增的 `skill/scripts/lib/` 工具函数有对应的测试
 - CLI 功能变更在 `test/bin/boss-skill.test.ts` 中覆盖
@@ -205,6 +207,7 @@ docs: 更新 README 安装说明
 ## 插件开发
 
 如需开发自定义插件，请参考：
+
 - 插件 Schema：`skill/assets/plugin-schema.json`
 - 内置插件示例：`skill/assets/plugins/security-audit/`
 - 插件注册入口：`boss runtime register-plugins <feature>`

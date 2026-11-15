@@ -21,6 +21,7 @@ Boss fonctionne avec Claude Code, Codex, OpenClaw, Antigravity et Hermes.
 ## Pourquoi Boss
 
 L'orchestration par prompts seule peut sembler organisée, mais elle ne peut généralement pas prouver que le plan a été suivi, que les tests ont été exécutés ou que les gates ont été passées. Boss est construit autour de la preuve et des contrats stricts :
+
 - **Contrats de qualité stricts** : chaque rôle possède un tableau d'exigences non négociables (par exemple, le PRD doit contenir des scénarios Given-When-Then ; l'architecture doit comparer au moins deux options ; QA doit enregistrer des preuves vérifiées ou honnêtement non vérifiées). Un contrat échoué bloque l'étape suivante sauf override explicite.
 - **Orienté artefacts** : chaque étape écrit un fichier réel sous `.boss/<feature>/`. La progression est jugée sur les artefacts sur disque, pas sur ce que l'agent affirme.
 - **Chaîne de continuation** : commencez à n'importe quelle étape (`/boss:pm`, `/boss:dev`, ...) et Boss exécute automatiquement toutes les étapes en aval jusqu'à `ship` ou jusqu'à ce que vous l'arrêtiez. Pas de transferts manuels.
@@ -154,6 +155,7 @@ Demande utilisateur
 ## Contrat de Qualité
 
 Boss possède deux couches de contrôle qualité :
+
 - **Exigences strictes par rôle** : le prompt de chaque agent définit un tableau d'exigences non négociables. L'agent s'auto-vérifie avant de transmettre ; un contrat échoué bloque l'étape suivante.
 - **Gates de qualité** : de vraies commandes dont les verdicts sont enregistrés dans l'artefact de l'étape.
 
@@ -217,6 +219,7 @@ Voir [test/evals/README.md](./test/evals/README.md).
 ## Développement
 
 Prérequis :
+
 - Node.js >= 22.18
 
 Installation :
