@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "69265c47d090cc549cf06e24f7847ed167c103cb",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/69265c47d090cc549cf06e24f7847ed167c103cb"
+    "commit": "dce57f6d3d0786890f37f2c7fdb2298f84f4c35e",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/dce57f6d3d0786890f37f2c7fdb2298f84f4c35e"
   },
   "publisher": {
     "name": "echoVic",
@@ -54,8 +54,8 @@
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "c2d1618fa3f117167eade0f512cde4981c54124cf5a262eed3384aca80de17c3",
-      "bytes": 6491
+      "sha256": "b3ba056248c7602196e33631f2437f074d26dbf51550ac4157e107c10b2bfa38",
+      "bytes": 6495
     },
     {
       "path": "skill/commands/boss.md",
@@ -74,13 +74,13 @@
     },
     {
       "path": "skill/commands/boss-ui.md",
-      "sha256": "35f04e89200621582366570a5039433108a28a6da73efa0f292af658193013c5",
-      "bytes": 2378
+      "sha256": "7d7eacf71f0f07213f4cc720c7badb7bc68d56ad08843e5cd2d5da3f88ab69e0",
+      "bytes": 2379
     },
     {
       "path": "skill/commands/boss-review.md",
-      "sha256": "d38175b4d933e2651d70991f1498b5b714925ffe824bb5dbb17b71f38fffdf95",
-      "bytes": 2661
+      "sha256": "ddf03e51141d82c83cc90fee7758acbffa06108a1225723ccaef161a0f7e1f06",
+      "bytes": 2662
     },
     {
       "path": "skill/commands/boss-tasks.md",

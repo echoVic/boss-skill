@@ -36,6 +36,7 @@ dsh plugin --profile desktop add dsh-boss-mode
 ## 为什么需要 Boss
 
 只靠 prompt 的编排经常"看起来很像团队"，但很难证明计划真的被执行、测试真的跑过、门禁真的通过。Boss 的核心是证据和硬契约：
+
 - **硬性质量契约**：每个角色都有不可妥协的要求表（例如 PRD 必须包含 Given-When-Then 场景；架构必须对比至少两种方案；QA 必须记录已验证或诚实标注未验证的证据）。契约未通过则阻断下一环节，除非你显式覆盖。
 - **产物驱动**：每个环节都把真实文件写入 `.boss/<feature>/`。进度以磁盘上的产物为准，而非 Agent 的口头声明。
 - **续跑链**：从任意环节启动（`/boss:pm`、`/boss:dev` ...），Boss 自动跑完所有下游环节直到 `ship` 或你叫停。无需手动交接。
@@ -177,6 +178,7 @@ dsh plugin --profile desktop add dsh-boss-mode
 ## 质量契约
 
 Boss 的质量保障分两层：
+
 - **每个角色的硬性要求**：每个 Agent 的 prompt 定义了不可妥协的要求表。Agent 在交接前自检；契约未通过则阻断下一环节。
 - **质量门禁**：真实执行的命令，判定结果记录在环节产物中。
 
@@ -240,6 +242,7 @@ release eval 包含 release-evidence 和 pipeline-compliance 检查——验证�
 ## 开发
 
 环境要求：
+
 - Node.js >= 22.18
 
 初始化：

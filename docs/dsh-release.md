@@ -112,6 +112,7 @@
 
 `npm run dsh:publish` 会依次校验 npm 元数据、`npm pack` 内容、版本是否已被占用、资源快照，然后执行
 `npm publish`。
+
 - 只验证不发布：`npm run dsh:publish:dry`
 - TOTP 账号（有 6 位验证码）：`npm run dsh:publish -- --otp=<code>`
 - 只注册了 **WebAuthn 安全密钥** 的账号：npm CLI 的交互式 2FA 只支持 TOTP，直发会返回 `EOTP`。

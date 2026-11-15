@@ -132,6 +132,7 @@ Boss Skill 是一个基于 **BMAD 方法论**（Breakthrough Method of Agile AI-
 ### 2.4 执行中会话层
 
 Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍是正式 source of truth，但执行期间允许点对点会话来处理偏差、求助和局部决策。
+
 - **会话原语**：`ask`、`challenge`、`propose`、`request_change`、`escalate`、`huddle`、`resolve`
 - **锚点要求**：每条会话必须绑定到 `artifact`、`task`、`scope` 或 `decision`
 - **最小模型**：`Thread -> Message -> Resolution -> Todo`
@@ -160,6 +161,7 @@ Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍�
 ```
 
 **关键点**：
+
 - PM 必须先执行，进行需求穿透
 - 架构和 UI 设计基于 PRD 并行执行
 
@@ -180,6 +182,7 @@ Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍�
 ```
 
 **关键点**：
+
 - 如果评审不通过，需要返回阶段 1 修改
 - 用户故事由 PM 在 PRD 中输出，Tech Lead 负责评审
 
@@ -200,11 +203,13 @@ Boss 不再把 Agent 协作限制为“交付文档后再反馈”。文档仍�
 ```
 
 **测试要求**（测试金字塔）：
+
 - 单元测试：覆盖率 ≥ 70%
 - 集成测试：API 端点、组件交互
 - E2E 测试：关键用户流程
 
 **执行中协作要求**：
+
 - 发现实现偏差、契约歧义或证据冲突时，优先开执行中会话，不要直接把问题埋进最终报告
 - 会话必须 anchored，并在收敛后生成 single-owner todo 或升级为正式修订循环
 - QA、Frontend、Backend、Tech Lead 等角色可按需点对点沟通或拉小范围 huddle
@@ -267,6 +272,7 @@ PM Agent 采用 **4 层需求挖掘模型**：
 ### 4.2 Apple 级设计标准
 
 UI Designer Agent 遵循 Apple 设计原则：
+
 - **简约至上**：去除一切不必要的元素
 - **细节决定成败**：像素级对齐、动效精心打磨
 - **一致性**：整体体验如同出自一人之手
@@ -428,6 +434,7 @@ Boss Skill 使用通用的 `general_purpose_task` agent，兼容主流 AI 编程
 #### 兼容性原理
 
 Boss Skill 的核心设计确保了广泛兼容性：
+
 1. **纯 Markdown 格式** - 所有 Agent prompts 都是标准 Markdown，无特殊语法
 2. **通用 Task 调用** - 使用 `general_purpose_task` 而非特定工具 API
 3. **无外部依赖** - 不依赖特定运行时或框架
@@ -438,6 +445,7 @@ Boss Skill 的核心设计确保了广泛兼容性：
 Boss Skill 支持项目级模板覆盖，以适配团队自己的文档规范。
 
 模板查找顺序：
+
 1. `.boss/templates/<name>.template`
 2. Skill 内置 `templates/<name>.template`
 
@@ -448,6 +456,7 @@ boss project init <feature-name> --template
 ```
 
 设计原则：
+
 - 用户可以直接修改项目中的模板副本，无需改动 Skill 仓库默认模板
 - 下游 Agent 必须优先读取项目级模板
 - `boss project init` 只负责初始化轻量占位文件；正式落文前再通过 `boss artifact prepare` 按模板优先级逐个准备当前产物骨架
@@ -462,17 +471,20 @@ boss project init <feature-name> --template
 **文件**：`agents/boss-pm.md`
 
 **角色定位**：
+
 - 20 年产品经验
 - 受乔布斯和张小龙认可
 - 能穿透用户需求表述
 
 **核心能力**：
+
 - 4 层需求挖掘（显性/隐性/潜在/惊喜）
 - 5W2H 深度追问
 - 竞品调研分析
 - 用户画像构建
 
 **输出**：
+
 - PRD（含用户故事）
 - 需求优先级矩阵
 - 验收标准
@@ -482,16 +494,19 @@ boss project init <feature-name> --template
 **文件**：`agents/boss-ui-designer.md`
 
 **角色定位**：
+
 - Apple Inc. 20 年设计师
 - 吹毛求疵，追求像素级完美
 
 **核心能力**：
+
 - Apple 设计原则
 - 完整设计系统
 - 组件规范（所有状态）
 - 无障碍设计
 
 **输出**：
+
 - `ui-spec.md` UI 规范文档
 - `ui-design.json` 机器可渲染设计契约，可用 `boss design preview <feature>` 预览
 - 设计系统定义
@@ -503,16 +518,19 @@ boss project init <feature-name> --template
 **文件**：`agents/boss-tech-lead.md`
 
 **角色定位**：
+
 - 15 年技术架构经验
 - 负责技术方案评审
 
 **核心能力**：
+
 - 架构评审
 - 技术风险评估
 - 可行性分析
 - 代码规范制定
 
 **输出**：
+
 - 技术评审报告
 - 风险清单
 - 改进建议

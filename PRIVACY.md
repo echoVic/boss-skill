@@ -13,6 +13,7 @@ configuration) has been **removed** — cross-session memory and preference deri
 computed deterministically from the local event stream, with no network dependency.
 
 The only network surface Boss can open is an **opt-in, loopback-only** preview server:
+
 - `boss design preview <feature>` starts an HTTP server bound to `127.0.0.1` on an
   ephemeral port to render a generated UI design in your local browser.
 - It is never started implicitly by the pipeline, binds only to loopback (not `0.0.0.0`),
@@ -28,6 +29,7 @@ grep -rn "fetch(\|node:https\|https.request\|net.connect" skill/cli
 ## Data: everything stays on disk under `.boss/`
 
 All state Boss produces lives inside your project under `.boss/<feature>/`:
+
 - `events.jsonl` — append-only event log (the source of truth).
 - `execution.json` — state projected from the event log (fully replayable).
 - Pipeline artifacts (`prd.md`, `architecture.md`, `tasks.md`, `qa-report.md`, …).

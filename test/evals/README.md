@@ -20,6 +20,7 @@ test/evals/run-evals.sh --release
 
 Use `--smoke` for the fast deterministic canary and `--release` for the
 release-readiness fixtures:
+
 - `release-evidence` — evidence-wave planning, QA evidence, cost thresholds
 - `pipeline-compliance` — expert-squad orchestration transcript checks
 
@@ -28,6 +29,7 @@ Both modes score captured fixtures only.
 ## Case Format
 
 Each eval case has:
+
 - `case.json`: prompt, feature, required artifacts, required behaviors, and thresholds.
 - `transcript.jsonl`: captured Claude/Codex-style tool transcript.
 - `workspace/.boss/<feature>/`: produced Boss artifacts.
