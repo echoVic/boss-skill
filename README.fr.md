@@ -36,17 +36,17 @@ Redémarrez DeepSeek Harness, créez une session et choisissez **Boss Expert Squ
 
 Chaque commande est un point d'entrée qui enchaîne automatiquement les étapes suivantes :
 
-| Commande | Démarre à | Enchaîne jusqu'à |
-| --- | --- | --- |
-| `/boss` | PM | la chaîne complète → ship |
-| `/boss:pm` | PM | Architecte → … → Ship |
-| `/boss:architect` | Architecte | UI → … → Ship |
-| `/boss:ui` | Designer UI | Revue → … → Ship |
-| `/boss:review` | Lead Technique | Tâches → … → Ship |
-| `/boss:tasks` | Scrum Master | Développement → QA → Ship |
-| `/boss:dev` | Frontend / Backend | QA → Ship |
-| `/boss:qa` | QA | Ship |
-| `/boss:ship` | DevOps | termine la chaîne |
+| Commande          | Démarre à          | Enchaîne jusqu'à          |
+| ----------------- | ------------------ | ------------------------- |
+| `/boss`           | PM                 | la chaîne complète → ship |
+| `/boss:pm`        | PM                 | Architecte → … → Ship     |
+| `/boss:architect` | Architecte         | UI → … → Ship             |
+| `/boss:ui`        | Designer UI        | Revue → … → Ship          |
+| `/boss:review`    | Lead Technique     | Tâches → … → Ship         |
+| `/boss:tasks`     | Scrum Master       | Développement → QA → Ship |
+| `/boss:dev`       | Frontend / Backend | QA → Ship                 |
+| `/boss:qa`        | QA                 | Ship                      |
+| `/boss:ship`      | DevOps             | termine la chaîne         |
 
 La chaîne complète est `pm → architect → ui → review → tasks → dev → qa → ship`. Arrêtez-la en disant « stop », « seulement cette étape », ou avec `--stop-after <stage>`.
 
@@ -97,11 +97,11 @@ demande → clarification (sauf --quick)
 
 En plus des contrats par rôle, chaque porte est tranchée par une vraie commande et le verdict est consigné dans l'artefact de l'étape :
 
-| Porte | Étape | Vérifie |
-| --- | --- | --- |
-| 0 (qualité du code) | après le développement, avant QA | typecheck et lint passent, aucune vulnérabilité grave dans les dépendances |
-| 1 (tests) | après QA, avant le déploiement | tests unitaires et d'intégration passent, couverture ≥ 70 %, aucun bug P0/P1, E2E écrits |
-| 2 (performance) | avant le déploiement web | Lighthouse ≥ 80, API P99 < 500 ms (projets web uniquement) |
+| Porte               | Étape                            | Vérifie                                                                                  |
+| ------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| 0 (qualité du code) | après le développement, avant QA | typecheck et lint passent, aucune vulnérabilité grave dans les dépendances               |
+| 1 (tests)           | après QA, avant le déploiement   | tests unitaires et d'intégration passent, couverture ≥ 70 %, aucun bug P0/P1, E2E écrits |
+| 2 (performance)     | avant le déploiement web         | Lighthouse ≥ 80, API P99 < 500 ms (projets web uniquement)                               |
 
 Si vous n'avez pas besoin d'un dossier `.boss/` traçable, vous n'avez probablement pas besoin de la chaîne complète ; utilisez un seul rôle.
 

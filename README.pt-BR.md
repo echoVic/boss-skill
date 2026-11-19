@@ -36,17 +36,17 @@ Reinicie o DeepSeek Harness, crie uma sessão e escolha **Boss Expert Squad**.
 
 Cada comando é um ponto de entrada que executa automaticamente as etapas seguintes:
 
-| Comando | Começa em | Executa até |
-| --- | --- | --- |
-| `/boss` | PM | a cadeia completa → ship |
-| `/boss:pm` | PM | Arquiteto → … → Ship |
-| `/boss:architect` | Arquiteto | UI → … → Ship |
-| `/boss:ui` | Designer de UI | Revisão → … → Ship |
-| `/boss:review` | Tech Lead | Tarefas → … → Ship |
-| `/boss:tasks` | Scrum Master | Desenvolvimento → QA → Ship |
-| `/boss:dev` | Frontend / Backend | QA → Ship |
-| `/boss:qa` | QA | Ship |
-| `/boss:ship` | DevOps | encerra a cadeia |
+| Comando           | Começa em          | Executa até                 |
+| ----------------- | ------------------ | --------------------------- |
+| `/boss`           | PM                 | a cadeia completa → ship    |
+| `/boss:pm`        | PM                 | Arquiteto → … → Ship        |
+| `/boss:architect` | Arquiteto          | UI → … → Ship               |
+| `/boss:ui`        | Designer de UI     | Revisão → … → Ship          |
+| `/boss:review`    | Tech Lead          | Tarefas → … → Ship          |
+| `/boss:tasks`     | Scrum Master       | Desenvolvimento → QA → Ship |
+| `/boss:dev`       | Frontend / Backend | QA → Ship                   |
+| `/boss:qa`        | QA                 | Ship                        |
+| `/boss:ship`      | DevOps             | encerra a cadeia            |
 
 A cadeia completa é `pm → architect → ui → review → tasks → dev → qa → ship`. Pare dizendo "stop", "só este passo", ou passando `--stop-after <stage>`.
 
@@ -97,11 +97,11 @@ pedido → esclarecimento (exceto --quick)
 
 Além dos contratos por papel, cada portão é decidido por um comando real e o veredito é registrado no artefato da etapa:
 
-| Portão | Etapa | Verifica |
-| --- | --- | --- |
-| 0 (qualidade do código) | após o desenvolvimento, antes do QA | typecheck e lint passam, sem vulnerabilidades graves em dependências |
-| 1 (testes) | após o QA, antes do deploy | testes unitários e de integração passam, cobertura ≥ 70%, sem bugs P0/P1, E2E escritos |
-| 2 (desempenho) | antes do deploy web | Lighthouse ≥ 80, API P99 < 500 ms (apenas projetos web) |
+| Portão                  | Etapa                               | Verifica                                                                               |
+| ----------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| 0 (qualidade do código) | após o desenvolvimento, antes do QA | typecheck e lint passam, sem vulnerabilidades graves em dependências                   |
+| 1 (testes)              | após o QA, antes do deploy          | testes unitários e de integração passam, cobertura ≥ 70%, sem bugs P0/P1, E2E escritos |
+| 2 (desempenho)          | antes do deploy web                 | Lighthouse ≥ 80, API P99 < 500 ms (apenas projetos web)                                |
 
 Se você não precisa de uma pasta `.boss/` rastreável, provavelmente não precisa da cadeia completa; use um único papel.
 
