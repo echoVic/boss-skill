@@ -21,6 +21,11 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "markdown": {
+    "parser": {
+      "frontmatter": true
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
