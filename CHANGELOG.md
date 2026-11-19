@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 修复（Fixed）
+
+- **DeepSeek Harness bundle `dsh-boss-mode` `0.1.6`。** bundle 内打包的 `SKILL.md` 与 agent 定义带上
+  修复后的 YAML front matter（[#91](https://github.com/echoVic/boss-skill/issues/91)），资源快照同步到
+  Boss `5.0.5`。插件代码与 preset 行为不变。
+
 ## [5.0.5] - 2026-11-19
 
 ### 新增（Added）

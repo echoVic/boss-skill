@@ -21,10 +21,10 @@ dsh plugin --profile desktop add dsh-boss-mode
 ```
 
 Or install the tarball attached to the
-[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.5):
+[GitHub Release](https://github.com/echoVic/boss-skill/releases/tag/dsh-boss-mode-v0.1.6):
 
 ```sh
-dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.5/dsh-boss-mode-0.1.5.tgz
+dsh plugin --profile desktop add https://github.com/echoVic/boss-skill/releases/download/dsh-boss-mode-v0.1.6/dsh-boss-mode-0.1.6.tgz
 ```
 
 Or add the [raw market index](https://raw.githubusercontent.com/echoVic/boss-skill/main/integrations/deepseek-harness/marketplace.json) to the DSH plugin market. Then fully
