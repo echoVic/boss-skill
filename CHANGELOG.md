@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [5.0.5] - 2026-11-19
+
 ### 新增（Added）
 
 - **DeepSeek Harness bundle 发布到 npm。** `integrations/deepseek-harness` 以
@@ -25,6 +27,14 @@
 - `npm run lint` 在仓库里已有本地 `.boss/` 工作区时不再失败。Biome 现在读取 `.gitignore`
   （需要同时设置 `vcs.enabled` 与 `vcs.clientKind`）。已提交的
   `test/**/workspace/.boss/` 与 `test/**/fixture/.boss/` 夹具仍会检查。
+- **`SKILL.md` 与 agent 定义的 YAML front matter 恢复可解析
+  （[#91](https://github.com/echoVic/boss-skill/issues/91)）。** v5.0.4 里 Biome 把 front matter
+  当成普通 Markdown 重排，主 `skill/SKILL.md`、35 个子 skill 和 9 个 agent 定义因此解析失败，
+  `npx skills add` 会跳过 boss skill。现在 `biome.json` 开启了 `markdown.parser.frontmatter`，
+  受影响文件的 front matter 已恢复，并新增 `test/lint/markdown-frontmatter.test.ts` 防止回归。
+- `npm run release` 在同步版本号后会重建并提交 DSH 资源快照
+  `integrations/deepseek-harness/resources.json`。此前快照里的 `bossVersion` 会停留在旧版本，
+  release 提交过不了 `test/dsh/plugin.test.ts`。
 
 ## [5.0.3] - 2026-09-29
 
