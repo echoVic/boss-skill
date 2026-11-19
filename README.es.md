@@ -36,17 +36,17 @@ Reinicia DeepSeek Harness, crea una sesión y elige **Boss Expert Squad**.
 
 Cada comando es un punto de entrada que ejecuta automáticamente las etapas posteriores:
 
-| Comando | Empieza en | Ejecuta hasta |
-| --- | --- | --- |
-| `/boss` | PM | la cadena completa → ship |
-| `/boss:pm` | PM | Arquitecto → … → Ship |
-| `/boss:architect` | Arquitecto | UI → … → Ship |
-| `/boss:ui` | Diseñador UI | Revisión → … → Ship |
-| `/boss:review` | Líder Técnico | Tareas → … → Ship |
-| `/boss:tasks` | Scrum Master | Desarrollo → QA → Ship |
-| `/boss:dev` | Frontend / Backend | QA → Ship |
-| `/boss:qa` | QA | Ship |
-| `/boss:ship` | DevOps | termina la cadena |
+| Comando           | Empieza en         | Ejecuta hasta             |
+| ----------------- | ------------------ | ------------------------- |
+| `/boss`           | PM                 | la cadena completa → ship |
+| `/boss:pm`        | PM                 | Arquitecto → … → Ship     |
+| `/boss:architect` | Arquitecto         | UI → … → Ship             |
+| `/boss:ui`        | Diseñador UI       | Revisión → … → Ship       |
+| `/boss:review`    | Líder Técnico      | Tareas → … → Ship         |
+| `/boss:tasks`     | Scrum Master       | Desarrollo → QA → Ship    |
+| `/boss:dev`       | Frontend / Backend | QA → Ship                 |
+| `/boss:qa`        | QA                 | Ship                      |
+| `/boss:ship`      | DevOps             | termina la cadena         |
 
 La cadena completa es `pm → architect → ui → review → tasks → dev → qa → ship`. Detenla diciendo «stop», «solo este paso» o pasando `--stop-after <stage>`.
 
@@ -97,11 +97,11 @@ petición → aclaración (salvo --quick)
 
 Además de los contratos por rol, cada puerta la decide un comando real y el veredicto se registra en el artefacto de la etapa:
 
-| Puerta | Etapa | Comprueba |
-| --- | --- | --- |
-| 0 (calidad del código) | tras desarrollo, antes de QA | typecheck y lint pasan, sin vulnerabilidades graves en dependencias |
-| 1 (pruebas) | tras QA, antes del despliegue | pruebas unitarias y de integración pasan, cobertura ≥ 70%, sin bugs P0/P1, E2E escritos |
-| 2 (rendimiento) | antes del despliegue web | Lighthouse ≥ 80, API P99 < 500 ms (solo proyectos web) |
+| Puerta                 | Etapa                         | Comprueba                                                                               |
+| ---------------------- | ----------------------------- | --------------------------------------------------------------------------------------- |
+| 0 (calidad del código) | tras desarrollo, antes de QA  | typecheck y lint pasan, sin vulnerabilidades graves en dependencias                     |
+| 1 (pruebas)            | tras QA, antes del despliegue | pruebas unitarias y de integración pasan, cobertura ≥ 70%, sin bugs P0/P1, E2E escritos |
+| 2 (rendimiento)        | antes del despliegue web      | Lighthouse ≥ 80, API P99 < 500 ms (solo proyectos web)                                  |
 
 Si no necesitas una carpeta `.boss/` trazable, probablemente no necesites la cadena completa; usa un solo rol.
 

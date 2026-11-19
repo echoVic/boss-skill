@@ -36,17 +36,17 @@ DeepSeek Harness를 재시작하고 새 세션을 만든 뒤 **Boss Expert Squad
 
 각 명령은 진입점이며 하위 단계를 자동으로 실행합니다:
 
-| 명령 | 시작 | 실행 범위 |
-| --- | --- | --- |
-| `/boss` | PM | 전체 체인 → ship |
-| `/boss:pm` | PM | 아키텍트 → … → Ship |
-| `/boss:architect` | 아키텍트 | UI → … → Ship |
-| `/boss:ui` | UI 디자이너 | 리뷰 → … → Ship |
-| `/boss:review` | 테크 리드 | 작업 → … → Ship |
-| `/boss:tasks` | 스크럼 마스터 | 개발 → QA → Ship |
-| `/boss:dev` | 프론트엔드 / 백엔드 | QA → Ship |
-| `/boss:qa` | QA | Ship |
-| `/boss:ship` | DevOps | 체인 종료 |
+| 명령              | 시작                | 실행 범위           |
+| ----------------- | ------------------- | ------------------- |
+| `/boss`           | PM                  | 전체 체인 → ship    |
+| `/boss:pm`        | PM                  | 아키텍트 → … → Ship |
+| `/boss:architect` | 아키텍트            | UI → … → Ship       |
+| `/boss:ui`        | UI 디자이너         | 리뷰 → … → Ship     |
+| `/boss:review`    | 테크 리드           | 작업 → … → Ship     |
+| `/boss:tasks`     | 스크럼 마스터       | 개발 → QA → Ship    |
+| `/boss:dev`       | 프론트엔드 / 백엔드 | QA → Ship           |
+| `/boss:qa`        | QA                  | Ship                |
+| `/boss:ship`      | DevOps              | 체인 종료           |
 
 전체 체인은 `pm → architect → ui → review → tasks → dev → qa → ship`입니다. "stop", "이 단계만"이라고 말하거나 `--stop-after <stage>`를 넘기면 멈춥니다.
 
@@ -97,11 +97,11 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 역할별 계약 외에도 각 게이트는 실제 명령으로 판정되고 결과는 해당 단계의 산출물에 기록됩니다:
 
-| 게이트 | 단계 | 확인 |
-| --- | --- | --- |
-| 0(코드 품질) | 개발 후, QA 전 | typecheck와 lint 통과, 의존성에 고위험 취약점 없음 |
-| 1(테스트) | QA 후, 배포 전 | 단위 및 통합 테스트 통과, 커버리지 ≥ 70%, P0/P1 없음, E2E 작성 |
-| 2(성능) | 웹 배포 전 | Lighthouse ≥ 80, API P99 < 500ms(웹 프로젝트만) |
+| 게이트       | 단계           | 확인                                                           |
+| ------------ | -------------- | -------------------------------------------------------------- |
+| 0(코드 품질) | 개발 후, QA 전 | typecheck와 lint 통과, 의존성에 고위험 취약점 없음             |
+| 1(테스트)    | QA 후, 배포 전 | 단위 및 통합 테스트 통과, 커버리지 ≥ 70%, P0/P1 없음, E2E 작성 |
+| 2(성능)      | 웹 배포 전     | Lighthouse ≥ 80, API P99 < 500ms(웹 프로젝트만)                |
 
 추적 가능한 `.boss/` 폴더가 필요 없다면 전체 체인도 필요 없을 가능성이 큽니다. 단일 역할을 쓰세요.
 

@@ -36,17 +36,17 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 每个斜杠命令都是入口，默认自动跑完下游阶段：
 
-| 命令 | 起点 | 跑到 |
-| --- | --- | --- |
-| `/boss` | PM | 完整链路 → ship |
-| `/boss:pm` | PM | 架构 → … → Ship |
-| `/boss:architect` | 架构师 | UI → … → Ship |
-| `/boss:ui` | UI 设计 | 评审 → … → Ship |
-| `/boss:review` | 技术负责人 | 任务 → … → Ship |
-| `/boss:tasks` | Scrum Master | 开发 → QA → Ship |
-| `/boss:dev` | 前端 / 后端 | QA → Ship |
-| `/boss:qa` | QA | Ship |
-| `/boss:ship` | DevOps | 结束链路 |
+| 命令              | 起点         | 跑到             |
+| ----------------- | ------------ | ---------------- |
+| `/boss`           | PM           | 完整链路 → ship  |
+| `/boss:pm`        | PM           | 架构 → … → Ship  |
+| `/boss:architect` | 架构师       | UI → … → Ship    |
+| `/boss:ui`        | UI 设计      | 评审 → … → Ship  |
+| `/boss:review`    | 技术负责人   | 任务 → … → Ship  |
+| `/boss:tasks`     | Scrum Master | 开发 → QA → Ship |
+| `/boss:dev`       | 前端 / 后端  | QA → Ship        |
+| `/boss:qa`        | QA           | Ship             |
+| `/boss:ship`      | DevOps       | 结束链路         |
 
 完整链路是 `pm → architect → ui → review → tasks → dev → qa → ship`。说「停」「只做这一步」，或传 `--stop-after <stage>` 可以中断。
 
@@ -97,11 +97,11 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 除各角色的契约外，每个闸门都由真实命令判定，结果记进该阶段的产物：
 
-| 闸门 | 阶段 | 检查 |
-| --- | --- | --- |
-| 0（代码质量） | 开发后、QA 前 | 类型检查和 lint 通过，没有高危依赖漏洞 |
-| 1（测试） | QA 后、部署前 | 单元和集成测试通过，覆盖率 ≥ 70%，没有 P0/P1，E2E 已写 |
-| 2（性能） | Web 部署前 | Lighthouse ≥ 80，API P99 < 500 ms（仅 Web 项目） |
+| 闸门          | 阶段          | 检查                                                   |
+| ------------- | ------------- | ------------------------------------------------------ |
+| 0（代码质量） | 开发后、QA 前 | 类型检查和 lint 通过，没有高危依赖漏洞                 |
+| 1（测试）     | QA 后、部署前 | 单元和集成测试通过，覆盖率 ≥ 70%，没有 P0/P1，E2E 已写 |
+| 2（性能）     | Web 部署前    | Lighthouse ≥ 80，API P99 < 500 ms（仅 Web 项目）       |
 
 如果不需要可追溯的 `.boss/` 目录，大概也不需要整条流水线，用单个角色即可。
 
