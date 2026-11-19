@@ -44,6 +44,23 @@ describe('release script contract', () => {
     expect(provenanceIndex).toBeGreaterThan(formatIndex);
   });
 
+  it('rebuilds the DSH resources snapshot after syncing so it carries the new version', () => {
+    const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
+    const syncIndex = source.indexOf('同步版本号');
+    const dshIndex = source.indexOf("run('npm', ['run', 'dsh:build'])");
+    const formatIndex = source.indexOf("run('npm', ['run', 'format'])");
+    const commitPathsLine = source
+      .split('\n')
+      .find((line) => line.includes('commitPaths') && line.includes('VERSION_FILES'));
+
+    // resources.json embeds the root version and skill/SKILL.md; test/dsh/plugin.test.ts fails
+    // on the release commit when the snapshot is left at the previous version.
+    expect(dshIndex).toBeGreaterThan(syncIndex);
+    expect(formatIndex).toBeGreaterThan(dshIndex);
+    expect(source).toContain("'integrations/deepseek-harness/resources.json'");
+    expect(commitPathsLine).toContain('DSH_RESOURCES_FILE');
+  });
+
   it('never publishes to npm anymore', () => {
     const source = fs.readFileSync(RELEASE_SCRIPT, 'utf8');
     expect(source).not.toContain('npm publish');

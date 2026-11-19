@@ -26,6 +26,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 const PROVENANCE_FILE = '.agents/plugins/provenance.json';
+// DSH bundle 的资源快照内嵌根版本号与 skill/SKILL.md，版本同步后必须重建并随 release 提交。
+const DSH_RESOURCES_FILE = 'integrations/deepseek-harness/resources.json';
 
 // ── 需要同步版本号的文件 ───────────────────────────────
 const VERSION_FILES = [
@@ -260,8 +262,11 @@ function main() {
     }
   }
   if (dryRun) {
+    console.log(`  [dry-run] 将更新 ${DSH_RESOURCES_FILE}`);
     console.log(`  [dry-run] 将更新 ${PROVENANCE_FILE}`);
   } else {
+    // 快照里的 bossVersion 与 SKILL.md 要跟上新版本，否则 release 提交过不了 test/dsh。
+    run('npm', ['run', 'dsh:build']);
     // 版本回写会重排 JSON（JSON.stringify 展开数组），先恢复 biome 格式再生成 provenance，
     // 保证 release 提交本身通过 CI 的 lint 门禁。
     run('npm', ['run', 'format']);
@@ -291,7 +296,7 @@ function main() {
 
   // 6. Git commit + tag
   console.log('\n📝 提交版本更新...');
-  const commitPaths = VERSION_FILES.map((f) => f.path);
+  const commitPaths = [...VERSION_FILES.map((f) => f.path), DSH_RESOURCES_FILE];
   run('git', ['add', ...commitPaths]);
   run('git', ['commit', '-m', `chore: release v${next}`]);
   run('git', ['tag', `v${next}`]);
