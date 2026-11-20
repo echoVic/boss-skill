@@ -1,0 +1,75 @@
+name: Skill behavior evals
+
+# Runs the cases in evals/ against a real Claude Code agent with `claude plugin eval`.
+# Each run costs API credit, so this is weekly and manual, not per push.
+#
+# Setup: add an ANTHROPIC_API_KEY repository secret. Without it the job reports that it
+# skipped and exits green.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      case:
+        description: "Case name glob (empty runs every case)"
+        required: false
+        default: ""
+      runs:
+        description: "Runs per case"
+        required: false
+        default: "2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-behavior
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    name: claude plugin eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CASE_GLOB: ${{ inputs.case }}
+      RUNS: ${{ inputs.runs || '2' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check for credentials
+        id: credentials
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY is not set; skipping the behavior evals." >> "$GITHUB_STEP_SUMMARY"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.credentials.outputs.available == 'true'
+        with:
+          node-version: "22"
+      - name: Install the Claude Code CLI and its sandbox backend
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap socat
+          npm install --global @anthropic-ai/claude-code@2.1.329
+      - name: Run the eval suite
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          args=(. --scaffold --allow-tools Write Edit Bash --trust-plugin --no-publish
+            --model claude-sonnet-5-5 --judge-model claude-haiku-5-5
+            --runs "$RUNS" --threshold 0.8 --max-cost-usd 25
+            --output-dir eval-results --json eval-results/result.json)
+          if [ -n "$CASE_GLOB" ]; then args+=(--case "$CASE_GLOB"); fi
+          claude plugin eval "${args[@]}"
+      - name: Upload the report
+        if: always() && steps.credentials.outputs.available == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: skill-behavior-report
+          path: eval-results/
+          if-no-files-found: ignore
