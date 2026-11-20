@@ -79,7 +79,7 @@ const bridge = `## DeepSeek Harness 适配规则
 - Read/Write/Glob/Grep/Bash/WebSearch/WebFetch 对应实际可用的 DSH 文件、检索、shell 与 web 工具；Windows 使用 pwsh。使用工具目录中的真实名称，不虚构工具。
 - 本包只提供角色规范和界面，不安装历史 Boss CLI/hooks，不运行事件引擎。质量契约由代理遵循；没有独立的运行时强制门禁。
 - 所有 Markdown 产物写入项目 .boss/<feature>/，语言跟随用户请求、摘要在前。没执行的测试明确写“未验证”；测试证据记录命令、退出码、通过/失败/跳过数和失败详情。
-- 额外资源位于 ${JSON.stringify(fileURLToPath(resourcesURL))}，JSON 的 files 字段以 Boss 相对路径索引 agents/、commands/、references/、scripts/、templates/、skills/。scripts/check-artifacts.mjs 在本包中只是文本：按其中的规则逐条核对产物，并在报告里说明核对方式；独立核验用 boss-verifier 的规范交给另一名成员或子代理。用文件工具或 shell 按 key 取所需文本，避免把整个资源文件加入上下文。用户项目不需要安装本仓库。
+- 额外资源位于 ${JSON.stringify(fileURLToPath(resourcesURL))}，JSON 的 files 字段以 Boss 相对路径索引 agents/、commands/、references/、scripts/、templates/、skills/。scripts/check-artifacts.mjs 在本包中只是文本：按其中的规则逐条核对产物，并在报告里说明核对方式；独立核验用 boss-verifier 的规范交给另一名成员或子代理。命令文件里的 ${'$'}{CLAUDE_PLUGIN_ROOT}/skill 在本包中不会展开，它指的就是上述 Boss 相对路径的根；“boss:boss-pm 类型的子代理”在本模式中对应成员 boss-pm 等。用文件工具或 shell 按 key 取所需文本，避免把整个资源文件加入上下文。用户项目不需要安装本仓库。
 - 用户停止、达到 --stop-after、无法修复的失败或授权边界时停止相关工作，并给出实际产物与阻塞点。不得通过改断言、删测试或伪造证据凑绿。
 `;
 
