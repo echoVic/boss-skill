@@ -1,7 +1,7 @@
 {
   "name": "boss",
   "version": "5.0.5",
-  "description": "BMAD 全自动项目编排插件。从需求到部署的完整研发流水线，编排 9 个专业 Agent（PM、架构师、UI 设计师、Tech Lead、Scrum Master、开发者、QA、DevOps）自动完成完整研发周期。",
+  "description": "Expert-squad workflow for coding agents: PM, architect, UI, tech lead, scrum master, developers, QA and DevOps roles, each held to a contract that an independent verifier checks. Run one stage on an existing codebase or the whole pipeline.",
   "author": {
     "name": "echoVic",
     "email": "137844255@qq.com",
@@ -20,11 +20,10 @@
     "project-management"
   ],
   "skills": ["./skill/"],
-  "hooks": ["./skill/hooks/claude/hooks.json"],
   "interface": {
     "displayName": "Boss",
     "shortDescription": "Auditable multi-agent engineering workflow.",
-    "longDescription": "Boss turns a coding agent into a structured engineering team with PM, architecture, implementation, QA, DevOps, runtime state, hooks, quality gates, and replayable delivery artifacts.",
+    "longDescription": "Boss turns a coding agent into a structured engineering team. Each role writes an artifact to .boss/<feature>/ and is held to a hard-requirement contract, checked by a script and an independent verifier. Run a single stage on an existing codebase, such as /boss:review on the current branch, or the full pipeline from requirements to shipping.",
     "developerName": "echoVic",
     "category": "Productivity",
     "capabilities": ["Planning", "Code Review", "Testing"],
@@ -35,10 +34,23 @@
     "logo": "./assets/boss-logo.svg",
     "screenshots": ["./boss-skill-promo.png"],
     "defaultPrompt": [
-      "Use Boss to plan and implement this feature.",
+      "Use Boss to review the current branch.",
       "Run Boss QA on this project.",
-      "Review this code with Boss."
+      "Use Boss to build this feature end to end."
     ],
     "brandColor": "#171717"
-  }
+  },
+  "commands": ["./skill/commands/"],
+  "agents": [
+    "./skill/agents/boss-architect.md",
+    "./skill/agents/boss-backend.md",
+    "./skill/agents/boss-devops.md",
+    "./skill/agents/boss-frontend.md",
+    "./skill/agents/boss-pm.md",
+    "./skill/agents/boss-qa.md",
+    "./skill/agents/boss-scrum-master.md",
+    "./skill/agents/boss-tech-lead.md",
+    "./skill/agents/boss-ui-designer.md",
+    "./skill/agents/boss-verifier.md"
+  ]
 }

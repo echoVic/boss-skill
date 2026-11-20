@@ -20,16 +20,17 @@ const MANIFEST_REFERENCES = [
 
 const COMPONENT_REFERENCES = [
   'skill/SKILL.md',
-  'skill/commands/boss.md',
-  'skill/commands/boss-pm.md',
-  'skill/commands/boss-architect.md',
-  'skill/commands/boss-ui.md',
-  'skill/commands/boss-review.md',
-  'skill/commands/boss-tasks.md',
-  'skill/commands/boss-dev.md',
-  'skill/commands/boss-qa.md',
-  'skill/commands/boss-ship.md',
-  'skill/commands/boss-upgrade.md',
+  'skill/commands/pm.md',
+  'skill/commands/architect.md',
+  'skill/commands/ui.md',
+  'skill/commands/review.md',
+  'skill/commands/tasks.md',
+  'skill/commands/dev.md',
+  'skill/commands/qa.md',
+  'skill/commands/ship.md',
+  'skill/commands/verify.md',
+  'skill/commands/upgrade.md',
+  'skill/scripts/check-artifacts.mjs',
 ];
 
 function readJson(relativePath) {
