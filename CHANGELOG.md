@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### 变更（Changed）
+
+- **DeepSeek Harness bundle `dsh-boss-mode` `0.2.0`。** 资源快照同步到 Boss `5.1.0`：单个环节入口只做该环节，
+  核验后停下，续跑需要完整流程、`--continue` 或 `--stop-after`；`ship` 默认开 PR；产物语言跟随用户请求。
+  快照新增 `commands/` 与 `scripts/`，lead 的入口文档（`SKILL.md` 与续跑规则）改为英文，适配文案同步了
+  这些行为，并说明 `${CLAUDE_PLUGIN_ROOT}` 与 `boss:boss-<角色>` 在 DSH 里的对应关系。
+
 ## [5.1.0] - 2026-11-20
 
 ### 破坏性变更（Breaking）
