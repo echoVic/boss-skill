@@ -17,7 +17,8 @@ function collect(relative) {
   }
 }
 files['SKILL.md'] = readFileSync(path.join(skill, 'SKILL.md'), 'utf8');
-for (const directory of ['agents', 'references', 'templates', 'skills']) collect(directory);
+for (const directory of ['agents', 'commands', 'references', 'scripts', 'templates', 'skills'])
+  collect(directory);
 const content =
   JSON.stringify(
     {

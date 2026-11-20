@@ -8,8 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/echoVic/boss-skill",
-    "commit": "08fc5052e65aac082e037feec0e764b57d652b7f",
-    "commitUrl": "https://github.com/echoVic/boss-skill/commit/08fc5052e65aac082e037feec0e764b57d652b7f"
+    "commit": "f664ad5cfb9013e79562dc0f051a7489708313b2",
+    "commitUrl": "https://github.com/echoVic/boss-skill/commit/f664ad5cfb9013e79562dc0f051a7489708313b2"
   },
   "publisher": {
     "name": "echoVic",
@@ -27,8 +27,8 @@
   "manifests": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "8faf71800f822e9fb61b14fe786e9b2069d2fb306d4cc479413765e9aae8185d",
-      "bytes": 1576
+      "sha256": "16fcb0a02d09fa879b5d91fca56085abd81d785103fca42b6e829377e3ad23c5",
+      "bytes": 1686
     },
     {
       "path": ".codex-plugin/marketplace.json",
@@ -37,13 +37,13 @@
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "sha256": "f6b1b2d1ca0683ffeac682021706b6c504c46110d9c2cfc333570376ade95151",
-      "bytes": 1781
+      "sha256": "cd8b5bfb2ae549c017f2c646c3a34a6706f4c4431bf01f7d241ff3c3487b00d1",
+      "bytes": 2355
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "sha256": "c51bbb0a1690fba90bccdb83550f0a5e5a2e218d70503c2cff4c49c6cdd237e4",
-      "bytes": 1016
+      "sha256": "00b0b5492e3863e8681c46da000c4a425e399cf052dfa8bcd44f1e767b647031",
+      "bytes": 1076
     },
     {
       "path": ".agents/plugins/marketplace.json",
@@ -54,58 +54,63 @@
   "components": [
     {
       "path": "skill/SKILL.md",
-      "sha256": "ffc5e555bb59011bd20a7f2da3870342d1d806dc164147981a9dec9890653b81",
-      "bytes": 6520
+      "sha256": "73e7e199e805985d5a32b7a3bc0241a08bc9daa344b4c99a3f74aaf80f56212e",
+      "bytes": 8683
     },
     {
-      "path": "skill/commands/boss.md",
-      "sha256": "d88a4d15e5d49a20d61fd17b89d4f9918550ed89dbdc0729c791abec630baccb",
-      "bytes": 3452
+      "path": "skill/commands/pm.md",
+      "sha256": "565487d6355d5f6759f61f778bd6b86b545b2aae910c9dd63487b3d90cb92f81",
+      "bytes": 2791
     },
     {
-      "path": "skill/commands/boss-pm.md",
-      "sha256": "4d10436c37bc82d6d83eda8cf2d741512c28b4712aa11f3640edff2bf96ae825",
-      "bytes": 2260
+      "path": "skill/commands/architect.md",
+      "sha256": "bfe8c3a23a4208e524af6057c760b6de69b5da1fac2b95bb889f7cc68f737b53",
+      "bytes": 2930
     },
     {
-      "path": "skill/commands/boss-architect.md",
-      "sha256": "4505fced013d2a4081fcb5962d93f027a4b60af47467bc665f2e86e23164cfa2",
-      "bytes": 2076
+      "path": "skill/commands/ui.md",
+      "sha256": "24f15c599fabeb637fdce489e1f4132881554e272aa5d7da917322ce753c71da",
+      "bytes": 3041
     },
     {
-      "path": "skill/commands/boss-ui.md",
-      "sha256": "2eaa6f4527f8a4bb2cd935ffdd7a8859ae2b513259a01efa96fad0e66f8214ab",
-      "bytes": 2378
+      "path": "skill/commands/review.md",
+      "sha256": "4b3f09c9e907025d393a0694c86d7729b79f35193edc1f334c0707cb66e198ce",
+      "bytes": 5072
     },
     {
-      "path": "skill/commands/boss-review.md",
-      "sha256": "9c168f871979c3731b81e1e61ccfd41f04c5da8f72254f5cc63f7fa3487f06b4",
-      "bytes": 2661
+      "path": "skill/commands/tasks.md",
+      "sha256": "a42ca63e2c58b50bc2f036e95a6dba63f5b94e53d99930455dab8c7c554339cb",
+      "bytes": 2921
     },
     {
-      "path": "skill/commands/boss-tasks.md",
-      "sha256": "5bef4e302024621579d98ad0d3b1ee0b8e531e94f650fce8e272c451c941323a",
-      "bytes": 2440
+      "path": "skill/commands/dev.md",
+      "sha256": "1b0e6f8ef27716904ddd4e9e60cf7db24819644c2aa56c202d455dcc7ff629cf",
+      "bytes": 2990
     },
     {
-      "path": "skill/commands/boss-dev.md",
-      "sha256": "795eed1fe0b5bac8c89e097645e883eeb1e68f292c8f8e939f476198f82d5895",
-      "bytes": 2607
+      "path": "skill/commands/qa.md",
+      "sha256": "6a2e84e1db0c40e57a2de6d79efdf9576bfe318496d4d9bfec1995f645bb08cd",
+      "bytes": 3362
     },
     {
-      "path": "skill/commands/boss-qa.md",
-      "sha256": "7dfc99082a84de8746dea7e1eb7143dc7056e62d6989ada6c78069ed3f1e1ff4",
-      "bytes": 2106
+      "path": "skill/commands/ship.md",
+      "sha256": "c72b348e37f0c3089948ff88d1d41e23422487473fb033bc9607607c484f6e46",
+      "bytes": 5646
     },
     {
-      "path": "skill/commands/boss-ship.md",
-      "sha256": "9316f22043f86e17885b7b331636f9caba4518fa1447a77dd2b60a88da71078d",
-      "bytes": 3915
+      "path": "skill/commands/verify.md",
+      "sha256": "0602990e08d7a1d97cec4f963757d84bcaa6ec0e0faaae853b567bc907d51a03",
+      "bytes": 1656
     },
     {
-      "path": "skill/commands/boss-upgrade.md",
-      "sha256": "b2718c718fa3be6f69ccdd67327150425293432ede6d752a0c5846bbafe4572f",
-      "bytes": 712
+      "path": "skill/commands/upgrade.md",
+      "sha256": "03940484f817e23c79983348bfba12a0579e9df91a6685bdd1f82add3d02a2e4",
+      "bytes": 732
+    },
+    {
+      "path": "skill/scripts/check-artifacts.mjs",
+      "sha256": "8577888588ca1bc73ac16872a38f9f750e54ce343d0b39d48a02b75153baf297",
+      "bytes": 8471
     }
   ]
 }
