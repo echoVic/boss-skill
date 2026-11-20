@@ -10,7 +10,7 @@
 
 > Este proyecto forma parte del programa AtomGit G-Star Incubation. GitHub es el repositorio canónico y AtomGit es un espejo sincronizado automáticamente. Envía issues y pull requests en [GitHub](https://github.com/echoVic/boss-skill).
 
-**Boss es un flujo de trabajo de escuadrón de expertos para agentes de programación.** Convierte un agente en un equipo de ingeniería estructurado: PM, Arquitecto, Diseñador UI, Líder Técnico, Scrum Master, Frontend, Backend, QA y DevOps. A diferencia de los equipos de agentes basados solo en prompts, Boss impone un contrato de calidad estricto por rol, produce artefactos reproducibles y encadena las etapas automáticamente: empieza por donde quieras y ejecutará el resto hasta que le digas que pare.
+**Boss es un flujo de trabajo de escuadrón de expertos para agentes de programación.** Convierte un agente en un equipo de ingeniería estructurado: PM, Arquitecto, Diseñador UI, Líder Técnico, Scrum Master, Frontend, Backend, QA y DevOps. Cada rol trabaja conforme a un contrato de calidad estricto y escribe su resultado en disco, y un verificador independiente comprueba el contrato en lugar del autor. Ejecuta un solo rol sobre el código que ya tienes, por ejemplo una revisión de la rama actual, o el pipeline completo, desde una idea hasta un pull request.
 
 Boss funciona con Claude Code, Codex, OpenClaw, Antigravity, Hermes y DeepSeek Harness.
 
@@ -26,29 +26,32 @@ Reinicia DeepSeek Harness, crea una sesión y elige **Boss Expert Squad**.
 
 ## Por qué Boss
 
-- **Contratos de calidad estrictos**: cada rol tiene una tabla de requisitos innegociable (un PRD necesita escenarios Dado-Cuando-Entonces, una arquitectura debe comparar dos opciones, QA debe registrar evidencia verificada o declarada como no verificada). Un contrato incumplido bloquea la siguiente etapa salvo que lo autorices.
+- **Útil sobre código existente**: `/boss:review` revisa el diff de la rama actual, `/boss:qa` lo prueba y `/boss:ship` abre el pull request. Cada comando hace su única etapa y se detiene.
+- **Contratos de calidad estrictos**: cada rol tiene una tabla de requisitos innegociable (un PRD necesita escenarios Dado-Cuando-Entonces, una arquitectura debe comparar dos opciones, QA debe registrar el comando y el código de salida que respaldan cada afirmación).
+- **El autor no califica su propio trabajo**: un script comprueba lo que un script puede decidir y después un agente verificador aparte juzga el resto y cita su evidencia. Un contrato incumplido bloquea la siguiente etapa salvo que lo dispenses.
 - **Guiado por artefactos**: cada etapa escribe un archivo real en `.boss/<feature>/`; el progreso se juzga por lo que hay en disco, no por lo que dice el agente.
-- **Cadena de continuación**: empieza en cualquier etapa y Boss ejecuta automáticamente todas las etapas posteriores hasta `ship`.
 - **TDD por defecto**: las etapas de desarrollo escriben primero una prueba que falla, la ven en RED y luego la ponen en GREEN con el mínimo código.
-- **Local por defecto**: sin telemetría ni proxy remoto; la única superficie de red es un servidor de vista previa opcional en `127.0.0.1`.
+- **Local por defecto**: sin telemetría ni proxy remoto. Boss solo hace push, abre un pull request o despliega cuando ejecutas `ship` o dices que sí.
 
 ## Comandos del escuadrón de expertos
 
-Cada comando es un punto de entrada que ejecuta automáticamente las etapas posteriores:
+Cada comando ejecuta una etapa, la verifica y se detiene, indicando el siguiente comando:
 
-| Comando           | Empieza en         | Ejecuta hasta             |
-| ----------------- | ------------------ | ------------------------- |
-| `/boss`           | PM                 | la cadena completa → ship |
-| `/boss:pm`        | PM                 | Arquitecto → … → Ship     |
-| `/boss:architect` | Arquitecto         | UI → … → Ship             |
-| `/boss:ui`        | Diseñador UI       | Revisión → … → Ship       |
-| `/boss:review`    | Líder Técnico      | Tareas → … → Ship         |
-| `/boss:tasks`     | Scrum Master       | Desarrollo → QA → Ship    |
-| `/boss:dev`       | Frontend / Backend | QA → Ship                 |
-| `/boss:qa`        | QA                 | Ship                      |
-| `/boss:ship`      | DevOps             | termina la cadena         |
+| Comando           | Rol                | Escribe                                                       |
+| ----------------- | ------------------ | ------------------------------------------------------------- |
+| `/boss:pm`        | PM                 | `prd.md`                                                      |
+| `/boss:architect` | Arquitecto         | `architecture.md`                                             |
+| `/boss:ui`        | Diseñador UI       | `ui-spec.md`, `ui-design.json`                                |
+| `/boss:review`    | Líder Técnico      | `code-review.md` para un diff, o `tech-review.md` y `plan.md` |
+| `/boss:tasks`     | Scrum Master       | `tasks.md`                                                    |
+| `/boss:dev`       | Frontend / Backend | código y pruebas                                              |
+| `/boss:qa`        | QA                 | `qa-report.md`                                                |
+| `/boss:ship`      | DevOps             | un pull request, o un despliegue con `--deploy`               |
+| `/boss:verify`    | Verificador        | `verification.md` para los artefactos que ya existen          |
 
-La cadena completa es `pm → architect → ui → review → tasks → dev → qa → ship`. Detenla diciendo «stop», «solo este paso» o pasando `--stop-after <stage>`.
+Añade `--continue` para seguir avanzando por la cadena, o `--stop-after <stage>` para detenerte en una etapa posterior. La cadena completa es `pm → architect → ui → review → tasks → dev → qa → ship`; ejecútala entera con `/boss:boss <request>` en Claude Code, o pidiéndole a Boss que construya algo de principio a fin.
+
+En Claude Code son comandos slash reales. En otros agentes, invoca la skill Boss e indica la etapa, por ejemplo «usa Boss para revisar esta rama».
 
 ## Inicio rápido
 
@@ -69,17 +72,19 @@ npx skills add echoVic/boss-skill
 dsh plugin --profile desktop add dsh-boss-mode
 ```
 
-La primera prueba más económica es una revisión de solo lectura sobre código existente: `/boss:review` escribe `tech-review.md` y `plan.md` y no toca nada más. Para ejecutar la cadena completa:
+La primera prueba más económica es una revisión de solo lectura de la rama en la que estás: `/boss:review` escribe `.boss/<branch>/code-review.md` y no cambia ningún archivo fuente. Para ejecutar la cadena completa:
 
 ```text
-/boss Build a local personal todo app --skip-ui
+/boss:boss Build a local personal todo app --skip-ui
 ```
 
 `--skip-ui` omite el diseño UI en proyectos de API o CLI, y `--quick` omite las aclaraciones rutinarias.
 
-Los artefactos viven en `.boss/<feature>/`: `prd.md`, `architecture.md`, `ui-spec.md`, `ui-design.json`, `tech-review.md`, `plan.md`, `tasks.md`, `qa-report.md` y `deploy-report.md`. Cada uno empieza con un resumen para que los agentes posteriores lean primero la conclusión.
+Los artefactos viven en `.boss/<feature>/`: `prd.md`, `architecture.md`, `ui-spec.md`, `ui-design.json`, `tech-review.md`, `plan.md`, `code-review.md`, `tasks.md`, `qa-report.md`, `deploy-report.md` y `verification.md`. Cada uno empieza con un resumen para que los agentes posteriores lean primero la conclusión. Se escriben en el idioma de tu petición; `--lang <code>` lo sustituye.
 
 ## Flujo de trabajo
+
+El pipeline completo, con cada etapa verificada antes de que empiece la siguiente:
 
 ```text
 petición → aclaración (salvo --quick)
@@ -90,12 +95,12 @@ petición → aclaración (salvo --quick)
   → Scrum Master: tasks.md
   → Frontend / Backend: implementación TDD
   → QA: qa-report.md
-  → DevOps: deploy-report.md
+  → DevOps: pull request o despliegue, deploy-report.md
 ```
 
 ## Puertas de calidad
 
-Además de los contratos por rol, cada puerta la decide un comando real y el veredicto se registra en el artefacto de la etapa:
+El contrato de cada etapa se comprueba dos veces: `skill/scripts/check-artifacts.mjs` aplica las reglas que un script puede decidir y el agente verificador juzga el resto. Además de los contratos, cada puerta la decide un comando real y el veredicto se registra en el artefacto de la etapa:
 
 | Puerta                 | Etapa                         | Comprueba                                                                               |
 | ---------------------- | ----------------------------- | --------------------------------------------------------------------------------------- |
@@ -107,16 +112,19 @@ Si no necesitas una carpeta `.boss/` trazable, probablemente no necesites la cad
 
 ## Seguridad y privacidad
 
-Boss es local-first y por defecto no hace peticiones salientes. La procedencia de la release vive en `.agents/plugins/provenance.json` y fija la URL del repositorio, el commit de origen, el publicador y los digests de los manifiestos; verifícala con `npm run provenance:verify`. La frontera completa de datos y red está en [PRIVACY.md](./PRIVACY.md).
+Boss es local-first y por defecto no hace peticiones salientes; `ship` solo hace push o despliega cuando lo ejecutas o lo confirmas. La procedencia de la release vive en `.agents/plugins/provenance.json` y fija la URL del repositorio, el commit de origen, el publicador y los digests de los manifiestos; verifícala con `npm run provenance:verify`. La frontera completa de datos y red está en [PRIVACY.md](./PRIVACY.md).
 
 ## Evals
 
-Los transcripts capturados se puntúan sin iniciar un LLM real:
+Tres capas comprueban el propio Boss:
 
 ```bash
-npm run evals
-npm run evals:release   # añade comprobaciones de evidencia de release y cumplimiento del pipeline
+npm run test:install-smoke   # carga el repo mediante la CLI skills y `claude plugin validate`
+npm run evals                # puntúa los transcripts capturados; no se llama a ningún modelo
+npm run evals:agent          # ejecuta evals/ contra un agente real de Claude Code (consume crédito de API)
 ```
+
+`npm run evals:agent` envuelve [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals). Sus casos comprueban que una edición pequeña no activa Boss, que una etapa se detiene cuando termina, que una revisión no edita ningún archivo fuente y que la verificación informa de un contrato incumplido. La misma suite se ejecuta cada semana en `.github/workflows/skill-behavior.yml` una vez configurado un secreto `ANTHROPIC_API_KEY`.
 
 ## Desarrollo
 
@@ -130,7 +138,7 @@ npm run typecheck
 npm test
 ```
 
-Otros scripts útiles: `npm run test:skills` (solo comportamiento de la skill), `npm run evals`, `npm run lint` (Biome). Las releases usan `npm run release -- patch|minor|major|<versión>`; el script comprueba que el árbol esté limpio, ejecuta typecheck, lint y pruebas, y después sincroniza versiones, hace commit, crea la etiqueta y hace push. Consulta [CONTRIBUTING.md](./CONTRIBUTING.md) y [docs/dsh-release.md](./docs/dsh-release.md).
+Otros scripts útiles: `npm run test:skills` (análisis de transcripts), `npm run test:contracts` (el comprobador de artefactos), `npm run lint` (Biome). Las releases usan `npm run release -- patch|minor|major|<versión>`; el script comprueba que el árbol esté limpio, ejecuta typecheck, lint y pruebas, y después sincroniza versiones, hace commit, crea la etiqueta y hace push. Consulta [CONTRIBUTING.md](./CONTRIBUTING.md) y [docs/dsh-release.md](./docs/dsh-release.md).
 
 ## Diseño
 

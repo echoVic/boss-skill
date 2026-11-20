@@ -7,7 +7,40 @@
 
 ## [Unreleased]
 
+### 破坏性变更（Breaking）
+
+- **单环节命令默认只跑本环节。** `/boss:pm`、`/boss:review` 等入口现在做完本环节、通过核验后就停下，
+  并给出下一个命令；此前会自动续跑到 `ship`。要续跑请加 `--continue` 或 `--stop-after <环节>`，
+  或使用完整流程入口（Claude Code 里是 `/boss:boss <需求>`）。
+- **`/boss:ship` 默认开 pull request，不再默认部署。** 部署改为显式的 `--deploy` 或 `--platform <名称>`。
+  流水线自行走到 `ship` 时，推送、开 PR、部署前都会先问用户；直接运行 `/boss:ship` 视为同意。
+- **命令文件改名。** `skill/commands/boss-<环节>.md` 改为 `skill/commands/<环节>.md`，`boss.md` 并入
+  `SKILL.md`。Claude Code 按文件名注册命令，改名后 `/boss:pm`、`/boss:review` 等才是真正的斜杠命令。
+- **产物语言跟随用户请求的语言。** 此前默认中文；`--lang <code>` 仍可覆盖。
+
+### 新增（Added）
+
+- **面向已有代码的入口。** `/boss:review` 在没有 `architecture.md` 时评审当前分支相对 base 的 diff，
+  只读，产出带 `路径:行号` 的 `code-review.md`；`/boss:qa` 在没有 PRD 时以分支 diff 为测试范围。
+- **契约由作者之外的角色核验。** 每个环节产出后先跑 `skill/scripts/check-artifacts.mjs`
+  （摘要在最前、无占位符、PRD 有 Given-When-Then、QA 报告有退出码等可机械判定的规则），再派发独立的
+  `boss-verifier` 逐条给出带证据的结论，结果追加到 `.boss/<feature>/verification.md`。
+  新增 `/boss:verify`，对已有产物单独做这套核验。
+- **Claude Code 里注册角色子 agent。** `boss:boss-pm`、`boss:boss-tech-lead`、`boss:boss-verifier` 等
+  可以直接作为子 agent 类型派发。
+- **入口层英文化。** `SKILL.md`、各命令和 `references/continuation-chain.md` 改为英文，触发词保留中英两套。
+  角色 prompt、方法论子 skill 和模板仍是中文。
+- **三层自检。** `npm run test:install-smoke` 用 skills CLI 和 `claude plugin validate` 走真实安装路径，
+  并进了 CI；`test/install`、`test/contracts` 覆盖清单引用和检查脚本；`evals/` 下的用例用
+  `claude plugin eval` 在真实 agent 上验证触发、单环节停下、只读评审和核验行为，
+  由 `.github/workflows/skill-behavior.yml` 每周运行（需要 `ANTHROPIC_API_KEY` secret）。
+
 ### 修复（Fixed）
+
+- **Claude Code 插件加载失败。** `.claude-plugin/plugin.json` 和 `.codex-plugin/plugin.json` 仍指向
+  v5.0.4 已删除的 `skill/hooks/*/hooks.json`，`claude plugin validate` 报加载失败。已去掉该引用。
+- **README 里的 `/boss:<环节>` 在 Claude Code 里并不存在。** 插件此前只注册了 `boss:boss` 一个 skill，
+  命令目录没有注册。现在清单声明了命令目录。
 
 - **DeepSeek Harness bundle `dsh-boss-mode` `0.1.6`。** bundle 内打包的 `SKILL.md` 与 agent 定义带上
   修复后的 YAML front matter（[#91](https://github.com/echoVic/boss-skill/issues/91)），资源快照同步到

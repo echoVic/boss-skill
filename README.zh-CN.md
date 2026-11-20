@@ -10,7 +10,7 @@
 
 > 本项目属于 AtomGit G-Star 孵化计划。GitHub 是主仓库，AtomGit 是自动同步的镜像；Issue 和 PR 请在 [GitHub](https://github.com/echoVic/boss-skill) 提交。
 
-**Boss 是给编码 Agent 用的专家小队工作流。** 它把一只编码 Agent 变成一支结构化的工程团队：PM、架构师、UI 设计、技术负责人、Scrum Master、前端、后端、QA 和 DevOps。与只靠提示词的 Agent 团队不同，Boss 为每个角色加上硬性质量契约，产出可回放的产物，并自动串联各阶段——从任意阶段开始，它会把剩下的跑完，直到你说停。
+**Boss 是给编码 Agent 用的专家小队工作流。** 它把一只编码 Agent 变成一支结构化的工程团队：PM、架构师、UI 设计、技术负责人、Scrum Master、前端、后端、QA 和 DevOps。每个角色都按硬性质量契约工作，并把结果写到磁盘，契约是否达标由独立的验证者检查，而不是作者自己。可以只让一个角色处理你已有的代码，比如评审当前分支；也可以跑完整条流水线，从一个想法一路做到 PR。
 
 Boss 支持 Claude Code、Codex、OpenClaw、Antigravity、Hermes 和 DeepSeek Harness。
 
@@ -26,29 +26,32 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 ## 为什么需要 Boss
 
-- **硬性质量契约**：每个角色都有一张不可协商的要求表（PRD 必须有 Given-When-Then 场景，架构至少比较两个方案，QA 必须记录已验证或如实标注未验证的证据）。契约不通过就挡住下一阶段，除非你显式放行。
+- **对现有代码同样有用**：`/boss:review` 评审当前分支的 diff，`/boss:qa` 测试它，`/boss:ship` 创建 PR。每个命令只做自己那一个阶段，做完就停。
+- **硬性质量契约**：每个角色都有一张不可协商的要求表（PRD 必须有 Given-When-Then 场景，架构至少比较两个方案，QA 的每条结论都必须记录背后的命令和退出码）。
+- **作者不给自己打分**：脚本能判定的由脚本检查，其余交给独立的验证 Agent 判断，并引用它的证据。契约不通过就挡住下一阶段，除非你豁免。
 - **产物驱动**：每个阶段都在 `.boss/<feature>/` 下写真实文件；进度看磁盘上的产物，不看 Agent 自己怎么说。
-- **续跑链**：从任意阶段开始，Boss 自动跑完所有下游阶段，直到 `ship`。
 - **默认 TDD**：开发阶段先写一个失败的测试，看它变 RED，再用最少的代码让它变 GREEN。
-- **本地优先**：没有遥测，也没有远程代理；唯一的网络面是 UI 阶段可选的 `127.0.0.1` 回环预览服务器。
+- **本地优先**：没有遥测，也没有远程代理。只有在你运行 `ship` 或明确同意时，Boss 才会推送、创建 PR 或部署。
 
 ## 专家小队命令
 
-每个斜杠命令都是入口，默认自动跑完下游阶段：
+每个命令只跑一个阶段，验证后停下，并给出下一个命令：
 
-| 命令              | 起点         | 跑到             |
-| ----------------- | ------------ | ---------------- |
-| `/boss`           | PM           | 完整链路 → ship  |
-| `/boss:pm`        | PM           | 架构 → … → Ship  |
-| `/boss:architect` | 架构师       | UI → … → Ship    |
-| `/boss:ui`        | UI 设计      | 评审 → … → Ship  |
-| `/boss:review`    | 技术负责人   | 任务 → … → Ship  |
-| `/boss:tasks`     | Scrum Master | 开发 → QA → Ship |
-| `/boss:dev`       | 前端 / 后端  | QA → Ship        |
-| `/boss:qa`        | QA           | Ship             |
-| `/boss:ship`      | DevOps       | 结束链路         |
+| 命令              | 角色         | 产出                                                            |
+| ----------------- | ------------ | --------------------------------------------------------------- |
+| `/boss:pm`        | PM           | `prd.md`                                                        |
+| `/boss:architect` | 架构师       | `architecture.md`                                               |
+| `/boss:ui`        | UI 设计      | `ui-spec.md`、`ui-design.json`                                  |
+| `/boss:review`    | 技术负责人   | 针对 diff 的 `code-review.md`，或 `tech-review.md` 和 `plan.md` |
+| `/boss:tasks`     | Scrum Master | `tasks.md`                                                      |
+| `/boss:dev`       | 前端 / 后端  | 代码和测试                                                      |
+| `/boss:qa`        | QA           | `qa-report.md`                                                  |
+| `/boss:ship`      | DevOps       | PR，或用 `--deploy` 做一次部署                                  |
+| `/boss:verify`    | 验证者       | 针对已有产物的 `verification.md`                                |
 
-完整链路是 `pm → architect → ui → review → tasks → dev → qa → ship`。说「停」「只做这一步」，或传 `--stop-after <stage>` 可以中断。
+加 `--continue` 可以沿链路继续往下跑，加 `--stop-after <stage>` 则在后面的某个阶段停下。完整链路是 `pm → architect → ui → review → tasks → dev → qa → ship`；在 Claude Code 里用 `/boss:boss <request>` 跑完整条链路，或者直接让 Boss 端到端地做出某样东西。
+
+在 Claude Code 里，这些是真正的斜杠命令。在其他 Agent 上，调用 Boss 技能并说明阶段，例如「用 Boss 评审这个分支」。
 
 ## 快速上手
 
@@ -69,17 +72,19 @@ npx skills add echoVic/boss-skill
 dsh plugin --profile desktop add dsh-boss-mode
 ```
 
-最低成本的一次尝试是对现有代码做只读评审：`/boss:review` 只写 `tech-review.md` 和 `plan.md`，不碰仓库其他内容。要跑完整流水线：
+最低成本的一次尝试是对你当前所在的分支做只读评审：`/boss:review` 写 `.boss/<branch>/code-review.md`，不改任何源文件。要跑完整流水线：
 
 ```text
-/boss Build a local personal todo app --skip-ui
+/boss:boss Build a local personal todo app --skip-ui
 ```
 
 `--skip-ui` 给纯 API / CLI 项目跳过 UI 设计，`--quick` 跳过例行澄清。
 
-产物在 `.boss/<feature>/` 下：`prd.md`、`architecture.md`、`ui-spec.md`、`ui-design.json`、`tech-review.md`、`plan.md`、`tasks.md`、`qa-report.md` 和 `deploy-report.md`。每份都以摘要开头，方便下游 Agent 先读结论。
+产物在 `.boss/<feature>/` 下：`prd.md`、`architecture.md`、`ui-spec.md`、`ui-design.json`、`tech-review.md`、`plan.md`、`code-review.md`、`tasks.md`、`qa-report.md`、`deploy-report.md` 和 `verification.md`。每份都以摘要开头，方便下游 Agent 先读结论。产物用你提需求时的语言撰写；`--lang <code>` 可以覆盖。
 
 ## 工作流
+
+完整流水线，每个阶段都先通过验证，下一个阶段才开始：
 
 ```text
 需求 → 澄清（除非 --quick）
@@ -90,12 +95,12 @@ dsh plugin --profile desktop add dsh-boss-mode
   → Scrum Master：tasks.md
   → 前端 / 后端：TDD 实现
   → QA：qa-report.md
-  → DevOps：deploy-report.md
+  → DevOps：PR 或部署，deploy-report.md
 ```
 
 ## 质量闸门
 
-除各角色的契约外，每个闸门都由真实命令判定，结果记进该阶段的产物：
+每个阶段的契约会检查两遍：`skill/scripts/check-artifacts.mjs` 执行脚本能判定的规则，其余由验证 Agent 判断。除契约外，每个闸门都由真实命令判定，结果记进该阶段的产物：
 
 | 闸门          | 阶段          | 检查                                                   |
 | ------------- | ------------- | ------------------------------------------------------ |
@@ -107,16 +112,19 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 ## 安全与隐私
 
-Boss 本地优先，默认不向外发请求。发布来源记录在 `.agents/plugins/provenance.json`，钉住仓库 URL、源码提交、发布者和清单摘要，用 `npm run provenance:verify` 校验。完整的数据和网络边界见 [PRIVACY.md](./PRIVACY.md)。
+Boss 本地优先，默认不向外发请求；`ship` 只有在你运行它或确认之后才会推送或部署。发布来源记录在 `.agents/plugins/provenance.json`，钉住仓库 URL、源码提交、发布者和清单摘要，用 `npm run provenance:verify` 校验。完整的数据和网络边界见 [PRIVACY.md](./PRIVACY.md)。
 
 ## Evals
 
-录下来的对话记录不调用真实 LLM 就能评分：
+有三层检查用来验证 Boss 自身：
 
 ```bash
-npm run evals
-npm run evals:release   # 额外检查发布证据和流水线合规
+npm run test:install-smoke   # 通过 skills CLI 和 `claude plugin validate` 加载本仓库
+npm run evals                # 给录下来的对话记录评分；不调用任何模型
+npm run evals:agent          # 用真实的 Claude Code Agent 跑 evals/（消耗 API 额度）
 ```
+
+`npm run evals:agent` 封装了 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals)。它的用例检查：小改动不会触发 Boss，阶段做完就停，评审不修改任何源文件，验证会报告被违反的契约。配置好 `ANTHROPIC_API_KEY` secret 后，同一套用例每周在 `.github/workflows/skill-behavior.yml` 中运行。
 
 ## 开发
 
@@ -130,7 +138,7 @@ npm run typecheck
 npm test
 ```
 
-其他常用脚本：`npm run test:skills`（只跑技能行为）、`npm run evals`、`npm run lint`（Biome）。发布用 `npm run release -- patch|minor|major|<版本>`，脚本会检查工作区、跑类型检查、lint 和测试，然后同步版本、提交、打标签并推送。约定见 [CONTRIBUTING.md](./CONTRIBUTING.md) 和 [docs/dsh-release.md](./docs/dsh-release.md)。
+其他常用脚本：`npm run test:skills`（对话记录解析）、`npm run test:contracts`（产物检查器）、`npm run lint`（Biome）。发布用 `npm run release -- patch|minor|major|<版本>`，脚本会检查工作区、跑类型检查、lint 和测试，然后同步版本、提交、打标签并推送。约定见 [CONTRIBUTING.md](./CONTRIBUTING.md) 和 [docs/dsh-release.md](./docs/dsh-release.md)。
 
 ## 设计
 
