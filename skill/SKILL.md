@@ -6,7 +6,7 @@ description: |
   Triggers: 'boss', '/boss', 'boss mode', 'use Boss', 'build this end to end', 'from requirements to shipping', 'write a PRD', 'design the architecture', 'review my branch', 'run QA on this', 'ship this', '全自动开发', '从需求到部署', '帮我做一个', '全流程', '写个 PRD', '技术评审', '跑一下测试', '可以发布了吗'
 
   Does not apply to: single-file edits, small bug fixes, reading or explaining code, or anything a person would finish in under 30 minutes.
-version: 5.0.5
+version: 5.1.0
 license: MIT
 user-invocable: true
 ---

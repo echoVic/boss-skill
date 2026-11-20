@@ -1,7 +1,7 @@
 {
   "name": "boss-skill",
   "description": "Boss expert-squad workflow for coding agents",
-  "version": "5.0.5",
+  "version": "5.1.0",
   "interface": {
     "displayName": "Boss Skill"
   },
@@ -19,7 +19,7 @@
       "name": "boss",
       "source": "./",
       "description": "Role-based engineering workflow with verified contracts: run one stage on an existing codebase or the full pipeline from requirements to shipping.",
-      "version": "5.0.5",
+      "version": "5.1.0",
       "author": {
         "name": "echoVic",
         "email": "137844255@qq.com",
