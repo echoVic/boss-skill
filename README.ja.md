@@ -10,7 +10,7 @@
 
 > このプロジェクトは AtomGit G-Star Incubation Program の一部です。GitHub が正規リポジトリで、AtomGit は自動同期されるミラーです。Issue や Pull Request は [GitHub](https://github.com/echoVic/boss-skill) に投稿してください。
 
-**Boss はコーディングエージェント向けのエキスパートスクワッド・ワークフローです。** 1 体のエージェントを構造化されたエンジニアリングチームに変えます。PM、アーキテクト、UI デザイナー、テックリード、スクラムマスター、フロントエンド、バックエンド、QA、DevOps。プロンプトだけのエージェントチームと違い、Boss はロールごとに厳格な品質契約を課し、再生可能な成果物を生み出し、ステージを自動でつなぎます。どこから始めても、止めるまで残りを実行します。
+**Boss はコーディングエージェント向けのエキスパートスクワッド・ワークフローです。** 1 体のエージェントを構造化されたエンジニアリングチームに変えます。PM、アーキテクト、UI デザイナー、テックリード、スクラムマスター、フロントエンド、バックエンド、QA、DevOps。各ロールは厳格な品質契約に従って作業し、結果をディスクに書き出します。契約は作成者ではなく、独立した検証者が確認します。現在のブランチのレビューのように既存のコードに対して 1 つのロールだけを実行することも、アイデアから Pull Request までパイプライン全体を実行することもできます。
 
 Boss は Claude Code、Codex、OpenClaw、Antigravity、Hermes、DeepSeek Harness で動作します。
 
@@ -26,29 +26,32 @@ DeepSeek Harness を再起動し、新しいセッションを作成して **Bos
 
 ## Boss を選ぶ理由
 
-- **厳格な品質契約**: 各ロールに交渉不可の要件表があります（PRD には Given-When-Then シナリオ、アーキテクチャは最低 2 案の比較、QA は検証済みか正直に未検証と記録した証拠が必要）。契約を満たさないと、明示的に上書きしない限り次のステージに進めません。
+- **既存のコードにも使える**: `/boss:review` は現在のブランチの diff をレビューし、`/boss:qa` はそれをテストし、`/boss:ship` は Pull Request を作成します。各コマンドは自分の 1 ステージだけを実行して止まります。
+- **厳格な品質契約**: 各ロールに交渉不可の要件表があります（PRD には Given-When-Then シナリオ、アーキテクチャは最低 2 案の比較、QA はすべての主張について、裏付けとなるコマンドと終了コードの記録が必要）。
+- **作成者は自分の成果物を採点しない**: スクリプトで判定できることはスクリプトが確認し、残りは別の検証エージェントが判断して、その根拠を引用します。契約を満たさないと、免除しない限り次のステージに進めません。
 - **成果物駆動**: 各ステージは `.boss/<feature>/` に実ファイルを書きます。進捗はディスク上の成果物で判断し、エージェントの主張では判断しません。
-- **継続チェーン**: どのステージから始めても、Boss が `ship` まで下流のステージを自動実行します。
 - **デフォルト TDD**: 開発ステージはまず失敗するテストを書き、RED を確認してから、最小限のコードで GREEN にします。
-- **ローカル優先**: テレメトリもリモートプロキシもありません。唯一のネットワーク面は任意で有効にする `127.0.0.1` のループバックプレビューサーバーです。
+- **ローカル優先**: テレメトリもリモートプロキシもありません。Boss がプッシュ、Pull Request の作成、デプロイを行うのは、`ship` を実行したときか、あなたが承諾したときだけです。
 
 ## エキスパートスクワッドコマンド
 
-各コマンドは入口で、下流のステージを自動実行します:
+各コマンドは 1 つのステージを実行し、検証して止まり、次のコマンドを示します:
 
-| コマンド          | 開始                          | 実行範囲                |
-| ----------------- | ----------------------------- | ----------------------- |
-| `/boss`           | PM                            | 全チェーン → ship       |
-| `/boss:pm`        | PM                            | アーキテクト → … → Ship |
-| `/boss:architect` | アーキテクト                  | UI → … → Ship           |
-| `/boss:ui`        | UI デザイナー                 | レビュー → … → Ship     |
-| `/boss:review`    | テックリード                  | タスク → … → Ship       |
-| `/boss:tasks`     | スクラムマスター              | 開発 → QA → Ship        |
-| `/boss:dev`       | フロントエンド / バックエンド | QA → Ship               |
-| `/boss:qa`        | QA                            | Ship                    |
-| `/boss:ship`      | DevOps                        | チェーン終了            |
+| コマンド          | ロール                        | 書き出すもの                                                         |
+| ----------------- | ----------------------------- | -------------------------------------------------------------------- |
+| `/boss:pm`        | PM                            | `prd.md`                                                             |
+| `/boss:architect` | アーキテクト                  | `architecture.md`                                                    |
+| `/boss:ui`        | UI デザイナー                 | `ui-spec.md`、`ui-design.json`                                       |
+| `/boss:review`    | テックリード                  | diff に対する `code-review.md`、または `tech-review.md` と `plan.md` |
+| `/boss:tasks`     | スクラムマスター              | `tasks.md`                                                           |
+| `/boss:dev`       | フロントエンド / バックエンド | コードとテスト                                                       |
+| `/boss:qa`        | QA                            | `qa-report.md`                                                       |
+| `/boss:ship`      | DevOps                        | Pull Request、または `--deploy` でデプロイ                           |
+| `/boss:verify`    | 検証者                        | 既存の成果物に対する `verification.md`                               |
 
-完全なチェーンは `pm → architect → ui → review → tasks → dev → qa → ship` です。「stop」「このステップだけ」と言うか、`--stop-after <stage>` を渡すと止められます。
+`--continue` を付けるとチェーンの先へ進み続け、`--stop-after <stage>` を付けると後のステージで止まります。完全なチェーンは `pm → architect → ui → review → tasks → dev → qa → ship` です。全体を実行するには、Claude Code で `/boss:boss <request>` を使うか、Boss に最初から最後まで作るよう頼みます。
+
+Claude Code では、これらは実際のスラッシュコマンドです。他のエージェントでは、Boss スキルを呼び出してステージを指定します。たとえば「Boss でこのブランチをレビューして」のように伝えます。
 
 ## クイックスタート
 
@@ -69,17 +72,19 @@ npx skills add echoVic/boss-skill
 dsh plugin --profile desktop add dsh-boss-mode
 ```
 
-最初の試し方は、既存コードへの読み取り専用レビューが最も安価です。`/boss:review` は `tech-review.md` と `plan.md` だけを書き、他は触りません。フルチェーンを回すには:
+最初の試し方は、いまいるブランチの読み取り専用レビューが最も安価です。`/boss:review` は `.boss/<branch>/code-review.md` を書き、ソースファイルは一切変更しません。フルチェーンを回すには:
 
 ```text
-/boss Build a local personal todo app --skip-ui
+/boss:boss Build a local personal todo app --skip-ui
 ```
 
 `--skip-ui` は API / CLI プロジェクトで UI 設計を省略し、`--quick` は定型的な確認を省略します。
 
-成果物は `.boss/<feature>/` にあります: `prd.md`、`architecture.md`、`ui-spec.md`、`ui-design.json`、`tech-review.md`、`plan.md`、`tasks.md`、`qa-report.md`、`deploy-report.md`。どれも要約から始まり、下流のエージェントが先に結論を読めます。
+成果物は `.boss/<feature>/` にあります: `prd.md`、`architecture.md`、`ui-spec.md`、`ui-design.json`、`tech-review.md`、`plan.md`、`code-review.md`、`tasks.md`、`qa-report.md`、`deploy-report.md`、`verification.md`。どれも要約から始まり、下流のエージェントが先に結論を読めます。成果物はリクエストの言語で書かれます。`--lang <code>` で上書きできます。
 
 ## ワークフロー
+
+パイプライン全体です。各ステージは、次のステージが始まる前に検証されます:
 
 ```text
 リクエスト → 明確化（--quick 以外）
@@ -90,12 +95,12 @@ dsh plugin --profile desktop add dsh-boss-mode
   → スクラムマスター: tasks.md
   → フロントエンド / バックエンド: TDD 実装
   → QA: qa-report.md
-  → DevOps: deploy-report.md
+  → DevOps: Pull Request またはデプロイ、deploy-report.md
 ```
 
 ## 品質ゲート
 
-ロールごとの契約に加えて、各ゲートは実際のコマンドで判定され、結果はそのステージの成果物に記録されます:
+各ステージの契約は 2 回チェックされます。`skill/scripts/check-artifacts.mjs` がスクリプトで判定できるルールを適用し、残りは検証エージェントが判断します。契約に加えて、各ゲートは実際のコマンドで判定され、結果はそのステージの成果物に記録されます:
 
 | ゲート              | ステージ          | 確認内容                                                               |
 | ------------------- | ----------------- | ---------------------------------------------------------------------- |
@@ -107,16 +112,19 @@ dsh plugin --profile desktop add dsh-boss-mode
 
 ## セキュリティとプライバシー
 
-Boss はローカル優先で、デフォルトでは外向きのリクエストを行いません。リリースの来歴は `.agents/plugins/provenance.json` にあり、リポジトリ URL、ソースコミット、発行者、マニフェストのダイジェストを固定します。`npm run provenance:verify` で検証できます。データとネットワークの境界は [PRIVACY.md](./PRIVACY.md) を参照してください。
+Boss はローカル優先で、デフォルトでは外向きのリクエストを行いません。`ship` がプッシュやデプロイを行うのは、あなたが実行したときか確認したときだけです。リリースの来歴は `.agents/plugins/provenance.json` にあり、リポジトリ URL、ソースコミット、発行者、マニフェストのダイジェストを固定します。`npm run provenance:verify` で検証できます。データとネットワークの境界は [PRIVACY.md](./PRIVACY.md) を参照してください。
 
 ## Evals
 
-記録済みのトランスクリプトを、実際の LLM を起動せずに採点します:
+3 つの層で Boss 自体をチェックします:
 
 ```bash
-npm run evals
-npm run evals:release   # リリース証跡とパイプライン遵守のチェックを追加
+npm run test:install-smoke   # skills CLI と `claude plugin validate` でリポジトリを読み込む
+npm run evals                # 記録済みのトランスクリプトを採点する。モデルは呼び出さない
+npm run evals:agent          # evals/ を実際の Claude Code エージェントで実行する（API クレジットを消費）
 ```
+
+`npm run evals:agent` は [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) をラップしています。そのケースは、小さな編集で Boss が起動しないこと、ステージが完了したら止まること、レビューがソースファイルを編集しないこと、検証が破られた契約を報告することを確認します。`ANTHROPIC_API_KEY` シークレットを設定すると、同じスイートが `.github/workflows/skill-behavior.yml` で毎週実行されます。
 
 ## 開発
 
@@ -130,7 +138,7 @@ npm run typecheck
 npm test
 ```
 
-その他のスクリプト: `npm run test:skills`（スキルの動作のみ）、`npm run evals`、`npm run lint`（Biome）。リリースは `npm run release -- patch|minor|major|<version>` で行います。スクリプトはクリーンなワークツリーを確認し、typecheck・lint・テストを実行してから、バージョン同期、コミット、タグ、プッシュを行います。[CONTRIBUTING.md](./CONTRIBUTING.md) と [docs/dsh-release.md](./docs/dsh-release.md) も参照してください。
+その他のスクリプト: `npm run test:skills`（トランスクリプトの解析）、`npm run test:contracts`（成果物チェッカー）、`npm run lint`（Biome）。リリースは `npm run release -- patch|minor|major|<version>` で行います。スクリプトはクリーンなワークツリーを確認し、typecheck・lint・テストを実行してから、バージョン同期、コミット、タグ、プッシュを行います。[CONTRIBUTING.md](./CONTRIBUTING.md) と [docs/dsh-release.md](./docs/dsh-release.md) も参照してください。
 
 ## 設計
 

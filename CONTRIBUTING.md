@@ -94,6 +94,18 @@ npm test
 
 测试使用 Vitest，位于 `test/` 目录。
 
+按改动的内容再跑对应的检查：
+
+| 改了什么                                             | 跑什么                                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 插件清单、命令文件名、front matter                   | `npm run test:install-smoke`：用 skills CLI 和 `claude plugin validate` 走真实安装路径 |
+| `skill/scripts/check-artifacts.mjs` 或角色的硬性要求 | `npm run test:contracts`                                                               |
+| `SKILL.md`、命令、角色 prompt 的措辞                 | `npm run evals:agent`：在真实 agent 上跑 `evals/` 里的用例，会消耗 API 额度            |
+
+命令文件名就是 Claude Code 里的命令名：`skill/commands/review.md` 注册为 `/boss:review`。不要给命令文件加 `boss-` 前缀，也不要在 front matter 里写 `name`。
+
+改 skill 的措辞前先在 `evals/` 里加一个会失败的用例，改完再看它通过。用例格式见 [Claude Code 的 plugin evals 文档](https://code.claude.com/docs/en/plugin-evals)。需要 Bash 的用例在沙箱里运行，Linux 上要先装 `bubblewrap` 和 `socat`。
+
 ### 编写测试
 
 - 测试文件命名：`test/<分类>/<模块名>.test.ts`
